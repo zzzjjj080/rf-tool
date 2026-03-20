@@ -1,0 +1,2244 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RF計算ツール</title>
+<style>
+  :root {
+    --primary: #1a6fa8;
+    --primary-dark: #145a8a;
+    --accent: #e67e22;
+    --bg: #f0f4f8;
+    --card: #ffffff;
+    --border: #c8d6e5;
+    --text: #2d3748;
+    --muted: #718096;
+    --success: #27ae60;
+    --warning: #f39c12;
+    --danger: #e74c3c;
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+  header { background: var(--primary); color: #fff; padding: 14px 24px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+  header h1 { font-size: 20px; font-weight: 700; letter-spacing: 0.5px; }
+  header span { font-size: 12px; opacity: 0.8; }
+  .tabs { display: flex; background: var(--primary-dark); overflow-x: auto; }
+  .tab-btn { padding: 12px 20px; color: rgba(255,255,255,0.75); border: none; background: none; cursor: pointer; font-size: 13px; white-space: nowrap; border-bottom: 3px solid transparent; transition: all 0.2s; }
+  .tab-btn:hover { color: #fff; background: rgba(255,255,255,0.08); }
+  .tab-btn.active { color: #fff; border-bottom-color: var(--accent); background: rgba(255,255,255,0.1); }
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+  .card h2 { font-size: 16px; font-weight: 700; color: var(--primary); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid var(--border); }
+  .card h3 { font-size: 14px; font-weight: 600; color: var(--text); margin: 14px 0 10px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .form-group { margin-bottom: 12px; }
+  .inputs-col { display:flex; flex-wrap:wrap; gap:0 20px; flex:0 0 auto; }
+  .inputs-col .form-group { width: 180px; }
+  .split-row { display:flex; gap:24px; align-items:start; flex-wrap:wrap; }
+  .split-row .results-col { flex:1; min-width:260px; }
+  label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  input[type="number"], input[type="text"], select {
+    width: 100%; max-width: 200px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 4px;
+    font-size: 14px; color: var(--text); background: #fafafa; transition: border 0.2s;
+  }
+  .inline-row input[type="number"], .segment-row input[type="number"] { max-width: none; }
+  input:focus, select:focus { outline: none; border-color: var(--primary); background: #fff; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border: none; border-radius: 4px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn-secondary { background: #e2e8f0; color: var(--text); }
+  .btn-secondary:hover { background: #cbd5e0; }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-danger:hover { background: #c0392b; }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+  .result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 16px; }
+  .result-item { background: #f7fafc; border: 1px solid var(--border); border-radius: 6px; padding: 12px; text-align: center; }
+  .result-item .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .result-item .value { font-size: 20px; font-weight: 700; color: var(--primary); }
+  .result-item .unit { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .result-item.highlight { border-color: var(--accent); background: #fff8f3; }
+  .result-item.highlight .value { color: var(--accent); }
+  .result-item.secondary { background: #f0f4f8; padding: 8px 10px; }
+  .result-item.secondary .value { font-size: 15px; }
+  .result-item.secondary .label { font-size: 10px; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; }
+  .badge-pass { background: #d4edda; color: var(--success); }
+  .badge-fail { background: #f8d7da; color: var(--danger); }
+  .badge-warn { background: #fff3cd; color: var(--warning); }
+  .section-divider { height: 1px; background: var(--border); margin: 16px 0; }
+  .inline-row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+  .inline-row .form-group { flex: 1; min-width: 120px; }
+  .tolerance-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+  table.result-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
+  table.result-table th { background: var(--primary); color: #fff; padding: 8px 10px; text-align: left; }
+  table.result-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); }
+  table.result-table tr:nth-child(even) td { background: #f7fafc; }
+  .complex-display { font-family: monospace; font-size: 15px; font-weight: 600; color: var(--primary); }
+  .log-section { max-height: 240px; overflow-y: auto; }
+  .log-entry { font-size: 12px; padding: 6px 10px; border-bottom: 1px solid var(--border); display: flex; gap: 10px; }
+  .log-entry .ts { color: var(--muted); white-space: nowrap; font-family: monospace; }
+  .log-entry .msg { color: var(--text); }
+  .error-msg { color: var(--danger); font-size: 12px; margin-top: 4px; }
+  .info-box { background: #ebf8ff; border-left: 4px solid var(--primary); padding: 10px 14px; border-radius: 4px; font-size: 12px; color: var(--primary-dark); margin-bottom: 14px; }
+  .segment-row { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 8px; }
+  .segment-row .form-group { flex: 1; min-width: 100px; margin-bottom: 0; }
+  .notx { text-transform: none; }
+  /* Tooltip */
+  .tip { position:relative; display:inline-block; cursor:help; margin-left:4px; }
+  .tip .tip-icon {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:15px; height:15px; border-radius:50%;
+    background:var(--accent); color:#fff; font-size:10px; font-weight:700;
+    line-height:1; user-select:none;
+  }
+  .tip .tip-box {
+    display:none; position:absolute; z-index:200;
+    background:#1e293b; color:#f1f5f9;
+    padding:8px 12px; border-radius:8px;
+    font-size:12px; line-height:1.6; font-weight:400;
+    width:240px; top:-4px; left:22px;
+    box-shadow:0 4px 16px rgba(0,0,0,0.3);
+    pointer-events:none;
+  }
+  .tip:hover .tip-box { display:block; }
+  /* 整合インジケーターバッジ */
+  .match-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11.5px; font-weight: 600; padding: 3px 9px; border-radius: 20px;
+    border: 1px solid transparent; transition: all 0.3s;
+  }
+  .match-badge.good   { color: #16a34a; background: #f0fdf4; border-color: #bbf7d0; }
+  .match-badge.warn   { color: #b45309; background: #fffbeb; border-color: #fde68a; }
+  .match-badge.bad    { color: #dc2626; background: #fef2f2; border-color: #fecaca; }
+  .match-badge.none   { color: var(--muted); background: transparent; }
+  body.dark .match-badge.good { color: #4ade80; background: #052e16; border-color: #166534; }
+  body.dark .match-badge.warn { color: #fbbf24; background: #1c1400; border-color: #78350f; }
+  body.dark .match-badge.bad  { color: #f87171; background: #1c0000; border-color: #7f1d1d; }
+  @media (max-width: 600px) {
+    .grid { grid-template-columns: 1fr; }
+    .result-grid { grid-template-columns: repeat(2, 1fr); }
+    .inline-row { flex-direction: column; }
+    /* タッチ操作しやすいサイズ調整 */
+    input[type="number"], input[type="text"], select { min-height: 40px; font-size: 16px; }
+    button, .tab-btn { min-height: 40px; }
+    canvas { max-width: 100%; height: auto !important; }
+  }
+  /* ===== DARK MODE ===== */
+  body.dark {
+    --primary: #60a5fa; --primary-dark: #3b82f6;
+    --accent: #fb923c;
+    --bg: #0f172a; --card: #1e293b;
+    --border: #334155; --text: #e2e8f0; --muted: #94a3b8;
+  }
+  body.dark header { background: #1e3a5f; }
+  body.dark .tabs  { background: #172a45; }
+  body.dark .tab-btn.active { background: rgba(255,255,255,0.08); }
+  body.dark input[type="number"], body.dark input[type="text"], body.dark select {
+    background: #0f172a; color: var(--text); border-color: var(--border);
+  }
+  body.dark input:focus, body.dark select:focus { background: #1e293b; }
+  body.dark .result-item { background: #0f172a; }
+  body.dark .result-item.highlight { background: #1c1008; border-color: var(--accent); }
+  body.dark .result-item.secondary { background: #172032; }
+  body.dark .info-box { background: #162035; border-color: var(--primary); color: #93c5fd; }
+  body.dark .btn-secondary { background: #334155; color: var(--text); }
+  body.dark .btn-secondary:hover { background: #475569; }
+  body.dark table.result-table tr:nth-child(even) td { background: #172032; }
+  body.dark .log-entry { border-color: var(--border); }
+  body.dark canvas { filter: brightness(0.92) contrast(1.05); }
+  #dark-toggle {
+    margin-left: auto; padding: 6px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.3);
+    background: transparent; color: #fff; cursor: pointer; font-size: 13px; font-weight: 600;
+    transition: background 0.2s;
+  }
+  #dark-toggle:hover { background: rgba(255,255,255,0.15); }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>RF計算ツール</h1>
+    <span>プラズマエッチング系 現場用計算アプリ (フェーズ1)</span>
+  </div>
+  <button id="dark-toggle" onclick="toggleDark()">🌙 ダーク</button>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('mod1')">① 方向性結合器</button>
+  <button class="tab-btn" onclick="switchTab('mod2')">② VIセンサー</button>
+  <button class="tab-btn" onclick="switchTab('mod3')">③ スミスチャート解析</button>
+  <button class="tab-btn" onclick="switchTab('mod4')">④ 電力単位換算</button>
+  <button class="tab-btn" onclick="switchTab('mod5')">⑤ ケーブル損失補正</button>
+  <button class="tab-btn" onclick="switchTab('log')">🗒 履歴ログ</button>
+</div>
+
+<div class="container">
+
+<!-- ===== MODULE 1: Directional Coupler ===== -->
+<div id="mod1" class="tab-panel active">
+  <div class="card">
+    <h2>方向性結合器</h2>
+    <div class="info-box">Z₀ = 50Ω固定。</div>
+
+    <h3>1-A：電力 → 方結</h3>
+    <div class="grid">
+      <div>
+        <div class="form-group">
+          <label>FWD [W]</label>
+          <input type="number" id="m1_pfwd_a" step="100" value="3000" min="0" oninput="calc_m1a()">
+        </div>
+        <div class="form-group">
+          <label>結合度 [<span class="notx">dB</span>]<span class="tip"><span class="tip-icon">i</span><span class="tip-box">方向性結合器が分岐する信号の割合。正の値で入力（例: 50 → −50dB）。範囲: 0〜70、高電力RF系では50〜60が多い</span></span></label>
+          <input type="number" id="m1_cc_a" step="1" value="50" min="1" max="100" oninput="calc_m1a()">
+        </div>
+      </div>
+      <div>
+        <div class="result-grid">
+          <div class="result-item highlight">
+            <div class="label">方結出力 <span class="notx">Vrms</span></div>
+            <div class="value" id="m1a_vrms">—</div>
+            <div class="unit"><span class="notx">mVrms</span></div>
+          </div>
+          <div class="result-item highlight">
+            <div class="label">方結出力 <span class="notx">Vpp</span></div>
+            <div class="value" id="m1a_vpp">—</div>
+            <div class="unit"><span class="notx">mVpp</span></div>
+          </div>
+          <div class="result-item">
+            <div class="label">結合電力</div>
+            <div class="value" id="m1a_pout">—</div>
+            <div class="unit">W</div>
+          </div>
+        </div>
+        <canvas id="chart1a" width="280" height="155" style="margin-top:10px;border:1px solid var(--border);border-radius:4px;background:#fff;max-width:100%"></canvas>
+      </div>
+    </div>
+
+    <div class="section-divider"></div>
+
+    <h3>1-B：方結 → 電力</h3>
+    <div class="grid">
+      <div>
+        <div class="form-group">
+          <label>入力種別</label>
+          <div style="display:flex;gap:16px;margin-top:4px">
+            <label style="text-transform:none;font-weight:normal;display:flex;align-items:center;gap:4px;cursor:pointer">
+              <input type="radio" name="m1b_type" id="m1b_type_vrms" value="vrms" checked onchange="update_m1b_unit();calc_m1b()"> <span class="notx">Vrms</span>
+            </label>
+            <label style="text-transform:none;font-weight:normal;display:flex;align-items:center;gap:4px;cursor:pointer">
+              <input type="radio" name="m1b_type" id="m1b_type_vpp" value="vpp" onchange="update_m1b_unit();calc_m1b()"> <span class="notx">Vpp</span>
+            </label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>電圧値 [<span class="notx" id="m1b_unit_lbl">mVrms</span>]</label>
+          <input type="number" id="m1b_vval" step="10" value="1224.75" min="0" oninput="calc_m1b()">
+        </div>
+        <div class="form-group">
+          <label>結合度 [<span class="notx">dB</span>]<span class="tip"><span class="tip-icon">i</span><span class="tip-box">方向性結合器が分岐する信号の割合。正の値で入力（例: 50 → −50dB）。範囲: 0〜70、高電力RF系では50〜60が多い</span></span></label>
+          <input type="number" id="m1b_cc" step="1" value="50" min="1" max="100" oninput="calc_m1b()">
+        </div>
+      </div>
+      <div>
+        <div class="result-grid">
+          <div class="result-item highlight">
+            <div class="label">推算電力</div>
+            <div class="value" id="m1b_power">—</div>
+            <div class="unit">W</div>
+          </div>
+          <div class="result-item">
+            <div class="label">電力 <span class="notx">dBW</span></div>
+            <div class="value" id="m1b_dbw">—</div>
+            <div class="unit"><span class="notx">dBW</span></div>
+          </div>
+          <div class="result-item">
+            <div class="label">電力 <span class="notx">dBm</span></div>
+            <div class="value" id="m1b_dbm">—</div>
+            <div class="unit"><span class="notx">dBm</span></div>
+          </div>
+        </div>
+        <canvas id="chart1b" width="280" height="155" style="margin-top:10px;border:1px solid var(--border);border-radius:4px;background:#fff;max-width:100%"></canvas>
+      </div>
+    </div>
+
+    <div class="section-divider"></div>
+
+    <h3>1-C：FWD / REF → VSWR / Γ / ロードパワー</h3>
+    <div class="grid">
+      <div>
+        <div class="form-group">
+          <label>FWD [W]</label>
+          <input type="number" id="m1c_pfwd" step="100" value="3000" min="0" oninput="calc_m1c()">
+        </div>
+        <div class="form-group">
+          <label>REF [W]</label>
+          <input type="number" id="m1c_pref" step="10" value="600" min="0" oninput="calc_m1c()">
+        </div>
+        <div class="form-group">
+          <label>反射電力許容上限 [W]（合否判定）</label>
+          <input type="number" id="m1c_tol" step="10" value="600" min="0" oninput="calc_m1c()">
+        </div>
+      </div>
+      <div>
+        <div class="result-grid">
+          <div class="result-item highlight">
+            <div class="label">ロードパワー</div>
+            <div class="value" id="m1c_pabs">—</div>
+            <div class="unit">W</div>
+          </div>
+          <div class="result-item highlight">
+            <div class="label">反射係数 |Γ|<span class="tip" style="text-transform:none"><span class="tip-icon">i</span><span class="tip-box">反射係数の大きさ。範囲: 0（完全整合）〜1（完全反射）</span></span></div>
+            <div class="value" id="m1c_gamma">—</div>
+            <div class="unit">（無次元）</div>
+          </div>
+          <div class="result-item">
+            <div class="label">VSWR<span class="tip" style="text-transform:none"><span class="tip-icon">i</span><span class="tip-box">定在波比。範囲: 1（完全整合）〜∞（完全反射）。実用上は1.5以下が目標</span></span></div>
+            <div class="value" id="m1c_vswr">—</div>
+            <div class="unit">—</div>
+          </div>
+          <div class="result-item">
+            <div class="label">反射損失<span class="tip" style="text-transform:none"><span class="tip-icon">i</span><span class="tip-box">入射電力に対する反射電力の比（dB）。大きいほど整合が良い。範囲: 0dB（完全反射）〜∞dB（完全整合）</span></span></div>
+            <div class="value" id="m1c_rl">—</div>
+            <div class="unit">dB</div>
+          </div>
+          <div class="result-item">
+            <div class="label">合否判定</div>
+            <div class="value" id="m1c_judge" style="font-size:14px">—</div>
+            <div class="unit"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <canvas id="chart1c" width="560" height="110" style="margin-top:10px;border:1px solid var(--border);border-radius:4px;background:#fff;max-width:100%;display:block"></canvas>
+  </div>
+</div>
+
+<!-- ===== MODULE 2: VI Sensor ===== -->
+<div id="mod2" class="tab-panel">
+  <div class="card">
+    <h2>VIセンサー</h2>
+    <div class="info-box">Z₀ = 50Ω固定。センサー出力を <span class="notx">mV / mA</span> で入力し、結合度で実負荷電力を換算します。位相差θはVがIより進む場合を正。スミスチャートをクリックするとZを逆算して入力値を更新します。</div>
+    <div style="display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start">
+      <!-- 左: 入力 + 結果 -->
+      <div>
+        <div class="inputs-col" style="gap:0 20px">
+          <div class="form-group">
+            <label>電圧振幅 |V| [<span class="notx">mV</span>]（<span class="notx">Vpp</span>）</label>
+            <input type="number" id="m2_v" step="100" value="3464" min="0" oninput="calc_m2()">
+          </div>
+          <div class="form-group">
+            <label>電流振幅 |I| [<span class="notx">mA</span>]（<span class="notx">Ipp</span>）</label>
+            <input type="number" id="m2_i" step="10" value="69.3" min="0" oninput="calc_m2()">
+          </div>
+          <div class="form-group">
+            <label>位相差 θ (V−I) [°]</label>
+            <input type="number" id="m2_theta" step="10" value="30" min="-90" max="90" oninput="calc_m2()">
+          </div>
+          <div class="form-group">
+            <label>周波数 [<span class="notx">MHz</span>]</label>
+            <input type="number" id="m2_freq" step="1" value="27.12" min="0.01" oninput="calc_m2()">
+          </div>
+          <div class="form-group">
+            <label>結合度 [<span class="notx">dB</span>]<span class="tip"><span class="tip-icon">i</span><span class="tip-box">方向性結合器が分岐する信号の割合。正の値で入力（例: 50 → −50dB）。範囲: 0〜70、高電力RF系では50〜60が多い</span></span></label>
+            <input type="number" id="m2_cc" step="1" value="50" min="1" max="100" oninput="calc_m2()">
+          </div>
+        </div>
+
+        <!-- 1段目: R / X / |Z| (最重要・オレンジ) -->
+        <div class="section-divider"></div>
+        <div class="result-grid" style="grid-template-columns:repeat(3,1fr)">
+          <div class="result-item highlight">
+            <div class="label">Z 実部 R</div>
+            <div class="value" id="m2_zr">—</div>
+            <div class="unit">Ω</div>
+          </div>
+          <div class="result-item highlight">
+            <div class="label">Z 虚部 X</div>
+            <div class="value" id="m2_zx">—</div>
+            <div class="unit">Ω</div>
+          </div>
+          <div class="result-item highlight">
+            <div class="label">|Z|</div>
+            <div class="value" id="m2_zmag">—</div>
+            <div class="unit">Ω</div>
+          </div>
+        </div>
+
+        <!-- 2段目: ロードパワー + VSWR (オレンジ) -->
+        <div class="result-grid" style="grid-template-columns:1fr 1fr;margin-top:8px">
+          <div class="result-item highlight">
+            <div class="label">ロードパワー</div>
+            <div class="value" id="m2_pabs">—</div>
+            <div class="unit">W</div>
+          </div>
+          <div class="result-item highlight">
+            <div class="label">VSWR<span class="tip" style="text-transform:none"><span class="tip-icon">i</span><span class="tip-box">定在波比。範囲: 1（完全整合）〜∞（完全反射）。実用上は1.5以下が目標</span></span></div>
+            <div class="value" id="m2_vswr">—</div>
+            <div class="unit">—</div>
+          </div>
+        </div>
+        <!-- Module 2 整合インジケーター -->
+        <div style="text-align:center;margin:5px 0 2px">
+          <span id="m2_match_badge" class="match-badge none">—</span>
+        </div>
+
+        <!-- 3段目: 補足情報 (小・青) -->
+        <div class="section-divider"></div>
+        <div class="result-grid" style="grid-template-columns:repeat(3,1fr)">
+          <div class="result-item secondary">
+            <div class="label">|Γ|<span class="tip" style="text-transform:none"><span class="tip-icon">i</span><span class="tip-box">反射係数の大きさ。範囲: 0（完全整合）〜1（完全反射）</span></span></div>
+            <div class="value" id="m2_gmag">—</div>
+            <div class="unit">—</div>
+          </div>
+          <div class="result-item secondary">
+            <div class="label">∠Γ<span class="tip" style="text-transform:none"><span class="tip-icon">i</span><span class="tip-box">反射係数の位相角。範囲: −180°〜180°</span></span></div>
+            <div class="value" id="m2_garg">—</div>
+            <div class="unit">°</div>
+          </div>
+          <div class="result-item secondary">
+            <div class="label">反射損失<span class="tip" style="text-transform:none"><span class="tip-icon">i</span><span class="tip-box">入射電力に対する反射電力の比（dB）。大きいほど整合が良い。範囲: 0dB（完全反射）〜∞dB（完全整合）</span></span></div>
+            <div class="value" id="m2_rl">—</div>
+            <div class="unit"><span class="notx">dB</span></div>
+          </div>
+        </div>
+        <div class="result-grid" style="grid-template-columns:repeat(3,1fr);margin-top:8px">
+          <div class="result-item secondary">
+            <div class="label">∠Z<span class="tip" style="text-transform:none"><span class="tip-icon">i</span><span class="tip-box">インピーダンスの位相角。範囲: −90°〜90°（純抵抗=0°、誘導性=正、容量性=負）</span></span></div>
+            <div class="value" id="m2_zarg">—</div>
+            <div class="unit">°</div>
+          </div>
+          <div class="result-item secondary">
+            <div class="label">皮相電力<span class="tip" style="text-transform:none"><span class="tip-icon">i</span><span class="tip-box">V×Iの大きさ（有効電力と無効電力の合成）。単位はVA</span></span></div>
+            <div class="value" id="m2_papp">—</div>
+            <div class="unit">VA</div>
+          </div>
+          <div class="result-item secondary">
+            <div class="label">力率 <span class="notx">cos(θ)</span><span class="tip" style="text-transform:none"><span class="tip-icon">i</span><span class="tip-box">有効電力÷皮相電力。1に近いほど効率よく伝わる。範囲: 0〜1</span></span></div>
+            <div class="value" id="m2_pf">—</div>
+            <div class="unit">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右: スミスチャート + フェーザー図 -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+        <div style="font-size:11px;font-weight:600;color:var(--muted)">クリックで Z を逆算</div>
+        <canvas id="smith_chart" width="360" height="360" style="border:1px solid var(--border);border-radius:6px;background:#fff;cursor:crosshair"></canvas>
+        <div style="font-size:11px;font-weight:600;color:var(--muted);margin-top:8px;align-self:flex-start">フェーザー図（V / I）</div>
+        <canvas id="chart2_phasor" width="280" height="160" style="border:1px solid var(--border);border-radius:4px;background:#fff;display:block"></canvas>
+        <div style="font-size:11px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:2px">
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-weight:normal;text-transform:none">
+            <input type="checkbox" id="sc_z" checked onchange="calc_m2()">
+            <span class="notx">Z</span>（インピーダンス）
+          </label>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-weight:normal;text-transform:none">
+            <input type="checkbox" id="sc_y" onchange="calc_m2()">
+            <span class="notx">Y</span>（アドミタンス）
+          </label>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-weight:normal;text-transform:none">
+            <input type="checkbox" id="sc_vswr" onchange="calc_m2()">
+            VSWR サークル
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODULE 3: Smith Chart Analyzer ===== -->
+<div id="mod3" class="tab-panel">
+  <div class="card">
+    <h2>スミスチャート解析</h2>
+    <div class="info-box">V・I の実測値（直接値）を入力してインピーダンスを算出し、スミスチャートにプロットします。Z₀ = 50Ω。スミスチャートをクリックするとZを逆算して入力値を更新します。</div>
+    <div style="display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start">
+
+      <!-- 左: 入力 + 結果 -->
+      <div>
+        <div class="inputs-col" style="gap:0 20px">
+          <div class="form-group">
+            <label>電圧振幅 |V| [<span class="notx">V</span>]（<span class="notx">Vpp</span>）</label>
+            <input type="number" id="m3s_v" step="10" value="100" min="0" oninput="calc_m3s()">
+          </div>
+          <div class="form-group">
+            <label>電流振幅 |I| [<span class="notx">A</span>]（<span class="notx">Ipp</span>）</label>
+            <input type="number" id="m3s_i" step="0.1" value="2" min="0" oninput="calc_m3s()">
+          </div>
+          <div class="form-group">
+            <label>位相差 θ (V−I) [°]</label>
+            <input type="number" id="m3s_theta" step="10" value="30" min="-90" max="90" oninput="calc_m3s()">
+          </div>
+          <div class="form-group">
+            <label>周波数 [<span class="notx">MHz</span>]</label>
+            <input type="number" id="m3s_freq" step="1" value="27.12" min="0.01" oninput="calc_m3s()">
+          </div>
+        </div>
+
+        <!-- 1段目: R / X / |Z| (オレンジ) -->
+        <div class="section-divider"></div>
+        <div class="result-grid" style="grid-template-columns:repeat(3,1fr)">
+          <div class="result-item highlight">
+            <div class="label">Z 実部 R</div>
+            <div class="value" id="m3s_zr">—</div>
+            <div class="unit">Ω</div>
+          </div>
+          <div class="result-item highlight">
+            <div class="label">Z 虚部 X</div>
+            <div class="value" id="m3s_zx">—</div>
+            <div class="unit">Ω</div>
+          </div>
+          <div class="result-item highlight">
+            <div class="label">|Z|</div>
+            <div class="value" id="m3s_zmag">—</div>
+            <div class="unit">Ω</div>
+          </div>
+        </div>
+
+        <!-- 2段目: VSWR + ロードパワー (オレンジ) -->
+        <div class="result-grid" style="grid-template-columns:1fr 1fr;margin-top:8px">
+          <div class="result-item highlight">
+            <div class="label">VSWR<span class="tip" style="text-transform:none"><span class="tip-icon">i</span><span class="tip-box">定在波比。範囲: 1（完全整合）〜∞（完全反射）。実用上は1.5以下が目標</span></span></div>
+            <div class="value" id="m3s_vswr">—</div>
+            <div class="unit">—</div>
+          </div>
+          <div class="result-item highlight">
+            <div class="label">ロードパワー</div>
+            <div class="value" id="m3s_pabs">—</div>
+            <div class="unit">W</div>
+          </div>
+        </div>
+        <!-- 整合状態インジケーター -->
+        <div style="text-align:center;margin:5px 0 2px">
+          <span id="m3s_match_badge" class="match-badge none">—</span>
+        </div>
+
+        <!-- 3段目: 補足 (小・青) -->
+        <div class="section-divider"></div>
+        <div class="result-grid" style="grid-template-columns:repeat(3,1fr)">
+          <div class="result-item secondary">
+            <div class="label">|Γ|<span class="tip" style="text-transform:none"><span class="tip-icon">i</span><span class="tip-box">反射係数の大きさ。範囲: 0（完全整合）〜1（完全反射）</span></span></div>
+            <div class="value" id="m3s_gmag">—</div>
+            <div class="unit">—</div>
+          </div>
+          <div class="result-item secondary">
+            <div class="label">∠Γ<span class="tip" style="text-transform:none"><span class="tip-icon">i</span><span class="tip-box">反射係数の位相角。範囲: −180°〜180°</span></span></div>
+            <div class="value" id="m3s_garg">—</div>
+            <div class="unit">°</div>
+          </div>
+          <div class="result-item secondary">
+            <div class="label">反射損失<span class="tip" style="text-transform:none"><span class="tip-icon">i</span><span class="tip-box">入射電力に対する反射電力の比（dB）。大きいほど整合が良い。範囲: 0dB（完全反射）〜∞dB（完全整合）</span></span></div>
+            <div class="value" id="m3s_rl">—</div>
+            <div class="unit"><span class="notx">dB</span></div>
+          </div>
+        </div>
+        <div class="result-grid" style="grid-template-columns:repeat(3,1fr);margin-top:8px">
+          <div class="result-item secondary">
+            <div class="label">∠Z<span class="tip" style="text-transform:none"><span class="tip-icon">i</span><span class="tip-box">インピーダンスの位相角。範囲: −90°〜90°（純抵抗=0°、誘導性=正、容量性=負）</span></span></div>
+            <div class="value" id="m3s_zarg">—</div>
+            <div class="unit">°</div>
+          </div>
+          <div class="result-item secondary">
+            <div class="label">皮相電力<span class="tip" style="text-transform:none"><span class="tip-icon">i</span><span class="tip-box">V×Iの大きさ（有効電力と無効電力の合成）。単位はVA</span></span></div>
+            <div class="value" id="m3s_papp">—</div>
+            <div class="unit">VA</div>
+          </div>
+          <div class="result-item secondary">
+            <div class="label">力率 <span class="notx">cos(θ)</span><span class="tip" style="text-transform:none"><span class="tip-icon">i</span><span class="tip-box">有効電力÷皮相電力。1に近いほど効率よく伝わる。範囲: 0〜1</span></span></div>
+            <div class="value" id="m3s_pf">—</div>
+            <div class="unit">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右: スミスチャート -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+        <!-- アニメーション制御（最上部） -->
+        <div style="width:360px;padding:8px 10px;background:#f7fafc;border:1px solid var(--border);border-radius:6px;font-size:11px">
+          <div style="font-weight:600;color:var(--muted);margin-bottom:6px">アニメーションモード</div>
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-weight:normal;text-transform:none">
+              <input type="radio" name="m3s_anim" value="none" checked onchange="m3s_onModeChange()">
+              モードなし（停止）
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-weight:normal;text-transform:none">
+              <input type="radio" name="m3s_anim" value="txline" onchange="m3s_onModeChange()">
+              伝送線路回転
+              <span class="tip" style="text-transform:none"><span class="tip-icon">i</span><span class="tip-box">ケーブル電気長を変えると |Γ| 一定のまま VSWR 円上を時計回りに移動。λ/4 変わると 180° 回転します。</span></span>
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-weight:normal;text-transform:none">
+              <input type="radio" name="m3s_anim" value="series_x" onchange="m3s_onModeChange()">
+              直列リアクタンス追加
+              <span class="tip" style="text-transform:none"><span class="tip-icon">i</span><span class="tip-box">コイル（インダクタ）を直列追加すると等R円の上方向（反時計回り）へ移動。コンデンサ（キャパシタ）を直列追加すると下方向へ移動。抵抗 R は変わりません。</span></span>
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-weight:normal;text-transform:none">
+              <input type="radio" name="m3s_anim" value="shunt_b" onchange="m3s_onModeChange()">
+              並列リアクタンス追加
+              <span class="tip" style="text-transform:none"><span class="tip-icon">i</span><span class="tip-box">コンデンサ（キャパシタ）を並列追加すると等G円の上方向へ移動。コイルを並列追加すると下方向へ移動。コンダクタンス G は変わりません。</span></span>
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-weight:normal;text-transform:none">
+              <input type="radio" name="m3s_anim" value="r_sweep" onchange="m3s_onModeChange()">
+              抵抗スイープ
+              <span class="tip" style="text-transform:none"><span class="tip-icon">i</span><span class="tip-box">X（リアクタンス）固定で R（抵抗）を変化させると等 X 弧上を往復します。R=Z₀ のとき実軸上の整合点 (Γ=0) を通ります。</span></span>
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-weight:normal;text-transform:none">
+              <input type="radio" name="m3s_anim" value="z_to_y" onchange="m3s_onModeChange()">
+              Z ↔ Y 反転
+              <span class="tip" style="text-transform:none"><span class="tip-icon">i</span><span class="tip-box">Y = 1/Z への変換は Γ を 180° 回転させることに対応します。並列回路→直列回路の変換直感を養います。</span></span>
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-weight:normal;text-transform:none">
+              <input type="radio" name="m3s_anim" value="phase_sweep" onchange="m3s_onModeChange()">
+              位相差スイープ
+              <span class="tip" style="text-transform:none"><span class="tip-icon">i</span><span class="tip-box">|Z| を固定したまま位相差 θ を −90°〜+90° で往復します。50Ω 整合点では中心を縦断するパスになり、リアクタンス成分が電力伝達に与える影響を直感的に確認できます。</span></span>
+            </label>
+          </div>
+          <div style="margin-top:8px;display:flex;align-items:center;gap:8px">
+            <span style="color:var(--muted)">速度</span>
+            <input type="range" id="m3s_speed" min="1" max="10" value="3" style="flex:1;accent-color:var(--accent)" oninput="document.getElementById('m3s_speed_lbl').textContent=this.value">
+            <span id="m3s_speed_lbl" style="color:var(--muted);min-width:12px">3</span>
+          </div>
+        </div>
+        <div style="font-size:11px;font-weight:600;color:var(--muted)">クリックで Z を逆算</div>
+        <canvas id="smith3_chart" width="360" height="360" style="border:1px solid var(--border);border-radius:6px;background:#fff;cursor:crosshair"></canvas>
+        <!-- グリッド表示チェックボックス（キャンバス下） -->
+        <div style="font-size:11px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:2px">
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-weight:normal;text-transform:none">
+            <input type="checkbox" id="sc3_z" checked onchange="calc_m3s()">
+            <span class="notx">Z</span>（インピーダンス）
+          </label>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-weight:normal;text-transform:none">
+            <input type="checkbox" id="sc3_y" onchange="calc_m3s()">
+            <span class="notx">Y</span>（アドミタンス）
+          </label>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-weight:normal;text-transform:none">
+            <input type="checkbox" id="sc3_vswr" onchange="calc_m3s()">
+            VSWR サークル
+          </label>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start">
+      <div>
+        <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px">フェーザー図（V / I）</div>
+        <canvas id="chart3_phasor" width="210" height="270" style="border:1px solid var(--border);border-radius:4px;background:#fff;display:block"></canvas>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px">Z 平面 200Ω　クリックで逆算</div>
+        <canvas id="chart3z_200" width="270" height="270" style="border:1px solid var(--border);border-radius:4px;background:#fff;display:block;cursor:crosshair"></canvas>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px">Z 平面 2000Ω　クリックで逆算</div>
+        <canvas id="chart3z_2000" width="270" height="270" style="border:1px solid var(--border);border-radius:4px;background:#fff;display:block;cursor:crosshair"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODULE 4: Power Conversion ===== -->
+<div id="mod4" class="tab-panel">
+  <div class="card">
+    <h2>電力単位換算</h2>
+    <div class="info-box">1つの欄に値を入力すると残り2つを自動計算します。</div>
+    <div class="grid">
+      <div>
+        <div class="form-group">
+          <label>電力 [W]</label>
+          <input type="number" id="m4_w" step="100" value="3000" min="0" oninput="calc_m4('w')">
+        </div>
+        <div class="form-group">
+          <label>電力 [<span class="notx">dBm</span>]</label>
+          <input type="number" id="m4_dbm" step="any" oninput="calc_m4('dbm')">
+        </div>
+        <div class="form-group">
+          <label>電力 [<span class="notx">dBW</span>]</label>
+          <input type="number" id="m4_dbw" step="any" oninput="calc_m4('dbw')">
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="clearMod4()">クリア</button>
+      </div>
+      <div>
+        <div class="result-grid">
+          <div class="result-item highlight">
+            <div class="label">W</div>
+            <div class="value" id="m4_r_w">—</div>
+            <div class="unit">W</div>
+          </div>
+          <div class="result-item highlight">
+            <div class="label"><span class="notx">dBm</span></div>
+            <div class="value" id="m4_r_dbm">—</div>
+            <div class="unit"><span class="notx">dBm</span></div>
+          </div>
+          <div class="result-item highlight">
+            <div class="label"><span class="notx">dBW</span></div>
+            <div class="value" id="m4_r_dbw">—</div>
+            <div class="unit"><span class="notx">dBW</span></div>
+          </div>
+          <div class="result-item">
+            <div class="label"><span class="notx">Vrms</span>（50Ω）</div>
+            <div class="value" id="m4_vrms">—</div>
+            <div class="unit"><span class="notx">Vrms</span></div>
+          </div>
+          <div class="result-item">
+            <div class="label"><span class="notx">Vpp</span>（50Ω）</div>
+            <div class="value" id="m4_vpp">—</div>
+            <div class="unit"><span class="notx">Vpp</span></div>
+          </div>
+          <div class="result-item">
+            <div class="label">電流 <span class="notx">Irms</span>（50Ω）</div>
+            <div class="value" id="m4_irms">—</div>
+            <div class="unit"><span class="notx">Irms</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <canvas id="chart4" width="900" height="160" style="margin-top:12px;border:1px solid var(--border);border-radius:4px;background:#fff;width:100%;display:block;cursor:crosshair" title="クリックで値を設定"></canvas>
+
+    <!-- dB 基礎早見表 -->
+    <div style="margin-top:16px">
+      <div style="font-size:12px;font-weight:700;color:var(--primary);margin-bottom:8px">dB 基礎早見表</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <table style="border-collapse:collapse;font-size:12px">
+          <thead>
+            <tr>
+              <th style="background:var(--primary);color:#fff;padding:5px 10px;text-align:center">dB 変化</th>
+              <th style="background:var(--primary);color:#fff;padding:5px 10px;text-align:center">電力比</th>
+              <th style="background:var(--primary);color:#fff;padding:5px 10px;text-align:center">電圧比</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td style="padding:4px 10px;border-bottom:1px solid var(--border);text-align:center;color:var(--success);font-weight:600">+1 dB</td><td style="padding:4px 10px;border-bottom:1px solid var(--border);text-align:center">×1.26</td><td style="padding:4px 10px;border-bottom:1px solid var(--border);text-align:center">×1.12</td></tr>
+            <tr style="background:var(--bg)"><td style="padding:4px 10px;border-bottom:1px solid var(--border);text-align:center;color:var(--success);font-weight:600">+3 dB</td><td style="padding:4px 10px;border-bottom:1px solid var(--border);text-align:center">×2</td><td style="padding:4px 10px;border-bottom:1px solid var(--border);text-align:center">×1.41</td></tr>
+            <tr><td style="padding:4px 10px;border-bottom:1px solid var(--border);text-align:center;color:var(--success);font-weight:600">+6 dB</td><td style="padding:4px 10px;border-bottom:1px solid var(--border);text-align:center">×4</td><td style="padding:4px 10px;border-bottom:1px solid var(--border);text-align:center">×2</td></tr>
+            <tr style="background:var(--bg)"><td style="padding:4px 10px;border-bottom:1px solid var(--border);text-align:center;color:var(--success);font-weight:600">+10 dB</td><td style="padding:4px 10px;border-bottom:1px solid var(--border);text-align:center">×10</td><td style="padding:4px 10px;border-bottom:1px solid var(--border);text-align:center">×3.16</td></tr>
+            <tr><td style="padding:4px 10px;border-bottom:1px solid var(--border);text-align:center;color:var(--success);font-weight:600">+20 dB</td><td style="padding:4px 10px;border-bottom:1px solid var(--border);text-align:center">×100</td><td style="padding:4px 10px;border-bottom:1px solid var(--border);text-align:center">×10</td></tr>
+            <tr style="background:var(--bg)"><td style="padding:4px 10px;border-bottom:1px solid var(--border);text-align:center;color:var(--danger);font-weight:600">−3 dB</td><td style="padding:4px 10px;border-bottom:1px solid var(--border);text-align:center">÷2</td><td style="padding:4px 10px;border-bottom:1px solid var(--border);text-align:center">÷1.41</td></tr>
+            <tr><td style="padding:4px 10px;border-bottom:1px solid var(--border);text-align:center;color:var(--danger);font-weight:600">−10 dB</td><td style="padding:4px 10px;border-bottom:1px solid var(--border);text-align:center">÷10</td><td style="padding:4px 10px;border-bottom:1px solid var(--border);text-align:center">÷3.16</td></tr>
+            <tr style="background:var(--bg)"><td style="padding:4px 10px;text-align:center;color:var(--danger);font-weight:600">−20 dB</td><td style="padding:4px 10px;text-align:center">÷100</td><td style="padding:4px 10px;text-align:center">÷10</td></tr>
+          </tbody>
+        </table>
+        <table style="border-collapse:collapse;font-size:12px">
+          <thead>
+            <tr>
+              <th style="background:var(--accent);color:#fff;padding:5px 10px;text-align:center">dBm 値</th>
+              <th style="background:var(--accent);color:#fff;padding:5px 10px;text-align:center">電力</th>
+              <th style="background:var(--accent);color:#fff;padding:5px 10px;text-align:center">用途目安</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td style="padding:4px 10px;border-bottom:1px solid var(--border);text-align:center;font-weight:600">0 dBm</td><td style="padding:4px 10px;border-bottom:1px solid var(--border);text-align:center">1 mW</td><td style="padding:4px 10px;border-bottom:1px solid var(--border);color:var(--muted)">基準点</td></tr>
+            <tr style="background:var(--bg)"><td style="padding:4px 10px;border-bottom:1px solid var(--border);text-align:center;font-weight:600">10 dBm</td><td style="padding:4px 10px;border-bottom:1px solid var(--border);text-align:center">10 mW</td><td style="padding:4px 10px;border-bottom:1px solid var(--border);color:var(--muted)">計測器出力</td></tr>
+            <tr><td style="padding:4px 10px;border-bottom:1px solid var(--border);text-align:center;font-weight:600">30 dBm</td><td style="padding:4px 10px;border-bottom:1px solid var(--border);text-align:center">1 W</td><td style="padding:4px 10px;border-bottom:1px solid var(--border);color:var(--muted)">小型RF amp</td></tr>
+            <tr style="background:var(--bg)"><td style="padding:4px 10px;border-bottom:1px solid var(--border);text-align:center;font-weight:600">40 dBm</td><td style="padding:4px 10px;border-bottom:1px solid var(--border);text-align:center">10 W</td><td style="padding:4px 10px;border-bottom:1px solid var(--border);color:var(--muted)">低電力エッチャー</td></tr>
+            <tr><td style="padding:4px 10px;border-bottom:1px solid var(--border);text-align:center;font-weight:600">60 dBm</td><td style="padding:4px 10px;border-bottom:1px solid var(--border);text-align:center">1 kW</td><td style="padding:4px 10px;border-bottom:1px solid var(--border);color:var(--muted)">高電力エッチャー</td></tr>
+            <tr style="background:var(--bg)"><td style="padding:4px 10px;text-align:center;font-weight:600">75 dBm</td><td style="padding:4px 10px;text-align:center">31.6 kW</td><td style="padding:4px 10px;color:var(--muted)">スケール上限</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODULE 5: Cable Loss ===== -->
+<div id="mod5" class="tab-panel">
+  <div class="card">
+    <h2>ケーブル・伝送路損失補正</h2>
+    <div class="info-box">各区間の損失を合算して負荷到達電力を計算します。</div>
+
+    <div class="form-group" style="max-width:280px">
+      <label>アンプ出力電力 [W]</label>
+      <input type="number" id="m5_pin" step="100" value="3000" min="0" oninput="calc_m5()">
+    </div>
+
+    <h3>損失区間の定義</h3>
+    <div id="m5_segments"></div>
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+      <button class="btn btn-secondary btn-sm" onclick="addSegment('cable')">+ ケーブル区間</button>
+      <button class="btn btn-secondary btn-sm" onclick="addSegment('fixed')">+ 固定損失（dB）</button>
+    </div>
+
+    <div class="section-divider"></div>
+    <h3>計算結果</h3>
+    <div class="result-grid">
+      <div class="result-item highlight">
+        <div class="label">総損失</div>
+        <div class="value" id="m5_total_loss">—</div>
+        <div class="unit">dB</div>
+      </div>
+      <div class="result-item highlight">
+        <div class="label">負荷到達電力</div>
+        <div class="value" id="m5_pload">—</div>
+        <div class="unit">W</div>
+      </div>
+      <div class="result-item">
+        <div class="label">損失電力</div>
+        <div class="value" id="m5_ploss">—</div>
+        <div class="unit">W</div>
+      </div>
+      <div class="result-item">
+        <div class="label">効率</div>
+        <div class="value" id="m5_eff">—</div>
+        <div class="unit">%</div>
+      </div>
+    </div>
+    <canvas id="chart5" width="560" height="120" style="margin-top:12px;border:1px solid var(--border);border-radius:4px;background:#fff;max-width:100%;display:block"></canvas>
+    <table class="result-table" style="margin-top:16px">
+      <thead><tr><th>区間</th><th>種別</th><th>損失 [dB]</th><th>残留電力 [W]</th></tr></thead>
+      <tbody id="m5_detail_table"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===== LOG ===== -->
+<div id="log" class="tab-panel">
+  <div class="card">
+    <h2>計算履歴ログ</h2>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button class="btn btn-danger btn-sm" onclick="clearLog()">ログをクリア</button>
+      <button class="btn btn-secondary btn-sm" onclick="exportLogCSV()">CSVダウンロード</button>
+    </div>
+    <div class="log-section" id="log_list">
+      <div style="color:var(--muted);font-size:13px;padding:12px">ログはありません。</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+// ============================================================
+// Utilities
+// ============================================================
+const Z0 = 50;
+
+function fmt(v, d=4) {
+  if (v === null || v === undefined || isNaN(v) || !isFinite(v)) return '—';
+  if (Math.abs(v) >= 1e6) return v.toExponential(3);
+  if (Math.abs(v) >= 1000) return v.toFixed(1);
+  if (Math.abs(v) >= 100) return v.toFixed(2);
+  if (Math.abs(v) >= 10) return v.toFixed(3);
+  return v.toFixed(d);
+}
+
+function set(id, v) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = (v === null || v === undefined) ? '—' : v;
+}
+
+function setMatchBadge(vswr, elId='m3s_match_badge') {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  if (!isFinite(vswr) || isNaN(vswr)) {
+    el.className = 'match-badge none'; el.textContent = '—'; return;
+  }
+  const gamma  = (vswr - 1) / (vswr + 1);
+  const refPct = Math.round(gamma * gamma * 100);
+  const pctStr = `  ／  反射 ${refPct}%`;
+  if (vswr < 1.5) {
+    el.className = 'match-badge good'; el.textContent = `● 良好  VSWR < 1.5${pctStr}`;
+  } else if (vswr < 3) {
+    el.className = 'match-badge warn'; el.textContent = `● 注意  VSWR 1.5〜3${pctStr}`;
+  } else {
+    el.className = 'match-badge bad';  el.textContent = `● 不整合  VSWR > 3${pctStr}`;
+  }
+}
+
+function get(id) {
+  const el = document.getElementById(id);
+  if (!el) return NaN;
+  const v = parseFloat(el.value);
+  return isNaN(v) ? NaN : v;
+}
+
+function deg2rad(d) { return d * Math.PI / 180; }
+function rad2deg(r) { return r * 180 / Math.PI; }
+
+// Complex number helpers
+function cAdd(a, b) { return {r: a.r+b.r, i: a.i+b.i}; }
+function cSub(a, b) { return {r: a.r-b.r, i: a.i-b.i}; }
+function cMul(a, b) { return {r: a.r*b.r - a.i*b.i, i: a.r*b.i + a.i*b.r}; }
+function cDiv(a, b) {
+  const d = b.r*b.r + b.i*b.i;
+  return {r: (a.r*b.r + a.i*b.i)/d, i: (a.i*b.r - a.r*b.i)/d};
+}
+function cMag(c) { return Math.sqrt(c.r*c.r + c.i*c.i); }
+function cArg(c) { return rad2deg(Math.atan2(c.i, c.r)); }
+
+// ============================================================
+// LOG
+// ============================================================
+let calcLog = JSON.parse(localStorage.getItem('rf_log') || '[]');
+function saveLog(module, label, result) {
+  const ts = new Date().toISOString().replace('T',' ').substring(0,19);
+  calcLog.unshift({ts, module, label, result});
+  if (calcLog.length > 500) calcLog.pop();
+  localStorage.setItem('rf_log', JSON.stringify(calcLog));
+  renderLog();
+}
+function renderLog() {
+  const el = document.getElementById('log_list');
+  if (!calcLog.length) { el.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:12px">ログはありません。</div>'; return; }
+  el.innerHTML = calcLog.map(e =>
+    `<div class="log-entry"><span class="ts">${e.ts}</span><span class="msg"><b>[${e.module}]</b> ${e.label}: ${e.result}</span></div>`
+  ).join('');
+}
+function clearLog() {
+  if (!confirm('ログをすべて削除しますか？')) return;
+  calcLog = [];
+  localStorage.removeItem('rf_log');
+  renderLog();
+}
+function exportLogCSV() {
+  const rows = [['timestamp','module','label','result'], ...calcLog.map(e=>[e.ts, e.module, e.label, e.result])];
+  const csv = rows.map(r => r.map(c => '"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent('\uFEFF' + csv);
+  a.download = 'rf_log_' + new Date().toISOString().substring(0,10) + '.csv';
+  a.click();
+}
+renderLog();
+
+// ============================================================
+// TAB
+// ============================================================
+function switchTab(id) {
+  document.querySelectorAll('.tab-panel').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+// ============================================================
+// MODULE 1
+// ============================================================
+function calc_m1a() {
+  const p = get('m1_pfwd_a');
+  const cc = get('m1_cc_a');  // 正の値で入力（内部でマイナス扱い）
+  if (isNaN(p) || isNaN(cc) || p <= 0) { set('m1a_vrms','—'); set('m1a_vpp','—'); set('m1a_pout','—'); return; }
+  const pout = p * Math.pow(10, -cc/10);  // W（結合度は正値なのでマイナスをつける）
+  const vrms = Math.sqrt(pout * Z0);
+  const vpp = vrms * 2 * Math.SQRT2;
+  set('m1a_vrms', fmt(vrms * 1000));   // mV表示
+  set('m1a_vpp', fmt(vpp * 1000));     // mV表示
+  set('m1a_pout', fmt(pout, 6));
+  saveLog('結合器1A', `FWD=${p}W, 結合度=${cc}dB`, `Vrms=${fmt(vrms*1000)}mV, Vpp=${fmt(vpp*1000)}mV`);
+  drawChart1A();
+}
+
+function update_m1b_unit() {
+  const type = document.querySelector('input[name="m1b_type"]:checked').value;
+  document.getElementById('m1b_unit_lbl').textContent = type === 'vrms' ? 'mVrms' : 'mVpp';
+}
+
+function calc_m1b() {
+  const type = document.querySelector('input[name="m1b_type"]:checked').value;
+  const vval_mv = get('m1b_vval');  // mV入力
+  const cc = get('m1b_cc');         // 正の値入力（結合度）
+  if (isNaN(vval_mv) || isNaN(cc) || vval_mv <= 0) { set('m1b_power','—'); set('m1b_dbw','—'); set('m1b_dbm','—'); return; }
+  const vval = vval_mv / 1000;  // V換算
+  let vrms;
+  if (type === 'vrms') vrms = vval;
+  else vrms = vval / (2 * Math.SQRT2);  // Vpp -> Vrms
+  const pout = vrms*vrms / Z0;
+  const pfwd = pout / Math.pow(10, -cc/10);  // 結合度は正値なのでマイナスをつける
+  const dbw = 10 * Math.log10(pfwd);
+  const dbm = dbw + 30;
+  set('m1b_power', fmt(pfwd, 2));
+  set('m1b_dbw', fmt(dbw));
+  set('m1b_dbm', fmt(dbm));
+  saveLog('結合器1B', `${type}=${vval_mv}mV, 結合度=${cc}dB`, `P=${fmt(pfwd,2)}W`);
+  drawChart1B();
+}
+
+function calc_m1c() {
+  const pf = get('m1c_pfwd');
+  const pr = get('m1c_pref');
+  const tol = get('m1c_tol');
+  if (isNaN(pf) || isNaN(pr) || pf <= 0 || pr < 0 || pr >= pf) {
+    ['m1c_pabs','m1c_gamma','m1c_vswr','m1c_rl'].forEach(id=>set(id,'—'));
+    set('m1c_judge', '—');
+    return;
+  }
+  const pabs = pf - pr;
+  const gamma = Math.sqrt(pr / pf);
+  const vswr = (1 + gamma) / (1 - gamma);
+  const rl = -20 * Math.log10(gamma);
+  set('m1c_pabs', fmt(pabs));
+  set('m1c_gamma', fmt(gamma));
+  set('m1c_vswr', fmt(vswr));
+  set('m1c_rl', fmt(rl));
+  if (!isNaN(tol) && tol > 0) {
+    const pass = pr <= tol;
+    document.getElementById('m1c_judge').innerHTML =
+      `<span class="badge ${pass?'badge-pass':'badge-fail'}">${pass?'PASS':'FAIL'}</span>`;
+  } else {
+    set('m1c_judge', '—');
+  }
+  saveLog('結合器1C', `FWD=${pf}W, REF=${pr}W`, `ロードパワー=${fmt(pabs)}W, Γ=${fmt(gamma)}, VSWR=${fmt(vswr)}`);
+  drawChart1C();
+}
+
+// ============================================================
+// MODULE 1 CHARTS
+// ============================================================
+function fmtShort(v) {
+  if (Math.abs(v) === 0) return '0';
+  if (Math.abs(v) >= 1000) return (v/1000).toPrecision(3).replace(/\.?0+$/,'') + 'k';
+  if (Math.abs(v) >= 1)    return parseFloat(v.toPrecision(3)) + '';
+  return parseFloat(v.toPrecision(2)) + '';
+}
+
+function drawMiniChart(canvas, cfg) {
+  // cfg: { fn, xMin, xMax, xLabel, yLabel, dotX, dotY, color, yMin }
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const PAD = {t:14, r:12, b:34, l:46};
+  const cw = W - PAD.l - PAD.r, ch = H - PAD.t - PAD.b;
+  ctx.clearRect(0,0,W,H);
+
+  // sample curve
+  const N = 120;
+  const pts = [];
+  for (let i=0;i<=N;i++) {
+    const x = cfg.xMin + (cfg.xMax - cfg.xMin) * i / N;
+    const y = cfg.fn(x);
+    pts.push({x,y});
+  }
+  const yVals = pts.map(p=>p.y).filter(v=>isFinite(v));
+  if (!yVals.length) return;
+  let yMin = cfg.yMin !== undefined ? cfg.yMin : Math.min(...yVals);
+  let yMax = Math.max(...yVals);
+  if (yMax === yMin) { yMax = yMin + 1; }
+  const xToC = x => PAD.l + (x - cfg.xMin) / (cfg.xMax - cfg.xMin) * cw;
+  const yToC = y => PAD.t + ch - (y - yMin) / (yMax - yMin) * ch;
+
+  // grid
+  ctx.strokeStyle = '#e8e8e8'; ctx.lineWidth = 1;
+  const NY = 4;
+  for (let i=0;i<=NY;i++) {
+    const yv = yMin + (yMax - yMin)*i/NY;
+    const cy = yToC(yv);
+    ctx.beginPath(); ctx.moveTo(PAD.l, cy); ctx.lineTo(PAD.l+cw, cy); ctx.stroke();
+    ctx.fillStyle='#888'; ctx.font='9px sans-serif'; ctx.textAlign='right';
+    ctx.fillText(fmtShort(yv), PAD.l-3, cy+3.5);
+  }
+  const NX = 4;
+  for (let i=0;i<=NX;i++) {
+    const xv = cfg.xMin + (cfg.xMax - cfg.xMin)*i/NX;
+    const cx = xToC(xv);
+    ctx.beginPath(); ctx.moveTo(cx, PAD.t); ctx.lineTo(cx, PAD.t+ch); ctx.stroke();
+    ctx.fillStyle='#888'; ctx.font='9px sans-serif'; ctx.textAlign='center';
+    ctx.fillText(fmtShort(xv), cx, PAD.t+ch+11);
+  }
+
+  // axes
+  ctx.strokeStyle='#bbb'; ctx.lineWidth=1;
+  ctx.strokeRect(PAD.l, PAD.t, cw, ch);
+
+  // curve
+  ctx.beginPath(); ctx.strokeStyle = cfg.color || '#2563eb'; ctx.lineWidth = 1.8;
+  let first = true;
+  for (const p of pts) {
+    if (!isFinite(p.y)) { first=true; continue; }
+    const cx = xToC(p.x), cy = yToC(p.y);
+    if (first) { ctx.moveTo(cx,cy); first=false; } else ctx.lineTo(cx,cy);
+  }
+  ctx.stroke();
+
+  // dot
+  if (cfg.dotX !== undefined && cfg.dotY !== undefined && isFinite(cfg.dotY)) {
+    const dx = xToC(cfg.dotX), dy = yToC(cfg.dotY);
+    ctx.beginPath(); ctx.arc(dx, dy, 4, 0, Math.PI*2);
+    ctx.fillStyle='#f97316'; ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
+    // value label
+    const lbl = fmtShort(cfg.dotY);
+    ctx.font='bold 9px sans-serif'; ctx.fillStyle='#f97316'; ctx.textAlign='center';
+    ctx.fillText(lbl, dx, dy-7);
+  }
+
+  // axis labels
+  ctx.fillStyle='#555'; ctx.font='9px sans-serif'; ctx.textAlign='center';
+  ctx.fillText(cfg.xLabel || '', PAD.l + cw/2, H-3);
+  ctx.save(); ctx.translate(10, PAD.t+ch/2); ctx.rotate(-Math.PI/2);
+  ctx.fillText(cfg.yLabel || '', 0, 0); ctx.restore();
+}
+
+function drawChart1A() {
+  const p = get('m1_pfwd_a');
+  const cc = get('m1_cc_a');
+  const canvas = document.getElementById('chart1a');
+  if (!canvas || isNaN(p) || isNaN(cc) || p <= 0) return;
+  const xMax = Math.max(p * 1.6, 100);
+  const dotX = p;
+  const dotY = Math.sqrt(p * Math.pow(10,-cc/10) * Z0) * 1000;
+  drawMiniChart(canvas, {
+    fn: x => Math.sqrt(x * Math.pow(10,-cc/10) * Z0) * 1000,
+    xMin: 0, xMax,
+    xLabel: 'FWD (W)', yLabel: 'mVrms',
+    dotX, dotY,
+    color: '#2563eb', yMin: 0
+  });
+}
+
+function drawChart1B() {
+  const type = document.querySelector('input[name="m1b_type"]:checked').value;
+  const vval_mv = get('m1b_vval');
+  const cc = get('m1b_cc');
+  const canvas = document.getElementById('chart1b');
+  if (!canvas || isNaN(vval_mv) || isNaN(cc) || vval_mv <= 0) return;
+  const xMax = Math.max(vval_mv * 1.6, 10);
+  const toVrms = v_mv => type === 'vrms' ? v_mv/1000 : v_mv/1000/(2*Math.SQRT2);
+  const toPfwd = v_mv => { const vr = toVrms(v_mv); return (vr*vr/Z0) / Math.pow(10,-cc/10); };
+  const dotX = vval_mv;
+  const dotY = toPfwd(vval_mv);
+  const xLbl = type === 'vrms' ? 'mVrms' : 'mVpp';
+  drawMiniChart(canvas, {
+    fn: x => toPfwd(x),
+    xMin: 0, xMax,
+    xLabel: xLbl, yLabel: 'FWD (W)',
+    dotX, dotY,
+    color: '#16a34a', yMin: 0
+  });
+}
+
+function drawChart1C() {
+  const pf = get('m1c_pfwd');
+  const pr = get('m1c_pref');
+  const tol = get('m1c_tol');
+  const canvas = document.getElementById('chart1c');
+  if (!canvas || isNaN(pf) || isNaN(pr) || pf <= 0 || pr < 0 || pr >= pf) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+  const pabs = pf - pr;
+  const PAD = {t:10, r:20, b:28, l:90};
+  const barsData = [
+    { label:'FWD',         value: pf,   color:'#2563eb' },
+    { label:'ロードパワー', value: pabs, color:'#16a34a' },
+    { label:'REF',         value: pr,   color:'#f97316' },
+  ];
+  const bh = Math.floor((H - PAD.t - PAD.b - 8) / 3);
+  const gap = 4;
+  const xMax = pf * 1.1;
+  const barW = W - PAD.l - PAD.r;
+  const xToC = x => PAD.l + x / xMax * barW;
+
+  // grid lines
+  ctx.strokeStyle='#e8e8e8'; ctx.lineWidth=1;
+  const NX = 5;
+  for (let i=0;i<=NX;i++) {
+    const xv = xMax * i / NX;
+    const cx = xToC(xv);
+    ctx.beginPath(); ctx.moveTo(cx, PAD.t); ctx.lineTo(cx, H-PAD.b); ctx.stroke();
+    ctx.fillStyle='#888'; ctx.font='9px sans-serif'; ctx.textAlign='center';
+    ctx.fillText(fmtShort(xv)+'W', cx, H-PAD.b+10);
+  }
+
+  // bars
+  barsData.forEach((d, i) => {
+    const y = PAD.t + i*(bh+gap);
+    const bw = xToC(d.value) - PAD.l;
+    ctx.fillStyle = d.color + '33';  // faint fill
+    ctx.fillRect(PAD.l, y, barW, bh);
+    ctx.fillStyle = d.color;
+    ctx.fillRect(PAD.l, y, Math.max(bw,0), bh);
+    // label
+    ctx.fillStyle='#333'; ctx.font='bold 10px sans-serif'; ctx.textAlign='right';
+    ctx.fillText(d.label, PAD.l-4, y+bh/2+4);
+    // value text
+    ctx.fillStyle='#fff'; ctx.font='bold 10px sans-serif'; ctx.textAlign='left';
+    const valTxt = fmtShort(d.value)+'W';
+    const txX = PAD.l + Math.max(bw,0) + 4;
+    ctx.fillStyle = bw > 30 ? '#fff' : d.color;
+    ctx.textAlign = bw > 30 ? 'right' : 'left';
+    ctx.fillText(valTxt, bw > 30 ? PAD.l + bw - 4 : txX, y+bh/2+4);
+  });
+
+  // tolerance line
+  if (!isNaN(tol) && tol > 0) {
+    const tx = xToC(tol);
+    ctx.strokeStyle='#dc2626'; ctx.lineWidth=1.5; ctx.setLineDash([4,3]);
+    ctx.beginPath(); ctx.moveTo(tx, PAD.t); ctx.lineTo(tx, H-PAD.b); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='#dc2626'; ctx.font='bold 9px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('上限', tx, PAD.t-1);
+  }
+}
+
+// ============================================================
+// MODULE 2
+// ============================================================
+function calc_m2() {
+  const V_mV = get('m2_v');      // センサー出力 mV peak-to-peak (Vpp)
+  const I_mA = get('m2_i');      // センサー出力 mA peak-to-peak (Ipp)
+  const theta_deg = get('m2_theta');
+  const cc = get('m2_cc');       // 結合度 dB（正の値）
+  const ids = ['m2_pabs','m2_papp','m2_pf','m2_zr','m2_zx','m2_zmag','m2_zarg','m2_gmag','m2_garg','m2_vswr','m2_rl'];
+  if (isNaN(V_mV)||isNaN(I_mA)||isNaN(theta_deg)||isNaN(cc)||V_mV<=0||I_mA<=0) {
+    ids.forEach(id=>set(id,'—'));
+    setMatchBadge(NaN, 'm2_match_badge');
+    drawSmithChart(null);
+    return;
+  }
+  const theta  = deg2rad(theta_deg);
+  const V_V    = V_mV / 2 / 1000;  // Vpp → peak
+  const I_A    = I_mA / 2 / 1000;  // Ipp → peak
+  const scale  = Math.pow(10, cc / 20);  // 電圧スケール（結合度補正）
+  const V_act  = V_V * scale;            // 実際の負荷電圧 peak
+  const I_act  = I_A * scale;            // 実際の負荷電流 peak
+
+  // ロードパワー（結合度補正後ピーク値から）
+  const pabs = 0.5 * V_act * I_act * Math.cos(theta);
+  const papp = 0.5 * V_act * I_act;
+  const pf   = Math.cos(theta);
+
+  // インピーダンス（結合度はキャンセル: mV/mA = Ω）
+  const zmag = V_mV / I_mA;
+  const zr   = zmag * Math.cos(theta);
+  const zx   = zmag * Math.sin(theta);
+
+  // 反射係数 Γ = (Z - Z0) / (Z + Z0)
+  const Zc   = {r: zr, i: zx};
+  const Z0c  = {r: Z0, i: 0};
+  const gam  = cDiv(cSub(Zc, Z0c), cAdd(Zc, Z0c));
+  const gmag = cMag(gam);
+  const garg = cArg(gam);
+  const vswr = gmag < 1 ? (1+gmag)/(1-gmag) : Infinity;
+  const rl   = gmag > 0 ? -20*Math.log10(gmag) : Infinity;
+
+  set('m2_pabs', fmt(pabs));
+  set('m2_papp', fmt(papp));
+  set('m2_pf',   fmt(pf));
+  set('m2_zr',   fmt(zr));
+  set('m2_zx',   fmt(zx));
+  set('m2_zmag', fmt(zmag));
+  set('m2_zarg', fmt(theta_deg));
+  set('m2_gmag', fmt(gmag));
+  set('m2_garg', fmt(garg));
+  set('m2_vswr', isFinite(vswr) ? fmt(vswr) : '∞');
+  set('m2_rl',   isFinite(rl)   ? fmt(rl)   : '∞');
+  setMatchBadge(vswr, 'm2_match_badge');
+
+  drawSmithChart({gr: gam.r, gi: gam.i, zr, zx});
+  drawPhasor(theta_deg, zmag, 'chart2_phasor');
+  saveLog('VIセンサー2', `|V|=${V_mV}mV, |I|=${I_mA}mA, θ=${theta_deg}°, CC=${cc}dB`, `ロードパワー=${fmt(pabs)}W, Z=${fmt(zr)}+j${fmt(zx)}Ω, |Γ|=${fmt(gmag)}`);
+}
+
+// ============================================================
+// MODULE 2: Phasor diagram
+// ============================================================
+function drawPhasor(theta_deg, zmag, canvasId='chart2_phasor') {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const CW = canvas.width, CH = canvas.height;
+  ctx.clearRect(0, 0, CW, CH);
+
+  const PAD = 28;
+  const cx = PAD + (CW - PAD*2) * 0.35;  // origin slightly left of center
+  const cy = CH / 2;
+  const L  = Math.min(CW - PAD*2, CH - PAD*2) * 0.42;
+
+  // Grid circle
+  ctx.beginPath(); ctx.arc(cx, cy, L, 0, Math.PI*2);
+  ctx.strokeStyle = '#e8e8e8'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx, cy, L*0.5, 0, Math.PI*2);
+  ctx.strokeStyle = '#f0f0f0'; ctx.lineWidth = 1; ctx.stroke();
+
+  // Axes
+  ctx.strokeStyle = '#ccc'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(PAD, cy); ctx.lineTo(CW-PAD*0.3, cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx, PAD*0.5); ctx.lineTo(cx, CH-PAD*0.5); ctx.stroke();
+
+  // Axis labels
+  ctx.fillStyle = '#aaa'; ctx.font = '9px sans-serif';
+  ctx.textAlign = 'left'; ctx.fillText('Re', CW-PAD*0.2, cy-3);
+  ctx.textAlign = 'center'; ctx.fillText('Im', cx+3, PAD*0.5);
+
+  const theta = theta_deg * Math.PI / 180;
+
+  // Arrow helper
+  function arrow(x1, y1, x2, y2, color, label, loff) {
+    const dx = x2-x1, dy = y2-y1;
+    const len = Math.sqrt(dx*dx+dy*dy);
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+    ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.stroke();
+    // Arrowhead
+    const ux = dx/len, uy = dy/len;
+    const aw = 7;
+    ctx.beginPath();
+    ctx.moveTo(x2, y2);
+    ctx.lineTo(x2 - ux*aw - uy*aw*0.5, y2 - uy*aw + ux*aw*0.5);
+    ctx.lineTo(x2 - ux*aw + uy*aw*0.5, y2 - uy*aw - ux*aw*0.5);
+    ctx.closePath(); ctx.fillStyle = color; ctx.fill();
+    // Label
+    if (label) {
+      ctx.fillStyle = color; ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(label, x2 + loff[0], y2 + loff[1]);
+    }
+  }
+
+  // I vector: along positive real axis (reference, θ=0)
+  arrow(cx, cy, cx + L, cy, '#3b82f6', 'I', [8, 4]);
+
+  // V vector: at angle theta above I (since V leads I by theta)
+  const vx = cx + L * Math.cos(theta);
+  const vy = cy - L * Math.sin(theta);  // canvas Y is inverted
+  arrow(cx, cy, vx, vy, '#f97316', 'V', [8, theta > 0 ? -6 : 10]);
+
+  // Angle arc
+  if (Math.abs(theta_deg) > 1) {
+    const arcR = L * 0.28;
+    ctx.beginPath();
+    ctx.arc(cx, cy, arcR, -theta, 0, theta > 0);  // canvas: angle from +x, CCW for positive theta
+    ctx.strokeStyle = '#a855f7'; ctx.lineWidth = 1.2; ctx.setLineDash([3,2]); ctx.stroke();
+    ctx.setLineDash([]);
+    // θ label
+    const midA = -theta / 2;
+    ctx.fillStyle = '#a855f7'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(`θ=${theta_deg.toFixed(1)}°`, cx + arcR*1.5*Math.cos(midA), cy + arcR*1.5*Math.sin(midA));
+  }
+
+  // |Z| label
+  ctx.fillStyle = '#555'; ctx.font = '9px sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText(`|Z|=${fmt(zmag,3)}Ω`, CW - PAD - 60, PAD*0.8);
+}
+
+function drawSmithChart(point, canvasId='smith_chart', prefix='sc', trail=[]) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const cx = W/2, cy = H/2, R = W * 0.43;
+
+  const showZ    = document.getElementById(`${prefix}_z`)?.checked ?? true;
+  const showY    = document.getElementById(`${prefix}_y`)?.checked ?? false;
+  const showVSWR = document.getElementById(`${prefix}_vswr`)?.checked ?? false;
+
+  ctx.clearRect(0, 0, W, H);
+  function toC(gr, gi) { return [cx + gr*R, cy - gi*R]; }
+
+  // === Y グリッド（アドミタンス） ===
+  // YチャートはΓ→−Γ（180°回転）: 等コンダクタンス円・等サセプタンス弧
+  if (showY) {
+    // 等コンダクタンス円: center = (cx − G/(G+1)*R, cy), radius = R/(G+1)
+    [[0,'#b3d9ff',0.7],[0.2,'#cce8ff',0.6],[0.5,'#b3d9ff',0.7],[1,'#6ab0e8',1.2],[2,'#b3d9ff',0.7],[5,'#cce8ff',0.6]].forEach(([g,col,lw]) => {
+      ctx.beginPath();
+      ctx.arc(cx - g/(g+1)*R, cy, R/(g+1), 0, 2*Math.PI);
+      ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.stroke();
+    });
+    // 等サセプタンス弧: center = (cx−R, cy + R/bv), radius = |R/bv|, clipped
+    [0.2,0.5,1,2,5].forEach(b => {
+      [b,-b].forEach(bv => {
+        ctx.save();
+        ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2*Math.PI); ctx.clip();
+        ctx.beginPath();
+        ctx.arc(cx-R, cy + R/bv, Math.abs(R/bv), 0, 2*Math.PI);
+        ctx.strokeStyle = '#cce8ff'; ctx.lineWidth = 0.7; ctx.stroke();
+        ctx.restore();
+      });
+    });
+    // Y実軸（水平）
+    ctx.beginPath(); ctx.moveTo(cx-R, cy); ctx.lineTo(cx+R, cy);
+    ctx.strokeStyle = '#99ccff'; ctx.lineWidth = 0.8; ctx.stroke();
+    // G-ラベル（左側）
+    ctx.font = '9px sans-serif'; ctx.fillStyle = '#6ab0e8'; ctx.textAlign = 'center';
+    [[0,1,'0'],[0.5,1/3,'0.5'],[1,0,'1'],[2,-1/3,'2'],[5,-2/3,'5']].forEach(([g,gx,lbl]) => {
+      ctx.fillText(lbl, cx + gx*R, cy + 14);
+    });
+  }
+
+  // === Z グリッド（インピーダンス） ===
+  if (showZ) {
+    // 等抵抗円
+    [[0,'#ccc',0.7],[0.2,'#ddd',0.6],[0.5,'#ccc',0.7],[1,'#888',1.2],[2,'#ccc',0.7],[5,'#ddd',0.6]].forEach(([r,col,lw]) => {
+      ctx.beginPath();
+      ctx.arc(cx + r/(r+1)*R, cy, R/(r+1), 0, 2*Math.PI);
+      ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.stroke();
+    });
+    // 等リアクタンス弧
+    [0.2,0.5,1,2,5].forEach(x => {
+      [x,-x].forEach(xv => {
+        ctx.save();
+        ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2*Math.PI); ctx.clip();
+        ctx.beginPath();
+        ctx.arc(cx+R, cy-R/xv, Math.abs(R/xv), 0, 2*Math.PI);
+        ctx.strokeStyle = '#ddd'; ctx.lineWidth = 0.7; ctx.stroke();
+        ctx.restore();
+      });
+    });
+    // 実軸
+    ctx.beginPath(); ctx.moveTo(cx-R, cy); ctx.lineTo(cx+R, cy);
+    ctx.strokeStyle = '#bbb'; ctx.lineWidth = 0.8; ctx.stroke();
+    // R-ラベル
+    ctx.font = '9px sans-serif'; ctx.fillStyle = '#888'; ctx.textAlign = 'center';
+    [[0,-1,'0'],[0.5,-1/3,'0.5'],[1,0,'1'],[2,1/3,'2'],[5,2/3,'5']].forEach(([r,gx,lbl]) => {
+      ctx.fillText(lbl, cx + gx*R, cy - 6);
+    });
+  }
+
+  // === VSWR サークル ===
+  if (showVSWR) {
+    // VSWR → |Γ| の変換: |Γ| = (VSWR−1)/(VSWR+1)
+    [[1.5,'#52c97a'],[2,'#3ab86a'],[3,'#2ea05a'],[5,'#228848'],[10,'#166036']].forEach(([vswr,col]) => {
+      const gmag = (vswr-1)/(vswr+1);
+      const r = gmag * R;
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2*Math.PI);
+      ctx.strokeStyle = col; ctx.lineWidth = 0.9;
+      ctx.setLineDash([5,3]); ctx.stroke(); ctx.setLineDash([]);
+      // ラベル（右側・実軸上）
+      ctx.font = '9px sans-serif'; ctx.fillStyle = col; ctx.textAlign = 'left';
+      ctx.fillText(`${vswr}`, cx + r + 3, cy - 3);
+    });
+    // 凡例
+    ctx.font = '8px sans-serif'; ctx.fillStyle = '#2ea05a'; ctx.textAlign = 'left';
+    ctx.fillText('VSWR', cx + 4, cy - R * 0.82);
+  }
+
+  // 単位円（常時）
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2*Math.PI);
+  ctx.strokeStyle = '#555'; ctx.lineWidth = 1.5; ctx.stroke();
+
+  // 中心点
+  ctx.beginPath(); ctx.arc(cx, cy, 2.5, 0, 2*Math.PI);
+  ctx.fillStyle = '#aaa'; ctx.fill();
+
+  // タイトル
+  ctx.fillStyle = '#1a6fa8'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('Smith Chart  (Z₀ = 50Ω)', cx, 14);
+
+  // 軌跡（残像）
+  if (trail && trail.length > 1) {
+    ctx.beginPath();
+    const [tx0, ty0] = toC(trail[0].gr, trail[0].gi);
+    ctx.moveTo(tx0, ty0);
+    for (let i = 1; i < trail.length; i++) {
+      const [txi, tyi] = toC(trail[i].gr, trail[i].gi);
+      ctx.lineTo(txi, tyi);
+    }
+    ctx.strokeStyle = 'rgba(230,126,34,0.45)';
+    ctx.lineWidth = 1.8;
+    ctx.stroke();
+    // 先端付近を明るく
+    if (trail.length > 10) {
+      ctx.beginPath();
+      const start = Math.max(0, trail.length - 20);
+      const [txs, tys] = toC(trail[start].gr, trail[start].gi);
+      ctx.moveTo(txs, tys);
+      for (let i = start+1; i < trail.length; i++) {
+        const [txi, tyi] = toC(trail[i].gr, trail[i].gi);
+        ctx.lineTo(txi, tyi);
+      }
+      ctx.strokeStyle = 'rgba(230,126,34,0.85)';
+      ctx.lineWidth = 2.2;
+      ctx.stroke();
+    }
+  }
+
+  if (!point) return;
+
+  const [px, py] = toC(point.gr, point.gi);
+
+  // クロスヘア
+  ctx.strokeStyle = 'rgba(230,126,34,0.35)'; ctx.lineWidth = 0.8; ctx.setLineDash([4,3]);
+  ctx.beginPath(); ctx.moveTo(px, cy-R); ctx.lineTo(px, cy+R); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx-R, py); ctx.lineTo(cx+R, py); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // プロット点
+  ctx.beginPath(); ctx.arc(px, py, 6, 0, 2*Math.PI);
+  ctx.fillStyle = '#e67e22'; ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+
+  // ラベル
+  const sign = point.zx >= 0 ? '+j' : '−j';
+  const lbl = `Z = ${fmt(point.zr)} ${sign} ${fmt(Math.abs(point.zx))} Ω`;
+  ctx.font = 'bold 10px sans-serif'; ctx.fillStyle = '#2d3748';
+  ctx.textAlign = px > cx ? 'right' : 'left';
+  ctx.fillText(lbl, px + (px > cx ? -10 : 10), py + (py > cy ? -8 : 14));
+}
+
+// ============================================================
+// MODULE 3: Smith Chart Analyzer
+// ============================================================
+function calc_m3s() {
+  const V_Vpp    = get('m3s_v');
+  const I_App    = get('m3s_i');
+  const theta_deg = get('m3s_theta');
+  const ids = ['m3s_zr','m3s_zx','m3s_zmag','m3s_pabs','m3s_papp','m3s_pf','m3s_gmag','m3s_garg','m3s_vswr','m3s_rl','m3s_zarg'];
+  if (isNaN(V_Vpp)||isNaN(I_App)||isNaN(theta_deg)||V_Vpp<=0||I_App<=0) {
+    ids.forEach(id=>set(id,'—'));
+    setMatchBadge(NaN);
+    drawSmithChart(null, 'smith3_chart', 'sc3');
+    return;
+  }
+  const theta  = deg2rad(theta_deg);
+  const V_peak = V_Vpp / 2;
+  const I_peak = I_App / 2;
+
+  const pabs = 0.5 * V_peak * I_peak * Math.cos(theta);
+  const papp = 0.5 * V_peak * I_peak;
+  const pf   = Math.cos(theta);
+
+  const zmag = V_peak / I_peak;
+  const zr   = zmag * Math.cos(theta);
+  const zx   = zmag * Math.sin(theta);
+
+  const Zc  = {r: zr, i: zx};
+  const Z0c = {r: Z0, i: 0};
+  const gam  = cDiv(cSub(Zc, Z0c), cAdd(Zc, Z0c));
+  const gmag = cMag(gam);
+  const garg = cArg(gam);
+  const vswr = gmag < 1 ? (1+gmag)/(1-gmag) : Infinity;
+  const rl   = gmag > 0 ? -20*Math.log10(gmag) : Infinity;
+
+  set('m3s_pabs', fmt(pabs));
+  set('m3s_papp', fmt(papp));
+  set('m3s_pf',   fmt(pf));
+  set('m3s_zr',   fmt(zr));
+  set('m3s_zx',   fmt(zx));
+  set('m3s_zmag', fmt(zmag));
+  set('m3s_zarg', fmt(theta_deg));
+  set('m3s_gmag', fmt(gmag));
+  set('m3s_garg', fmt(garg));
+  set('m3s_vswr', isFinite(vswr) ? fmt(vswr) : '∞');
+  set('m3s_rl',   isFinite(rl)   ? fmt(rl)   : '∞');
+  setMatchBadge(vswr);
+
+  drawSmithChart({gr: gam.r, gi: gam.i, zr, zx}, 'smith3_chart', 'sc3');
+  drawChart3Z('chart3z_200',  zr, zx, 200,  200);
+  drawChart3Z('chart3z_2000', zr, zx, 2000, 2000);
+  drawPhasor(theta_deg, zmag, 'chart3_phasor');
+  saveLog('スミスチャート解析', `|V|=${V_Vpp}Vpp, |I|=${I_App}App, θ=${theta_deg}°`, `Z=${fmt(zr)}+j${fmt(zx)}Ω, VSWR=${isFinite(vswr)?fmt(vswr):'∞'}`);
+}
+
+// ============================================================
+// MODULE 4: Power Conversion
+// ============================================================
+let m4_updating = false;
+function calc_m4(src) {
+  if (m4_updating) return;
+  m4_updating = true;
+  let w = NaN;
+  if (src === 'w') w = get('m4_w');
+  else if (src === 'dbm') w = Math.pow(10, (get('m4_dbm') - 30) / 10);
+  else if (src === 'dbw') w = Math.pow(10, get('m4_dbw') / 10);
+
+  if (isNaN(w) || w <= 0) {
+    ['m4_r_w','m4_r_dbm','m4_r_dbw','m4_vrms','m4_vpp','m4_irms'].forEach(id=>set(id,'—'));
+    m4_updating = false; return;
+  }
+  const dbw = 10*Math.log10(w);
+  const dbm = dbw + 30;
+  const vrms = Math.sqrt(w * Z0);
+  const vpp = vrms * 2 * Math.SQRT2;
+  const irms = vrms / Z0;
+  set('m4_r_w', fmt(w, 3));
+  set('m4_r_dbm', fmt(dbm));
+  set('m4_r_dbw', fmt(dbw));
+  set('m4_vrms', fmt(vrms));
+  set('m4_vpp', fmt(vpp));
+  set('m4_irms', fmt(irms));
+  // Update other inputs
+  if (src !== 'w') document.getElementById('m4_w').value = fmt(w, 4);
+  if (src !== 'dbm') document.getElementById('m4_dbm').value = fmt(dbm);
+  if (src !== 'dbw') document.getElementById('m4_dbw').value = fmt(dbw);
+  saveLog('換算4', `${src}=${get('m4_'+src)}`, `W=${fmt(w,3)}, dBm=${fmt(dbm)}, dBW=${fmt(dbw)}`);
+  m4_updating = false;
+  drawChart4();
+}
+function clearMod4() {
+  ['m4_w','m4_dbm','m4_dbw'].forEach(id => document.getElementById(id).value = '');
+  ['m4_r_w','m4_r_dbm','m4_r_dbw','m4_vrms','m4_vpp','m4_irms'].forEach(id=>set(id,'—'));
+}
+
+// ============================================================
+// MODULE 5: Cable Loss
+// ============================================================
+let m5_segments = [];
+let m5_seg_id = 0;
+
+function addSegment(type, defaults) {
+  const id = ++m5_seg_id;
+  m5_segments.push({id, type, ...defaults});
+  renderSegments();
+}
+function removeSegment(id) {
+  m5_segments = m5_segments.filter(s => s.id !== id);
+  renderSegments();
+  calc_m5();
+}
+function renderSegments() {
+  const container = document.getElementById('m5_segments');
+  container.innerHTML = m5_segments.map(seg => {
+    if (seg.type === 'cable') {
+      return `
+        <div class="segment-row" id="seg_${seg.id}">
+          <div class="form-group"><label>区間名</label><input type="text" id="s${seg.id}_name" value="${seg.name||''}" oninput="calc_m5()"></div>
+          <div class="form-group"><label>損失 [<span class="notx">dB</span>/m]</label><input type="number" id="s${seg.id}_loss" step="any" value="${seg.loss||''}" min="0" oninput="calc_m5()"></div>
+          <div class="form-group"><label>長さ [m]</label><input type="number" id="s${seg.id}_len" step="any" value="${seg.len||''}" min="0" oninput="calc_m5()"></div>
+          <div class="form-group" style="flex:0"><label>&nbsp;</label><button class="btn btn-danger btn-sm" onclick="removeSegment(${seg.id})">削除</button></div>
+        </div>`;
+    } else {
+      return `
+        <div class="segment-row" id="seg_${seg.id}">
+          <div class="form-group"><label>区間名</label><input type="text" id="s${seg.id}_name" value="${seg.name||''}" oninput="calc_m5()"></div>
+          <div class="form-group"><label>固定損失 [<span class="notx">dB</span>]</label><input type="number" id="s${seg.id}_db" step="any" value="${seg.db||''}" oninput="calc_m5()"></div>
+          <div class="form-group" style="flex:0"><label>&nbsp;</label><button class="btn btn-danger btn-sm" onclick="removeSegment(${seg.id})">削除</button></div>
+        </div>`;
+    }
+  }).join('');
+}
+function calc_m5() {
+  const pin = get('m5_pin');
+  if (isNaN(pin) || pin <= 0) {
+    set('m5_total_loss','—'); set('m5_pload','—'); set('m5_ploss','—'); set('m5_eff','—');
+    document.getElementById('m5_detail_table').innerHTML = '';
+    return;
+  }
+  let totalDb = 0;
+  const rows = [];
+  let currentP = pin;
+  for (const seg of m5_segments) {
+    let db = 0;
+    let nameEl = document.getElementById(`s${seg.id}_name`);
+    const name = nameEl ? nameEl.value || `区間${seg.id}` : `区間${seg.id}`;
+    if (seg.type === 'cable') {
+      const loss = parseFloat((document.getElementById(`s${seg.id}_loss`)||{}).value)||0;
+      const len = parseFloat((document.getElementById(`s${seg.id}_len`)||{}).value)||0;
+      db = loss * len;
+    } else {
+      db = parseFloat((document.getElementById(`s${seg.id}_db`)||{}).value)||0;
+    }
+    totalDb += db;
+    currentP = currentP * Math.pow(10, -db/10);
+    rows.push({name, type: seg.type==='cable'?'ケーブル':'固定損失', db, p: currentP});
+  }
+  const pload = pin * Math.pow(10, -totalDb/10);
+  const ploss = pin - pload;
+  const eff = (pload / pin) * 100;
+  set('m5_total_loss', fmt(totalDb));
+  set('m5_pload', fmt(pload));
+  set('m5_ploss', fmt(ploss));
+  set('m5_eff', fmt(eff));
+  const tbody = document.getElementById('m5_detail_table');
+  tbody.innerHTML = rows.map(r =>
+    `<tr><td>${r.name}</td><td>${r.type}</td><td>${fmt(r.db)}</td><td>${fmt(r.p)}</td></tr>`
+  ).join('');
+  saveLog('損失5', `Pin=${pin}W, 損失合計=${fmt(totalDb)}dB`, `Pload=${fmt(pload)}W, 効率=${fmt(eff)}%`);
+  drawChart5(rows, pin);
+}
+
+// ============================================================
+// MODULE 4 CHART — dBm log-scale ruler
+// ============================================================
+function drawChart4() {
+  const canvas = document.getElementById('chart4');
+  if (!canvas) return;
+  const wVal = get('m4_w');
+  const ctx = canvas.getContext('2d');
+  const CW = canvas.width, CH = canvas.height;
+  ctx.clearRect(0, 0, CW, CH);
+
+  const dbmMin = -10, dbmMax = 75;
+  const PAD = {l: 16, r: 16, t: 46, b: 46};
+  const cw  = CW - PAD.l - PAD.r;
+  const axY = PAD.t + (CH - PAD.t - PAD.b) / 2;
+  const dbmToX = d => PAD.l + (d - dbmMin) / (dbmMax - dbmMin) * cw;
+
+  // Background gradient
+  const grad = ctx.createLinearGradient(PAD.l, 0, PAD.l + cw, 0);
+  grad.addColorStop(0,   '#f0f9ff');
+  grad.addColorStop(0.4, '#f0fdf4');
+  grad.addColorStop(0.8, '#fefce8');
+  grad.addColorStop(1,   '#fff1f2');
+  ctx.fillStyle = grad;
+  ctx.fillRect(PAD.l, PAD.t, cw, CH - PAD.t - PAD.b);
+
+  // Border
+  ctx.strokeStyle = '#ddd'; ctx.lineWidth = 1;
+  ctx.strokeRect(PAD.l, PAD.t, cw, CH - PAD.t - PAD.b);
+
+  // Zone labels (top-left subtle)
+  ctx.font = '9px sans-serif'; ctx.fillStyle = '#94a3b8'; ctx.textAlign = 'left';
+  ctx.fillText('µW 〜 mW 領域', PAD.l + 4, PAD.t + 12);
+  ctx.textAlign = 'right';
+  ctx.fillText('kW 領域', PAD.l + cw - 4, PAD.t + 12);
+
+  // Axis line
+  ctx.strokeStyle = '#999'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(PAD.l, axY); ctx.lineTo(PAD.l + cw, axY); ctx.stroke();
+
+  // Ticks every 10 dBm — major; every 5 dBm — minor
+  for (let d = dbmMin; d <= dbmMax; d += 5) {
+    const x = dbmToX(d);
+    const major = d % 10 === 0;
+    ctx.strokeStyle = major ? '#aaa' : '#ddd'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, axY - (major ? 10 : 5)); ctx.lineTo(x, axY + (major ? 10 : 5)); ctx.stroke();
+  }
+
+  // Major tick labels
+  [-10,0,10,20,30,40,50,60,70].forEach(dbm => {
+    const w = Math.pow(10, (dbm - 30) / 10);
+    let wLabel;
+    if (w >= 1e6)      wLabel = (w/1e6).toFixed(0) + 'MW';
+    else if (w >= 1e3) wLabel = (w/1e3).toFixed(0) + 'kW';
+    else if (w >= 1)   wLabel = w.toFixed(0) + 'W';
+    else if (w >= 1e-3) wLabel = (w*1e3).toFixed(0) + 'mW';
+    else               wLabel = (w*1e6).toFixed(0) + 'µW';
+    const x = dbmToX(dbm);
+    // dBm above axis
+    ctx.fillStyle = '#444'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(dbm + ' dBm', x, axY - 14);
+    // Watt below axis
+    ctx.fillStyle = '#6b7280'; ctx.font = '9px sans-serif';
+    ctx.fillText(wLabel, x, axY + 22);
+  });
+
+  // Current marker
+  if (!isNaN(wVal) && wVal > 0) {
+    const cd = 10 * Math.log10(wVal) + 30;
+    const cx = dbmToX(cd);
+
+    // Vertical guide line
+    ctx.strokeStyle = 'rgba(249,115,22,0.25)'; ctx.lineWidth = 1.5; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(cx, PAD.t); ctx.lineTo(cx, PAD.t + (CH - PAD.t - PAD.b)); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Triangle above
+    ctx.beginPath(); ctx.moveTo(cx, axY - 10); ctx.lineTo(cx - 7, axY - 22); ctx.lineTo(cx + 7, axY - 22); ctx.closePath();
+    ctx.fillStyle = '#f97316'; ctx.fill();
+
+    // Circle on axis
+    ctx.beginPath(); ctx.arc(cx, axY, 6, 0, Math.PI * 2);
+    ctx.fillStyle = '#f97316'; ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+
+    // Label above triangle
+    const labelY = axY - 26;
+    const label  = cd.toFixed(1) + ' dBm  /  ' + fmtShort(wVal) + 'W';
+    ctx.font = 'bold 11px sans-serif';
+    const tw = ctx.measureText(label).width;
+    const lx = Math.max(PAD.l + tw/2 + 4, Math.min(cx, PAD.l + cw - tw/2 - 4));
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.fillRect(lx - tw/2 - 4, labelY - 12, tw + 8, 15);
+    ctx.fillStyle = '#c2410c'; ctx.textAlign = 'center';
+    ctx.fillText(label, lx, labelY);
+  }
+}
+
+// ============================================================
+// MODULE 5 CHART — power waterfall
+// ============================================================
+function drawChart5(rows, pin) {
+  const canvas = document.getElementById('chart5');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const CW = canvas.width, CH = canvas.height;
+  ctx.clearRect(0, 0, CW, CH);
+  if (!rows || rows.length === 0) return;
+
+  // Stages: input + after each segment
+  const stages = [{name: 'アンプ出力', p: pin, db: 0, type: 'in'}];
+  rows.forEach(r => stages.push({name: r.name, p: r.p, db: r.db, type: r.type}));
+
+  const PAD = {t: 6, r: 52, b: 14, l: 78};
+  const n = stages.length;
+  const totalBarArea = CH - PAD.t - PAD.b;
+  const gap = 3;
+  const barH = Math.min(24, Math.floor((totalBarArea - gap*(n-1)) / n));
+  const bw = CW - PAD.l - PAD.r;
+  const startY = PAD.t + (totalBarArea - n*(barH+gap) + gap) / 2;
+  const xScale = p => PAD.l + (p / pin) * bw;
+
+  stages.forEach((s, i) => {
+    const y = startY + i * (barH + gap);
+    const filledW = Math.max(0, xScale(s.p) - PAD.l);
+    const isFirst = i === 0, isLast = i === n - 1;
+
+    // Lost portion (light gray)
+    ctx.fillStyle = '#f0f0f0';
+    ctx.fillRect(PAD.l, y, bw, barH);
+
+    // Remaining power (colored)
+    ctx.fillStyle = isFirst ? '#2563eb' : isLast ? '#16a34a' : '#60a5fa';
+    ctx.fillRect(PAD.l, y, filledW, barH);
+
+    // Stage label (left)
+    ctx.fillStyle = '#333';
+    ctx.font = (isFirst || isLast ? 'bold ' : '') + '9px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(s.name, PAD.l - 3, y + barH/2 + 3.5);
+
+    // Power value
+    const valTxt = fmtShort(s.p) + 'W';
+    ctx.font = 'bold 9px sans-serif';
+    if (filledW > 38) {
+      ctx.fillStyle = '#fff'; ctx.textAlign = 'right';
+      ctx.fillText(valTxt, PAD.l + filledW - 4, y + barH/2 + 3.5);
+    } else {
+      ctx.fillStyle = '#555'; ctx.textAlign = 'left';
+      ctx.fillText(valTxt, PAD.l + filledW + 4, y + barH/2 + 3.5);
+    }
+
+    // dB loss label (right edge) for non-first
+    if (i > 0 && s.db > 0) {
+      ctx.fillStyle = '#dc2626'; ctx.font = '8px sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText('−' + s.db.toFixed(2) + ' dB', CW - PAD.r + 3, y + barH/2 + 3);
+    }
+  });
+}
+
+// Module 3 Z-plane chart range (must be declared before init calls drawChart3Z)
+let m3z_rMax = 200, m3z_xHalf = 150;
+
+// Default segments
+addSegment('fixed', {name: '方向性結合器', db: 0.5});
+addSegment('cable', {name: 'ケーブル', loss: 0.1, len: 5});
+
+// Init: run all calculations with default values
+calc_m1a();
+calc_m1b();
+calc_m1c();
+calc_m2();
+calc_m3s();
+calc_m4('w');
+calc_m5();
+
+// ドラッグ＆タッチ対応ヘルパー
+function addDragHandler(el, handler) {
+  let down = false;
+  // --- マウス ---
+  el.addEventListener('mousedown',  e => { down = true;  handler(e); });
+  el.addEventListener('mousemove',  e => { if (down) handler(e); });
+  el.addEventListener('mouseup',    () => down = false);
+  el.addEventListener('mouseleave', () => down = false);
+  // --- タッチ（スクロール抑止＋座標変換） ---
+  const touch2e = t => {
+    const touch = t.touches[0] || t.changedTouches[0];
+    return { clientX: touch.clientX, clientY: touch.clientY, target: t.target };
+  };
+  el.addEventListener('touchstart', e => { e.preventDefault(); down = true;  handler(touch2e(e)); }, { passive: false });
+  el.addEventListener('touchmove',  e => { e.preventDefault(); if (down) handler(touch2e(e)); },     { passive: false });
+  el.addEventListener('touchend',   e => { down = false; },                                          { passive: false });
+}
+
+// chart4: dBmルーラー ドラッグ対応
+addDragHandler(document.getElementById('chart4'), function(e) {
+  const el = document.getElementById('chart4');
+  const rect = el.getBoundingClientRect();
+  const scaleX = el.width / rect.width;
+  const x = (e.clientX - rect.left) * scaleX;
+  const dbmMin = -10, dbmMax = 75, PAD_l = 14, PAD_r = 14;
+  const cw = el.width - PAD_l - PAD_r;
+  const dbm = dbmMin + (x - PAD_l) / cw * (dbmMax - dbmMin);
+  const w = Math.pow(10, (dbm - 30) / 10);
+  if (w > 0 && isFinite(w)) {
+    document.getElementById('m4_w').value = parseFloat(w.toPrecision(4));
+    calc_m4('w');
+  }
+});
+
+// chart3z ドラッグ対応ハンドラ
+function chart3zClickHandler(canvasId, rMax, xHalf) {
+  const canvas = document.getElementById(canvasId);
+  addDragHandler(canvas, function(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const cx = (e.clientX - rect.left) * scaleX;
+    const cy = (e.clientY - rect.top)  * scaleY;
+    const PAD = {l:44, r:12, t:12, b:32};
+    const cw = canvas.width - PAD.l - PAD.r;
+    const ch = canvas.height - PAD.t - PAD.b;
+    const zr = Math.max(0, (cx - PAD.l) / cw * rMax);
+    const zx = -(cy - (PAD.t + ch/2)) / (ch/2) * xHalf;
+    const zmag = Math.sqrt(zr*zr + zx*zx);
+    if (zmag < 0.01) return;
+    const theta_deg = Math.atan2(zx, zr) * 180 / Math.PI;
+    const V_peak = (get('m3s_v') || 100) / 2;
+    const I_Ipp = (V_peak / zmag) * 2;
+    document.getElementById('m3s_i').value = parseFloat(I_Ipp.toPrecision(4));
+    document.getElementById('m3s_theta').value = parseFloat(theta_deg.toFixed(1));
+    calc_m3s();
+  });
+}
+chart3zClickHandler('chart3z_200',  200,  200);
+chart3zClickHandler('chart3z_2000', 2000, 2000);
+
+// スミスチャート ドラッグ対応ハンドラ
+function smithClickHandler(canvasEl, calcFn, vId, iId, thetaId, vUnit) {
+  addDragHandler(canvasEl, function(e) {
+    const rect = canvasEl.getBoundingClientRect();
+    const scaleX = canvasEl.width  / rect.width;
+    const scaleY = canvasEl.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top)  * scaleY;
+    const cx = canvasEl.width/2, cy = canvasEl.height/2, R = canvasEl.width * 0.43;
+    const gr = (x - cx) / R;
+    const gi = -(y - cy) / R;
+    if (gr*gr + gi*gi >= 1) return;
+
+    const denom = (1-gr)*(1-gr) + gi*gi;
+    const zr = Z0 * (1 - gr*gr - gi*gi) / denom;
+    const zx = Z0 * 2*gi / denom;
+    const zmag = Math.sqrt(zr*zr + zx*zx);
+    const theta_deg = Math.atan2(zx, zr) * 180 / Math.PI;
+
+    const V = get(vId);
+    if (!isNaN(V) && V > 0 && zmag > 0) {
+      document.getElementById(iId).value = (V / zmag).toFixed(2);
+    }
+    document.getElementById(thetaId).value = theta_deg.toFixed(1);
+    calcFn();
+  });
+}
+
+smithClickHandler(document.getElementById('smith_chart'),  calc_m2,  'm2_v',  'm2_i',  'm2_theta');
+smithClickHandler(document.getElementById('smith3_chart'), calc_m3s, 'm3s_v', 'm3s_i', 'm3s_theta');
+
+// ============================================================
+// MODULE 3: Smith Chart Animation
+// ============================================================
+let m3s_animId   = null;
+let m3s_trail    = [];
+let m3s_animT    = 0;
+let m3s_animBase = null;
+let m3s_lastPt   = null;  // 停止時に位置を保持するため
+
+function m3s_onModeChange() {
+  if (m3s_animId) { cancelAnimationFrame(m3s_animId); m3s_animId = null; }
+  m3s_trail = [];
+  m3s_animT = 0;
+  const mode = document.querySelector('input[name="m3s_anim"]:checked')?.value;
+  if (!mode || mode === 'none') {
+    // 停止時：最後のアニメ位置を入力値に反映してから再描画
+    if (m3s_lastPt) {
+      const {zr, zx} = m3s_lastPt;
+      const zmag      = Math.sqrt(zr*zr + zx*zx);
+      const theta_deg = Math.max(-90, Math.min(90, Math.atan2(zx, zr) * 180 / Math.PI));
+      const V_Vpp     = get('m3s_v') || 100;
+      const I_App     = zmag > 0 ? ((V_Vpp / 2) / zmag) * 2 : get('m3s_i');
+      document.getElementById('m3s_i').value     = I_App.toFixed(3);
+      document.getElementById('m3s_theta').value = theta_deg.toFixed(1);
+      m3s_lastPt = null;
+    }
+    calc_m3s();
+    return;
+  }
+
+  const V_Vpp    = get('m3s_v');
+  const I_App    = get('m3s_i');
+  const theta_deg = get('m3s_theta');
+  if (isNaN(V_Vpp)||isNaN(I_App)||V_Vpp<=0||I_App<=0) return;
+
+  const theta  = deg2rad(theta_deg);
+  const V_peak = V_Vpp / 2;
+  const I_peak = I_App / 2;
+  const zmag   = V_peak / I_peak;
+  const zr0    = zmag * Math.cos(theta);
+  const zx0    = zmag * Math.sin(theta);
+  const Zc     = {r: zr0, i: zx0};
+  const gam0   = cDiv(cSub(Zc, {r:Z0,i:0}), cAdd(Zc, {r:Z0,i:0}));
+  const Y0     = cDiv({r:1,i:0}, Zc);
+
+  m3s_animBase = {
+    zr: zr0, zx: zx0,
+    gr: gam0.r, gi: gam0.i,
+    gmag: cMag(gam0), garg: cArg(gam0),
+    Rn: zr0 / Z0, Xn: zx0 / Z0,
+    Gn: Y0.r * Z0
+  };
+  m3s_animLoop();
+}
+
+function m3s_animPoint(t) {
+  const mode = document.querySelector('input[name="m3s_anim"]:checked')?.value;
+  const b = m3s_animBase;
+  let gr, gi;
+
+  switch (mode) {
+    case 'txline': {
+      const angle = b.garg - t;                   // 時計回り
+      gr = b.gmag * Math.cos(angle);
+      gi = b.gmag * Math.sin(angle);
+      break;
+    }
+    case 'series_x': {
+      const c   = b.Rn / (b.Rn + 1);             // 等R円の中心（Γ空間）
+      const rad = 1 / (b.Rn + 1);
+      const a0  = Math.atan2(b.gi, b.gr - c);    // 現在点の角度
+      gr = c   + rad * Math.cos(a0 + t);          // 反時計回り（X増加方向）
+      gi = rad * Math.sin(a0 + t);
+      break;
+    }
+    case 'shunt_b': {
+      const Gn  = Math.max(0.001, b.Gn);
+      const c   = -Gn / (Gn + 1);                // 等G円の中心（Γ空間）
+      const rad = 1 / (Gn + 1);
+      const a0  = Math.atan2(b.gi, b.gr - c);
+      gr = c   + rad * Math.cos(a0 + t);          // 反時計回り
+      gi = rad * Math.sin(a0 + t);
+      break;
+    }
+    case 'r_sweep': {
+      // Xn 固定、Rn をサイン波でスイープ（0.01 〜 10 倍 Z0）
+      const Rn_cur = Math.max(0.001, b.Rn);
+      const Rn_sw  = Rn_cur * Math.pow(10, 1.5 * Math.sin(t));   // ±1.5桁スイープ
+      const z_sw   = {r: Rn_sw * Z0, i: b.zx};
+      const g_sw   = cDiv(cSub(z_sw, {r:Z0,i:0}), cAdd(z_sw, {r:Z0,i:0}));
+      gr = g_sw.r; gi = g_sw.i;
+      break;
+    }
+    case 'z_to_y': {
+      // 0.5*(1-cos(t)) で garg と garg+π を滑らかに往復
+      const angle = b.garg + Math.PI * 0.5 * (1 - Math.cos(t));
+      gr = b.gmag * Math.cos(angle);
+      gi = b.gmag * Math.sin(angle);
+      break;
+    }
+    case 'phase_sweep': {
+      // |Z| 固定、θ を −90°〜+90° でサイン波往復
+      const zmag0 = Math.sqrt(b.zr**2 + b.zx**2);
+      const theta  = (Math.PI / 2) * Math.sin(t);
+      const zr_sw  = zmag0 * Math.cos(theta);
+      const zx_sw  = zmag0 * Math.sin(theta);
+      const z_sw   = {r: zr_sw, i: zx_sw};
+      const g_sw   = cDiv(cSub(z_sw, {r:Z0,i:0}), cAdd(z_sw, {r:Z0,i:0}));
+      gr = g_sw.r; gi = g_sw.i;
+      break;
+    }
+    default:
+      return null;
+  }
+
+  // 単位円の外に出ないようクランプ
+  const mag = Math.sqrt(gr*gr + gi*gi);
+  if (mag > 0.998) { gr *= 0.998/mag; gi *= 0.998/mag; }
+
+  // Z を逆算
+  const dn = (1-gr)**2 + gi**2;
+  const zr = Z0 * (1 - gr*gr - gi*gi) / dn;
+  const zx = Z0 * 2*gi / dn;
+  return {gr, gi, zr, zx};
+}
+
+function m3s_updateResults(pt, trail=[]) {
+  const {zr, zx, gr, gi} = pt;
+  const zmag     = Math.sqrt(zr*zr + zx*zx);
+  const theta_deg = Math.atan2(zx, zr) * 180 / Math.PI;
+  const gmag     = Math.sqrt(gr*gr + gi*gi);
+  const garg     = Math.atan2(gi, gr) * 180 / Math.PI;
+  const vswr     = gmag < 1 ? (1+gmag)/(1-gmag) : Infinity;
+  const rl       = gmag > 0 ? -20*Math.log10(gmag) : Infinity;
+  // ロードパワー: V固定、Iを新しいZから再計算
+  const V_peak = (get('m3s_v') || 100) / 2;
+  const I_peak = zmag > 0 ? V_peak / zmag : 0;
+  const theta  = deg2rad(theta_deg);
+  const pabs   = 0.5 * V_peak * I_peak * Math.cos(theta);
+  const papp   = 0.5 * V_peak * I_peak;
+  set('m3s_zr',   fmt(zr));
+  set('m3s_zx',   fmt(zx));
+  set('m3s_zmag', fmt(zmag));
+  set('m3s_zarg', fmt(theta_deg));
+  set('m3s_gmag', fmt(gmag));
+  set('m3s_garg', fmt(garg));
+  set('m3s_vswr', isFinite(vswr) ? fmt(vswr) : '∞');
+  set('m3s_rl',   isFinite(rl)   ? fmt(rl)   : '∞');
+  setMatchBadge(vswr);
+  set('m3s_pabs', fmt(pabs));
+  set('m3s_papp', fmt(papp));
+  set('m3s_pf',   fmt(Math.cos(theta)));
+  drawChart3Z('chart3z_200',  zr, zx, 200,  200,  trail);
+  drawChart3Z('chart3z_2000', zr, zx, 2000, 2000, trail);
+  drawPhasor(theta_deg, zmag, 'chart3_phasor');
+}
+
+// ============================================================
+// MODULE 3: Z-plane chart
+// ============================================================
+function drawChart3Z(canvasId, zr, zx, rMax, xHalf, trail=[]) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const CW = canvas.width, CH = canvas.height;
+  ctx.clearRect(0, 0, CW, CH);
+
+  m3z_rMax  = rMax;
+  m3z_xHalf = xHalf;
+
+  const PAD = {l: 44, r: 12, t: 12, b: 32};
+  const cw = CW - PAD.l - PAD.r, ch = CH - PAD.t - PAD.b;
+  const rToX = r  => PAD.l + (r  / m3z_rMax)  * cw;
+  const xToY = x  => PAD.t + ch/2 - (x / m3z_xHalf) * ch/2;
+
+  // Grid
+  ctx.strokeStyle = '#ebebeb'; ctx.lineWidth = 1;
+  const NR = 6, NX = 6;
+  for (let i=0; i<=NR; i++) {
+    const rv = m3z_rMax * i / NR;
+    const cx = rToX(rv);
+    ctx.beginPath(); ctx.moveTo(cx, PAD.t); ctx.lineTo(cx, PAD.t+ch); ctx.stroke();
+    ctx.fillStyle = '#999'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(fmtShort(rv), cx, PAD.t+ch+11);
+  }
+  for (let i=-NX; i<=NX; i++) {
+    const xv = m3z_xHalf * i / NX;
+    const cy = xToY(xv);
+    ctx.beginPath(); ctx.moveTo(PAD.l, cy); ctx.lineTo(PAD.l+cw, cy); ctx.stroke();
+    if (i !== 0) {
+      ctx.fillStyle = '#999'; ctx.font = '9px sans-serif'; ctx.textAlign = 'right';
+      ctx.fillText(fmtShort(xv), PAD.l-3, cy+3.5);
+    }
+  }
+
+  // Concentric |Z| reference circles (dashed)
+  [Z0*0.5, Z0, Z0*2, Z0*4].forEach(r => {
+    const cx = rToX(0), cy = xToY(0);
+    const rx = r / m3z_rMax * cw;
+    const ry = r / m3z_xHalf * ch/2;
+    if (rx < 2) return;
+    ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI*2);
+    ctx.strokeStyle = '#d4d4d4'; ctx.lineWidth = 1; ctx.setLineDash([3,3]); ctx.stroke();
+    ctx.setLineDash([]);
+    // label
+    const lx = rToX(r), ly = xToY(0) - 3;
+    if (lx < PAD.l+cw-5) {
+      ctx.fillStyle = '#bbb'; ctx.font = '8px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('|Z|=' + fmtShort(r), lx, ly);
+    }
+  });
+
+  // Z₀ vertical reference line
+  const z0x = rToX(Z0);
+  ctx.setLineDash([4,3]); ctx.strokeStyle = '#93c5fd'; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(z0x, PAD.t); ctx.lineTo(z0x, PAD.t+ch); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#3b82f6'; ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('R=Z₀', z0x, PAD.t+5);
+
+  // Axes
+  ctx.strokeStyle = '#aaa'; ctx.lineWidth = 1.5;
+  // X=0 horizontal axis
+  const ay = xToY(0);
+  ctx.beginPath(); ctx.moveTo(PAD.l, ay); ctx.lineTo(PAD.l+cw, ay); ctx.stroke();
+  // R=0 vertical axis
+  ctx.beginPath(); ctx.moveTo(PAD.l, PAD.t); ctx.lineTo(PAD.l, PAD.t+ch); ctx.stroke();
+
+  // Axis labels
+  ctx.fillStyle = '#555'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('R [Ω]', PAD.l + cw/2, CH - 2);
+  ctx.save(); ctx.translate(10, PAD.t + ch/2); ctx.rotate(-Math.PI/2);
+  ctx.fillText('X [Ω]', 0, 0); ctx.restore();
+
+  // Perfect match point (50, 0)
+  if (Z0 >= 0 && Z0 <= m3z_rMax) {
+    const mx = rToX(Z0), my = xToY(0);
+    ctx.beginPath(); ctx.arc(mx, my, 4, 0, Math.PI*2);
+    ctx.fillStyle = '#93c5fd'; ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
+  }
+
+  // Animation trail — canvas clipで範囲外を自動カット
+  if (trail.length > 1) {
+    const pts = trail.filter(p => p.zr !== undefined);
+    if (pts.length > 1) {
+      ctx.save();
+      ctx.beginPath(); ctx.rect(PAD.l, PAD.t, cw, ch); ctx.clip();
+      // 折り返し検出閾値（レンジの30%を超えるジャンプは不連続とみなす）
+      const jumpR = rMax   * 0.30;
+      const jumpX = xHalf  * 0.30;
+      ctx.beginPath();
+      ctx.moveTo(rToX(pts[0].zr), xToY(pts[0].zx));
+      for (let i = 1; i < pts.length; i++) {
+        const dr = Math.abs(pts[i].zr - pts[i-1].zr);
+        const dx = Math.abs(pts[i].zx - pts[i-1].zx);
+        if (dr > jumpR || dx > jumpX) {
+          ctx.moveTo(rToX(pts[i].zr), xToY(pts[i].zx)); // 不連続 → 線を切る
+        } else {
+          ctx.lineTo(rToX(pts[i].zr), xToY(pts[i].zx));
+        }
+      }
+      ctx.strokeStyle = '#f9731650'; ctx.lineWidth = 1.5; ctx.setLineDash([]);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  // Current Z point — 範囲外はチャート端にクランプして表示
+  const inRange = zr >= 0 && zr <= rMax && Math.abs(zx) <= xHalf;
+  const clampedZr = Math.max(0, Math.min(rMax, zr));
+  const clampedZx = Math.max(-xHalf, Math.min(xHalf, zx));
+  const px = rToX(clampedZr), py = xToY(clampedZx);
+
+  if (!inRange) {
+    // 範囲外: 灰色の菱形マーカーを端に表示
+    ctx.save();
+    ctx.beginPath(); ctx.rect(PAD.l, PAD.t, cw, ch); ctx.clip();
+    ctx.beginPath();
+    ctx.moveTo(px, py - 6); ctx.lineTo(px + 5, py); ctx.lineTo(px, py + 6); ctx.lineTo(px - 5, py); ctx.closePath();
+    ctx.fillStyle = '#94a3b8'; ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.restore();
+    // 範囲外ラベル
+    ctx.fillStyle = '#94a3b8'; ctx.font = '8px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('範囲外', px, py > PAD.t + ch/2 ? py - 8 : py + 14);
+  } else {
+    // 通常: オレンジドット
+    ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI*2);
+    ctx.fillStyle = '#f97316'; ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+
+    // Crosshair lines to axes
+    ctx.setLineDash([3,3]); ctx.strokeStyle = '#f9731680'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, ay); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(PAD.l, py); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Label at point
+    ctx.fillStyle = '#ea6c00'; ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center';
+    const lbl = `(${fmt(zr,3)}, j${fmt(zx,3)})`;
+    const lblY = py > PAD.t + 18 ? py - 9 : py + 16;
+    ctx.fillText(lbl, px, lblY);
+  }
+}
+
+// ============================================================
+// DARK MODE
+// ============================================================
+function toggleDark() {
+  document.body.classList.toggle('dark');
+  const isDark = document.body.classList.contains('dark');
+  localStorage.setItem('darkMode', isDark ? '1' : '');
+  document.getElementById('dark-toggle').textContent = isDark ? '☀️ ライト' : '🌙 ダーク';
+}
+if (localStorage.getItem('darkMode')) {
+  document.body.classList.add('dark');
+  document.getElementById('dark-toggle').textContent = '☀️ ライト';
+}
+
+function m3s_animLoop() {
+  const mode = document.querySelector('input[name="m3s_anim"]:checked')?.value;
+  if (!mode || mode === 'none' || !m3s_animBase) return;
+
+  const speed = parseInt(document.getElementById('m3s_speed')?.value || 3);
+  m3s_animT += 0.12 * Math.pow(speed / 10, 2);
+
+  const pt = m3s_animPoint(m3s_animT);
+  if (!pt) return;
+
+  m3s_lastPt = pt;
+  m3s_trail.push({gr: pt.gr, gi: pt.gi, zr: pt.zr, zx: pt.zx});
+  if (m3s_trail.length > 500) m3s_trail.shift();
+
+  drawSmithChart(pt, 'smith3_chart', 'sc3', m3s_trail);
+  m3s_updateResults(pt, m3s_trail);
+  m3s_animId = requestAnimationFrame(m3s_animLoop);
+}
+</script>
+</body>
+</html>
