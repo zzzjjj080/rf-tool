@@ -1,0 +1,1766 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CORDIC Visualizer — IQ Triangle Method</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+JP:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+/* ── Light mode (default) ── */
+:root {
+  --bg:      #f0f4f8;
+  --panel:   #ffffff;
+  --panel2:  #f1f5f9;
+  --border:  #cbd5e1;
+  --accent:  #0284c7;
+  --accent2: #ea580c;
+  --text:    #1e293b;
+  --text-dim:#64748b;
+  --gold:    #d97706;
+  --green:   #16a34a;
+  --red:     #dc2626;
+  --shadow:  rgba(0,0,0,0.07);
+  --grid-line: rgba(100,116,139,0.08);
+}
+/* ── Dark mode ── */
+[data-theme="dark"] {
+  --bg:      #0a0e1a;
+  --panel:   #111827;
+  --panel2:  #1a2235;
+  --border:  #1e3a5f;
+  --accent:  #00d4ff;
+  --accent2: #ff6b35;
+  --text:    #e2e8f0;
+  --text-dim:#64748b;
+  --gold:    #fbbf24;
+  --green:   #22c55e;
+  --red:     #f87171;
+  --shadow:  rgba(0,0,0,0.3);
+  --grid-line: rgba(0,212,255,0.03);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Noto Sans JP', sans-serif; min-height: 100vh; overflow-x: hidden; transition: background 0.3s, color 0.3s; }
+body::before {
+  content: ''; position: fixed; inset: 0;
+  background-image: linear-gradient(var(--grid-line) 1px, transparent 1px),
+                    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 40px 40px; pointer-events: none; z-index: 0;
+}
+.container { position: relative; z-index: 1; max-width: 1140px; margin: 0 auto; padding: 20px 16px 40px; }
+
+/* ── Header ── */
+header { text-align: center; margin-bottom: 20px; padding: 20px 0 16px; border-bottom: 1px solid var(--border); position: relative; }
+.header-tag { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; margin-bottom: 6px; opacity: 0.8; }
+h1 { font-family: 'Space Mono', monospace; font-size: clamp(22px,5vw,36px); font-weight: 700; letter-spacing: -1px;
+     background: linear-gradient(135deg, var(--accent) 0%, var(--text) 50%, var(--accent2) 100%);
+     -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.subtitle { font-size: 11px; color: var(--text-dim); margin-top: 5px; font-family: 'Space Mono', monospace; letter-spacing: 1px; }
+
+/* Theme toggle */
+.theme-toggle {
+  position: absolute; top: 20px; right: 0;
+  padding: 7px 14px; border-radius: 20px; border: 1px solid var(--border);
+  background: var(--panel); color: var(--text); cursor: pointer;
+  font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700;
+  transition: all 0.2s; box-shadow: 0 1px 4px var(--shadow);
+}
+.theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── Flow arrow ── */
+.flow-arrow { text-align: center; color: var(--text-dim); font-size: 18px; line-height: 1; margin: 3px 0; opacity: 0.4; }
+
+/* ── Zone base ── */
+.zone { border-radius: 12px; margin-bottom: 6px; overflow: hidden; box-shadow: 0 1px 4px var(--shadow); }
+.zone-header { padding: 8px 18px; font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+.zone-tag { font-size: 9px; letter-spacing: 1px; padding: 2px 8px; border-radius: 10px; font-weight: 700; margin-left: auto; }
+.zone-body { padding: 14px 18px; display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; background: var(--panel); }
+
+/* Zone 1 — settings (light) */
+.zone-settings { background: var(--panel); border: 1.5px solid rgba(2,132,199,0.6); }
+.zone-settings .zone-header { background: rgba(2,132,199,0.08); border-bottom: 1px solid rgba(2,132,199,0.2); color: var(--accent); }
+.zone-settings .zone-tag { background: rgba(2,132,199,0.12); color: var(--accent); }
+/* Zone 1 — settings (dark) */
+[data-theme="dark"] .zone-settings { border-color: rgba(0,212,255,0.4); }
+[data-theme="dark"] .zone-settings .zone-header { background: rgba(0,212,255,0.08); border-bottom-color: rgba(0,212,255,0.2); }
+[data-theme="dark"] .zone-settings .zone-tag { background: rgba(0,212,255,0.12); }
+
+/* Zone 2 — analysis (light) */
+.zone-analysis { background: var(--panel); border: 1.5px solid rgba(234,88,12,0.6); }
+.zone-analysis .zone-header { background: rgba(234,88,12,0.08); border-bottom: 1px solid rgba(234,88,12,0.2); color: var(--accent2); }
+.zone-analysis .zone-tag { background: rgba(234,88,12,0.12); color: var(--accent2); }
+/* Zone 2 — analysis (dark) */
+[data-theme="dark"] .zone-analysis { border-color: rgba(255,107,53,0.4); }
+[data-theme="dark"] .zone-analysis .zone-header { background: rgba(255,107,53,0.08); border-bottom-color: rgba(255,107,53,0.2); }
+[data-theme="dark"] .zone-analysis .zone-tag { background: rgba(255,107,53,0.12); }
+
+/* ── Inputs ── */
+.input-group { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 160px; }
+.input-group label { font-size: 10px; letter-spacing: 2px; color: var(--accent); font-family: 'Space Mono', monospace; text-transform: uppercase; }
+.input-group-inline { display: flex; align-items: center; gap: 8px; }
+input[type="range"] { -webkit-appearance: none; width: 100%; height: 4px; background: var(--border); border-radius: 2px; outline: none; cursor: pointer; }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); cursor: pointer; box-shadow: 0 1px 4px var(--shadow); }
+.input-val { font-family: 'Space Mono', monospace; font-size: 16px; color: var(--gold); min-width: 66px; text-align: center; font-weight: 700; }
+.zone-info { display: flex; flex-direction: column; gap: 4px; font-family: 'Space Mono', monospace; font-size: 10px; color: var(--text-dim); align-self: center; min-width: 160px; }
+
+/* ── Steps & Buttons ── */
+.steps-group { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 140px; }
+.steps-group > label { font-size: 10px; letter-spacing: 2px; color: var(--accent2); font-family: 'Space Mono', monospace; text-transform: uppercase; }
+.steps-btns { display: flex; gap: 4px; }
+.step-btn { flex: 1; padding: 7px 4px; background: var(--panel2); border: 1px solid var(--border); border-radius: 6px; color: var(--text-dim); font-family: 'Space Mono', monospace; font-size: 12px; cursor: pointer; transition: all 0.2s; }
+.step-btn.active { background: var(--accent2); border-color: var(--accent2); color: #fff; }
+.ctrl-btns { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.btn { padding: 9px 18px; border-radius: 8px; border: none; font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700; cursor: pointer; letter-spacing: 1px; transition: all 0.2s; white-space: nowrap; }
+.btn-primary   { background: var(--accent);  color: #fff; box-shadow: 0 1px 4px var(--shadow); }
+.btn-primary:hover { opacity: 0.85; }
+.btn-secondary { background: var(--panel2); color: var(--accent); border: 1.5px solid var(--accent); }
+.btn-secondary:hover { background: rgba(2,132,199,0.1); }
+[data-theme="dark"] .btn-secondary:hover { background: rgba(0,212,255,0.1); }
+.btn-danger    { background: var(--panel2); color: var(--accent2); border: 1.5px solid var(--accent2); }
+.btn-danger:hover { background: rgba(234,88,12,0.1); }
+[data-theme="dark"] .btn-danger:hover { background: rgba(255,107,53,0.1); }
+.speed-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; width: 100%; }
+.speed-row label { font-size: 11px; color: var(--text-dim); font-family: 'Space Mono', monospace; }
+.speed-slider { -webkit-appearance: none; width: 90px; height: 4px; background: var(--border); border-radius: 2px; outline: none; cursor: pointer; }
+.speed-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: var(--accent2); cursor: pointer; }
+.progress-bar { flex: 1; min-width: 80px; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; transition: width 0.3s ease; }
+
+/* ── Panel (canvas wrappers) ── */
+.panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px var(--shadow); }
+.panel-header { padding: 9px 14px; background: var(--panel2); border-bottom: 1px solid var(--border); font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 2px; color: var(--accent); text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.dot-orange { background: var(--accent2) !important; }
+.dot-gold   { background: var(--gold)    !important; }
+canvas { display: block; width: 100%; }
+
+/* IQ Panel */
+.iq-panel { margin-bottom: 6px; }
+.iq-info-row { display: flex; gap: 16px; flex-wrap: wrap; padding: 7px 14px; background: var(--panel2); border-top: 1px solid var(--border); font-family: 'Space Mono', monospace; font-size: 11px; }
+.iq-val { display: flex; align-items: center; gap: 5px; }
+.iq-val .lbl { color: var(--text-dim); font-size: 9px; }
+.iq-val .num { font-size: 13px; font-weight: 700; }
+.i-color { color: var(--accent); } .q-color { color: var(--accent2); }
+.amp-color { color: var(--gold); } .ang-color { color: var(--green); }
+
+/* Pre-rotation banner */
+.prerot-banner { display: flex; align-items: center; gap: 8px; padding: 6px 14px; font-family: 'Space Mono', monospace; font-size: 11px; border-bottom: 1px solid var(--border); background: var(--panel2); transition: background 0.3s; }
+.prerot-banner.active { background: rgba(217,119,6,0.08); border-bottom-color: rgba(217,119,6,0.3); }
+[data-theme="dark"] .prerot-banner.active { background: rgba(251,191,36,0.08); border-bottom-color: rgba(251,191,36,0.3); }
+.prerot-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-dim); flex-shrink: 0; transition: background 0.3s; }
+.prerot-dot.active { background: var(--gold); }
+
+/* ── Result section ── */
+.result-section { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; margin-bottom: 14px; box-shadow: 0 1px 4px var(--shadow); }
+.section-label { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.section-label span { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 2px; color: var(--accent); text-transform: uppercase; }
+.result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+.result-card {
+  background: var(--panel2); border: 2px solid var(--border); border-radius: 10px; padding: 12px;
+  text-align: center; cursor: pointer; transition: border-color 0.15s, background 0.15s, transform 0.15s, box-shadow 0.15s;
+  position: relative; user-select: none;
+}
+.result-card[data-calc]:hover {
+  border-color: var(--accent);
+  border-width: 2.5px;
+  background: rgba(2,132,199,0.10);
+  box-shadow: 0 0 0 3px rgba(2,132,199,0.18), 0 4px 14px var(--shadow);
+  transform: translateY(-2px);
+}
+[data-theme="dark"] .result-card[data-calc]:hover {
+  background: rgba(0,212,255,0.10);
+  box-shadow: 0 0 0 3px rgba(0,212,255,0.20), 0 4px 14px var(--shadow);
+}
+.result-card[data-calc]:hover::after {
+  content: '▶ 計算を見る';
+  position: absolute; bottom: 0; left: 0; right: 0;
+  font-family: 'Space Mono', monospace; font-size: 9px; font-weight: 700;
+  color: #fff;
+  background: var(--accent);
+  border-radius: 0 0 8px 8px;
+  padding: 3px 0;
+  letter-spacing: 0.5px;
+}
+[data-theme="light"] .result-card[data-calc]:hover::after { color: #fff; }
+.result-card[data-calc]:active { transform: translateY(0); box-shadow: none; }
+.result-card.amp-card { border-color: rgba(22,163,74,0.5); background: rgba(22,163,74,0.05); }
+[data-theme="dark"] .result-card.amp-card { border-color: rgba(34,197,94,0.4); background: rgba(34,197,94,0.05); }
+.result-card.amp-card[data-calc]:hover {
+  border-color: var(--green);
+  background: rgba(22,163,74,0.13);
+  box-shadow: 0 0 0 3px rgba(22,163,74,0.2), 0 4px 14px var(--shadow);
+}
+[data-theme="dark"] .result-card.amp-card[data-calc]:hover {
+  background: rgba(34,197,94,0.13);
+  box-shadow: 0 0 0 3px rgba(34,197,94,0.22), 0 4px 14px var(--shadow);
+}
+.result-card.amp-card[data-calc]:hover::after { background: var(--green); }
+.result-card .label { font-size: 9px; letter-spacing: 2px; color: var(--text-dim); font-family: 'Space Mono', monospace; text-transform: uppercase; margin-bottom: 5px; }
+.result-card .value { font-family: 'Space Mono', monospace; font-size: clamp(14px,2.5vw,20px); font-weight: 700; color: var(--accent); }
+.result-card .value.orange { color: var(--accent2); } .result-card .value.green { color: var(--green); } .result-card .value.gold { color: var(--gold); }
+.result-card .unit { font-size: 9px; color: var(--text-dim); margin-top: 2px; font-family: 'Space Mono', monospace; }
+.error-bar { background: var(--panel2); border-radius: 4px; height: 6px; overflow: hidden; border: 1px solid var(--border); flex: 1; }
+.error-fill { height: 100%; background: linear-gradient(90deg, var(--green), var(--gold)); border-radius: 3px; transition: width 0.5s ease; }
+.amp-fill   { background: linear-gradient(90deg, var(--accent), var(--green)); }
+.conv-bars  { margin-top: 12px; display: flex; flex-direction: column; gap: 7px; }
+.conv-row   { display: flex; align-items: center; gap: 10px; font-family: 'Space Mono', monospace; font-size: 11px; }
+.conv-label { color: var(--text-dim); min-width: 56px; font-size: 10px; }
+.conv-val   { color: var(--green); font-weight: 700; min-width: 52px; text-align: right; }
+
+/* ── Main grid ── */
+.main-grid { display: grid; grid-template-columns: 3fr 2fr; gap: 14px; margin-bottom: 14px; }
+@media (max-width: 720px) { .main-grid { grid-template-columns: 1fr; } }
+.step-log { padding: 10px; max-height: 340px; overflow-y: auto; }
+.step-log::-webkit-scrollbar { width: 4px; }
+.step-log::-webkit-scrollbar-track { background: var(--panel2); }
+.step-log::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.log-row { display: grid; grid-template-columns: 20px 1fr 1fr 1fr 1fr 1fr; gap: 4px; padding: 5px 4px; border-bottom: 1px solid var(--border); font-family: 'Space Mono', monospace; font-size: 10px; align-items: center; }
+.log-row.header-row { color: var(--text-dim); font-size: 9px; letter-spacing: 1px; border-bottom: 1.5px solid var(--border); }
+.log-row.final-row { background: rgba(22,163,74,0.1); border-bottom: none; font-weight: 700; grid-template-columns: 1fr; text-align: center; padding: 8px 6px; color: var(--green); font-size: 10px; }
+[data-theme="dark"] .log-row.final-row { background: rgba(34,197,94,0.1); }
+.log-row.active-row { background: rgba(2,132,199,0.08); }
+[data-theme="dark"] .log-row.active-row { background: rgba(0,212,255,0.08); }
+.log-row.done-row { opacity: 0.55; }
+.step-num { color: var(--text-dim); font-size: 9px; }
+.dir-cw  { color: var(--accent2); font-weight: 700; }
+.dir-ccw { color: var(--accent);  font-weight: 700; }
+.angle-val  { color: var(--gold);  }
+.accum-val  { color: var(--green); }
+.remain-val { color: var(--text);  }
+.legend { display: flex; gap: 16px; padding: 8px 14px; font-family: 'Space Mono', monospace; font-size: 10px; border-top: 1px solid var(--border); background: var(--panel2); flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 5px; }
+.legend-box { width: 14px; height: 10px; border-radius: 2px; border: 1px solid; }
+
+/* ── Explanation ── */
+.explain-section { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; margin-bottom: 14px; box-shadow: 0 1px 4px var(--shadow); }
+.explain-section h3 { font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 2px; color: var(--accent2); text-transform: uppercase; margin-bottom: 10px; }
+.explain-text { font-size: 13px; line-height: 1.9; color: var(--text); margin-bottom: 14px; }
+.explain-text .hl  { color: var(--accent);  font-weight: 700; }
+.explain-text .hl2 { color: var(--accent2); font-weight: 700; }
+.explain-text .hl3 { color: var(--gold);    font-weight: 700; }
+.explain-text .hlg { color: var(--green);   font-weight: 700; }
+.explain-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.explain-card { background: var(--panel2); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.explain-card-head { font-family: 'Space Mono', monospace; font-size: 10px; font-weight: 700; letter-spacing: 1px; padding: 8px 14px; text-transform: uppercase; }
+.explain-card-head.gold   { background: rgba(217,119,6,0.12); color: var(--gold);   border-bottom: 1px solid rgba(217,119,6,0.2); }
+.explain-card-head.accent { background: rgba(2,132,199,0.10); color: var(--accent); border-bottom: 1px solid rgba(2,132,199,0.2); }
+.explain-card-head.green  { background: rgba(22,163,74,0.10); color: var(--green);  border-bottom: 1px solid rgba(22,163,74,0.2); }
+[data-theme="dark"] .explain-card-head.gold   { background: rgba(251,191,36,0.10); border-bottom-color: rgba(251,191,36,0.2); }
+[data-theme="dark"] .explain-card-head.accent { background: rgba(0,212,255,0.08);  border-bottom-color: rgba(0,212,255,0.2); }
+[data-theme="dark"] .explain-card-head.green  { background: rgba(34,197,94,0.08);  border-bottom-color: rgba(34,197,94,0.2); }
+.explain-card-body { padding: 12px 14px; font-size: 12px; line-height: 1.8; color: var(--text); }
+.explain-card-body .hl  { color: var(--accent);  font-weight: 700; font-family: 'Space Mono', monospace; }
+.explain-card-body .hl3 { color: var(--gold);    font-size: 11px; font-family: 'Space Mono', monospace; display: block; margin-top: 4px; }
+.explain-card-body .hlg { color: var(--green);   font-weight: 700; font-family: 'Space Mono', monospace; }
+
+/* ── Modal ── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,0.35); backdrop-filter: blur(4px);
+  align-items: center; justify-content: center; padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal-card {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 16px;
+  width: 100%; max-width: 560px; max-height: 80vh; overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2); display: flex; flex-direction: column;
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px; background: var(--panel2); border-bottom: 1px solid var(--border);
+}
+.modal-title { font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700; letter-spacing: 1px; color: var(--accent); text-transform: uppercase; }
+.modal-close { background: none; border: 1px solid var(--border); border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-size: 14px; color: var(--text-dim); display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.modal-close:hover { background: var(--accent2); color: #fff; border-color: var(--accent2); }
+.modal-body { overflow-y: auto; padding: 16px 18px; flex: 1; }
+.modal-body::-webkit-scrollbar { width: 4px; }
+.modal-body::-webkit-scrollbar-track { background: var(--panel2); }
+.modal-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* Modal content styles */
+.calc-table { width: 100%; border-collapse: collapse; font-family: 'Space Mono', monospace; font-size: 11px; margin-bottom: 12px; }
+.calc-table th { font-size: 9px; letter-spacing: 1px; color: var(--text-dim); text-transform: uppercase; padding: 5px 6px; border-bottom: 1.5px solid var(--border); text-align: right; }
+.calc-table th:first-child { text-align: center; }
+.calc-table td { padding: 5px 6px; border-bottom: 1px solid var(--border); text-align: right; }
+.calc-table td:first-child { text-align: center; color: var(--text-dim); }
+.calc-table tr.prerot-row td { color: var(--gold); font-weight: 700; }
+.calc-table tr.ccw-row td:nth-child(2) { color: var(--accent); font-weight: 700; }
+.calc-table tr.cw-row  td:nth-child(2) { color: var(--accent2); font-weight: 700; }
+.calc-table tr.active-tr { background: rgba(2,132,199,0.08); }
+[data-theme="dark"] .calc-table tr.active-tr { background: rgba(0,212,255,0.07); }
+.calc-result { background: var(--panel2); border-radius: 8px; padding: 10px 14px; font-family: 'Space Mono', monospace; font-size: 12px; border-left: 3px solid var(--accent); margin-top: 8px; }
+.calc-result .r-label { font-size: 9px; letter-spacing: 1px; color: var(--text-dim); text-transform: uppercase; margin-bottom: 4px; }
+.calc-result .r-eq { color: var(--text); line-height: 1.8; }
+.calc-result .r-val { color: var(--accent); font-weight: 700; font-size: 15px; }
+.calc-result .r-true { color: var(--text-dim); font-size: 10px; margin-top: 4px; }
+.calc-result .r-err  { color: var(--green); font-size: 10px; }
+.calc-hint { font-size: 11px; color: var(--text-dim); margin-bottom: 10px; line-height: 1.6; font-family: 'Space Mono', monospace; }
+
+@keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.pulsing { animation: pulse-dot 0.9s infinite; }
+
+/* ── Intro Panel ── */
+.intro-panel {
+  background: var(--panel);
+  border: 1.5px solid rgba(2,132,199,0.35);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 6px var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+.intro-panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2), var(--green));
+}
+[data-theme="dark"] .intro-panel { border-color: rgba(0,212,255,0.3); }
+.intro-badge {
+  display: inline-block;
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: rgba(2,132,199,0.1);
+  border: 1px solid rgba(2,132,199,0.3);
+  border-radius: 20px;
+  padding: 3px 10px;
+  margin-bottom: 10px;
+}
+[data-theme="dark"] .intro-badge { background: rgba(0,212,255,0.1); border-color: rgba(0,212,255,0.3); }
+.intro-main {
+  font-size: 14px;
+  line-height: 1.9;
+  color: var(--text);
+  margin-bottom: 14px;
+}
+.intro-main .hl-i   { color: var(--accent);  font-weight: 700; font-family: 'Space Mono', monospace; }
+.intro-main .hl-q   { color: var(--accent2); font-weight: 700; font-family: 'Space Mono', monospace; }
+.intro-main .hl-amp { color: var(--green);   font-weight: 700; }
+.intro-main .hl-ang { color: var(--gold);    font-weight: 700; }
+.intro-steps {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: var(--panel2);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+}
+.intro-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text);
+  flex: 1;
+  min-width: 140px;
+}
+.intro-step small { color: var(--text-dim); font-size: 10px; font-family: 'Space Mono', monospace; }
+.intro-num {
+  width: 22px; height: 22px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 50%;
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 1px;
+}
+.intro-arrow {
+  color: var(--text-dim);
+  font-size: 20px;
+  flex-shrink: 0;
+  align-self: center;
+}
+.intro-note {
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.7;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  margin-top: 4px;
+  font-family: 'Space Mono', monospace;
+}
+
+/* ── Button size variants ── */
+.btn-large { padding: 11px 22px; font-size: 13px; }
+.btn-small { padding: 6px 12px; font-size: 11px; opacity: 0.8; }
+.btn-small:hover { opacity: 1; }
+
+/* ── Read-only value badges (Zone 1) ── */
+.ro-row { width:100%; flex-basis:100%; display:flex; gap:10px; flex-wrap:wrap; margin-top:2px; }
+.ro-badge { display:flex; flex-direction:column; gap:4px; background:var(--panel2); border:1px solid var(--border); border-radius:8px; padding:8px 14px; min-width:90px; }
+.ro-badge-wide { flex:1; }
+.ro-label { font-size:9px; color:var(--text-dim); font-family:'Space Mono',monospace; letter-spacing:0.8px; text-transform:uppercase; }
+.ro-val { font-size:18px; font-weight:700; font-family:'Space Mono',monospace; color:var(--text); line-height:1; }
+.ro-val-sm { font-size:12px; }
+
+/* ── Zone guide hints ── */
+.zone-guide {
+  width: 100%;
+  flex-basis: 100%;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  background: rgba(100,116,139,0.07);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 12px;
+  line-height: 1.75;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+[data-theme="dark"] .zone-guide { background: rgba(100,116,139,0.1); }
+.zone-guide.guide-accent { background: rgba(2,132,199,0.07); border-left: 3px solid rgba(2,132,199,0.4); }
+.zone-guide.guide-orange { background: rgba(234,88,12,0.07);  border-left: 3px solid rgba(234,88,12,0.4); }
+[data-theme="dark"] .zone-guide.guide-accent { background: rgba(0,212,255,0.07); border-left-color: rgba(0,212,255,0.35); }
+[data-theme="dark"] .zone-guide.guide-orange { background: rgba(255,107,53,0.07); border-left-color: rgba(255,107,53,0.35); }
+.zone-guide-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; line-height: 1; }
+.zone-guide-text .g-em  { color: var(--accent);  font-weight: 700; }
+.zone-guide-text .g-em2 { color: var(--accent2); font-weight: 700; }
+.zone-guide-text .g-dim { color: var(--text-dim); font-size: 11px; }
+
+/* ── Verilog section ── */
+.vlog-section { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; margin-top: 16px; }
+.vlog-section h3 { font-family: 'Space Mono', monospace; font-size: 13px; color: var(--accent); margin: 0 0 10px 0; letter-spacing: 1px; }
+.vlog-intro { font-size: 12px; line-height: 1.75; color: var(--text); margin-bottom: 16px; }
+.vlog-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+@media (max-width: 720px) { .vlog-cards { grid-template-columns: 1fr; } }
+.vlog-card { background: var(--panel2); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.vlog-card-head { background: rgba(2,132,199,0.1); border-bottom: 1px solid var(--border); padding: 7px 12px; font-size: 11px; font-weight: 700; font-family: 'Space Mono', monospace; color: var(--accent); }
+[data-theme="dark"] .vlog-card-head { background: rgba(0,212,255,0.08); }
+.vlog-card-body { padding: 10px 12px; font-size: 11px; line-height: 1.75; color: var(--text); }
+.vlog-card-body code { background: var(--panel); border: 1px solid var(--border); border-radius: 3px; padding: 0 5px; font-family: 'Space Mono', monospace; font-size: 10px; color: var(--accent2); }
+/* Code block */
+.code-wrap { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; font-family: 'Space Mono', monospace; }
+.code-hdr { display: flex; align-items: center; gap: 12px; background: var(--panel2); border-bottom: 1px solid var(--border); padding: 8px 14px; }
+.code-fname { font-size: 12px; font-weight: 700; color: var(--accent); }
+.code-desc { font-size: 10px; color: var(--text-dim); }
+.code-block { margin: 0; padding: 16px; background: var(--panel); overflow-x: auto; font-size: 11px; line-height: 1.65; color: var(--text); white-space: pre; }
+.code-block .kw  { color: #7dd3fc; font-weight: 700; }  /* keywords */
+.code-block .c   { color: var(--text-dim); font-style: italic; } /* comments */
+.code-block .nm  { color: #fbbf24; }  /* numbers */
+.code-block .pu  { color: #c084fc; }  /* punctuation/operators */
+[data-theme="light"] .code-block .kw { color: #0369a1; }
+[data-theme="light"] .code-block .nm { color: #92400e; }
+[data-theme="light"] .code-block .pu { color: #7c3aed; }
+/* Verilog notes */
+.vlog-notes { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; }
+.vlog-note-item { font-size: 11px; line-height: 1.6; color: var(--text); background: var(--panel2); border-radius: 6px; padding: 7px 12px; }
+.vlog-note-item code { font-family: 'Space Mono', monospace; font-size: 10px; background: var(--panel); border: 1px solid var(--border); border-radius: 3px; padding: 0 4px; color: var(--accent); }
+
+/* ── K deep-dive section ── */
+.kdive-section { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; margin-top: 16px; }
+.kdive-section h3 { font-family: 'Space Mono', monospace; font-size: 13px; color: var(--green); margin: 0 0 16px 0; letter-spacing: 1px; }
+.kdive-body { display: flex; flex-direction: column; gap: 16px; }
+.kdive-step { display: flex; gap: 14px; align-items: flex-start; font-size: 12px; line-height: 1.75; color: var(--text); }
+.kdive-num { background: var(--green); color: #fff; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-family: 'Space Mono', monospace; font-weight: 700; font-size: 11px; flex-shrink: 0; margin-top: 2px; }
+[data-theme="dark"] .kdive-num { color: #0a0e1a; }
+.kdive-step code { background: var(--panel2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; font-family: 'Space Mono', monospace; font-size: 11px; color: var(--accent); }
+.kdive-analogy { background: rgba(251,191,36,0.08); border: 1px solid rgba(217,119,6,0.3); border-radius: 8px; padding: 12px 16px; font-size: 12px; line-height: 1.75; color: var(--text); }
+[data-theme="dark"] .kdive-analogy { background: rgba(251,191,36,0.06); border-color: rgba(251,191,36,0.25); }
+
+/* ── Transition callout between IQ and Zone 2 ── */
+.flow-transition {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 6px 0;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+  text-align: center;
+}
+.flow-transition .ft-badge {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: 10px;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+.flow-transition .ft-badge-big {
+  padding: 10px 24px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  text-align: center;
+  line-height: 1.5;
+  white-space: normal;
+}
+.flow-transition .ft-arrow { font-size: 18px; opacity: 0.4; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="header-tag">Algorithm Visualizer</div>
+    <h1>CORDIC</h1>
+    <div class="subtitle">IQ信号 → 事前回転チェック → 直角三角形の積み上げ → 振幅・位相</div>
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙 Dark</button>
+  </header>
+
+  <div class="intro-panel">
+    <div class="intro-badge">なぜCORDICはすごいのか？</div>
+    <div class="intro-body">
+      <p class="intro-main">
+        ある瞬間の信号から <span class="hl-i">I = A·cos(θ)</span> と <span class="hl-q">Q = A·sin(θ)</span> の
+        <strong>たった2つの数値</strong>をサンプリングするだけで、<span class="hl-amp">振幅 A</span> と <span class="hl-ang">位相 θ</span> の
+        <em>両方</em>を完全に復元できます。これが <strong>IQデモジュレーション</strong> の本質です。
+      </p>
+      <div class="intro-steps">
+        <div class="intro-step">
+          <span class="intro-num">①</span>
+          <span>2波形を<strong>同時サンプル</strong><br><small>Iチャネル(0°)とQチャネル(90°)</small></span>
+        </div>
+        <div class="intro-arrow">→</div>
+        <div class="intro-step">
+          <span class="intro-num">②</span>
+          <span><strong>CORDIC</strong>が処理<br><small>シフト＋加減算のみ・乗算ゼロ</small></span>
+        </div>
+        <div class="intro-arrow">→</div>
+        <div class="intro-step">
+          <span class="intro-num">③</span>
+          <span>振幅と位相を<strong>同時に出力</strong><br><small>A = √(I²+Q²)、θ = atan2(Q,I)</small></span>
+        </div>
+      </div>
+      <p class="intro-note">
+        CORDICは1959年Jack Volder考案。ハードウェアに乗算器がなかった時代に生まれた天才的アルゴリズムで、
+        GPS・ソフトウェア無線・FPGAなど現代の信号処理でも現役。直角三角形を<em>ビットシフトで</em>積み重ねることで
+        任意の角度への回転を実現します。
+      </p>
+    </div>
+  </div>
+
+  <!-- ZONE 1 — signal setup + IQ canvas combined -->
+  <div class="zone zone-settings">
+    <div class="zone-header">
+      <svg width="13" height="13" viewBox="0 0 13 13"><circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" stroke-width="1.5" fill="none"/><circle cx="6.5" cy="6.5" r="2" fill="currentColor"/></svg>
+      ZONE 1 — 信号設定
+      <span class="zone-tag">IQ サンプリング</span>
+    </div>
+    <div class="zone-body">
+
+      <!-- Guide hint -->
+      <div class="zone-guide guide-accent">
+        <div class="zone-guide-icon">🎯</div>
+        <div class="zone-guide-text">
+          <strong>解析したい正弦波を設定します。</strong>
+          グラフ上を <span class="g-em">クリック → 位相θを設定</span>、上下に <span class="g-em">ドラッグ ↕ → 振幅Aを調整</span>。<br>
+          <span class="g-dim">実際の受信機では A も θ も「未知」— IQの2値だけからCORDICが復元します。</span>
+        </div>
+      </div>
+
+      <!-- IQ canvas (full width) -->
+      <div style="width:100%;flex-basis:100%;">
+        <div class="panel-header" style="margin-bottom:4px;">
+          <div class="dot dot-gold pulsing"></div>
+          IQ SIGNAL
+          <span style="margin-left:auto;font-size:9px;color:var(--text-dim);">縦線 = サンプル点θ　／　青帯 = CORDIC直接収束範囲(±90°)</span>
+        </div>
+        <canvas id="iqCanvas" height="150" style="cursor:crosshair;"></canvas>
+        <div style="font-size:9px;color:var(--text-dim);padding:3px 8px 0;font-family:'Space Mono',monospace;">
+          💡 クリックで角度を設定 &nbsp;／&nbsp; ドラッグ ↕ で振幅を調整
+        </div>
+        <div class="iq-info-row">
+          <div class="iq-val"><span class="lbl">I = A·cos(θ)</span><span class="num i-color" id="iqI">—</span></div>
+          <div class="iq-val"><span class="lbl">Q = A·sin(θ)</span><span class="num q-color" id="iqQ">—</span></div>
+          <div class="iq-val"><span class="lbl">振幅 A</span><span class="num amp-color" id="iqAmp">—</span></div>
+          <div class="iq-val"><span class="lbl">角度 θ</span><span class="num ang-color" id="iqAngle">—</span></div>
+          <span style="margin-left:auto;font-size:9px;color:var(--text-dim);">↑ この (I, Q) をCORDICが処理</span>
+        </div>
+      </div>
+
+      <!-- Read-only value badges -->
+      <div class="ro-row">
+        <div class="ro-badge">
+          <span class="ro-label">目標角度 θ</span>
+          <span class="ro-val" id="angleDisplay" style="color:var(--accent);">60°</span>
+        </div>
+        <div class="ro-badge">
+          <span class="ro-label">入力振幅 A</span>
+          <span class="ro-val" id="ampDisplay">1.00</span>
+        </div>
+        <div class="ro-badge ro-badge-wide">
+          <span class="ro-label">CORDICへの入力</span>
+          <span class="ro-val ro-val-sm">
+            I = <span id="zoneI" style="color:var(--accent);">—</span>
+            &ensp;/&ensp;
+            Q = <span id="zoneQ" style="color:var(--accent2);">—</span>
+          </span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="flow-transition">
+    <span class="ft-arrow">↓</span>
+    <span class="ft-badge ft-badge-big">
+      <span style="font-size:11px;letter-spacing:1px;opacity:0.7;">CORDICへの入力</span><br>
+      <span style="font-size:16px;font-weight:700;letter-spacing:0;">
+        <span style="color:var(--accent);">I</span>
+        <span style="opacity:0.5;font-size:12px;"> と </span>
+        <span style="color:var(--accent2);">Q</span>
+        <span style="opacity:0.6;font-size:12px;"> の </span>
+        <strong>2値だけ</strong>
+      </span>
+    </span>
+    <span class="ft-arrow">↓</span>
+  </div>
+
+  <!-- ZONE 2 -->
+  <div class="zone zone-analysis">
+    <div class="zone-header">
+      <svg width="13" height="13" viewBox="0 0 13 13"><polygon points="1.5,11.5 6.5,1.5 11.5,11.5" stroke="currentColor" stroke-width="1.5" fill="none"/><line x1="6.5" y1="5" x2="6.5" y2="8" stroke="currentColor" stroke-width="1.5"/><circle cx="6.5" cy="9.5" r="0.8" fill="currentColor"/></svg>
+      ZONE 2 — CORDIC 解析実行
+      <span class="zone-tag">アルゴリズム制御</span>
+    </div>
+    <div class="zone-body">
+      <div class="zone-guide guide-orange">
+        <div class="zone-guide-icon">📐</div>
+        <div class="zone-guide-text">
+          <strong>直角三角形を1枚ずつ積み重ねて、目標角度 θ に収束させます。</strong><br>
+          各ステップで回転できる角度は <span class="g-em2">arctan(2⁻ⁱ) = 45°, 26.6°, 14.0°, 7.1°…</span> と半分ずつ小さくなります。<br>
+          <strong>📌 方向の決め方（θ は不要！）：</strong> 各ステップでは θ を見ず、現在の <span class="g-em2">y成分（Q相当）の符号だけ</span>を確認します：<br>
+          &nbsp;&nbsp;y &gt; 0（ベクトルが上向き）→ <span class="g-em2">−CW（時計回り）</span>で y を 0 に引き下げる<br>
+          &nbsp;&nbsp;y &lt; 0（ベクトルが下向き）→ <span class="g-em">+CCW（反時計回り）</span>で y を 0 に引き上げる<br>
+          y が 0 に収束したとき、累積回転角 = θ が確定します。<span class="g-dim">θ を知らなくても収束できるのがCORDICの肝です。</span><br>
+          <strong>📏 振幅の取り出し方：</strong> 直角三角形を重ねるたびに、ベクトルがほんの少し伸びます（斜辺 > 底辺）。ステップを重ねると合計で約 1.647 倍になりますが、この倍率は固定なので、最後に 0.607 倍（K補正）するだけで真の振幅Aが求まります。<a href="#kdive" class="g-em" style="font-size:10px;margin-left:6px;">なぜ？ → 詳細はページ下部↓</a><br>
+          <span class="g-dim">まず STEP を数回押して1ステップずつ確認 → 全ステップを一気に見るなら RUN、自動再生は AUTO。</span>
+        </div>
+      </div>
+      <div class="steps-group">
+        <label>反復回数</label>
+        <div class="steps-btns">
+          <button class="step-btn" data-n="6">6</button>
+          <button class="step-btn active" data-n="8">8</button>
+          <button class="step-btn" data-n="10">10</button>
+          <button class="step-btn" data-n="12">12</button>
+        </div>
+      </div>
+      <div class="ctrl-btns">
+        <button class="btn btn-secondary btn-large" id="stepBtn">STEP →</button>
+        <button class="btn btn-danger    btn-large" id="resetBtn">⟳ RESET</button>
+        <button class="btn btn-primary   btn-small" id="runBtn">▶ RUN</button>
+        <button class="btn btn-secondary btn-small" id="autoBtn">▶ AUTO</button>
+      </div>
+      <div class="speed-row">
+        <label>速度</label>
+        <input type="range" class="speed-slider" id="speedSlider" min="100" max="1500" value="700" step="100">
+        <label id="speedLabel" style="min-width:40px;">700ms</label>
+        <span style="font-family:'Space Mono',monospace;font-size:11px;color:var(--text-dim);" id="progressLabel">Step 0 / 0</span>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      </div>
+    </div>
+
+  <!-- Results — inside Zone 2 -->
+  <div class="result-section" style="margin:0 0 0 0;border-radius:0;border:none;border-top:1px solid var(--border);box-shadow:none;">
+    <div class="section-label">
+      <div class="dot"></div>
+      <span>収束結果 — カードをクリックで計算過程を表示</span>
+    </div>
+    <div class="result-grid">
+      <div class="result-card" data-calc="angle">
+        <div class="label">推定角度</div>
+        <div class="value" id="resAngle">—</div>
+        <div class="unit">deg</div>
+      </div>
+      <div class="result-card" style="cursor:default;" title="入力パラメータ">
+        <div class="label">目標角度</div>
+        <div class="value orange" id="resTarget">—</div>
+        <div class="unit">deg (設定値)</div>
+      </div>
+      <div class="result-card" data-calc="error">
+        <div class="label">残差</div>
+        <div class="value gold" id="resError">—</div>
+        <div class="unit">deg</div>
+      </div>
+      <div class="result-card" data-calc="cos">
+        <div class="label">cos(θ)推定</div>
+        <div class="value green" id="resCos">—</div>
+        <div class="unit">= I/A</div>
+      </div>
+      <div class="result-card" data-calc="sin">
+        <div class="label">sin(θ)推定</div>
+        <div class="value" style="color:var(--accent2)" id="resSin">—</div>
+        <div class="unit">= Q/A</div>
+      </div>
+      <div class="result-card amp-card" data-calc="amp">
+        <div class="label" style="color:var(--green);">振幅A (K補正後)</div>
+        <div class="value green" id="resAmp">—</div>
+        <div class="unit" style="color:var(--green);">= |v| × K</div>
+      </div>
+    </div>
+    <div class="conv-bars">
+      <div class="conv-row">
+        <span class="conv-label">角度収束</span>
+        <div class="error-bar"><div class="error-fill" id="errorFill" style="width:0%"></div></div>
+        <span class="conv-val" id="accuracyPct">—</span>
+      </div>
+      <div class="conv-row">
+        <span class="conv-label">振幅収束</span>
+        <div class="error-bar"><div class="error-fill amp-fill" id="ampErrorFill" style="width:0%"></div></div>
+        <span class="conv-val" id="ampAccuracyPct">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main grid — inside Zone 2 -->
+  <div class="main-grid" style="margin:0;border-top:1px solid var(--border);padding-top:14px;">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="dot pulsing"></div>
+        TRIANGLE STACKING — 直角三角形の積み上げ
+        <span style="margin-left:auto;font-size:9px;color:var(--text-dim);">緑 = K補正後の振幅A</span>
+      </div>
+      <div class="prerot-banner" id="prerotBanner">
+        <div class="prerot-dot" id="prerotDot"></div>
+        <span id="prerotText" style="color:var(--text-dim);">θ = ±90°以内 — 事前回転なし</span>
+      </div>
+      <canvas id="triCanvas" width="640" height="460"></canvas>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-box" style="background:rgba(2,132,199,0.25);border-color:var(--accent);"></div><span style="color:var(--accent)">+CCW回転</span></div>
+        <div class="legend-item"><div class="legend-box" style="background:rgba(234,88,12,0.25);border-color:var(--accent2);"></div><span style="color:var(--accent2)">−CW回転</span></div>
+        <div class="legend-item"><div class="legend-box" style="background:rgba(217,119,6,0.25);border-color:var(--gold);"></div><span style="color:var(--gold)">事前回転 ±90°</span></div>
+        <div class="legend-item"><div class="legend-box" style="background:rgba(22,163,74,0.25);border-color:var(--green);"></div><span style="color:var(--green)">K補正 → 振幅A</span></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><div class="dot dot-orange pulsing"></div>STEP LOG</div>
+      <div class="step-log" id="stepLog">
+        <div class="log-row header-row">
+          <span>#</span><span>DIR</span><span>角度</span><span>累積θ</span><span>残差</span><span>振幅est</span>
+        </div>
+      </div>
+    </div>
+  </div><!-- end main-grid -->
+  </div><!-- end zone-analysis -->
+
+  <!-- Explanation -->
+  <div class="explain-section">
+    <h3>// CORDICの動作原理</h3>
+    <div class="explain-text">
+      CORDICはベクトル (I, Q) を目標角度θに向けて回転させるアルゴリズムです。
+      毎ステップ <span class="hl">「今の角度より目標が上なら反時計回り、下なら時計回り」</span> の判定だけで進みます。
+      <span class="hl2">乗算を一切使わず</span>、ビットシフトと加減算だけで動作します。
+    </div>
+
+    <div class="explain-cards">
+      <div class="explain-card">
+        <div class="explain-card-head gold">① 収束範囲と事前回転</div>
+        <div class="explain-card-body">
+          CORDICが直接扱える角度は <strong>±90°以内</strong>（各ステップ角の総和 ≈ 99.7°）。<br>
+          それを超える角度は最初に ±90° 回転してから残りをCORDICに渡します。<br>
+          <span class="hl3">θ &gt; 90° → (A,0) を (0,A) に事前回転し、残り = θ−90°</span><br>
+          <span class="hl3">θ &lt; −90° → (A,0) を (0,−A) に事前回転し、残り = θ+90°</span>
+        </div>
+      </div>
+      <div class="explain-card">
+        <div class="explain-card-head accent">② 各ステップの計算</div>
+        <div class="explain-card-body">
+          ステップ i の回転角 = <strong>arctan(2⁻ⁱ)</strong>（45°→26.6°→14.0°…と半分ずつ減少）。<br>
+          <strong>方向 d の決め方（θ不要）：</strong> d = −sign(y)。y &gt; 0 なら CW(−1)、y &lt; 0 なら CCW(+1)。<br>
+          d が決まれば乗算ゼロで計算：<br>
+          <span class="hl">x' = x − d·y·2⁻ⁱ</span>　← y を 2⁻ⁱ 倍 = ビットシフトのみ<br>
+          <span class="hl">y' = y + d·x·2⁻ⁱ</span>　← x を 2⁻ⁱ 倍 = ビットシフトのみ
+        </div>
+      </div>
+      <div class="explain-card">
+        <div class="explain-card-head green">③ 斜辺の積み重ねと振幅のK補正</div>
+        <div class="explain-card-body">
+          各ステップで直角三角形を重ねるとき、<strong>新ベクトル = 斜辺</strong>になります。<br>
+          斜辺は底辺より必ず長く（比率 = √(1+2⁻²ⁱ)）、ステップごとにベクトルが伸び続けます。<br>
+          n ステップ後の合計伸び率 = <strong>1/K ≈ 1.647</strong>（K ≈ 0.6073 は計算済み固定値）。<br>
+          <span class="hlg">振幅A = |最終斜辺の長さ| × K</span>　で元の振幅を回収できます。<br>
+          三角形キャンバスの<span class="hlg">緑の点線と緑点</span>が K 補正後の正しい振幅円を示しています。<br>
+          STEP LOGの<span class="hlg">振幅est列</span>でステップごとの収束が確認でき、最終行「✓ 振幅確定」が答えです。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── K補正 詳細解説 ──────────────────────────────────────────────── -->
+  <div class="kdive-section" id="kdive">
+    <h3>// なぜ K で補正するのか — 斜辺の伸びを直す</h3>
+    <div class="kdive-body">
+
+      <div class="kdive-step">
+        <div class="kdive-num">①</div>
+        <div>
+          <strong>CORDICの回転は「疑似回転」</strong><br>
+          本来の純粋な回転はベクトルの長さを変えませんが、CORDICのステップは<br>
+          <code>x' = x − d·y·2⁻ⁱ</code>、<code>y' = y + d·x·2⁻ⁱ</code><br>
+          この計算は回転ではなく <strong>直角三角形を新たに重ねる</strong> 操作です。
+        </div>
+      </div>
+
+      <div class="kdive-step">
+        <div class="kdive-num">②</div>
+        <div>
+          <strong>ステップごとに斜辺が底辺より長くなる</strong><br>
+          直角三角形では必ず <em>斜辺 &gt; 底辺</em>。ステップ i での伸び率は：<br>
+          <code>√(1 + 2⁻²ⁱ)</code> 倍<br>
+          例：ステップ 0 → 底辺 1 に対して 2⁻⁰=1 の直角辺 → 斜辺 = √2 ≈ 1.414 倍<br>
+          &emsp;&emsp;ステップ 1 → 底辺 1 に対して 2⁻¹=0.5 の直角辺 → 斜辺 = √1.25 ≈ 1.118 倍
+        </div>
+      </div>
+
+      <div class="kdive-step">
+        <div class="kdive-num">③</div>
+        <div>
+          <strong>n ステップ後の合計伸び率は固定値</strong><br>
+          全ステップの伸び率を掛け合わせると：<br>
+          <code>1/K = √2 × √1.25 × √1.0625 × … ≈ 1.6468</code><br>
+          この値は <strong>ステップ数が決まれば一定</strong>（入力する角度 θ や振幅 A に依存しない）。<br>
+          だから K（≈ 0.6073）を一度だけ計算しておけば、どんな入力にも使い回せます。
+        </div>
+      </div>
+
+      <div class="kdive-step">
+        <div class="kdive-num">④</div>
+        <div>
+          <strong>補正は掛け算ひとつ</strong><br>
+          最終ベクトルの長さ |v| は真の振幅 A より 1/K 倍大きくなっているので：<br>
+          <code>A = |v| × K</code><br>
+          グラフの <span style="color:var(--green);font-weight:700">緑の点</span> が K 補正後の点です。
+          斜辺の先端（白点）から緑点への破線が「縮め戻し」を示しています。
+        </div>
+      </div>
+
+      <div class="kdive-analogy">
+        💡 <strong>直感的なたとえ：</strong>
+        コピー機で原稿を 8 回コピーするたびに 1.08 倍ずつ拡大されてしまうとします。
+        最終的に何倍になるかは計算できます（1.08⁸ ≈ 1.85 倍）。
+        なら縮小率 1/1.85 ≈ 0.54 をかければ元のサイズに戻せます。
+        CORDICのK補正はこれと同じ発想です。
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Verilog / FPGA 実装ガイド ────────────────────────────────────── -->
+  <div class="vlog-section" id="vlog">
+    <h3>// Verilog / FPGA 実装ガイド</h3>
+
+    <p class="vlog-intro">
+      CORDICは <strong>シフト＋加減算のみ</strong> で動作するため、乗算器を持たない古典的なFPGAでも実装できます。
+      以下に実装の要点と、実際に合成・動作するVerilogコードのサンプルを示します。
+    </p>
+
+    <div class="vlog-cards">
+
+      <div class="vlog-card">
+        <div class="vlog-card-head">① 固定小数点表現とビット幅</div>
+        <div class="vlog-card-body">
+          入力 I, Q は <code>signed [15:0]</code>（Q1.15形式 = 1符号ビット＋15小数ビット）。<br>
+          演算途中でビットが1〜2bit伸びるため、中間レジスタは <code>signed [17:0]</code> 程度に広げるか、
+          入力時に1〜2bit右シフトして余裕を持たせます。<br>
+          角度の内部表現: <strong>180° = 2¹⁴ = 16384</strong> とスケーリング。1LSB ≈ 0.011°。
+        </div>
+      </div>
+
+      <div class="vlog-card">
+        <div class="vlog-card-head">② あらかじめ保持する定数テーブル（ROM）</div>
+        <div class="vlog-card-body">
+          <strong>角度テーブル</strong>（ステップ数分だけ必要、起動後は変化なし → Quartus/Vivadoが自動的にLUTやBlock RAMに配置）：<br>
+          <code>ATAN[i] = arctan(2⁻ⁱ)</code> を固定小数点で保持。<br>
+          <strong>K補正係数</strong>（ステップ数が決まれば固定値）：<br>
+          <code>K = 0.6073... → Q1.15形式 = 19898 (16'sh4DBA)</code><br>
+          これらは <code>localparam</code> として宣言するだけで合成ツールが定数扱いします。
+        </div>
+      </div>
+
+      <div class="vlog-card">
+        <div class="vlog-card-head">③ アーキテクチャ選択：パイプライン vs 逐次処理</div>
+        <div class="vlog-card-body">
+          <strong>パイプライン型</strong>（下のサンプル）— N段のフリップフロップを連結。毎クロック1サンプル入力可能。レイテンシ = N_ITER サイクル。高スループットが必要な場合に向く。<br>
+          <strong>逐次処理型</strong>（ステートマシン）— 1段を N_ITER 回繰り返す。レイテンシ同じだがスループット 1/N_ITER。小面積が優先の場合に向く。<br>
+          <span style="color:var(--text-dim);font-size:11px;">SDRやFMラジオなどのリアルタイム処理 → パイプライン型推奨。</span>
+        </div>
+      </div>
+
+      <div class="vlog-card">
+        <div class="vlog-card-head">④ 実装上の注意点</div>
+        <div class="vlog-card-body">
+          <strong>入力象限チェック（事前回転）</strong>：|θ| &gt; 90° のとき I = A·cos(θ) &lt; 0 になる。CORDICの収束条件は x₀ ≥ 0 なので、入力時に象限を判定して90°回転してから渡す。<br>
+          <strong>ビットシフトの符号</strong>：<code>&gt;&gt;&gt;</code>（算術右シフト）を使用。論理シフト <code>&gt;&gt;</code> では符号ビットが化ける。<br>
+          <strong>K補正の乗算</strong>：K補正だけは乗算が必要。FPGAのDSPブロック（Multiplier）1個で実現可能。乗算を避けたい場合は K≈0.625 = 1/2 + 1/8 と近似してシフト加算で実装できます。
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Verilog code sample -->
+    <div class="code-wrap">
+      <div class="code-hdr">
+        <span class="code-fname">cordic_vectoring.v</span>
+        <span class="code-desc">IQ復調CORDICコア ／ パイプライン実装 ／ 8ステップ ／ 16bit固定小数点</span>
+      </div>
+<pre class="code-block"><span class="c">// ================================================================
+// cordic_vectoring.v  —  CORDIC Vectoring Mode (IQ Demodulation)
+//
+// 入力 : I_in = A·cos(θ),  Q_in = A·sin(θ)   [signed 16-bit Q1.15]
+// 出力 : phase     ≈ θ  [固定小数点, 180° = 16384]
+//        amplitude ≈ A  [K補正済み, Q1.15]
+// 方式 : N_ITER段パイプライン — 毎クロック1サンプル処理
+//        レイテンシ = N_ITER + 1 サイクル
+// ================================================================</span>
+<span class="kw">module</span> cordic_vectoring <span class="pu">#(</span>
+    <span class="kw">parameter</span> DW     = <span class="nm">16</span>,   <span class="c">// データビット幅</span>
+    <span class="kw">parameter</span> N_ITER = <span class="nm">8</span>     <span class="c">// 反復回数（精度）</span>
+<span class="pu">)(</span>
+    <span class="kw">input  wire</span>                    clk,
+    <span class="kw">input  wire</span>                    rst_n,
+    <span class="kw">input  wire</span>                    valid_i,
+    <span class="kw">input  wire signed</span> [DW<span class="pu">-1:0</span>]  I_in,    <span class="c">// Iサンプル</span>
+    <span class="kw">input  wire signed</span> [DW<span class="pu">-1:0</span>]  Q_in,    <span class="c">// Qサンプル</span>
+    <span class="kw">output reg</span>                     valid_o,
+    <span class="kw">output reg  signed</span> [DW<span class="pu">-1:0</span>]  phase,   <span class="c">// 推定位相θ</span>
+    <span class="kw">output reg  signed</span> [DW<span class="pu">-1:0</span>]  amplitude <span class="c">// 推定振幅A（K補正後）</span>
+<span class="pu">);</span>
+
+<span class="c">// ─── ① 定数テーブル（合成時にLUTまたはBlock RAMに配置）─────────</span>
+<span class="c">// arctan(2^-i) の固定小数点：スケール 180° = 2^14 = 16384</span>
+<span class="kw">localparam signed</span> [<span class="nm">15</span><span class="pu">:0</span>] ATAN[<span class="nm">0</span><span class="pu">:</span><span class="nm">7</span>] = <span class="pu">'</span>{
+    <span class="nm">16</span><span class="pu">'</span>sd<span class="nm">4096</span>,  <span class="c">// i=0 : arctan(2^-0) = 45.000°</span>
+    <span class="nm">16</span><span class="pu">'</span>sd<span class="nm">2419</span>,  <span class="c">// i=1 : arctan(2^-1) = 26.565°</span>
+    <span class="nm">16</span><span class="pu">'</span>sd<span class="nm">1278</span>,  <span class="c">// i=2 : arctan(2^-2) = 14.036°</span>
+    <span class="nm">16</span><span class="pu">'</span>sd<span class="nm"> 649</span>,  <span class="c">// i=3 : arctan(2^-3) =  7.125°</span>
+    <span class="nm">16</span><span class="pu">'</span>sd<span class="nm"> 326</span>,  <span class="c">// i=4 : arctan(2^-4) =  3.576°</span>
+    <span class="nm">16</span><span class="pu">'</span>sd<span class="nm"> 163</span>,  <span class="c">// i=5 : arctan(2^-5) =  1.790°</span>
+    <span class="nm">16</span><span class="pu">'</span>sd<span class="nm">  81</span>,  <span class="c">// i=6 : arctan(2^-6) =  0.895°</span>
+    <span class="nm">16</span><span class="pu">'</span>sd<span class="nm">  41</span>   <span class="c">// i=7 : arctan(2^-7) =  0.448°</span>
+<span class="pu">};</span>
+<span class="c">// K補正係数: K ≈ 0.6073  →  Q1.15形式: 0.6073 × 32768 ≈ 19898</span>
+<span class="kw">localparam signed</span> [DW<span class="pu">-1:0</span>] K_FACTOR = <span class="nm">16</span><span class="pu">'</span>sh<span class="nm">4DBA</span>;  <span class="c">// = 19898</span>
+
+<span class="c">// ─── ② パイプラインレジスタ（N_ITER + 1段）─────────────────────</span>
+<span class="kw">reg signed</span> [DW<span class="pu">-1:0</span>] xp[<span class="nm">0</span><span class="pu">:</span>N_ITER];  <span class="c">// x成分（最終的に振幅/K に相当）</span>
+<span class="kw">reg signed</span> [DW<span class="pu">-1:0</span>] yp[<span class="nm">0</span><span class="pu">:</span>N_ITER];  <span class="c">// y成分（0 に収束させる）</span>
+<span class="kw">reg signed</span> [DW<span class="pu">-1:0</span>] zp[<span class="nm">0</span><span class="pu">:</span>N_ITER];  <span class="c">// 累積角度（θ に収束）</span>
+<span class="kw">reg</span>                  vp[<span class="nm">0</span><span class="pu">:</span>N_ITER];  <span class="c">// valid信号</span>
+
+<span class="c">// ─── ③ ステージ0 : 入力ラッチ＆象限チェック（事前回転）─────────</span>
+<span class="c">// |θ| > 90° のとき I_in &lt; 0  →  先に ±90° 回転して x ≥ 0 を保証</span>
+<span class="kw">always</span> @(<span class="kw">posedge</span> clk) <span class="kw">begin</span>
+    vp[<span class="nm">0</span>] &lt;= valid_i;
+    <span class="kw">if</span> (!I_in[DW<span class="pu">-1</span>]) <span class="kw">begin</span>           <span class="c">// I >= 0: |θ| ≤ 90°, そのまま</span>
+        xp[<span class="nm">0</span>] &lt;= I_in;  yp[<span class="nm">0</span>] &lt;= Q_in;  zp[<span class="nm">0</span>] &lt;= <span class="nm">0</span>;
+    <span class="kw">end else if</span> (!Q_in[DW<span class="pu">-1</span>]) <span class="kw">begin</span>  <span class="c">// I < 0, Q >= 0: 第2象限 → +90°回転</span>
+        xp[<span class="nm">0</span>] &lt;=  Q_in;  yp[<span class="nm">0</span>] &lt;= -I_in;  zp[<span class="nm">0</span>] &lt;= <span class="nm">16</span><span class="pu">'</span>sd<span class="nm">8192</span>;  <span class="c">// +90°</span>
+    <span class="kw">end else begin</span>                    <span class="c">// I < 0, Q < 0: 第3象限 → -90°回転</span>
+        xp[<span class="nm">0</span>] &lt;= -Q_in;  yp[<span class="nm">0</span>] &lt;=  I_in;  zp[<span class="nm">0</span>] &lt;= -<span class="nm">16</span><span class="pu">'</span>sd<span class="nm">8192</span>; <span class="c">// -90°</span>
+    <span class="kw">end</span>
+<span class="kw">end</span>
+
+<span class="c">// ─── ④ CORDICパイプラインステージ（generate で N_ITER 段展開）────</span>
+<span class="c">// 乗算なし : x >>> i  は算術右シフト = x × 2^-i</span>
+<span class="c">// 方向判定 : y の符号ビット1つだけ見ればよい（θ を知らなくてよい）</span>
+<span class="kw">genvar</span> i;
+<span class="kw">generate</span>
+    <span class="kw">for</span> (i = <span class="nm">0</span>; i &lt; N_ITER; i = i + <span class="nm">1</span>) <span class="kw">begin</span> : stage
+        <span class="kw">always</span> @(<span class="kw">posedge</span> clk) <span class="kw">begin</span>
+            vp[i<span class="pu">+1</span>] &lt;= vp[i];
+            <span class="kw">if</span> (yp[i] &gt;= <span class="nm">0</span>) <span class="kw">begin</span>       <span class="c">// y ≥ 0 → CW回転（yを引き下げる）</span>
+                xp[i<span class="pu">+1</span>] &lt;= xp[i] + (yp[i] <span class="pu">&gt;&gt;&gt;</span> i);
+                yp[i<span class="pu">+1</span>] &lt;= yp[i] - (xp[i] <span class="pu">&gt;&gt;&gt;</span> i);
+                zp[i<span class="pu">+1</span>] &lt;= zp[i] + ATAN[i];
+            <span class="kw">end else begin</span>               <span class="c">// y &lt; 0 → CCW回転（yを引き上げる）</span>
+                xp[i<span class="pu">+1</span>] &lt;= xp[i] - (yp[i] <span class="pu">&gt;&gt;&gt;</span> i);
+                yp[i<span class="pu">+1</span>] &lt;= yp[i] + (xp[i] <span class="pu">&gt;&gt;&gt;</span> i);
+                zp[i<span class="pu">+1</span>] &lt;= zp[i] - ATAN[i];
+            <span class="kw">end</span>
+        <span class="kw">end</span>
+    <span class="kw">end</span>
+<span class="kw">endgenerate</span>
+
+<span class="c">// ─── ⑤ 出力ステージ : K補正して振幅を復元 ───────────────────────</span>
+<span class="c">// xp[N_ITER] ≈ A/K  →  × K_FACTOR(Q1.15) >> 15  で真の A が得られる</span>
+<span class="c">// DSPブロック1個分の乗算（FPGAの場合は自動的にDSPスライスに配置）</span>
+<span class="kw">always</span> @(<span class="kw">posedge</span> clk) <span class="kw">begin</span>
+    valid_o   &lt;= vp[N_ITER];
+    phase     &lt;= zp[N_ITER];                              <span class="c">// θ (180°=16384)</span>
+    amplitude &lt;= (xp[N_ITER] * K_FACTOR) <span class="pu">&gt;&gt;&gt;</span> (DW - <span class="nm">1</span>);  <span class="c">// K補正済み振幅</span>
+<span class="kw">end</span>
+
+<span class="kw">endmodule</span></pre>
+    </div><!-- end code-wrap -->
+
+    <div class="vlog-notes">
+      <div class="vlog-note-item">📐 <strong>角度の読み方：</strong> <code>phase</code> 出力をdegreeに変換 → <code>θ[°] = phase × 180.0 / 16384</code></div>
+      <div class="vlog-note-item">🔧 <strong>ステップ数の変更：</strong> <code>N_ITER</code> パラメータを変えるだけ。8→12にすると精度が上がりLUTが増える。</div>
+      <div class="vlog-note-item">⚡ <strong>合成結果の目安（Xilinx 7-series）：</strong> N_ITER=8, DW=16 で約 320 LUT + 1 DSP48E ／ Fmax ≈ 250MHz</div>
+      <div class="vlog-note-item">💡 <strong>K補正を乗算なしで近似：</strong> K ≈ 0.625 = 1/2 + 1/8 → <code>(x >> 1) + (x >> 3)</code> で誤差 ≈ 3%</div>
+    </div>
+
+  </div><!-- end vlog-section -->
+
+</div>
+
+<!-- ── MODAL ── -->
+<div class="modal-overlay" id="calcModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">計算詳細</span>
+      <button class="modal-close" id="modalClose">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+// ─── roundRect polyfill ────────────────────────────────────────────────────
+(function(){
+  const p = CanvasRenderingContext2D.prototype;
+  if (!p.roundRect) {
+    p.roundRect = function(x,y,w,h,r){
+      r = Math.min(r||0, w/2, h/2);
+      this.moveTo(x+r,y); this.lineTo(x+w-r,y); this.quadraticCurveTo(x+w,y,x+w,y+r);
+      this.lineTo(x+w,y+h-r); this.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+      this.lineTo(x+r,y+h); this.quadraticCurveTo(x,y+h,x,y+h-r);
+      this.lineTo(x,y+r); this.quadraticCurveTo(x,y,x+r,y); this.closePath();
+    };
+  }
+})();
+
+// ─── Theme ────────────────────────────────────────────────────────────────
+function isDark() { return document.documentElement.dataset.theme === 'dark'; }
+function toggleTheme() {
+  const dark = !isDark();
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  document.getElementById('themeToggle').textContent = dark ? '☀️ Light' : '🌙 Dark';
+  fullUpdate();
+}
+function T() {
+  const d = isDark();
+  return {
+    bg:     d ? '#0a0e1a' : '#f8fafc',
+    grid:   d ? 'rgba(30,58,95,0.4)'     : 'rgba(100,116,139,0.18)',
+    axis:   d ? 'rgba(100,116,139,0.35)' : 'rgba(100,116,139,0.5)',
+    text:   d ? '#e2e8f0'  : '#1e293b',
+    dim:    d ? 'rgba(100,116,139,0.7)' : 'rgba(100,116,139,0.8)',
+    accent: d ? '#00d4ff'  : '#0284c7',
+    a2:     d ? '#ff6b35'  : '#ea580c',
+    gold:   d ? '#fbbf24'  : '#d97706',
+    green:  d ? '#22c55e'  : '#16a34a',
+    af: (a) => d ? `rgba(0,212,255,${a})`   : `rgba(2,132,199,${a})`,
+    a2f:(a) => d ? `rgba(255,107,53,${a})`  : `rgba(234,88,12,${a})`,
+    gf: (a) => d ? `rgba(251,191,36,${a})`  : `rgba(217,119,6,${a})`,
+    grf:(a) => d ? `rgba(34,197,94,${a})`   : `rgba(22,163,74,${a})`,
+  };
+}
+
+// ─── CORDIC core ───────────────────────────────────────────────────────────
+const CORDIC_ANGLES = [];
+for (let i=0;i<32;i++) CORDIC_ANGLES.push(Math.atan(Math.pow(2,-i))*180/Math.PI);
+
+function computeK(n) {
+  let k=1; for(let i=0;i<n;i++) k*=1/Math.sqrt(1+Math.pow(2,-2*i)); return k;
+}
+function getPreRotation(deg, amp) {
+  if (deg > 90)  return {x0:0,      y0:amp,  adj:deg-90, pre:90};
+  if (deg < -90) return {x0:0,      y0:-amp, adj:deg+90, pre:-90};
+  return              {x0:amp,    y0:0,    adj:deg,    pre:0};
+}
+function computeCORDIC(deg, amp, n) {
+  const {x0,y0,adj,pre} = getPreRotation(deg,amp);
+  const steps=[]; let x=x0,y=y0,accum=pre,remain=adj;
+  for(let i=0;i<n;i++){
+    const angle=CORDIC_ANGLES[i], d=remain>=0?1:-1, s=Math.pow(2,-i);
+    const xP=x,yP=y;
+    x=x-d*y*s; y=yP+d*xP*s;
+    accum+=d*angle; remain-=d*angle;
+    steps.push({i:i+1,direction:d,angle,accum,remain,x,y,xPre:xP,yPre:yP});
+  }
+  return {steps, pre};
+}
+
+// ─── State ────────────────────────────────────────────────────────────────
+let state = {steps:[],currentStep:0,autoInterval:null,nSteps:8,targetDeg:60,amplitude:1.0,pre:0};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────
+function norm2(v){const l=Math.sqrt(v[0]*v[0]+v[1]*v[1]);return l<1e-9?[1,0]:[v[0]/l,v[1]/l];}
+function arrowHead(ctx,sx,sy,ex,ey,color,size){
+  size=size||10; const a=Math.atan2(ey-sy,ex-sx);
+  ctx.fillStyle=color; ctx.beginPath(); ctx.moveTo(ex,ey);
+  ctx.lineTo(ex-size*Math.cos(a-0.4),ey-size*Math.sin(a-0.4));
+  ctx.lineTo(ex-size*Math.cos(a+0.4),ey-size*Math.sin(a+0.4));
+  ctx.closePath(); ctx.fill();
+}
+function rightAngleMark(ctx,corner,pa,pb,size){
+  const da=norm2([pa[0]-corner[0],pa[1]-corner[1]]);
+  const db=norm2([pb[0]-corner[0],pb[1]-corner[1]]);
+  const p1=[corner[0]+da[0]*size,corner[1]+da[1]*size];
+  const p2=[p1[0]+db[0]*size,p1[1]+db[1]*size];
+  const p3=[corner[0]+db[0]*size,corner[1]+db[1]*size];
+  ctx.strokeStyle='rgba(120,120,120,0.6)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(p1[0],p1[1]); ctx.lineTo(p2[0],p2[1]); ctx.lineTo(p3[0],p3[1]); ctx.stroke();
+}
+
+// ─── IQ Canvas ────────────────────────────────────────────────────────────
+const iqCanvas=document.getElementById('iqCanvas');
+const iqCtx=iqCanvas.getContext('2d');
+
+// IQ canvas interaction state
+const iqInteract = { hoverX: null, isDragging: false, dragStartY: 0, dragStartAmp: 1.0 };
+
+function iqPixelToAngle(px) {
+  const margin=38, plotW=iqCanvas.width - margin*2;
+  return Math.max(-179, Math.min(179, Math.round((px - margin) / plotW * 360 - 180)));
+}
+
+function drawIQCanvas(){
+  const c=iqCanvas.closest('.panel')||iqCanvas.parentElement;
+  const W=Math.max(c.clientWidth,300)||600;
+  iqCanvas.width=W; iqCanvas.height=150;
+  const t=T(), H=150, cy=H/2, amp=state.amplitude, tRad=state.targetDeg*Math.PI/180;
+  iqCtx.clearRect(0,0,W,H);
+  iqCtx.fillStyle=t.bg; iqCtx.fillRect(0,0,W,H);
+
+  const ys=H*0.33, margin=38, plotW=W-margin*2;
+  const tX=v=>margin+(v+Math.PI)/(2*Math.PI)*plotW;
+  const vY=v=>cy-v*ys;
+
+  // ±90° shade
+  const x90L=tX(-Math.PI/2),x90R=tX(Math.PI/2);
+  iqCtx.fillStyle=t.af(0.06); iqCtx.fillRect(x90L,0,x90R-x90L,H-14);
+  [x90L,x90R].forEach(x=>{
+    iqCtx.strokeStyle=t.af(0.25); iqCtx.lineWidth=1; iqCtx.setLineDash([3,3]);
+    iqCtx.beginPath(); iqCtx.moveTo(x,0); iqCtx.lineTo(x,H-14); iqCtx.stroke(); iqCtx.setLineDash([]);
+  });
+  iqCtx.fillStyle=t.af(0.4); iqCtx.font='8px Space Mono,monospace';
+  iqCtx.fillText('CORDIC直接範囲',x90L+4,10);
+
+  // Grid
+  [cy-ys,cy,cy+ys].forEach(y=>{
+    iqCtx.strokeStyle=t.grid; iqCtx.lineWidth=0.5;
+    iqCtx.beginPath(); iqCtx.moveTo(0,y); iqCtx.lineTo(W,y); iqCtx.stroke();
+  });
+  iqCtx.fillStyle=t.dim; iqCtx.font='9px Space Mono,monospace';
+  iqCtx.fillText('+A',2,vY(amp)+4); iqCtx.fillText('0',2,cy+4); iqCtx.fillText('-A',2,vY(-amp)+4);
+
+  // Ticks
+  [[-Math.PI,'-180°'],[-Math.PI/2,'-90°'],[0,'0°'],[Math.PI/2,'90°'],[Math.PI,'180°']].forEach(([v,l])=>{
+    iqCtx.fillStyle=t.dim; iqCtx.font='9px Space Mono,monospace'; iqCtx.fillText(l,tX(v)-12,H-3);
+  });
+
+  // I wave
+  iqCtx.strokeStyle=t.af(0.8); iqCtx.lineWidth=2;
+  iqCtx.beginPath();
+  for(let px=0;px<=plotW;px++){
+    const v=-Math.PI+(px/plotW)*2*Math.PI;
+    px===0?iqCtx.moveTo(tX(v),vY(amp*Math.cos(v))):iqCtx.lineTo(tX(v),vY(amp*Math.cos(v)));
+  }
+  iqCtx.stroke();
+
+  // Q wave
+  iqCtx.strokeStyle=t.a2f(0.8); iqCtx.lineWidth=2;
+  iqCtx.beginPath();
+  for(let px=0;px<=plotW;px++){
+    const v=-Math.PI+(px/plotW)*2*Math.PI;
+    px===0?iqCtx.moveTo(tX(v),vY(amp*Math.sin(v))):iqCtx.lineTo(tX(v),vY(amp*Math.sin(v)));
+  }
+  iqCtx.stroke();
+
+  iqCtx.font='bold 10px Space Mono,monospace';
+  iqCtx.fillStyle=t.accent; iqCtx.fillText('I=cos',W-margin+2,vY(amp)+4);
+  iqCtx.fillStyle=t.a2;     iqCtx.fillText('Q=sin',W-margin+2,cy+14);
+
+  // Cursor
+  const cx2=tX(tRad);
+  iqCtx.strokeStyle=t.gf(0.9); iqCtx.lineWidth=1.8; iqCtx.setLineDash([4,3]);
+  iqCtx.beginPath(); iqCtx.moveTo(cx2,0); iqCtx.lineTo(cx2,H-14); iqCtx.stroke(); iqCtx.setLineDash([]);
+
+  const iVal=amp*Math.cos(tRad), qVal=amp*Math.sin(tRad);
+  [[iVal,t.accent,'I'],[qVal,t.a2,'Q']].forEach(([v,col,lbl])=>{
+    const dotY=vY(v);
+    // glow
+    const g=iqCtx.createRadialGradient(cx2,dotY,0,cx2,dotY,9);
+    g.addColorStop(0,col); g.addColorStop(1,'transparent');
+    iqCtx.fillStyle=g; iqCtx.beginPath(); iqCtx.arc(cx2,dotY,9,0,Math.PI*2); iqCtx.fill();
+    // dot
+    iqCtx.fillStyle=col; iqCtx.beginPath(); iqCtx.arc(cx2,dotY,5,0,Math.PI*2); iqCtx.fill();
+    // label
+    iqCtx.font='bold 10px Space Mono,monospace';
+    const valStr=`${lbl} = ${v.toFixed(3)}`;
+    const lw=iqCtx.measureText(valStr).width;
+    const lx=cx2+10+lw < W-4 ? cx2+10 : cx2-lw-10;
+    const ly=dotY+(v>=0?-7:13);
+    // bg pill
+    iqCtx.fillStyle=isDark()?'rgba(10,14,26,0.75)':'rgba(248,250,252,0.8)';
+    iqCtx.beginPath(); iqCtx.roundRect(lx-3,ly-10,lw+6,14,3); iqCtx.fill();
+    iqCtx.fillStyle=col; iqCtx.fillText(valStr,lx,ly);
+  });
+
+  document.getElementById('iqI').textContent    =iVal.toFixed(4);
+  document.getElementById('iqQ').textContent    =qVal.toFixed(4);
+  document.getElementById('iqAmp').textContent  =amp.toFixed(3);
+  document.getElementById('iqAngle').textContent=state.targetDeg+'°';
+  document.getElementById('zoneI').textContent  =iVal.toFixed(4);
+  document.getElementById('zoneQ').textContent  =qVal.toFixed(4);
+
+  // ── Hover preview (no drag) ─────────────────────────────────────────────
+  if(iqInteract.hoverX !== null && !iqInteract.isDragging){
+    const hx = iqInteract.hoverX;
+    const hDeg = iqPixelToAngle(hx);
+    iqCtx.strokeStyle = isDark()?'rgba(255,255,255,0.28)':'rgba(0,0,0,0.22)';
+    iqCtx.lineWidth=1; iqCtx.setLineDash([3,3]);
+    iqCtx.beginPath(); iqCtx.moveTo(hx,0); iqCtx.lineTo(hx,H-14); iqCtx.stroke(); iqCtx.setLineDash([]);
+    iqCtx.font='9px Space Mono,monospace';
+    iqCtx.fillStyle=isDark()?'rgba(255,255,255,0.55)':'rgba(0,0,0,0.55)';
+    const lbl=hDeg+'°'; const lw2=iqCtx.measureText(lbl).width;
+    const lx2=Math.min(hx+4, W-lw2-4);
+    iqCtx.fillText(lbl, lx2, 18);
+  }
+
+  // ── Drag active: amplitude level line ───────────────────────────────────
+  if(iqInteract.isDragging){
+    const aY = vY(amp);
+    iqCtx.strokeStyle=t.grf(0.6); iqCtx.lineWidth=1; iqCtx.setLineDash([4,3]);
+    iqCtx.beginPath(); iqCtx.moveTo(0,aY); iqCtx.lineTo(W,aY); iqCtx.stroke(); iqCtx.setLineDash([]);
+    iqCtx.fillStyle=t.green; iqCtx.font='bold 9px Space Mono,monospace';
+    iqCtx.fillText('A = '+amp.toFixed(2), margin+4, aY-5);
+  }
+}
+
+// ─── Triangle Canvas ───────────────────────────────────────────────────────
+const triCanvas=document.getElementById('triCanvas');
+const triCtx=triCanvas.getContext('2d');
+
+function drawTriangleCanvas(steps, currentStep){
+  const c2=triCanvas.closest('.panel')||triCanvas.parentElement;
+  const W=Math.max(c2.clientWidth,280)||500;
+  const H=Math.max(300,Math.min(W*0.85,480));
+  triCanvas.width=W; triCanvas.height=H;
+  const t=T(), ctx=triCtx;
+  const cx=W*0.48, cy=H*0.50, amp=state.amplitude;
+  const scale=Math.min(W,H)*0.33/Math.max(1.0,amp*1.05);
+
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle=t.bg; ctx.fillRect(0,0,W,H);
+
+  // Grid circles
+  for(let r=0.25;r<=Math.max(1.75,amp*1.1);r+=0.25){
+    const isAmp=Math.abs(r-amp)<0.01, isUnit=Math.abs(r-1.0)<0.01;
+    ctx.strokeStyle=isAmp?t.grf(0.5):isUnit?t.af(0.2):t.grid;
+    ctx.lineWidth=isAmp?1.8:isUnit?1.2:0.5;
+    ctx.setLineDash(isAmp?[5,3]:isUnit?[4,4]:[]);
+    ctx.beginPath(); ctx.arc(cx,cy,scale*r,0,Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
+    if(r<=amp+0.01){
+      ctx.fillStyle=isAmp?t.grf(0.8):t.dim; ctx.font=isAmp?'bold 9px Space Mono,monospace':'8px Space Mono,monospace';
+      ctx.fillText(r.toFixed(2),cx+scale*r+2,cy-3);
+    }
+  }
+  ctx.fillStyle=t.grf(0.75); ctx.font='bold 9px Space Mono,monospace';
+  ctx.fillText(`r=A=${amp.toFixed(2)}`,cx+scale*amp*0.62,cy-scale*amp*0.62-6);
+
+  // Axes
+  ctx.strokeStyle=t.axis; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(0,cy); ctx.lineTo(W,cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx,0); ctx.lineTo(cx,H); ctx.stroke();
+  ctx.fillStyle=t.dim; ctx.font='10px Space Mono,monospace';
+  ctx.fillText('Re',W-22,cy-6); ctx.fillText('Im',cx+6,14);
+
+  const tRad=state.targetDeg*Math.PI/180;
+  const {x0,y0,pre}=getPreRotation(state.targetDeg,amp);
+
+  // Target vector (dashed gold)
+  const tEx=cx+amp*Math.cos(tRad)*scale, tEy=cy-amp*Math.sin(tRad)*scale;
+  ctx.strokeStyle=t.gf(0.45); ctx.lineWidth=1.5; ctx.setLineDash([6,4]);
+  ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(tEx,tEy); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle=t.gf(0.6); ctx.font='10px Space Mono,monospace';
+  ctx.fillText(`目標 ${state.targetDeg}°`,cx+amp*Math.cos(tRad)*scale*1.18-14,cy-amp*Math.sin(tRad)*scale*1.18+4);
+
+  // Pre-rotation
+  if(pre!==0){
+    ctx.fillStyle=t.gf(0.3);
+    ctx.beginPath(); ctx.arc(cx+amp*scale,cy,5,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=t.gf(0.45); ctx.font='9px Space Mono,monospace';
+    ctx.fillText('(A,0)',cx+amp*scale+5,cy-8);
+    ctx.strokeStyle=t.gf(0.7); ctx.lineWidth=2; ctx.setLineDash([4,3]);
+    ctx.beginPath();
+    pre===90?ctx.arc(cx,cy,amp*scale,0,-Math.PI/2,true):ctx.arc(cx,cy,amp*scale,0,Math.PI/2,false);
+    ctx.stroke(); ctx.setLineDash([]);
+    const ex2=cx, ey2=cy-(pre>0?amp*scale:-amp*scale);
+    ctx.fillStyle=t.gf(0.85);
+    ctx.beginPath(); ctx.moveTo(ex2,ey2); ctx.lineTo(ex2-8,ey2+(pre>0?10:-10)); ctx.lineTo(ex2+8,ey2+(pre>0?10:-10)); ctx.closePath(); ctx.fill();
+    const la=pre>0?-Math.PI/4:Math.PI/4;
+    const lx2=cx+Math.cos(la)*amp*scale*0.68, ly2=cy+Math.sin(la)*amp*scale*0.68;
+    const preLabel=pre>0?'+90° 事前回転':'−90° 事前回転';
+    ctx.font='bold 9px Space Mono,monospace';
+    const tw2=ctx.measureText(preLabel).width;
+    ctx.fillStyle=t.gf(0.12);
+    ctx.beginPath(); ctx.roundRect(lx2-tw2/2-4,ly2-10,tw2+8,15,3); ctx.fill();
+    ctx.fillStyle=t.gf(0.9); ctx.fillText(preLabel,lx2-tw2/2,ly2+2);
+    ctx.fillStyle=t.gf(0.4);
+    ctx.beginPath(); ctx.arc(cx+x0*scale,cy-y0*scale,4,0,Math.PI*2); ctx.fill();
+  }
+
+  if(steps.length===0||currentStep===0){
+    const ex3=cx+x0*scale, ey3=cy-y0*scale;
+    ctx.strokeStyle=t.accent; ctx.lineWidth=2.5;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(ex3,ey3); ctx.stroke();
+    arrowHead(ctx,cx,cy,ex3,ey3,t.accent);
+    ctx.fillStyle=t.dim; ctx.font='10px Space Mono,monospace';
+    ctx.fillText(pre!==0?'事前回転済 → STEP待ち':'STEP待ち',8,H-8);
+    return;
+  }
+
+  // Triangles
+  const reveal=Math.min(currentStep,steps.length);
+  for(let s=0;s<reveal;s++){
+    const st=steps[s], isCur=(s===reveal-1);
+    const ox=cx,oy=cy;
+    const px=cx+st.xPre*scale, py=cy-st.yPre*scale;
+    const qx=cx+st.x*scale,    qy=cy-st.y*scale;
+    const fa=isCur?0.28:(0.04+0.04*(s/steps.length));
+    const sa=isCur?0.85:0.22;
+    const ccw=st.direction>0;
+
+    ctx.fillStyle=ccw?t.af(fa):t.a2f(fa*1.2);
+    ctx.beginPath(); ctx.moveTo(ox,oy); ctx.lineTo(px,py); ctx.lineTo(qx,qy); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle=ccw?t.af(sa):t.a2f(sa); ctx.lineWidth=isCur?1.5:0.7;
+    ctx.beginPath(); ctx.moveTo(ox,oy); ctx.lineTo(px,py); ctx.lineTo(qx,qy); ctx.closePath(); ctx.stroke();
+
+    if(isCur){
+      rightAngleMark(ctx,[px,py],[ox,oy],[qx,qy],7);
+      const pA=Math.atan2(st.yPre,st.xPre), cA=Math.atan2(st.y,st.x);
+      const arcR=scale*Math.max(0.06,0.18-s*0.010);
+      ctx.strokeStyle=ccw?t.af(0.9):t.a2f(0.9); ctx.lineWidth=2;
+      ctx.beginPath();
+      ccw?ctx.arc(cx,cy,arcR,-cA,-pA,true):ctx.arc(cx,cy,arcR,-pA,-cA,false);
+      ctx.stroke();
+      const mid=(pA+cA)/2;
+      const lx3=cx+Math.cos(mid)*(arcR+15), ly3=cy-Math.sin(mid)*(arcR+15);
+      const at=`i=${st.i-1}: ${st.angle.toFixed(2)}°`;
+      ctx.font='bold 10px Space Mono,monospace';
+      const tw3=ctx.measureText(at).width;
+      ctx.fillStyle=ccw?t.af(0.12):t.a2f(0.12);
+      ctx.beginPath(); ctx.roundRect(lx3-tw3/2-4,ly3-11,tw3+8,15,3); ctx.fill();
+      ctx.fillStyle=ccw?t.accent:t.a2; ctx.fillText(at,lx3-tw3/2,ly3+1);
+    }
+  }
+
+  // Current vector
+  const cur=steps[reveal-1];
+  const vcol=cur.direction>0?t.accent:t.a2;
+  const ex4=cx+cur.x*scale, ey4=cy-cur.y*scale;
+  ctx.strokeStyle=vcol; ctx.lineWidth=2.8;
+  ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(ex4,ey4); ctx.stroke();
+  arrowHead(ctx,cx,cy,ex4,ey4,vcol);
+  const gr=ctx.createRadialGradient(ex4,ey4,0,ex4,ey4,10);
+  gr.addColorStop(0,vcol); gr.addColorStop(1,'transparent');
+  ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(ex4,ey4,10,0,Math.PI*2); ctx.fill();
+
+  // K-correction
+  const K=computeK(state.nSteps);
+  const vmag=Math.sqrt(cur.x*cur.x+cur.y*cur.y);
+  const kX=cur.x*K, kY=cur.y*K;
+  const kEx=cx+kX*scale, kEy=cy-kY*scale;
+  ctx.strokeStyle=t.grf(0.75); ctx.lineWidth=1.8; ctx.setLineDash([4,3]);
+  ctx.beginPath(); ctx.moveTo(ex4,ey4); ctx.lineTo(kEx,kEy); ctx.stroke(); ctx.setLineDash([]);
+  arrowHead(ctx,ex4,ey4,kEx,kEy,t.green,8);
+  ctx.fillStyle=t.green; ctx.beginPath(); ctx.arc(kEx,kEy,6,0,Math.PI*2); ctx.fill();
+
+  // K-correction labels
+  const ang2=Math.atan2(kY,kX);
+  const midX=(ex4+kEx)/2, midY=(ey4+kEy)/2;
+  const px2=-Math.sin(ang2)*14, py2=Math.cos(ang2)*14;
+  const kLabel=`×K(${K.toFixed(4)})`;
+  ctx.font='bold 9px Space Mono,monospace';
+  const kLW=ctx.measureText(kLabel).width;
+  ctx.fillStyle=t.grf(0.12);
+  ctx.beginPath(); ctx.roundRect(midX+px2-kLW/2-4,midY+py2-11,kLW+8,15,3); ctx.fill();
+  ctx.fillStyle=t.green; ctx.fillText(kLabel,midX+px2-kLW/2,midY+py2+1);
+
+  const tipOffX=ex4>cx?7:-80, tipOffY=ey4<cy?-22:14;
+  ctx.fillStyle=t.dim; ctx.font='9px Space Mono,monospace';
+  ctx.fillText(`|v|=${vmag.toFixed(4)}`,ex4+tipOffX,ey4+tipOffY);
+  ctx.fillText(`= A/K`,ex4+tipOffX,ey4+tipOffY+12);
+
+  const kLX=kEx>cx?kEx+8:kEx-80, kLY=kEy<cy?kEy-8:kEy+18;
+  ctx.fillStyle=t.green; ctx.font='bold 9px Space Mono,monospace';
+  ctx.fillText(`振幅A=${(Math.sqrt(kX*kX+kY*kY)).toFixed(4)}`,kLX,kLY);
+
+  // Accumulated arc
+  const accumR=cur.accum*Math.PI/180;
+  ctx.strokeStyle=t.gf(0.4); ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(cx,cy,scale*0.15,0,-accumR,accumR<0); ctx.stroke();
+
+  ctx.fillStyle=t.dim; ctx.font='10px Space Mono,monospace';
+  ctx.fillText(`Step ${reveal}/${steps.length}  arctan(2⁻${reveal-1})=${steps[reveal-1].angle.toFixed(3)}°  K=${K.toFixed(4)}`,8,H-8);
+}
+
+// ─── Pre-rotation banner ───────────────────────────────────────────────────
+function updatePrerotBanner(){
+  const banner=document.getElementById('prerotBanner');
+  const dot=document.getElementById('prerotDot');
+  const text=document.getElementById('prerotText');
+  const p=state.pre;
+  if(p!==0){
+    banner.classList.add('active'); dot.classList.add('active');
+    text.style.color='var(--gold)';
+    text.textContent=`θ=${state.targetDeg}° → |θ|>90° ∴ 事前回転 ${p>0?'+':''}${p}° 適用 → 残りθ=${state.targetDeg-p}° でCORDIC開始`;
+  } else {
+    banner.classList.remove('active'); dot.classList.remove('active');
+    text.style.color='var(--text-dim)';
+    text.textContent=`θ=${state.targetDeg}° → |θ|≤90° ∴ 事前回転なし、(A,0) から直接CORDIC開始`;
+  }
+}
+
+// ─── Log & Results ─────────────────────────────────────────────────────────
+function updateLog(steps,currentStep){
+  const log=document.getElementById('stepLog');
+  while(log.children.length>1) log.removeChild(log.lastChild);
+  const K=computeK(state.nSteps);
+  steps.forEach((s,idx)=>{
+    const isActive=idx+1===currentStep, isDone=idx+1<currentStep;
+    const row=document.createElement('div');
+    row.className=`log-row ${isActive?'active-row':isDone?'done-row':''}`;
+    const ampEst=(isDone||isActive)?((Math.sqrt(s.x*s.x+s.y*s.y)*K).toFixed(3)):'—';
+    const ampCol=isDone||isActive?`<span class="amp-est-col" style="color:var(--green)">${ampEst}</span>`:`<span>—</span>`;
+    row.innerHTML=`<span class="step-num">${s.i}</span>
+      <span class="${s.direction>0?'dir-ccw':'dir-cw'}">${s.direction>0?'+CCW':'−CW'}</span>
+      <span class="angle-val">${s.angle.toFixed(3)}°</span>
+      <span class="accum-val">${s.accum.toFixed(3)}°</span>
+      <span class="remain-val">${s.remain.toFixed(3)}°</span>
+      ${ampCol}`;
+    log.appendChild(row);
+    if(isActive) setTimeout(()=>row.scrollIntoView({behavior:'smooth',block:'nearest'}),50);
+  });
+  // Final summary row when all steps done
+  if(steps.length>0 && currentStep>=steps.length){
+    const last=steps[steps.length-1];
+    const finalAmp=Math.sqrt(last.x*last.x+last.y*last.y)*K;
+    const fin=document.createElement('div');
+    fin.className='log-row final-row';
+    fin.textContent=`✓ 振幅確定: |v| × K = ${finalAmp.toFixed(5)}  (真値 A = ${state.amplitude.toFixed(5)})`;
+    log.appendChild(fin);
+    setTimeout(()=>fin.scrollIntoView({behavior:'smooth',block:'nearest'}),80);
+  }
+}
+
+function updateResults(steps,currentStep){
+  document.getElementById('resTarget').textContent=state.targetDeg.toFixed(2);
+  const dash='—';
+  if(!steps.length||currentStep===0){
+    ['resAngle','resError','resCos','resSin','resAmp','accuracyPct','ampAccuracyPct'].forEach(id=>document.getElementById(id).textContent=dash);
+    document.getElementById('progressLabel').textContent=`Step 0 / ${state.nSteps}`;
+    document.getElementById('progressFill').style.width='0%';
+    document.getElementById('errorFill').style.width='0%';
+    document.getElementById('ampErrorFill').style.width='0%';
+    return;
+  }
+  const cur=steps[Math.min(currentStep,steps.length)-1];
+  const K=computeK(state.nSteps);
+  const cosEst=cur.x*K/state.amplitude;
+  const sinEst=cur.y*K/state.amplitude;
+  const ampEst=Math.sqrt(cur.x*cur.x+cur.y*cur.y)*K;
+  const error=Math.abs(cur.remain);
+  document.getElementById('resAngle').textContent=cur.accum.toFixed(4);
+  document.getElementById('resError').textContent=error.toFixed(4);
+  document.getElementById('resCos').textContent  =cosEst.toFixed(5);
+  document.getElementById('resSin').textContent  =sinEst.toFixed(5);
+  document.getElementById('resAmp').textContent  =ampEst.toFixed(5);
+  const acc=Math.max(0,100-(error/180*100));
+  document.getElementById('accuracyPct').textContent=acc.toFixed(2)+'%';
+  document.getElementById('errorFill').style.width=acc+'%';
+  const ampRelErr=Math.abs(ampEst-state.amplitude)/state.amplitude;
+  const ampAcc=Math.max(0,100-ampRelErr*100);
+  document.getElementById('ampAccuracyPct').textContent=ampAcc.toFixed(2)+'%';
+  document.getElementById('ampErrorFill').style.width=ampAcc+'%';
+  document.getElementById('progressLabel').textContent=`Step ${currentStep} / ${state.nSteps}`;
+  document.getElementById('progressFill').style.width=(currentStep/state.nSteps*100)+'%';
+}
+
+function fullUpdate(){
+  updatePrerotBanner(); drawIQCanvas();
+  drawTriangleCanvas(state.steps,state.currentStep);
+  updateLog(state.steps,state.currentStep);
+  updateResults(state.steps,state.currentStep);
+}
+
+// ─── Calculation modal ─────────────────────────────────────────────────────
+function buildAngleContent(steps, reveal, pre){
+  const A = state.amplitude;
+  let rows = '';
+  if(pre!==0){
+    rows+=`<tr class="prerot-row"><td>事前</td><td>${pre>0?'+':''}</td><td>${pre>0?'+':''}90.000°</td><td>${pre.toFixed(3)}°</td><td>—</td></tr>`;
+  }
+  for(let i=0;i<reveal;i++){
+    const s=steps[i], ccw=s.direction>0;
+    const cls=`${ccw?'ccw':'cw'}-row${i===reveal-1?' active-tr':''}`;
+    const dSign=s.direction>0?'+':'−';
+    rows+=`<tr class="${cls}">
+      <td>${s.i}</td>
+      <td>${ccw?'+CCW':'−CW'}</td>
+      <td>${dSign}${s.angle.toFixed(4)}°</td>
+      <td>${s.accum.toFixed(4)}°</td>
+      <td>${s.remain.toFixed(4)}°</td>
+    </tr>`;
+  }
+  const cur=steps[reveal-1];
+  const trueAng=state.targetDeg;
+  return `
+  <p class="calc-hint">各ステップで arctan(2⁻ⁱ) を加減して目標角度に収束させます。<br>方向は y成分の符号のみで決定（y &gt; 0 → −CW、y &lt; 0 → +CCW）— θ 自体は参照しません。</p>
+  <table class="calc-table">
+    <thead><tr><th>#</th><th>方向</th><th>加減角度</th><th>累積θ</th><th>残差</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <div class="calc-result">
+    <div class="r-label">累積計算式</div>
+    <div class="r-eq">${pre!==0?`${pre>0?'+':''}${pre}° (事前) `:''} ${steps.slice(0,reveal).map(s=>`${s.direction>0?'+':'−'}${s.angle.toFixed(3)}°`).join(' ')}</div>
+    <div class="r-eq" style="margin-top:4px;">= <span class="r-val">${cur.accum.toFixed(5)}°</span></div>
+    <div class="r-true">目標: ${trueAng}°　　残差: ${Math.abs(cur.remain).toFixed(5)}°</div>
+  </div>`;
+}
+
+function buildErrorContent(steps, reveal){
+  const cur=steps[reveal-1];
+  const target=state.targetDeg;
+  const err=Math.abs(cur.remain);
+  return `
+  <p class="calc-hint">残差 = 目標角度に到達できなかった誤差（打ち切り誤差）。<br>ステップ数が多いほど指数関数的に小さくなります。</p>
+  <div class="calc-result">
+    <div class="r-label">計算式</div>
+    <div class="r-eq">残差 = |目標角度 − 推定角度|</div>
+    <div class="r-eq">= |${target}° − ${cur.accum.toFixed(5)}°|</div>
+    <div class="r-eq">= <span class="r-val">${err.toFixed(5)}°</span></div>
+    <div class="r-true">理論最小残差 ≈ arctan(2⁻ⁿ) / 2 (nステップ後)</div>
+    <div class="r-err">ステップ ${reveal} の最小角: ${CORDIC_ANGLES[reveal-1].toFixed(5)}°</div>
+  </div>`;
+}
+
+function buildCosContent(steps, reveal){
+  const cur=steps[reveal-1], K=computeK(state.nSteps), A=state.amplitude;
+  const cosEst=cur.x*K/A;
+  const trueVal=Math.cos(state.targetDeg*Math.PI/180);
+  const err=Math.abs(cosEst-trueVal);
+  return `
+  <p class="calc-hint">CORDICはベクトルを毎ステップ 1/K 倍に伸ばします。最終x成分にKを掛けて補正します。</p>
+  <div class="calc-result">
+    <div class="r-label">計算式</div>
+    <div class="r-eq">x_final = ${cur.x.toFixed(7)}</div>
+    <div class="r-eq">K = Πcos(arctan(2⁻ⁱ)) = ${K.toFixed(7)}</div>
+    <div class="r-eq">A = ${A.toFixed(4)}</div>
+    <div class="r-eq" style="margin-top:6px;">cos(θ) ≈ x_final × K / A</div>
+    <div class="r-eq">= ${cur.x.toFixed(6)} × ${K.toFixed(6)} / ${A.toFixed(4)}</div>
+    <div class="r-eq">= <span class="r-val">${cosEst.toFixed(7)}</span></div>
+    <div class="r-true">真値 cos(${state.targetDeg}°) = ${trueVal.toFixed(7)}</div>
+    <div class="r-err">誤差: ${err.toExponential(3)}</div>
+  </div>`;
+}
+
+function buildSinContent(steps, reveal){
+  const cur=steps[reveal-1], K=computeK(state.nSteps), A=state.amplitude;
+  const sinEst=cur.y*K/A;
+  const trueVal=Math.sin(state.targetDeg*Math.PI/180);
+  const err=Math.abs(sinEst-trueVal);
+  return `
+  <p class="calc-hint">y成分にKを掛けて補正します。θ>90°の場合は事前回転後のy成分が使われます。</p>
+  <div class="calc-result">
+    <div class="r-label">計算式</div>
+    <div class="r-eq">y_final = ${cur.y.toFixed(7)}</div>
+    <div class="r-eq">K = ${K.toFixed(7)}</div>
+    <div class="r-eq">A = ${A.toFixed(4)}</div>
+    <div class="r-eq" style="margin-top:6px;">sin(θ) ≈ y_final × K / A</div>
+    <div class="r-eq">= ${cur.y.toFixed(6)} × ${K.toFixed(6)} / ${A.toFixed(4)}</div>
+    <div class="r-eq">= <span class="r-val">${sinEst.toFixed(7)}</span></div>
+    <div class="r-true">真値 sin(${state.targetDeg}°) = ${trueVal.toFixed(7)}</div>
+    <div class="r-err">誤差: ${err.toExponential(3)}</div>
+  </div>`;
+}
+
+function buildAmpContent(steps, reveal){
+  const cur=steps[reveal-1], K=computeK(state.nSteps), A=state.amplitude;
+  const vmag=Math.sqrt(cur.x*cur.x+cur.y*cur.y);
+  const ampEst=vmag*K;
+  return `
+  <p class="calc-hint">CORDICはステップごとにベクトルを伸ばします。最終的なベクトル長にKを掛けると元の振幅Aが回収できます。</p>
+  <div class="calc-result">
+    <div class="r-label">計算式</div>
+    <div class="r-eq">x_final = ${cur.x.toFixed(6)}</div>
+    <div class="r-eq">y_final = ${cur.y.toFixed(6)}</div>
+    <div class="r-eq">|v| = √(x² + y²)</div>
+    <div class="r-eq">    = √(${(cur.x*cur.x).toFixed(5)} + ${(cur.y*cur.y).toFixed(5)})</div>
+    <div class="r-eq">    = ${vmag.toFixed(7)}</div>
+    <div class="r-eq" style="margin-top:6px;">A = |v| × K</div>
+    <div class="r-eq">  = ${vmag.toFixed(6)} × ${K.toFixed(6)}</div>
+    <div class="r-eq">  = <span class="r-val">${ampEst.toFixed(7)}</span></div>
+    <div class="r-true">入力振幅: ${A.toFixed(4)}　　誤差: ${Math.abs(ampEst-A).toExponential(3)}</div>
+    <div class="r-err">注: |v| = A/K = ${A.toFixed(4)}/${K.toFixed(4)} = ${(A/K).toFixed(5)} — 振幅円の外に出ている</div>
+  </div>`;
+}
+
+const MODAL_TITLES = {
+  angle:'推定角度 — 三角形積み上げの計算過程',
+  error:'残差 — 打ち切り誤差の計算',
+  cos:  'cos(θ)推定 — ベクトルx成分とK補正',
+  sin:  'sin(θ)推定 — ベクトルy成分とK補正',
+  amp:  '振幅A — ベクトル長とK補正による回収',
+};
+
+function showModal(type){
+  if(!state.steps.length||state.currentStep===0){
+    alert('まずRUNまたはSTEPを実行してください。'); return;
+  }
+  const reveal=Math.min(state.currentStep,state.steps.length);
+  const steps=state.steps;
+  let content='';
+  switch(type){
+    case 'angle': content=buildAngleContent(steps,reveal,state.pre); break;
+    case 'error': content=buildErrorContent(steps,reveal); break;
+    case 'cos':   content=buildCosContent(steps,reveal); break;
+    case 'sin':   content=buildSinContent(steps,reveal); break;
+    case 'amp':   content=buildAmpContent(steps,reveal); break;
+  }
+  document.getElementById('modalTitle').textContent=MODAL_TITLES[type]||'計算詳細';
+  document.getElementById('modalBody').innerHTML=content;
+  document.getElementById('calcModal').classList.add('open');
+}
+function closeModal(){ document.getElementById('calcModal').classList.remove('open'); }
+document.getElementById('modalClose').addEventListener('click', closeModal);
+document.getElementById('calcModal').addEventListener('click', e=>{ if(e.target===e.currentTarget) closeModal(); });
+
+// Result card click listeners
+document.querySelectorAll('.result-card[data-calc]').forEach(card=>{
+  card.addEventListener('click', ()=>showModal(card.dataset.calc));
+});
+
+// ─── Controls ──────────────────────────────────────────────────────────────
+document.querySelectorAll('.step-btn').forEach(btn=>btn.addEventListener('click',function(){
+  document.querySelectorAll('.step-btn').forEach(b=>b.classList.remove('active'));
+  this.classList.add('active');
+  state.nSteps=parseInt(this.dataset.n);
+  resetState();
+}));
+document.getElementById('speedSlider').addEventListener('input',function(){
+  document.getElementById('speedLabel').textContent=this.value+'ms';
+  if(state.autoInterval){stopAuto();startAuto();}
+});
+function resetState(){
+  stopAuto(); state.steps=[]; state.currentStep=0;
+  document.getElementById('autoBtn').textContent='▶ AUTO';
+  fullUpdate();
+}
+document.getElementById('resetBtn').addEventListener('click',resetState);
+document.getElementById('runBtn').addEventListener('click',()=>{
+  stopAuto();
+  const r=computeCORDIC(state.targetDeg,state.amplitude,state.nSteps);
+  state.steps=r.steps; state.pre=r.pre; state.currentStep=state.steps.length;
+  fullUpdate();
+});
+document.getElementById('stepBtn').addEventListener('click',()=>{
+  stopAuto();
+  if(!state.steps.length){
+    const r=computeCORDIC(state.targetDeg,state.amplitude,state.nSteps);
+    state.steps=r.steps; state.pre=r.pre; state.currentStep=0;
+  }
+  state.currentStep=state.currentStep<state.steps.length?state.currentStep+1:state.currentStep;
+  fullUpdate();
+});
+function startAuto(){
+  const speed=parseInt(document.getElementById('speedSlider').value);
+  if(!state.steps.length){
+    const r=computeCORDIC(state.targetDeg,state.amplitude,state.nSteps);
+    state.steps=r.steps; state.pre=r.pre; state.currentStep=0;
+  }
+  state.autoInterval=setInterval(()=>{
+    if(state.currentStep<state.steps.length){state.currentStep++;fullUpdate();}
+    else{stopAuto();document.getElementById('autoBtn').textContent='▶ AUTO';}
+  },speed);
+}
+function stopAuto(){
+  if(state.autoInterval){clearInterval(state.autoInterval);state.autoInterval=null;}
+}
+document.getElementById('autoBtn').addEventListener('click',function(){
+  if(state.autoInterval){stopAuto();this.textContent='▶ AUTO';}
+  else{
+    this.textContent='⏸ PAUSE';
+    if(state.currentStep>=state.steps.length){
+      state.currentStep=0;
+      const r=computeCORDIC(state.targetDeg,state.amplitude,state.nSteps);
+      state.steps=r.steps; state.pre=r.pre;
+    }
+    startAuto();
+  }
+});
+
+// ─── IQ Canvas Interaction ─────────────────────────────────────────────────
+function iqSetAngle(deg){
+  state.targetDeg=deg;
+  state.pre=getPreRotation(deg,state.amplitude).pre;
+  const d=document.getElementById('angleDisplay');
+  if(d) d.textContent=deg+'°';
+  state.steps=[]; state.currentStep=0; stopAuto();
+}
+function iqSetAmplitude(a){
+  const v=Math.round(Math.max(0.2,Math.min(2.0,a))*20)/20;
+  state.amplitude=v;
+  const d=document.getElementById('ampDisplay');
+  if(d) d.textContent=v.toFixed(2);
+  state.steps=[]; state.currentStep=0; stopAuto();
+}
+
+iqCanvas.addEventListener('mousedown', e=>{
+  e.preventDefault();
+  const r=iqCanvas.getBoundingClientRect();
+  const px=(e.clientX-r.left)*(iqCanvas.width/r.width);
+  const py=(e.clientY-r.top)*(iqCanvas.height/r.height);
+  iqInteract.isDragging=true;
+  iqInteract.dragStartY=py;
+  iqInteract.dragStartAmp=state.amplitude;
+  iqSetAngle(iqPixelToAngle(px));
+  fullUpdate();
+});
+
+iqCanvas.addEventListener('mousemove', e=>{
+  const r=iqCanvas.getBoundingClientRect();
+  const px=(e.clientX-r.left)*(iqCanvas.width/r.width);
+  const py=(e.clientY-r.top)*(iqCanvas.height/r.height);
+  iqInteract.hoverX=px;
+  if(iqInteract.isDragging){
+    iqCanvas.style.cursor='ns-resize';
+    iqSetAngle(iqPixelToAngle(px));
+    const dy=iqInteract.dragStartY-py;
+    iqSetAmplitude(iqInteract.dragStartAmp+dy*0.012);
+    fullUpdate();
+  } else {
+    iqCanvas.style.cursor='crosshair';
+    drawIQCanvas(); // lightweight redraw just for hover line
+  }
+});
+
+iqCanvas.addEventListener('mouseleave', ()=>{
+  iqInteract.hoverX=null;
+  iqInteract.isDragging=false;
+  iqCanvas.style.cursor='crosshair';
+  drawIQCanvas();
+});
+
+document.addEventListener('mouseup', ()=>{
+  if(iqInteract.isDragging){
+    iqInteract.isDragging=false;
+    iqCanvas.style.cursor='crosshair';
+  }
+});
+
+// ─── Init ──────────────────────────────────────────────────────────────────
+state.pre=getPreRotation(state.targetDeg,state.amplitude).pre;
+window.addEventListener('resize',fullUpdate);
+if(document.readyState==='complete') requestAnimationFrame(fullUpdate);
+else window.addEventListener('load',()=>requestAnimationFrame(fullUpdate));
+</script>
+</body>
+</html>
