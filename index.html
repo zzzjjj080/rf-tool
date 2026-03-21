@@ -1592,6 +1592,98 @@ const formulaConfigs = {
   });
 })();
 
+/* ===== ARROW KEY / SPINNER SNAP TO CLEAN VALUE ===== */
+(function wireSnapInputs() {
+  const SNAP_IDS = [
+    'm1_pfwd_a', 'm1b_vval', 'm1c_pfwd', 'm1c_pref', 'm1c_tol',
+    'm2_v', 'm2_i', 'm2_freq',
+    'm3s_v', 'm3s_i', 'm3s_freq',
+    'm4_w', 'm4_dbm', 'm4_dbw',
+    'm5_pin'
+  ];
+
+  // 各フィールドの mousedown 時の値を保存（スピナーボタン検出用）
+  const snapBase = {};
+
+  function getStep(el) {
+    const attr = el.getAttribute('step');
+    return (!attr || attr === 'any') ? 1 : (parseFloat(attr) || 1);
+  }
+
+  function applySnap(el, snapped) {
+    el.value = snapped;
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.value = snapped; // calc関数の書き戻しを上書き確定
+  }
+
+  SNAP_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    // ① mousedown でスピナークリック前の値を保存
+    el.addEventListener('mousedown', function() {
+      snapBase[this.id] = parseFloat(this.value);
+    });
+
+    // ② input イベント：スピナーボタンによる端数ステップを検出してスナップ
+    //    （キーボード矢印はkeydownでpreventDefault済みなのでここには来ない）
+    el.addEventListener('input', function() {
+      const pre = snapBase[this.id];
+      snapBase[this.id] = NaN; // 読んだら即クリア（再帰防止）
+      if (isNaN(pre)) return;
+
+      const cur = parseFloat(this.value);
+      if (isNaN(cur)) return;
+
+      const step = getStep(this);
+      const diff = cur - pre;
+
+      // diff ≈ ±step ならスピナーステップと判断
+      if (Math.abs(Math.abs(diff) - step) > step * 0.1) return;
+
+      // pre が既にステップ境界上なら追加スナップ不要
+      const rem = ((pre % step) + step) % step;
+      if (rem < 1e-9 || Math.abs(rem - step) < 1e-9) return;
+
+      // 境界外からのステップ → pre に基づいてスナップ先を決定
+      const decimals = (step.toString().split('.')[1] || '').length;
+      const snapped = diff > 0
+        ? Math.ceil(pre / step + 1e-9) * step   // ↑ クリック → 切り上げ
+        : Math.floor(pre / step - 1e-9) * step;  // ↓ クリック → 切り捨て
+      applySnap(this, parseFloat(snapped.toFixed(decimals)));
+    });
+
+    // ③ keydown：キーボード矢印キーによるスナップ
+    el.addEventListener('keydown', function(e) {
+      if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+      e.preventDefault();
+      snapBase[this.id] = NaN; // キーボード操作はスピナー検出をクリア
+
+      const step = getStep(this);
+      const cur  = parseFloat(this.value);
+      if (isNaN(cur)) return;
+
+      const rem = ((cur % step) + step) % step;
+      const onBoundary = rem < 1e-9 || Math.abs(rem - step) < 1e-9;
+      let next;
+      if (onBoundary) {
+        next = e.key === 'ArrowUp' ? cur + step : cur - step;
+      } else {
+        next = e.key === 'ArrowUp'
+          ? Math.ceil(cur / step + 1e-9) * step
+          : Math.floor(cur / step - 1e-9) * step;
+      }
+      const minVal = parseFloat(this.getAttribute('min'));
+      const maxVal = parseFloat(this.getAttribute('max'));
+      if (!isNaN(minVal)) next = Math.max(minVal, next);
+      if (!isNaN(maxVal)) next = Math.min(maxVal, next);
+
+      const decimals = (step.toString().split('.')[1] || '').length;
+      applySnap(this, parseFloat(next.toFixed(decimals)));
+    });
+  });
+})();
+
 function update_m1b_unit() {
   const type = document.querySelector('input[name="m1b_type"]:checked').value;
   document.getElementById('m1b_unit_lbl').textContent = type === 'vrms' ? 'mVrms' : 'mVpp';
@@ -2421,7 +2513,8 @@ function drawChart5(rows, pin) {
   const barH = Math.min(24, Math.floor((totalBarArea - gap*(n-1)) / n));
   const bw = CW - PAD.l - PAD.r;
   const startY = PAD.t + (totalBarArea - n*(barH+gap) + gap) / 2;
-  const xScale = p => PAD.l + (p / pin) * bw;
+  const xMax5000 = Math.max(pin, 5000);  // 最大5000W固定（入力がそれ以上なら合わせる）
+  const xScale = p => PAD.l + (p / xMax5000) * bw;
 
   stages.forEach((s, i) => {
     const y = startY + i * (barH + gap);
