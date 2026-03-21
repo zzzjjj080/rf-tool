@@ -105,6 +105,38 @@
     pointer-events:none;
   }
   .tip:hover .tip-box { display:block; }
+
+  /* ===== FORMULA POPUP ===== */
+  #formula-popup {
+    display:none; position:fixed; z-index:500;
+    background:#1e293b; color:#f1f5f9; border-radius:10px;
+    padding:14px 16px; font-size:13px; line-height:1.7;
+    width:300px; max-width:calc(100vw - 24px);
+    box-shadow:0 8px 32px rgba(0,0,0,0.4);
+    pointer-events:auto;
+  }
+  #formula-popup .fp-title { font-size:11px; font-weight:700; letter-spacing:.8px; color:#94a3b8; text-transform:uppercase; margin-bottom:8px; }
+  #formula-popup .fp-sym   { font-size:13.5px; font-weight:600; color:#fb923c; margin-bottom:6px; }
+  #formula-popup .fp-sub   { font-size:12px; color:#cbd5e1; margin-bottom:2px; }
+  #formula-popup .fp-result{ font-size:15px; font-weight:700; color:#4ade80; margin-top:8px; border-top:1px solid #334155; padding-top:8px; }
+  #formula-popup .fp-close { float:right; background:none; border:none; color:#94a3b8; font-size:16px; cursor:pointer; line-height:1; margin:-2px -4px 0 0; }
+  #formula-popup .fp-close:hover { color:#f1f5f9; }
+
+  /* ===== INPUT SOURCE HIGHLIGHT ===== */
+  .input-source-active {
+    border-color: #fb923c !important;
+    background: #fff8f0 !important;
+    box-shadow: 0 0 0 3px rgba(251,146,60,0.25) !important;
+    transition: border-color .15s, box-shadow .15s, background .15s;
+  }
+  body.dark .input-source-active { background: #2a1a08 !important; }
+
+  /* クリック可能な result-item */
+  .result-item.clickable { cursor: pointer; }
+  .result-item.clickable:hover { box-shadow: 0 0 0 2px var(--accent); }
+  .result-item.clickable::after { content:'🔍'; font-size:9px; position:absolute; top:4px; right:5px; opacity:0.35; }
+  .result-item.clickable { position:relative; }
+
   /* 整合インジケーターバッジ */
   .match-badge {
     display: inline-flex; align-items: center; gap: 5px;
@@ -926,6 +958,640 @@ function calc_m1a() {
   drawChart1A();
 }
 
+// ============================================================
+// FORMULA POPUP — 計算式ポップアップ ＋ 入力ハイライト
+// ============================================================
+let _formulaActiveInputs = [], _formulaPopupEl = null;
+
+function showFormula(event, config) {
+  event.stopPropagation();
+  if (!_formulaPopupEl) _formulaPopupEl = document.getElementById('formula-popup');
+  _formulaPopupEl.innerHTML = '<button class="fp-close" onclick="closeFormula()">✕</button>' + config.buildHTML();
+  _formulaPopupEl.style.display = 'block';
+  // viewport内にクランプして配置
+  const PAD = 12;
+  const W = _formulaPopupEl.offsetWidth, H = _formulaPopupEl.offsetHeight;
+  let x = event.clientX + 14, y = event.clientY + 14;
+  if (x + W > window.innerWidth  - PAD) x = event.clientX - W - 14;
+  if (y + H > window.innerHeight - PAD) y = event.clientY - H - 14;
+  if (x < PAD) x = PAD;
+  if (y < PAD) y = PAD;
+  _formulaPopupEl.style.left = x + 'px';
+  _formulaPopupEl.style.top  = y + 'px';
+  // 入力ハイライト
+  clearFormulaHighlights();
+  _formulaActiveInputs = config.inputIds || [];
+  _formulaActiveInputs.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('input-source-active');
+  });
+}
+function closeFormula() {
+  if (_formulaPopupEl) _formulaPopupEl.style.display = 'none';
+  clearFormulaHighlights();
+}
+function clearFormulaHighlights() {
+  _formulaActiveInputs.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('input-source-active');
+  });
+  _formulaActiveInputs = [];
+}
+document.addEventListener('click', e => {
+  if (_formulaPopupEl && _formulaPopupEl.style.display !== 'none' && !_formulaPopupEl.contains(e.target)) closeFormula();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFormula(); });
+
+// ============================================================
+// FORMULA CONFIGS REGISTRY — 全モジュール計算式定義
+// ============================================================
+// ヘルパー: 値を安全にフォーマット
+function fv(v, d=4) { return (isNaN(v)||!isFinite(v)) ? '?' : fmt(v, d); }
+
+const formulaConfigs = {
+
+  // ===== MODULE 1-A: 方向性結合器 → 出力電力 =====
+  'm1a_vrms': {
+    inputIds: ['m1_pfwd_a', 'm1_cc_a'],
+    buildHTML() {
+      const p = get('m1_pfwd_a'), cc = get('m1_cc_a');
+      const pout = p * Math.pow(10, -cc/10);
+      const vrms = Math.sqrt(pout * Z0) * 1000;
+      return `<div class="fp-title">計算式 — 方結出力 Vrms</div>
+        <div class="fp-sym">P<sub>out</sub> = FWD電力 × 10<sup>−結合度/10</sup></div>
+        <div class="fp-sub">　= ${fv(p,2)} W × 10<sup>−${fv(cc,1)}/10</sup> = <b>${fv(pout,4)} W</b></div>
+        <div class="fp-sym" style="margin-top:8px">Vrms = √( P<sub>out</sub> × Z₀ ) × 1000</div>
+        <div class="fp-sub">　= √( ${fv(pout,4)} W × 50 Ω ) × 1000</div>
+        <div class="fp-result">= ${fv(vrms,4)} mVrms</div>`;
+    }
+  },
+  'm1a_vpp': {
+    inputIds: ['m1_pfwd_a', 'm1_cc_a'],
+    buildHTML() {
+      const p = get('m1_pfwd_a'), cc = get('m1_cc_a');
+      const pout = p * Math.pow(10, -cc/10);
+      const vrms = Math.sqrt(pout * Z0) * 1000;
+      const vpp  = vrms * 2 * Math.SQRT2;
+      return `<div class="fp-title">計算式 — 方結出力 Vpp</div>
+        <div class="fp-sym">Vrms = √( FWD電力 × 10<sup>−結合度/10</sup> × Z₀ ) × 1000</div>
+        <div class="fp-sub">　= ${fv(vrms,4)} mVrms</div>
+        <div class="fp-sym" style="margin-top:8px">Vpp = Vrms × 2√2</div>
+        <div class="fp-sub">　= ${fv(vrms,4)} × 2√2</div>
+        <div class="fp-result">= ${fv(vpp,4)} mVpp</div>`;
+    }
+  },
+  'm1a_pout': {
+    inputIds: ['m1_pfwd_a', 'm1_cc_a'],
+    buildHTML() {
+      const p = get('m1_pfwd_a'), cc = get('m1_cc_a');
+      const pout = p * Math.pow(10, -cc/10);
+      return `<div class="fp-title">計算式 — 結合電力</div>
+        <div class="fp-sym">P<sub>out</sub> = FWD電力 × 10<sup>−結合度/10</sup></div>
+        <div class="fp-sub">　= ${fv(p,2)} W × 10<sup>−${fv(cc,1)}/10</sup></div>
+        <div class="fp-result">= ${fv(pout,6)} W</div>`;
+    }
+  },
+
+  // ===== MODULE 1-B: センサー出力 → FWD電力 =====
+  'm1b_power': {
+    inputIds: ['m1b_vval', 'm1b_cc'],
+    buildHTML() {
+      const vval_mv = get('m1b_vval'), cc = get('m1b_cc');
+      const type = document.querySelector('input[name="m1b_type"]:checked')?.value || 'vrms';
+      const vval = vval_mv / 1000;
+      const vrms = type === 'vrms' ? vval : vval / (2 * Math.SQRT2);
+      const pout = vrms * vrms / Z0;
+      const pfwd = pout / Math.pow(10, -cc/10);
+      const typeLabel = type === 'vrms' ? 'mVrms' : 'mVpp';
+      const vrmsNote = type === 'vrms' ? `Vrms = センサー出力 = ${fv(vrms*1000,4)} mVrms` : `Vrms = ${fv(vval_mv,4)} mVpp ÷ 2√2 = ${fv(vrms*1000,4)} mVrms`;
+      return `<div class="fp-title">計算式 — 推算FWD電力</div>
+        <div class="fp-sym">Vrms [V] = センサー出力 [${typeLabel}] ÷ 1000${type==='vpp'?' ÷ 2√2':''}</div>
+        <div class="fp-sub">　${vrmsNote}</div>
+        <div class="fp-sym" style="margin-top:8px">P<sub>out</sub> = Vrms² ÷ Z₀</div>
+        <div class="fp-sub">　= ${fv(vrms,6)}² ÷ 50 = ${fv(pout,6)} W</div>
+        <div class="fp-sym" style="margin-top:8px">P<sub>FWD</sub> = P<sub>out</sub> ÷ 10<sup>−結合度/10</sup></div>
+        <div class="fp-sub">　= ${fv(pout,6)} ÷ 10<sup>−${fv(cc,1)}/10</sup></div>
+        <div class="fp-result">= ${fv(pfwd,4)} W</div>`;
+    }
+  },
+  'm1b_dbw': {
+    inputIds: ['m1b_vval', 'm1b_cc'],
+    buildHTML() {
+      const vval_mv = get('m1b_vval'), cc = get('m1b_cc');
+      const type = document.querySelector('input[name="m1b_type"]:checked')?.value || 'vrms';
+      const vrms = (vval_mv/1000) / (type === 'vpp' ? 2*Math.SQRT2 : 1);
+      const pfwd = (vrms*vrms/Z0) / Math.pow(10,-cc/10);
+      const dbw  = 10 * Math.log10(pfwd);
+      return `<div class="fp-title">計算式 — 電力 dBW</div>
+        <div class="fp-sym">dBW = 10 × log₁₀( P<sub>FWD</sub> )</div>
+        <div class="fp-sub">　= 10 × log₁₀( ${fv(pfwd,4)} W )</div>
+        <div class="fp-result">= ${fv(dbw,4)} dBW</div>`;
+    }
+  },
+  'm1b_dbm': {
+    inputIds: ['m1b_vval', 'm1b_cc'],
+    buildHTML() {
+      const vval_mv = get('m1b_vval'), cc = get('m1b_cc');
+      const type = document.querySelector('input[name="m1b_type"]:checked')?.value || 'vrms';
+      const vrms = (vval_mv/1000) / (type === 'vpp' ? 2*Math.SQRT2 : 1);
+      const pfwd = (vrms*vrms/Z0) / Math.pow(10,-cc/10);
+      const dbw  = 10 * Math.log10(pfwd);
+      const dbm  = dbw + 30;
+      return `<div class="fp-title">計算式 — 電力 dBm</div>
+        <div class="fp-sym">dBm = dBW + 30</div>
+        <div class="fp-sub">　= ${fv(dbw,4)} + 30</div>
+        <div class="fp-result">= ${fv(dbm,4)} dBm</div>
+        <div class="fp-sub" style="margin-top:6px;color:#94a3b8">（1 W = 0 dBW = 30 dBm）</div>`;
+    }
+  },
+
+  // ===== MODULE 1-C: FWD/REF → VSWR/Γ/ロードパワー =====
+  'm1c_pabs': {
+    inputIds: ['m1c_pfwd', 'm1c_pref'],
+    buildHTML() {
+      const pf = get('m1c_pfwd'), pr = get('m1c_pref');
+      const pabs = pf - pr;
+      return `<div class="fp-title">計算式 — ロードパワー</div>
+        <div class="fp-sym">P<sub>load</sub> = P<sub>FWD</sub> − P<sub>REF</sub></div>
+        <div class="fp-sub">　= ${fv(pf,3)} W − ${fv(pr,3)} W</div>
+        <div class="fp-result">= ${fv(pabs,4)} W</div>`;
+    }
+  },
+  'm1c_gamma': {
+    inputIds: ['m1c_pfwd', 'm1c_pref'],
+    buildHTML() {
+      const pf = get('m1c_pfwd'), pr = get('m1c_pref');
+      const gamma = Math.sqrt(pr / pf);
+      return `<div class="fp-title">計算式 — 反射係数 |Γ|</div>
+        <div class="fp-sym">|Γ| = √( P<sub>REF</sub> / P<sub>FWD</sub> )</div>
+        <div class="fp-sub">　= √( ${fv(pr,3)} / ${fv(pf,3)} )</div>
+        <div class="fp-result">= ${fv(gamma,4)}</div>
+        <div class="fp-sub" style="margin-top:6px;color:#94a3b8">（0 = 完全整合, 1 = 完全反射）</div>`;
+    }
+  },
+  'm1c_vswr': {
+    inputIds: ['m1c_pfwd', 'm1c_pref'],
+    buildHTML() {
+      const pf = get('m1c_pfwd'), pr = get('m1c_pref');
+      const gamma = Math.sqrt(pr / pf);
+      const vswr  = (1 + gamma) / (1 - gamma);
+      return `<div class="fp-title">計算式 — VSWR</div>
+        <div class="fp-sym">|Γ| = √( P<sub>REF</sub> / P<sub>FWD</sub> ) = ${fv(gamma,4)}</div>
+        <div class="fp-sym" style="margin-top:8px">VSWR = ( 1 + |Γ| ) / ( 1 − |Γ| )</div>
+        <div class="fp-sub">　= ( 1 + ${fv(gamma,4)} ) / ( 1 − ${fv(gamma,4)} )</div>
+        <div class="fp-result">= ${fv(vswr,4)}</div>
+        <div class="fp-sub" style="margin-top:6px;color:#94a3b8">（1 = 完全整合, 実用目標 ≦ 1.5）</div>`;
+    }
+  },
+  'm1c_rl': {
+    inputIds: ['m1c_pfwd', 'm1c_pref'],
+    buildHTML() {
+      const pf = get('m1c_pfwd'), pr = get('m1c_pref');
+      const gamma = Math.sqrt(pr / pf);
+      const rl    = -20 * Math.log10(gamma);
+      return `<div class="fp-title">計算式 — 反射損失</div>
+        <div class="fp-sym">|Γ| = √( P<sub>REF</sub> / P<sub>FWD</sub> ) = ${fv(gamma,4)}</div>
+        <div class="fp-sym" style="margin-top:8px">RL = −20 × log₁₀( |Γ| )</div>
+        <div class="fp-sub">　= −20 × log₁₀( ${fv(gamma,4)} )</div>
+        <div class="fp-result">= ${fv(rl,4)} dB</div>
+        <div class="fp-sub" style="margin-top:6px;color:#94a3b8">（大きいほど整合が良い）</div>`;
+    }
+  },
+
+  // ===== MODULE 2: VIセンサー =====
+  'm2_zmag': {
+    inputIds: ['m2_v', 'm2_i'],
+    buildHTML() {
+      const V = get('m2_v'), I = get('m2_i');
+      const zmag = V / I;
+      return `<div class="fp-title">計算式 — |Z|</div>
+        <div class="fp-sym">|Z| = |V|<sub>Vpp</sub> / |I|<sub>App</sub></div>
+        <div class="fp-sub">　= ${fv(V,4)} mVpp / ${fv(I,4)} mApp</div>
+        <div class="fp-sub" style="color:#94a3b8;font-size:11px">　※ mV/mA → Ω 単位キャンセル, センサー結合度は打ち消される</div>
+        <div class="fp-result">= ${fv(zmag,4)} Ω</div>`;
+    }
+  },
+  'm2_zr': {
+    inputIds: ['m2_v', 'm2_i', 'm2_theta'],
+    buildHTML() {
+      const V = get('m2_v'), I = get('m2_i'), th = get('m2_theta');
+      const zmag = V / I, zr = zmag * Math.cos(deg2rad(th));
+      return `<div class="fp-title">計算式 — Z 実部 R</div>
+        <div class="fp-sym">|Z| = |V| / |I| = ${fv(zmag,4)} Ω</div>
+        <div class="fp-sym" style="margin-top:8px">R = |Z| × cos( 位相差θ )</div>
+        <div class="fp-sub">　= ${fv(zmag,4)} × cos( ${fv(th,1)}° )</div>
+        <div class="fp-result">= ${fv(zr,4)} Ω</div>`;
+    }
+  },
+  'm2_zx': {
+    inputIds: ['m2_v', 'm2_i', 'm2_theta'],
+    buildHTML() {
+      const V = get('m2_v'), I = get('m2_i'), th = get('m2_theta');
+      const zmag = V / I, zx = zmag * Math.sin(deg2rad(th));
+      return `<div class="fp-title">計算式 — Z 虚部 X</div>
+        <div class="fp-sym">|Z| = |V| / |I| = ${fv(zmag,4)} Ω</div>
+        <div class="fp-sym" style="margin-top:8px">X = |Z| × sin( 位相差θ )</div>
+        <div class="fp-sub">　= ${fv(zmag,4)} × sin( ${fv(th,1)}° )</div>
+        <div class="fp-result">= ${fv(zx,4)} Ω</div>
+        <div class="fp-sub" style="margin-top:6px;color:#94a3b8">（X > 0 誘導性, X < 0 容量性）</div>`;
+    }
+  },
+  'm2_zarg': {
+    inputIds: ['m2_theta'],
+    buildHTML() {
+      const th = get('m2_theta');
+      return `<div class="fp-title">計算式 — ∠Z</div>
+        <div class="fp-sym">∠Z = 位相差 θ（V−I）</div>
+        <div class="fp-sub">　V が I より θ だけ先行</div>
+        <div class="fp-result">= ${fv(th,2)}°</div>`;
+    }
+  },
+  'm2_pabs': {
+    inputIds: ['m2_v', 'm2_i', 'm2_theta', 'm2_cc'],
+    buildHTML() {
+      const V = get('m2_v'), I = get('m2_i'), th = get('m2_theta'), cc = get('m2_cc');
+      const scale = Math.pow(10, cc/20);
+      const V_act = V/2/1000 * scale, I_act = I/2/1000 * scale;
+      const pabs = 0.5 * V_act * I_act * Math.cos(deg2rad(th));
+      return `<div class="fp-title">計算式 — ロードパワー</div>
+        <div class="fp-sym">スケール = 10<sup>結合度/20</sup> = ${fv(scale,4)}</div>
+        <div class="fp-sub">　V<sub>実</sub> = ${fv(V,1)} mVpp ÷ 2 ÷ 1000 × ${fv(scale,4)} = ${fv(V_act,6)} V<sub>peak</sub></div>
+        <div class="fp-sub">　I<sub>実</sub> = ${fv(I,1)} mApp ÷ 2 ÷ 1000 × ${fv(scale,4)} = ${fv(I_act,6)} A<sub>peak</sub></div>
+        <div class="fp-sym" style="margin-top:8px">P = ½ × V<sub>実</sub> × I<sub>実</sub> × cos( θ )</div>
+        <div class="fp-sub">　= ½ × ${fv(V_act,6)} × ${fv(I_act,6)} × cos( ${fv(th,1)}° )</div>
+        <div class="fp-result">= ${fv(pabs,4)} W</div>`;
+    }
+  },
+  'm2_papp': {
+    inputIds: ['m2_v', 'm2_i', 'm2_cc'],
+    buildHTML() {
+      const V = get('m2_v'), I = get('m2_i'), cc = get('m2_cc');
+      const scale = Math.pow(10, cc/20);
+      const V_act = V/2/1000*scale, I_act = I/2/1000*scale;
+      const papp = 0.5 * V_act * I_act;
+      return `<div class="fp-title">計算式 — 皮相電力</div>
+        <div class="fp-sym">S = ½ × V<sub>実peak</sub> × I<sub>実peak</sub></div>
+        <div class="fp-sub">　= ½ × ${fv(V_act,6)} × ${fv(I_act,6)}</div>
+        <div class="fp-result">= ${fv(papp,4)} VA</div>
+        <div class="fp-sub" style="margin-top:6px;color:#94a3b8">（位相差を考慮しない見かけ上の電力）</div>`;
+    }
+  },
+  'm2_pf': {
+    inputIds: ['m2_theta'],
+    buildHTML() {
+      const th = get('m2_theta');
+      return `<div class="fp-title">計算式 — 力率 cos(θ)</div>
+        <div class="fp-sym">力率 = cos( 位相差θ )</div>
+        <div class="fp-sub">　= cos( ${fv(th,1)}° )</div>
+        <div class="fp-result">= ${fv(Math.cos(deg2rad(th)),4)}</div>
+        <div class="fp-sub" style="margin-top:6px;color:#94a3b8">（1 = 純抵抗, 0 = 純リアクタンス）</div>`;
+    }
+  },
+  'm2_gmag': {
+    inputIds: ['m2_v', 'm2_i', 'm2_theta'],
+    buildHTML() {
+      const V = get('m2_v'), I = get('m2_i'), th = get('m2_theta');
+      const zmag = V/I, zr = zmag*Math.cos(deg2rad(th)), zx = zmag*Math.sin(deg2rad(th));
+      const Zc = {r:zr,i:zx}, Z0c = {r:Z0,i:0};
+      const gam = cDiv(cSub(Zc,Z0c), cAdd(Zc,Z0c));
+      const gmag = cMag(gam);
+      return `<div class="fp-title">計算式 — |Γ|</div>
+        <div class="fp-sym">Γ = ( Z − Z₀ ) / ( Z + Z₀ )</div>
+        <div class="fp-sub">　Z = ${fv(zr,3)} + j${fv(zx,3)} Ω,  Z₀ = 50 Ω</div>
+        <div class="fp-sym" style="margin-top:8px">|Γ| = |Γの大きさ|</div>
+        <div class="fp-result">= ${fv(gmag,4)}</div>
+        <div class="fp-sub" style="margin-top:6px;color:#94a3b8">（0 = 完全整合, 1 = 完全反射）</div>`;
+    }
+  },
+  'm2_garg': {
+    inputIds: ['m2_v', 'm2_i', 'm2_theta'],
+    buildHTML() {
+      const V = get('m2_v'), I = get('m2_i'), th = get('m2_theta');
+      const zmag = V/I, zr = zmag*Math.cos(deg2rad(th)), zx = zmag*Math.sin(deg2rad(th));
+      const Zc = {r:zr,i:zx}, Z0c = {r:Z0,i:0};
+      const gam = cDiv(cSub(Zc,Z0c), cAdd(Zc,Z0c));
+      const garg = cArg(gam);
+      return `<div class="fp-title">計算式 — ∠Γ（スミスチャート角度）</div>
+        <div class="fp-sym">Γ = ( Z − Z₀ ) / ( Z + Z₀ )</div>
+        <div class="fp-sub">　Z = ${fv(zr,3)} + j${fv(zx,3)} Ω</div>
+        <div class="fp-sym" style="margin-top:8px">∠Γ = arg( Γ )</div>
+        <div class="fp-result">= ${fv(garg,4)}°</div>`;
+    }
+  },
+  'm2_vswr': {
+    inputIds: ['m2_v', 'm2_i', 'm2_theta'],
+    buildHTML() {
+      const V = get('m2_v'), I = get('m2_i'), th = get('m2_theta');
+      const zmag = V/I, zr = zmag*Math.cos(deg2rad(th)), zx = zmag*Math.sin(deg2rad(th));
+      const Zc = {r:zr,i:zx}, Z0c = {r:Z0,i:0};
+      const gam = cDiv(cSub(Zc,Z0c), cAdd(Zc,Z0c));
+      const gmag = cMag(gam);
+      const vswr = gmag < 1 ? (1+gmag)/(1-gmag) : Infinity;
+      return `<div class="fp-title">計算式 — VSWR</div>
+        <div class="fp-sym">|Γ| = |(Z−Z₀)/(Z+Z₀)| = ${fv(gmag,4)}</div>
+        <div class="fp-sym" style="margin-top:8px">VSWR = ( 1 + |Γ| ) / ( 1 − |Γ| )</div>
+        <div class="fp-sub">　= ( 1 + ${fv(gmag,4)} ) / ( 1 − ${fv(gmag,4)} )</div>
+        <div class="fp-result">= ${isFinite(vswr)?fv(vswr,4):'∞'}</div>`;
+    }
+  },
+  'm2_rl': {
+    inputIds: ['m2_v', 'm2_i', 'm2_theta'],
+    buildHTML() {
+      const V = get('m2_v'), I = get('m2_i'), th = get('m2_theta');
+      const zmag = V/I, zr = zmag*Math.cos(deg2rad(th)), zx = zmag*Math.sin(deg2rad(th));
+      const Zc = {r:zr,i:zx}, Z0c = {r:Z0,i:0};
+      const gam = cDiv(cSub(Zc,Z0c), cAdd(Zc,Z0c));
+      const gmag = cMag(gam);
+      const rl = gmag > 0 ? -20*Math.log10(gmag) : Infinity;
+      return `<div class="fp-title">計算式 — 反射損失</div>
+        <div class="fp-sym">|Γ| = ${fv(gmag,4)}</div>
+        <div class="fp-sym" style="margin-top:8px">RL = −20 × log₁₀( |Γ| )</div>
+        <div class="fp-sub">　= −20 × log₁₀( ${fv(gmag,4)} )</div>
+        <div class="fp-result">= ${isFinite(rl)?fv(rl,4):'∞'} dB</div>`;
+    }
+  },
+
+  // ===== MODULE 3: スミスチャート解析 (Module 2 と同構造) =====
+  'm3s_zmag': {
+    inputIds: ['m3s_v', 'm3s_i'],
+    buildHTML() {
+      const V = get('m3s_v'), I = get('m3s_i');
+      const zmag = (V/2) / (I/2);
+      return `<div class="fp-title">計算式 — |Z|</div>
+        <div class="fp-sym">|Z| = V<sub>peak</sub> / I<sub>peak</sub> = (Vpp/2) / (App/2)</div>
+        <div class="fp-sub">　= ${fv(V/2,4)} V / ${fv(I/2,4)} A</div>
+        <div class="fp-result">= ${fv(zmag,4)} Ω</div>`;
+    }
+  },
+  'm3s_zr': {
+    inputIds: ['m3s_v', 'm3s_i', 'm3s_theta'],
+    buildHTML() {
+      const V = get('m3s_v'), I = get('m3s_i'), th = get('m3s_theta');
+      const zmag = (V/2)/(I/2), zr = zmag*Math.cos(deg2rad(th));
+      return `<div class="fp-title">計算式 — Z 実部 R</div>
+        <div class="fp-sym">|Z| = Vpeak / Ipeak = ${fv(zmag,4)} Ω</div>
+        <div class="fp-sym" style="margin-top:8px">R = |Z| × cos( 位相差θ )</div>
+        <div class="fp-sub">　= ${fv(zmag,4)} × cos( ${fv(th,1)}° )</div>
+        <div class="fp-result">= ${fv(zr,4)} Ω</div>`;
+    }
+  },
+  'm3s_zx': {
+    inputIds: ['m3s_v', 'm3s_i', 'm3s_theta'],
+    buildHTML() {
+      const V = get('m3s_v'), I = get('m3s_i'), th = get('m3s_theta');
+      const zmag = (V/2)/(I/2), zx = zmag*Math.sin(deg2rad(th));
+      return `<div class="fp-title">計算式 — Z 虚部 X</div>
+        <div class="fp-sym">|Z| = ${fv(zmag,4)} Ω</div>
+        <div class="fp-sym" style="margin-top:8px">X = |Z| × sin( 位相差θ )</div>
+        <div class="fp-sub">　= ${fv(zmag,4)} × sin( ${fv(th,1)}° )</div>
+        <div class="fp-result">= ${fv(zx,4)} Ω</div>`;
+    }
+  },
+  'm3s_zarg': {
+    inputIds: ['m3s_theta'],
+    buildHTML() {
+      const th = get('m3s_theta');
+      return `<div class="fp-title">計算式 — ∠Z</div>
+        <div class="fp-sym">∠Z = 位相差 θ（V−I）</div>
+        <div class="fp-result">= ${fv(th,2)}°</div>`;
+    }
+  },
+  'm3s_pabs': {
+    inputIds: ['m3s_v', 'm3s_i', 'm3s_theta'],
+    buildHTML() {
+      const V = get('m3s_v'), I = get('m3s_i'), th = get('m3s_theta');
+      const Vp = V/2, Ip = I/2;
+      const pabs = 0.5 * Vp * Ip * Math.cos(deg2rad(th));
+      return `<div class="fp-title">計算式 — ロードパワー</div>
+        <div class="fp-sym">P = ½ × V<sub>peak</sub> × I<sub>peak</sub> × cos( θ )</div>
+        <div class="fp-sub">　= ½ × ${fv(Vp,4)} V × ${fv(Ip,4)} A × cos( ${fv(th,1)}° )</div>
+        <div class="fp-result">= ${fv(pabs,4)} W</div>`;
+    }
+  },
+  'm3s_papp': {
+    inputIds: ['m3s_v', 'm3s_i'],
+    buildHTML() {
+      const V = get('m3s_v'), I = get('m3s_i');
+      const papp = 0.5 * (V/2) * (I/2);
+      return `<div class="fp-title">計算式 — 皮相電力</div>
+        <div class="fp-sym">S = ½ × V<sub>peak</sub> × I<sub>peak</sub></div>
+        <div class="fp-sub">　= ½ × ${fv(V/2,4)} × ${fv(I/2,4)}</div>
+        <div class="fp-result">= ${fv(papp,4)} VA</div>`;
+    }
+  },
+  'm3s_pf': {
+    inputIds: ['m3s_theta'],
+    buildHTML() {
+      const th = get('m3s_theta');
+      return `<div class="fp-title">計算式 — 力率 cos(θ)</div>
+        <div class="fp-sym">力率 = cos( 位相差θ )</div>
+        <div class="fp-sub">　= cos( ${fv(th,1)}° )</div>
+        <div class="fp-result">= ${fv(Math.cos(deg2rad(th)),4)}</div>`;
+    }
+  },
+  'm3s_gmag': {
+    inputIds: ['m3s_v', 'm3s_i', 'm3s_theta'],
+    buildHTML() {
+      const V = get('m3s_v'), I = get('m3s_i'), th = get('m3s_theta');
+      const zmag = (V/2)/(I/2), zr = zmag*Math.cos(deg2rad(th)), zx = zmag*Math.sin(deg2rad(th));
+      const Zc = {r:zr,i:zx}, Z0c = {r:Z0,i:0};
+      const gam = cDiv(cSub(Zc,Z0c), cAdd(Zc,Z0c));
+      const gmag = cMag(gam);
+      return `<div class="fp-title">計算式 — |Γ|</div>
+        <div class="fp-sym">Γ = ( Z − Z₀ ) / ( Z + Z₀ )</div>
+        <div class="fp-sub">　Z = ${fv(zr,3)} + j${fv(zx,3)} Ω,  Z₀ = 50 Ω</div>
+        <div class="fp-result">|Γ| = ${fv(gmag,4)}</div>`;
+    }
+  },
+  'm3s_garg': {
+    inputIds: ['m3s_v', 'm3s_i', 'm3s_theta'],
+    buildHTML() {
+      const V = get('m3s_v'), I = get('m3s_i'), th = get('m3s_theta');
+      const zmag = (V/2)/(I/2), zr = zmag*Math.cos(deg2rad(th)), zx = zmag*Math.sin(deg2rad(th));
+      const Zc = {r:zr,i:zx}, Z0c = {r:Z0,i:0};
+      const gam = cDiv(cSub(Zc,Z0c), cAdd(Zc,Z0c));
+      const garg = cArg(gam);
+      return `<div class="fp-title">計算式 — ∠Γ</div>
+        <div class="fp-sym">Γ = ( Z − Z₀ ) / ( Z + Z₀ )</div>
+        <div class="fp-sub">　Z = ${fv(zr,3)} + j${fv(zx,3)} Ω</div>
+        <div class="fp-result">∠Γ = ${fv(garg,4)}°</div>`;
+    }
+  },
+  'm3s_vswr': {
+    inputIds: ['m3s_v', 'm3s_i', 'm3s_theta'],
+    buildHTML() {
+      const V = get('m3s_v'), I = get('m3s_i'), th = get('m3s_theta');
+      const zmag = (V/2)/(I/2), zr = zmag*Math.cos(deg2rad(th)), zx = zmag*Math.sin(deg2rad(th));
+      const Zc = {r:zr,i:zx}, Z0c = {r:Z0,i:0};
+      const gam = cDiv(cSub(Zc,Z0c), cAdd(Zc,Z0c));
+      const gmag = cMag(gam);
+      const vswr = gmag < 1 ? (1+gmag)/(1-gmag) : Infinity;
+      return `<div class="fp-title">計算式 — VSWR</div>
+        <div class="fp-sym">|Γ| = ${fv(gmag,4)}</div>
+        <div class="fp-sym" style="margin-top:8px">VSWR = ( 1 + |Γ| ) / ( 1 − |Γ| )</div>
+        <div class="fp-sub">　= ( 1 + ${fv(gmag,4)} ) / ( 1 − ${fv(gmag,4)} )</div>
+        <div class="fp-result">= ${isFinite(vswr)?fv(vswr,4):'∞'}</div>`;
+    }
+  },
+  'm3s_rl': {
+    inputIds: ['m3s_v', 'm3s_i', 'm3s_theta'],
+    buildHTML() {
+      const V = get('m3s_v'), I = get('m3s_i'), th = get('m3s_theta');
+      const zmag = (V/2)/(I/2), zr = zmag*Math.cos(deg2rad(th)), zx = zmag*Math.sin(deg2rad(th));
+      const Zc = {r:zr,i:zx}, Z0c = {r:Z0,i:0};
+      const gam = cDiv(cSub(Zc,Z0c), cAdd(Zc,Z0c));
+      const gmag = cMag(gam);
+      const rl = gmag > 0 ? -20*Math.log10(gmag) : Infinity;
+      return `<div class="fp-title">計算式 — 反射損失</div>
+        <div class="fp-sym">RL = −20 × log₁₀( |Γ| )</div>
+        <div class="fp-sub">　= −20 × log₁₀( ${fv(gmag,4)} )</div>
+        <div class="fp-result">= ${isFinite(rl)?fv(rl,4):'∞'} dB</div>`;
+    }
+  },
+
+  // ===== MODULE 4: 電力単位換算 =====
+  'm4_r_w': {
+    inputIds: ['m4_dbm', 'm4_dbw'],
+    buildHTML() {
+      const dbm = get('m4_dbm'), dbw = get('m4_dbw'), w = get('m4_w');
+      return `<div class="fp-title">計算式 — W（ワット）換算</div>
+        <div class="fp-sym">W = 10<sup>( dBm − 30 ) / 10</sup></div>
+        <div class="fp-sub">　= 10<sup>( ${fv(dbm,3)} − 30 ) / 10</sup></div>
+        <div class="fp-sym" style="margin-top:8px">または: W = 10<sup>dBW / 10</sup></div>
+        <div class="fp-sub">　= 10<sup>${fv(dbw,3)} / 10</sup></div>
+        <div class="fp-result">= ${fv(w,4)} W</div>`;
+    }
+  },
+  'm4_r_dbm': {
+    inputIds: ['m4_w'],
+    buildHTML() {
+      const w = get('m4_w');
+      const dbm = 10*Math.log10(w) + 30;
+      return `<div class="fp-title">計算式 — dBm 換算</div>
+        <div class="fp-sym">dBm = 10 × log₁₀( W ) + 30</div>
+        <div class="fp-sub">　= 10 × log₁₀( ${fv(w,4)} ) + 30</div>
+        <div class="fp-result">= ${fv(dbm,4)} dBm</div>
+        <div class="fp-sub" style="margin-top:6px;color:#94a3b8">（基準: 1 mW = 0 dBm）</div>`;
+    }
+  },
+  'm4_r_dbw': {
+    inputIds: ['m4_w'],
+    buildHTML() {
+      const w = get('m4_w');
+      const dbw = 10*Math.log10(w);
+      return `<div class="fp-title">計算式 — dBW 換算</div>
+        <div class="fp-sym">dBW = 10 × log₁₀( W )</div>
+        <div class="fp-sub">　= 10 × log₁₀( ${fv(w,4)} )</div>
+        <div class="fp-result">= ${fv(dbw,4)} dBW</div>
+        <div class="fp-sub" style="margin-top:6px;color:#94a3b8">（基準: 1 W = 0 dBW）</div>`;
+    }
+  },
+  'm4_vrms': {
+    inputIds: ['m4_w'],
+    buildHTML() {
+      const w = get('m4_w');
+      const vrms = Math.sqrt(w * Z0);
+      return `<div class="fp-title">計算式 — Vrms（50Ω系）</div>
+        <div class="fp-sym">Vrms = √( W × Z₀ )</div>
+        <div class="fp-sub">　= √( ${fv(w,4)} W × 50 Ω )</div>
+        <div class="fp-result">= ${fv(vrms,4)} Vrms</div>`;
+    }
+  },
+  'm4_vpp': {
+    inputIds: ['m4_w'],
+    buildHTML() {
+      const w = get('m4_w');
+      const vrms = Math.sqrt(w * Z0);
+      const vpp  = vrms * 2 * Math.SQRT2;
+      return `<div class="fp-title">計算式 — Vpp（50Ω系）</div>
+        <div class="fp-sym">Vrms = √( W × Z₀ ) = ${fv(vrms,4)} V</div>
+        <div class="fp-sym" style="margin-top:8px">Vpp = Vrms × 2√2</div>
+        <div class="fp-sub">　= ${fv(vrms,4)} × 2√2</div>
+        <div class="fp-result">= ${fv(vpp,4)} Vpp</div>`;
+    }
+  },
+  'm4_irms': {
+    inputIds: ['m4_w'],
+    buildHTML() {
+      const w = get('m4_w');
+      const vrms = Math.sqrt(w * Z0);
+      const irms = vrms / Z0;
+      return `<div class="fp-title">計算式 — 電流 Irms（50Ω系）</div>
+        <div class="fp-sym">Vrms = √( W × Z₀ ) = ${fv(vrms,4)} V</div>
+        <div class="fp-sym" style="margin-top:8px">Irms = Vrms / Z₀</div>
+        <div class="fp-sub">　= ${fv(vrms,4)} V / 50 Ω</div>
+        <div class="fp-result">= ${fv(irms,4)} Arms</div>`;
+    }
+  },
+
+  // ===== MODULE 5: ケーブル損失 =====
+  'm5_total_loss': {
+    inputIds: ['m5_pin'],
+    buildHTML() {
+      const pin = get('m5_pin');
+      const totalDb = parseFloat(document.getElementById('m5_total_loss')?.textContent) || 0;
+      return `<div class="fp-title">計算式 — 総損失</div>
+        <div class="fp-sym">総損失 = Σ( 損失[dB/m] × 長さ[m] ) + Σ固定損失[dB]</div>
+        <div class="fp-sub">　各区間の損失を合算したもの</div>
+        <div class="fp-result">= ${fv(totalDb,4)} dB</div>`;
+    }
+  },
+  'm5_pload': {
+    inputIds: ['m5_pin'],
+    buildHTML() {
+      const pin = get('m5_pin');
+      const totalDb = parseFloat(document.getElementById('m5_total_loss')?.textContent) || 0;
+      const pload = pin * Math.pow(10, -totalDb/10);
+      return `<div class="fp-title">計算式 — 負荷到達電力</div>
+        <div class="fp-sym">P<sub>load</sub> = P<sub>in</sub> × 10<sup>−総損失/10</sup></div>
+        <div class="fp-sub">　= ${fv(pin,4)} W × 10<sup>−${fv(totalDb,3)}/10</sup></div>
+        <div class="fp-result">= ${fv(pload,4)} W</div>`;
+    }
+  },
+  'm5_ploss': {
+    inputIds: ['m5_pin'],
+    buildHTML() {
+      const pin = get('m5_pin');
+      const totalDb = parseFloat(document.getElementById('m5_total_loss')?.textContent) || 0;
+      const pload = pin * Math.pow(10, -totalDb/10);
+      const ploss = pin - pload;
+      return `<div class="fp-title">計算式 — 損失電力</div>
+        <div class="fp-sym">P<sub>loss</sub> = P<sub>in</sub> − P<sub>load</sub></div>
+        <div class="fp-sub">　= ${fv(pin,4)} W − ${fv(pload,4)} W</div>
+        <div class="fp-result">= ${fv(ploss,4)} W</div>`;
+    }
+  },
+  'm5_eff': {
+    inputIds: ['m5_pin'],
+    buildHTML() {
+      const pin = get('m5_pin');
+      const totalDb = parseFloat(document.getElementById('m5_total_loss')?.textContent) || 0;
+      const pload = pin * Math.pow(10, -totalDb/10);
+      const eff = (pload / pin) * 100;
+      return `<div class="fp-title">計算式 — 効率</div>
+        <div class="fp-sym">η = ( P<sub>load</sub> / P<sub>in</sub> ) × 100</div>
+        <div class="fp-sub">　= ( ${fv(pload,4)} / ${fv(pin,4)} ) × 100</div>
+        <div class="fp-result">= ${fv(eff,4)} %</div>`;
+    }
+  },
+};
+
+// 全 result-item を自動でクリッカブルにワイヤリング
+(function wireFormulaPopups() {
+  Object.entries(formulaConfigs).forEach(([resultId, config]) => {
+    const valueEl = document.getElementById(resultId);
+    if (!valueEl) return;
+    const itemEl = valueEl.closest('.result-item');
+    if (!itemEl) return;
+    itemEl.classList.add('clickable');
+    itemEl.setAttribute('tabindex', '0');
+    itemEl.addEventListener('click', e => showFormula(e, config));
+    itemEl.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { showFormula(e, config); e.preventDefault(); }
+    });
+  });
+})();
+
 function update_m1b_unit() {
   const type = document.querySelector('input[name="m1b_type"]:checked').value;
   document.getElementById('m1b_unit_lbl').textContent = type === 'vrms' ? 'mVrms' : 'mVpp';
@@ -1071,7 +1737,7 @@ function drawChart1A() {
   const cc = get('m1_cc_a');
   const canvas = document.getElementById('chart1a');
   if (!canvas || isNaN(p) || isNaN(cc) || p <= 0) return;
-  const xMax = Math.max(p * 1.6, 100);
+  const xMax = 5000;
   const dotX = p;
   const dotY = Math.sqrt(p * Math.pow(10,-cc/10) * Z0) * 1000;
   drawMiniChart(canvas, {
@@ -1089,7 +1755,9 @@ function drawChart1B() {
   const cc = get('m1b_cc');
   const canvas = document.getElementById('chart1b');
   if (!canvas || isNaN(vval_mv) || isNaN(cc) || vval_mv <= 0) return;
-  const xMax = Math.max(vval_mv * 1.6, 10);
+  // 5000W FWD に対応するセンサー出力mV をxMaxに固定
+  const vrms5000 = Math.sqrt(5000 * Math.pow(10, -cc/10) * Z0) * 1000;
+  const xMax = type === 'vrms' ? vrms5000 : vrms5000 * 2 * Math.SQRT2;
   const toVrms = v_mv => type === 'vrms' ? v_mv/1000 : v_mv/1000/(2*Math.SQRT2);
   const toPfwd = v_mv => { const vr = toVrms(v_mv); return (vr*vr/Z0) / Math.pow(10,-cc/10); };
   const dotX = vval_mv;
@@ -1122,7 +1790,7 @@ function drawChart1C() {
   ];
   const bh = Math.floor((H - PAD.t - PAD.b - 8) / 3);
   const gap = 4;
-  const xMax = pf * 1.1;
+  const xMax = 5000;
   const barW = W - PAD.l - PAD.r;
   const xToC = x => PAD.l + x / xMax * barW;
 
@@ -2240,5 +2908,6 @@ function m3s_animLoop() {
   m3s_animId = requestAnimationFrame(m3s_animLoop);
 }
 </script>
+<div id="formula-popup" role="tooltip" aria-live="polite"></div>
 </body>
 </html>
