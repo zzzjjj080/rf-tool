@@ -498,6 +498,25 @@ canvas { display: block; width: 100%; }
   white-space: normal;
 }
 .flow-transition .ft-arrow { font-size: 18px; opacity: 0.4; }
+
+/* ── y-component indicator ── */
+.y-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--panel2);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  border: 1px solid var(--border);
+}
+.y-ind-label { color: var(--accent2); font-weight: 700; min-width: 60px; }
+.y-ind-val   { color: var(--text-dim); min-width: 54px; font-size: 10px; }
+.y-ind-bar   { flex: 1; height: 8px; background: var(--panel); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+.y-ind-fill  { height: 100%; border-radius: 3px; transition: width 0.4s ease, background 0.4s ease; background: var(--accent2); }
+.y-ind-zero  { color: var(--green); font-weight: 700; min-width: 14px; }
 </style>
 </head>
 <body>
@@ -630,14 +649,9 @@ canvas { display: block; width: 100%; }
       <div class="zone-guide guide-orange">
         <div class="zone-guide-icon">📐</div>
         <div class="zone-guide-text">
-          <strong>直角三角形を1枚ずつ積み重ねて、目標角度 θ に収束させます。</strong><br>
-          各ステップで回転できる角度は <span class="g-em2">arctan(2⁻ⁱ) = 45°, 26.6°, 14.0°, 7.1°…</span> と半分ずつ小さくなります。<br>
-          <strong>📌 方向の決め方（θ は不要！）：</strong> 各ステップでは θ を見ず、現在の <span class="g-em2">y成分（Q相当）の符号だけ</span>を確認します：<br>
-          &nbsp;&nbsp;y &gt; 0（ベクトルが上向き）→ <span class="g-em2">−CW（時計回り）</span>で y を 0 に引き下げる<br>
-          &nbsp;&nbsp;y &lt; 0（ベクトルが下向き）→ <span class="g-em">+CCW（反時計回り）</span>で y を 0 に引き上げる<br>
-          y が 0 に収束したとき、累積回転角 = θ が確定します。<span class="g-dim">θ を知らなくても収束できるのがCORDICの肝です。</span><br>
-          <strong>📏 振幅の取り出し方：</strong> 直角三角形を重ねるたびに、ベクトルがほんの少し伸びます（斜辺 > 底辺）。ステップを重ねると合計で約 1.647 倍になりますが、この倍率は固定なので、最後に 0.607 倍（K補正）するだけで真の振幅Aが求まります。<a href="#kdive" class="g-em" style="font-size:10px;margin-left:6px;">なぜ？ → 詳細はページ下部↓</a><br>
-          <span class="g-dim">まず STEP を数回押して1ステップずつ確認 → 全ステップを一気に見るなら RUN、自動再生は AUTO。</span>
+          <strong>ベクトル (I, Q) を出発点とし、y成分がゼロになるまで直角三角形を積み重ねます。</strong>
+          各ステップで <span class="g-em2">y の符号だけを見て</span>回転方向を決定（y>0→時計回り、y<0→反時計回り）。<strong>θ の値は一切不要</strong>です。<br>
+          <span class="g-dim">STEP を押すたびに y が 0 へ近づき、同時に累積回転角から θ が、ベクトル長 |v| から A が求まります。</span>
         </div>
       </div>
       <div class="steps-group">
@@ -730,17 +744,24 @@ canvas { display: block; width: 100%; }
       </div>
       <canvas id="triCanvas" width="640" height="460"></canvas>
       <div class="legend">
-        <div class="legend-item"><div class="legend-box" style="background:rgba(2,132,199,0.25);border-color:var(--accent);"></div><span style="color:var(--accent)">+CCW回転</span></div>
-        <div class="legend-item"><div class="legend-box" style="background:rgba(234,88,12,0.25);border-color:var(--accent2);"></div><span style="color:var(--accent2)">−CW回転</span></div>
-        <div class="legend-item"><div class="legend-box" style="background:rgba(217,119,6,0.25);border-color:var(--gold);"></div><span style="color:var(--gold)">事前回転 ±90°</span></div>
-        <div class="legend-item"><div class="legend-box" style="background:rgba(22,163,74,0.25);border-color:var(--green);"></div><span style="color:var(--green)">K補正 → 振幅A</span></div>
+        <div class="legend-item"><div class="legend-box" style="background:rgba(2,132,199,0.25);border-color:var(--accent);"></div><span style="color:var(--accent)">↑CCW (y&lt;0)</span></div>
+        <div class="legend-item"><div class="legend-box" style="background:rgba(234,88,12,0.25);border-color:var(--accent2);"></div><span style="color:var(--accent2)">↓CW (y&gt;0)</span></div>
+        <div class="legend-item"><div class="legend-box" style="background:rgba(217,119,6,0.25);border-color:var(--gold);"></div><span style="color:var(--gold)">I&lt;0→事前回転</span></div>
+        <div class="legend-item"><div class="legend-box" style="background:rgba(22,163,74,0.25);border-color:var(--green);"></div><span style="color:var(--green)">x軸(目標)・K補正</span></div>
       </div>
     </div>
     <div class="panel">
       <div class="panel-header"><div class="dot dot-orange pulsing"></div>STEP LOG</div>
+      <div class="y-indicator" id="yIndicator">
+        <span class="y-ind-label">Q収束:</span>
+        <span class="y-ind-val" id="yIndStart">—</span>
+        <div class="y-ind-bar"><div class="y-ind-fill" id="yIndFill" style="width:100%"></div></div>
+        <span class="y-ind-zero">0</span>
+        <span class="y-ind-val" id="yIndCurrent" style="text-align:right;color:var(--accent2)">y=—</span>
+      </div>
       <div class="step-log" id="stepLog">
         <div class="log-row header-row">
-          <span>#</span><span>DIR</span><span>角度</span><span>累積θ</span><span>残差</span><span>振幅est</span>
+          <span>#</span><span>DIR</span><span>角度</span><span>推定θ</span><span>y成分</span><span>振幅est</span>
         </div>
       </div>
     </div>
@@ -751,40 +772,42 @@ canvas { display: block; width: 100%; }
   <div class="explain-section">
     <h3>// CORDICの動作原理</h3>
     <div class="explain-text">
-      CORDICはベクトル (I, Q) を目標角度θに向けて回転させるアルゴリズムです。
-      毎ステップ <span class="hl">「今の角度より目標が上なら反時計回り、下なら時計回り」</span> の判定だけで進みます。
-      <span class="hl2">乗算を一切使わず</span>、ビットシフトと加減算だけで動作します。
+      CORDICベクタリングモードはベクトル (I, Q) を出発点とし、<strong>y成分がゼロになるまで</strong>回転させるアルゴリズムです。
+      毎ステップ <span class="hl">「y &gt; 0なら時計回り、y &lt; 0なら反時計回り」</span> — yの符号だけで決まります。
+      累積回転角から <strong>θ</strong> が、最終ベクトル長から <strong>振幅A</strong> が同時に確定。<span class="hl2">乗算ゼロ</span>、ビットシフトと加減算だけで動作します。
     </div>
 
     <div class="explain-cards">
       <div class="explain-card">
-        <div class="explain-card-head gold">① 収束範囲と事前回転</div>
+        <div class="explain-card-head gold">① 収束範囲と事前回転（I符号チェック）</div>
         <div class="explain-card-body">
-          CORDICが直接扱える角度は <strong>±90°以内</strong>（各ステップ角の総和 ≈ 99.7°）。<br>
-          それを超える角度は最初に ±90° 回転してから残りをCORDICに渡します。<br>
-          <span class="hl3">θ &gt; 90° → (A,0) を (0,A) に事前回転し、残り = θ−90°</span><br>
-          <span class="hl3">θ &lt; −90° → (A,0) を (0,−A) に事前回転し、残り = θ+90°</span>
+          CORDICベクタリングが直接収束できる範囲は <strong>x成分 &gt; 0（象限I/IV）</strong>のとき。<br>
+          I = A·cos(θ) &lt; 0（象限II/III）なら、まず ±90° 事前回転で x成分を正に直します。<br>
+          <span class="hl3">象限II (I&lt;0, Q≥0) → (I,Q) を −90° 回転 → (Q, −I) からCORDIC開始</span><br>
+          <span class="hl3">象限III (I&lt;0, Q&lt;0) → (I,Q) を +90° 回転 → (−Q, I) からCORDIC開始</span><br>
+          <strong>θ は見ていない</strong> — I の符号だけで判定できます。
         </div>
       </div>
       <div class="explain-card">
-        <div class="explain-card-head accent">② 各ステップの計算</div>
+        <div class="explain-card-head accent">② 各ステップの計算 — y符号のみ参照</div>
         <div class="explain-card-body">
-          ステップ i の回転角 = <strong>arctan(2⁻ⁱ)</strong>（45°→26.6°→14.0°…と半分ずつ減少）。<br>
-          <strong>方向 d の決め方（θ不要）：</strong> d = −sign(y)。y &gt; 0 なら CW(−1)、y &lt; 0 なら CCW(+1)。<br>
-          d が決まれば乗算ゼロで計算：<br>
-          <span class="hl">x' = x − d·y·2⁻ⁱ</span>　← y を 2⁻ⁱ 倍 = ビットシフトのみ<br>
-          <span class="hl">y' = y + d·x·2⁻ⁱ</span>　← x を 2⁻ⁱ 倍 = ビットシフトのみ
+          ステップ i の回転角 = <strong>arctan(2⁻ⁱ)</strong>（45°→26.6°→14.0°…）。<br>
+          <strong>方向 d は y 成分の符号だけで決まります：</strong><br>
+          y &gt; 0 → d = −1（時計回り、y を下げる）<br>
+          y &lt; 0 → d = +1（反時計回り、y を上げる）<br>
+          <span class="hl">x' = x − d·y·2⁻ⁱ</span>　<span class="hl">y' = y + d·x·2⁻ⁱ</span>（乗算ゼロ：ビットシフト＋加減算のみ）<br>
+          累積回転角 accum = Σ d·arctan(2⁻ⁱ) → 最終 <strong>θ = −accum</strong> として確定。
         </div>
       </div>
       <div class="explain-card">
-        <div class="explain-card-head green">③ 斜辺の積み重ねと振幅のK補正</div>
+        <div class="explain-card-head green">③ 振幅の取り出し — 最終斜辺の長さ × K</div>
         <div class="explain-card-body">
-          各ステップで直角三角形を重ねるとき、<strong>新ベクトル = 斜辺</strong>になります。<br>
-          斜辺は底辺より必ず長く（比率 = √(1+2⁻²ⁱ)）、ステップごとにベクトルが伸び続けます。<br>
-          n ステップ後の合計伸び率 = <strong>1/K ≈ 1.647</strong>（K ≈ 0.6073 は計算済み固定値）。<br>
-          <span class="hlg">振幅A = |最終斜辺の長さ| × K</span>　で元の振幅を回収できます。<br>
-          三角形キャンバスの<span class="hlg">緑の点線と緑点</span>が K 補正後の正しい振幅円を示しています。<br>
-          STEP LOGの<span class="hlg">振幅est列</span>でステップごとの収束が確認でき、最終行「✓ 振幅確定」が答えです。
+          各ステップで直角三角形を重ねるたびに <strong>新ベクトル = 斜辺</strong> になり、ベクトル長が伸び続けます。<br>
+          y が 0 に収束した最終状態では <strong>x成分 ≈ |v|</strong>（ベクトルがほぼx軸上）。<br>
+          n ステップ後の |v| は元の振幅 A より 1/K ≈ 1.647 倍大きい（K ≈ 0.6073 は固定値）。<br>
+          <span class="hlg">振幅A = x_final × K ≈ |v| × K</span>　これだけで元の振幅が確定します。<br>
+          緑の点線が「斜辺の先端 → K倍縮め → 振幅A」を示しています。<br>
+          最終行「✓ y≈0、振幅確定」でθとAの両方が同時に求まります。
         </div>
       </div>
     </div>
@@ -854,8 +877,8 @@ canvas { display: block; width: 100%; }
     <h3>// Verilog / FPGA 実装ガイド</h3>
 
     <p class="vlog-intro">
-      CORDICは <strong>シフト＋加減算のみ</strong> で動作するため、乗算器を持たない古典的なFPGAでも実装できます。
-      以下に実装の要点と、実際に合成・動作するVerilogコードのサンプルを示します。
+      CORDICベクタリングモードは <strong>シフト＋加減算のみ</strong> で動作するため、乗算器を持たない古典的なFPGAでも実装できます。
+      入力 (I, Q) からθとAを復元する回路の要点と、実際に合成・動作するVerilogサンプルを示します。
     </p>
 
     <div class="vlog-cards">
@@ -893,7 +916,7 @@ canvas { display: block; width: 100%; }
       <div class="vlog-card">
         <div class="vlog-card-head">④ 実装上の注意点</div>
         <div class="vlog-card-body">
-          <strong>入力象限チェック（事前回転）</strong>：|θ| &gt; 90° のとき I = A·cos(θ) &lt; 0 になる。CORDICの収束条件は x₀ ≥ 0 なので、入力時に象限を判定して90°回転してから渡す。<br>
+          <strong>入力象限チェック（事前回転）</strong>：I = A·cos(θ) &lt; 0（象限II/III）のとき収束しない。I の符号のみチェックし、I&lt;0なら (I,Q)→(Q,−I)または(−Q,I) に変換してから渡す。θの値は不要。<br>
           <strong>ビットシフトの符号</strong>：<code>&gt;&gt;&gt;</code>（算術右シフト）を使用。論理シフト <code>&gt;&gt;</code> では符号ビットが化ける。<br>
           <strong>K補正の乗算</strong>：K補正だけは乗算が必要。FPGAのDSPブロック（Multiplier）1個で実現可能。乗算を避けたい場合は K≈0.625 = 1/2 + 1/8 と近似してシフト加算で実装できます。
         </div>
@@ -1068,22 +1091,29 @@ for (let i=0;i<32;i++) CORDIC_ANGLES.push(Math.atan(Math.pow(2,-i))*180/Math.PI)
 function computeK(n) {
   let k=1; for(let i=0;i<n;i++) k*=1/Math.sqrt(1+Math.pow(2,-2*i)); return k;
 }
-function getPreRotation(deg, amp) {
-  if (deg > 90)  return {x0:0,      y0:amp,  adj:deg-90, pre:90};
-  if (deg < -90) return {x0:0,      y0:-amp, adj:deg+90, pre:-90};
-  return              {x0:amp,    y0:0,    adj:deg,    pre:0};
+// Vectoring mode: pre-rotation based on x-component (I) sign, not θ
+function getVectoringPreRotation(I, Q) {
+  if (I < 0 && Q >= 0) return {x0:  Q, y0: -I, pre: -90}; // Q2: rotate -90°
+  if (I < 0 && Q <  0) return {x0: -Q, y0:  I, pre: +90}; // Q3: rotate +90°
+  return                      {x0:  I, y0:  Q, pre:   0}; // Q1/Q4: no pre-rotation
 }
-function computeCORDIC(deg, amp, n) {
-  const {x0,y0,adj,pre} = getPreRotation(deg,amp);
-  const steps=[]; let x=x0,y=y0,accum=pre,remain=adj;
+function computeCordicVectoring(deg, amp, n) {
+  const I = amp * Math.cos(deg * Math.PI / 180);
+  const Q = amp * Math.sin(deg * Math.PI / 180);
+  const {x0, y0, pre} = getVectoringPreRotation(I, Q);
+  const steps = []; let x=x0, y=y0, accum=pre;
   for(let i=0;i<n;i++){
-    const angle=CORDIC_ANGLES[i], d=remain>=0?1:-1, s=Math.pow(2,-i);
-    const xP=x,yP=y;
+    const angle = CORDIC_ANGLES[i];
+    const d = y >= 0 ? -1 : 1;  // y>0→CW(d=-1), y<0→CCW(d=+1)
+    const s = Math.pow(2,-i);
+    const xP=x, yP=y;
     x=x-d*y*s; y=yP+d*xP*s;
-    accum+=d*angle; remain-=d*angle;
-    steps.push({i:i+1,direction:d,angle,accum,remain,x,y,xPre:xP,yPre:yP});
+    accum+=d*angle;
+    const remain = Math.atan2(y,x)*180/Math.PI; // current angle from x-axis → 0
+    steps.push({i:i+1,direction:d,angle,accum,remain,x,y,xPre:xP,yPre:yP,
+                vmag:Math.sqrt(x*x+y*y),yComp:y});
   }
-  return {steps, pre};
+  return {steps, pre, I, Q};
 }
 
 // ─── State ────────────────────────────────────────────────────────────────
@@ -1272,39 +1302,46 @@ function drawTriangleCanvas(steps, currentStep){
   ctx.fillStyle=t.dim; ctx.font='10px Space Mono,monospace';
   ctx.fillText('Re',W-22,cy-6); ctx.fillText('Im',cx+6,14);
 
-  const tRad=state.targetDeg*Math.PI/180;
-  const {x0,y0,pre}=getPreRotation(state.targetDeg,amp);
+  const I_iq=state.amplitude*Math.cos(state.targetDeg*Math.PI/180);
+  const Q_iq=state.amplitude*Math.sin(state.targetDeg*Math.PI/180);
+  const {x0,y0,pre}=getVectoringPreRotation(I_iq,Q_iq);
 
-  // Target vector (dashed gold)
-  const tEx=cx+amp*Math.cos(tRad)*scale, tEy=cy-amp*Math.sin(tRad)*scale;
-  ctx.strokeStyle=t.gf(0.45); ctx.lineWidth=1.5; ctx.setLineDash([6,4]);
-  ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(tEx,tEy); ctx.stroke(); ctx.setLineDash([]);
-  ctx.fillStyle=t.gf(0.6); ctx.font='10px Space Mono,monospace';
-  ctx.fillText(`目標 ${state.targetDeg}°`,cx+amp*Math.cos(tRad)*scale*1.18-14,cy-amp*Math.sin(tRad)*scale*1.18+4);
+  // Glowing x-axis (TARGET: y=0)
+  const xAxGrd=ctx.createLinearGradient(0,cy-8,0,cy+8);
+  xAxGrd.addColorStop(0,'transparent'); xAxGrd.addColorStop(0.5,t.grf(0.18)); xAxGrd.addColorStop(1,'transparent');
+  ctx.fillStyle=xAxGrd; ctx.fillRect(0,cy-8,W,16);
+  ctx.strokeStyle=t.grf(0.9); ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.moveTo(0,cy); ctx.lineTo(W,cy); ctx.stroke();
+  ctx.fillStyle=t.grf(0.85); ctx.font='bold 10px Space Mono,monospace';
+  ctx.fillText('▶ 目標: y=0（x軸）',W-130,cy-8);
 
-  // Pre-rotation
+  // Starting point (I, Q)
+  const iqEx=cx+I_iq*scale, iqEy=cy-Q_iq*scale;
+  ctx.strokeStyle=t.gf(0.5); ctx.lineWidth=1.2; ctx.setLineDash([5,3]);
+  ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(iqEx,iqEy); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle=t.gf(0.55); ctx.beginPath(); ctx.arc(iqEx,iqEy,5,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle=t.gf(0.8); ctx.font='9px Space Mono,monospace';
+  ctx.fillText(`(I,Q)=(${I_iq.toFixed(2)},${Q_iq.toFixed(2)})`,iqEx+8,iqEy-6);
+
+  // Pre-rotation (I<0 detection)
   if(pre!==0){
     ctx.fillStyle=t.gf(0.3);
-    ctx.beginPath(); ctx.arc(cx+amp*scale,cy,5,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle=t.gf(0.45); ctx.font='9px Space Mono,monospace';
-    ctx.fillText('(A,0)',cx+amp*scale+5,cy-8);
+    ctx.beginPath(); ctx.arc(iqEx,iqEy,5,0,Math.PI*2); ctx.fill();
+    const arcRad=amp*scale;
+    const startAng=Math.atan2(-Q_iq,I_iq); // angle of original (I,Q)
+    const endAng=startAng+(pre<0?-Math.PI/2:Math.PI/2);
     ctx.strokeStyle=t.gf(0.7); ctx.lineWidth=2; ctx.setLineDash([4,3]);
-    ctx.beginPath();
-    pre===90?ctx.arc(cx,cy,amp*scale,0,-Math.PI/2,true):ctx.arc(cx,cy,amp*scale,0,Math.PI/2,false);
-    ctx.stroke(); ctx.setLineDash([]);
-    const ex2=cx, ey2=cy-(pre>0?amp*scale:-amp*scale);
-    ctx.fillStyle=t.gf(0.85);
-    ctx.beginPath(); ctx.moveTo(ex2,ey2); ctx.lineTo(ex2-8,ey2+(pre>0?10:-10)); ctx.lineTo(ex2+8,ey2+(pre>0?10:-10)); ctx.closePath(); ctx.fill();
-    const la=pre>0?-Math.PI/4:Math.PI/4;
-    const lx2=cx+Math.cos(la)*amp*scale*0.68, ly2=cy+Math.sin(la)*amp*scale*0.68;
-    const preLabel=pre>0?'+90° 事前回転':'−90° 事前回転';
+    ctx.beginPath(); ctx.arc(cx,cy,arcRad,startAng,endAng,pre<0); ctx.stroke(); ctx.setLineDash([]);
+    const la=(startAng+endAng)/2;
+    const lx2=cx+Math.cos(la)*arcRad*0.65, ly2=cy+Math.sin(la)*arcRad*0.65;
+    const preLabel=pre<0?'I<0→−90°事前回転':'I<0→+90°事前回転';
     ctx.font='bold 9px Space Mono,monospace';
     const tw2=ctx.measureText(preLabel).width;
     ctx.fillStyle=t.gf(0.12);
     ctx.beginPath(); ctx.roundRect(lx2-tw2/2-4,ly2-10,tw2+8,15,3); ctx.fill();
     ctx.fillStyle=t.gf(0.9); ctx.fillText(preLabel,lx2-tw2/2,ly2+2);
-    ctx.fillStyle=t.gf(0.4);
-    ctx.beginPath(); ctx.arc(cx+x0*scale,cy-y0*scale,4,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=t.gf(0.55);
+    ctx.beginPath(); ctx.arc(cx+x0*scale,cy-y0*scale,5,0,Math.PI*2); ctx.fill();
   }
 
   if(steps.length===0||currentStep===0){
@@ -1312,8 +1349,13 @@ function drawTriangleCanvas(steps, currentStep){
     ctx.strokeStyle=t.accent; ctx.lineWidth=2.5;
     ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(ex3,ey3); ctx.stroke();
     arrowHead(ctx,cx,cy,ex3,ey3,t.accent);
+    // y-drop line to x-axis
+    ctx.strokeStyle=t.a2f(0.5); ctx.lineWidth=1.2; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(ex3,ey3); ctx.lineTo(ex3,cy); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle=t.a2; ctx.font='9px Space Mono,monospace';
+    ctx.fillText(`y=${y0.toFixed(3)}`,ex3+6,ey3<cy?ey3+14:ey3-6);
     ctx.fillStyle=t.dim; ctx.font='10px Space Mono,monospace';
-    ctx.fillText(pre!==0?'事前回転済 → STEP待ち':'STEP待ち',8,H-8);
+    ctx.fillText(pre!==0?'I<0→事前回転済 → STEP待ち':'(I,Q)セット → STEP待ち',8,H-8);
     return;
   }
 
@@ -1387,7 +1429,7 @@ function drawTriangleCanvas(steps, currentStep){
   const tipOffX=ex4>cx?7:-80, tipOffY=ey4<cy?-22:14;
   ctx.fillStyle=t.dim; ctx.font='9px Space Mono,monospace';
   ctx.fillText(`|v|=${vmag.toFixed(4)}`,ex4+tipOffX,ey4+tipOffY);
-  ctx.fillText(`= A/K`,ex4+tipOffX,ey4+tipOffY+12);
+  ctx.fillText(`≈ A/K (y→0→x=|v|)`,ex4+tipOffX,ey4+tipOffY+12);
 
   const kLX=kEx>cx?kEx+8:kEx-80, kLY=kEy<cy?kEy-8:kEy+18;
   ctx.fillStyle=t.green; ctx.font='bold 9px Space Mono,monospace';
@@ -1398,8 +1440,22 @@ function drawTriangleCanvas(steps, currentStep){
   ctx.strokeStyle=t.gf(0.4); ctx.lineWidth=2;
   ctx.beginPath(); ctx.arc(cx,cy,scale*0.15,0,-accumR,accumR<0); ctx.stroke();
 
+  // y-component drop line to x-axis (showing how close to y=0)
+  if(Math.abs(cur.y) > 0.001){
+    ctx.strokeStyle=t.a2f(0.7); ctx.lineWidth=1.5; ctx.setLineDash([3,2]);
+    ctx.beginPath(); ctx.moveTo(ex4,ey4); ctx.lineTo(ex4,cy); ctx.stroke(); ctx.setLineDash([]);
+    const yLabel=`y=${cur.y.toFixed(4)}`;
+    ctx.fillStyle=t.a2; ctx.font='bold 9px Space Mono,monospace';
+    const yLx=ex4+(ex4>cx?6:-ctx.measureText(yLabel).width-6);
+    const yLy=ey4+(ey4<cy?14:-6);
+    ctx.fillText(yLabel,yLx,yLy);
+  } else {
+    ctx.fillStyle=t.grf(0.9); ctx.font='bold 10px Space Mono,monospace';
+    ctx.fillText('✓ y≈0',ex4+6,ey4-8);
+  }
   ctx.fillStyle=t.dim; ctx.font='10px Space Mono,monospace';
-  ctx.fillText(`Step ${reveal}/${steps.length}  arctan(2⁻${reveal-1})=${steps[reveal-1].angle.toFixed(3)}°  K=${K.toFixed(4)}`,8,H-8);
+  const thetaEst=-cur.accum;
+  ctx.fillText(`Step ${reveal}/${steps.length}  推定θ=${thetaEst.toFixed(3)}°  K=${K.toFixed(4)}`,8,H-8);
 }
 
 // ─── Pre-rotation banner ───────────────────────────────────────────────────
@@ -1407,15 +1463,19 @@ function updatePrerotBanner(){
   const banner=document.getElementById('prerotBanner');
   const dot=document.getElementById('prerotDot');
   const text=document.getElementById('prerotText');
+  const I=state.amplitude*Math.cos(state.targetDeg*Math.PI/180);
+  const Q=state.amplitude*Math.sin(state.targetDeg*Math.PI/180);
   const p=state.pre;
   if(p!==0){
     banner.classList.add('active'); dot.classList.add('active');
     text.style.color='var(--gold)';
-    text.textContent=`θ=${state.targetDeg}° → |θ|>90° ∴ 事前回転 ${p>0?'+':''}${p}° 適用 → 残りθ=${state.targetDeg-p}° でCORDIC開始`;
+    const qName=p<0?'II':'III';
+    const x0s=(p<0?Q:-Q).toFixed(3), y0s=(p<0?-I:I).toFixed(3);
+    text.textContent=`I=${I.toFixed(3)}<0 → 象限${qName}検出 ∴ ${p>0?'+':''}${p}°事前回転 → (${x0s},${y0s}) からCORDIC開始`;
   } else {
     banner.classList.remove('active'); dot.classList.remove('active');
     text.style.color='var(--text-dim)';
-    text.textContent=`θ=${state.targetDeg}° → |θ|≤90° ∴ 事前回転なし、(A,0) から直接CORDIC開始`;
+    text.textContent=`I=${I.toFixed(3)}>0 → 象限I/IV ∴ 事前回転なし、(I,Q)=(${I.toFixed(3)},${Q.toFixed(3)}) から直接CORDIC開始`;
   }
 }
 
@@ -1424,28 +1484,45 @@ function updateLog(steps,currentStep){
   const log=document.getElementById('stepLog');
   while(log.children.length>1) log.removeChild(log.lastChild);
   const K=computeK(state.nSteps);
+  // y-indicator
+  const I0=state.amplitude*Math.cos(state.targetDeg*Math.PI/180);
+  const Q0=state.amplitude*Math.sin(state.targetDeg*Math.PI/180);
+  const {y0:yInit}=getVectoringPreRotation(I0,Q0);
+  const yAbsInit=Math.abs(yInit)<1e-9?1:Math.abs(yInit);
+  document.getElementById('yIndStart').textContent=yInit.toFixed(3);
+  let yCur=yInit, yPct=100;
+  if(steps.length>0&&currentStep>0){
+    const cs=steps[Math.min(currentStep,steps.length)-1];
+    yCur=cs.yComp; yPct=Math.min(100,Math.abs(yCur)/yAbsInit*100);
+  }
+  document.getElementById('yIndCurrent').textContent=`y=${yCur.toFixed(4)}`;
+  const fill=document.getElementById('yIndFill');
+  fill.style.width=yPct+'%';
+  fill.style.background=yPct<15?'var(--green)':yPct<40?'var(--gold)':'var(--accent2)';
+
   steps.forEach((s,idx)=>{
     const isActive=idx+1===currentStep, isDone=idx+1<currentStep;
     const row=document.createElement('div');
     row.className=`log-row ${isActive?'active-row':isDone?'done-row':''}`;
     const ampEst=(isDone||isActive)?((Math.sqrt(s.x*s.x+s.y*s.y)*K).toFixed(3)):'—';
+    const thetaEst=(isDone||isActive)?(-s.accum).toFixed(2)+'°':'—';
+    const dirLabel=s.direction<0?'↓CW(y>0)':'↑CCW(y<0)';
     const ampCol=isDone||isActive?`<span class="amp-est-col" style="color:var(--green)">${ampEst}</span>`:`<span>—</span>`;
     row.innerHTML=`<span class="step-num">${s.i}</span>
-      <span class="${s.direction>0?'dir-ccw':'dir-cw'}">${s.direction>0?'+CCW':'−CW'}</span>
+      <span class="${s.direction<0?'dir-cw':'dir-ccw'}" style="font-size:9px">${dirLabel}</span>
       <span class="angle-val">${s.angle.toFixed(3)}°</span>
-      <span class="accum-val">${s.accum.toFixed(3)}°</span>
-      <span class="remain-val">${s.remain.toFixed(3)}°</span>
+      <span class="accum-val">${thetaEst}</span>
+      <span class="remain-val" style="color:var(--accent2)">${(isDone||isActive)?s.yComp.toFixed(4):'—'}</span>
       ${ampCol}`;
     log.appendChild(row);
     if(isActive) setTimeout(()=>row.scrollIntoView({behavior:'smooth',block:'nearest'}),50);
   });
-  // Final summary row when all steps done
-  if(steps.length>0 && currentStep>=steps.length){
+  if(steps.length>0&&currentStep>=steps.length){
     const last=steps[steps.length-1];
-    const finalAmp=Math.sqrt(last.x*last.x+last.y*last.y)*K;
+    const finalAmp=last.x*K; // y≈0, so x≈|v|
     const fin=document.createElement('div');
     fin.className='log-row final-row';
-    fin.textContent=`✓ 振幅確定: |v| × K = ${finalAmp.toFixed(5)}  (真値 A = ${state.amplitude.toFixed(5)})`;
+    fin.textContent=`✓ y≈0、振幅確定: x×K = ${last.x.toFixed(5)}×${K.toFixed(4)} = ${(last.x*K).toFixed(5)}  (真値 A=${state.amplitude.toFixed(5)})`;
     log.appendChild(fin);
     setTimeout(()=>fin.scrollIntoView({behavior:'smooth',block:'nearest'}),80);
   }
@@ -1464,11 +1541,14 @@ function updateResults(steps,currentStep){
   }
   const cur=steps[Math.min(currentStep,steps.length)-1];
   const K=computeK(state.nSteps);
-  const cosEst=cur.x*K/state.amplitude;
-  const sinEst=cur.y*K/state.amplitude;
-  const ampEst=Math.sqrt(cur.x*cur.x+cur.y*cur.y)*K;
-  const error=Math.abs(cur.remain);
-  document.getElementById('resAngle').textContent=cur.accum.toFixed(4);
+  const thetaEst=-cur.accum;                          // vectoring mode: θ = −accum
+  const ampEst=Math.sqrt(cur.x*cur.x+cur.y*cur.y)*K; // |v|×K → A
+  const error=Math.abs(cur.remain);                   // current vector angle from x-axis
+  const I0=state.amplitude*Math.cos(state.targetDeg*Math.PI/180);
+  const Q0=state.amplitude*Math.sin(state.targetDeg*Math.PI/180);
+  const cosEst=ampEst>0?I0/ampEst:0;  // I/A_est
+  const sinEst=ampEst>0?Q0/ampEst:0;  // Q/A_est
+  document.getElementById('resAngle').textContent=thetaEst.toFixed(4);
   document.getElementById('resError').textContent=error.toFixed(4);
   document.getElementById('resCos').textContent  =cosEst.toFixed(5);
   document.getElementById('resSin').textContent  =sinEst.toFixed(5);
@@ -1657,14 +1737,14 @@ function resetState(){
 document.getElementById('resetBtn').addEventListener('click',resetState);
 document.getElementById('runBtn').addEventListener('click',()=>{
   stopAuto();
-  const r=computeCORDIC(state.targetDeg,state.amplitude,state.nSteps);
+  const r=computeCordicVectoring(state.targetDeg,state.amplitude,state.nSteps);
   state.steps=r.steps; state.pre=r.pre; state.currentStep=state.steps.length;
   fullUpdate();
 });
 document.getElementById('stepBtn').addEventListener('click',()=>{
   stopAuto();
   if(!state.steps.length){
-    const r=computeCORDIC(state.targetDeg,state.amplitude,state.nSteps);
+    const r=computeCordicVectoring(state.targetDeg,state.amplitude,state.nSteps);
     state.steps=r.steps; state.pre=r.pre; state.currentStep=0;
   }
   state.currentStep=state.currentStep<state.steps.length?state.currentStep+1:state.currentStep;
@@ -1673,7 +1753,7 @@ document.getElementById('stepBtn').addEventListener('click',()=>{
 function startAuto(){
   const speed=parseInt(document.getElementById('speedSlider').value);
   if(!state.steps.length){
-    const r=computeCORDIC(state.targetDeg,state.amplitude,state.nSteps);
+    const r=computeCordicVectoring(state.targetDeg,state.amplitude,state.nSteps);
     state.steps=r.steps; state.pre=r.pre; state.currentStep=0;
   }
   state.autoInterval=setInterval(()=>{
@@ -1690,7 +1770,7 @@ document.getElementById('autoBtn').addEventListener('click',function(){
     this.textContent='⏸ PAUSE';
     if(state.currentStep>=state.steps.length){
       state.currentStep=0;
-      const r=computeCORDIC(state.targetDeg,state.amplitude,state.nSteps);
+      const r=computeCordicVectoring(state.targetDeg,state.amplitude,state.nSteps);
       state.steps=r.steps; state.pre=r.pre;
     }
     startAuto();
@@ -1700,7 +1780,7 @@ document.getElementById('autoBtn').addEventListener('click',function(){
 // ─── IQ Canvas Interaction ─────────────────────────────────────────────────
 function iqSetAngle(deg){
   state.targetDeg=deg;
-  state.pre=getPreRotation(deg,state.amplitude).pre;
+  state.pre=getVectoringPreRotation(state.amplitude*Math.cos(deg*Math.PI/180),state.amplitude*Math.sin(deg*Math.PI/180)).pre;
   const d=document.getElementById('angleDisplay');
   if(d) d.textContent=deg+'°';
   state.steps=[]; state.currentStep=0; stopAuto();
@@ -1757,7 +1837,7 @@ document.addEventListener('mouseup', ()=>{
 });
 
 // ─── Init ──────────────────────────────────────────────────────────────────
-state.pre=getPreRotation(state.targetDeg,state.amplitude).pre;
+state.pre=getVectoringPreRotation(state.amplitude*Math.cos(state.targetDeg*Math.PI/180),state.amplitude*Math.sin(state.targetDeg*Math.PI/180)).pre;
 window.addEventListener('resize',fullUpdate);
 if(document.readyState==='complete') requestAnimationFrame(fullUpdate);
 else window.addEventListener('load',()=>requestAnimationFrame(fullUpdate));
