@@ -597,13 +597,13 @@ canvas { display: block; width: 100%; }
       </div>
 
       <!-- IQ canvas (full width) -->
-      <div style="width:100%;flex-basis:100%;">
+      <div style="width:100%;flex-basis:100%;touch-action:none;">
         <div class="panel-header" style="margin-bottom:4px;">
           <div class="dot dot-gold pulsing"></div>
           IQ SIGNAL
           <span style="margin-left:auto;font-size:9px;color:var(--text-dim);">縦線 = サンプル点θ　／　青帯 = CORDIC直接収束範囲(±90°)</span>
         </div>
-        <canvas id="iqCanvas" height="150" style="cursor:crosshair;touch-action:none;"></canvas>
+        <canvas id="iqCanvas" height="150" style="cursor:crosshair;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;display:block;width:100%;"></canvas>
         <div style="font-size:9px;color:var(--text-dim);padding:3px 8px 0;font-family:'Space Mono',monospace;">
           💡 <span class="hint-mouse">クリックで角度を設定 ／ ドラッグ ↕ で振幅を調整</span>
           <span class="hint-touch">タップで角度を設定 ／ 指を上下にドラッグ → 振幅を調整</span>
@@ -1856,32 +1856,42 @@ document.addEventListener('mouseup', ()=>{
 });
 
 // ─── Touch support for IQ canvas ──────────────────────────────────────────
-function iqTouchPos(e){
-  const r=iqCanvas.getBoundingClientRect(), t=e.touches[0];
+function iqTouchPos(touches){
+  const r=iqCanvas.getBoundingClientRect(), t=touches[0];
+  // getBoundingClientRect gives CSS pixels; canvas internal size may differ
+  const scaleX=r.width>0?iqCanvas.width/r.width:1;
+  const scaleY=r.height>0?iqCanvas.height/r.height:1;
   return {
-    px:(t.clientX-r.left)*(iqCanvas.width/r.width),
-    py:(t.clientY-r.top)*(iqCanvas.height/r.height)
+    px:(t.clientX-r.left)*scaleX,
+    py:(t.clientY-r.top)*scaleY
   };
+}
+let _iqRaf=false, _iqTx=0, _iqTy=0;
+function _iqApplyTouch(){
+  iqSetAngle(iqPixelToAngle(_iqTx));
+  const dy=iqInteract.dragStartY-_iqTy;
+  iqSetAmplitude(iqInteract.dragStartAmp+dy*0.012);
+  fullUpdate();
+  _iqRaf=false;
 }
 iqCanvas.addEventListener('touchstart', e=>{
   e.preventDefault();
-  const {px,py}=iqTouchPos(e);
+  const {px,py}=iqTouchPos(e.touches);
   iqInteract.isDragging=true;
   iqInteract.dragStartY=py;
   iqInteract.dragStartAmp=state.amplitude;
   iqInteract.hoverX=px;
+  _iqTx=px; _iqTy=py;
   iqSetAngle(iqPixelToAngle(px));
   fullUpdate();
 },{passive:false});
 
 iqCanvas.addEventListener('touchmove', e=>{
   e.preventDefault();
-  const {px,py}=iqTouchPos(e);
+  const {px,py}=iqTouchPos(e.touches);
   iqInteract.hoverX=px;
-  iqSetAngle(iqPixelToAngle(px));
-  const dy=iqInteract.dragStartY-py;
-  iqSetAmplitude(iqInteract.dragStartAmp+dy*0.012);
-  fullUpdate();
+  _iqTx=px; _iqTy=py;
+  if(!_iqRaf){ _iqRaf=true; requestAnimationFrame(_iqApplyTouch); }
 },{passive:false});
 
 iqCanvas.addEventListener('touchend', e=>{
