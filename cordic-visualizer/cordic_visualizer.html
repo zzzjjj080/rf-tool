@@ -645,6 +645,44 @@ canvas { display: block; width: 100%; }
       ZONE 2 — CORDIC 解析実行
       <span class="zone-tag">アルゴリズム制御</span>
     </div>
+
+  <!-- Main grid — triangle + log at TOP of Zone 2 -->
+  <div class="main-grid" style="margin:0;padding:14px 18px;border-bottom:1px solid var(--border);">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="dot pulsing"></div>
+        TRIANGLE STACKING — 直角三角形の積み上げ
+        <span style="margin-left:auto;font-size:9px;color:var(--text-dim);">緑 = K補正後の振幅A</span>
+      </div>
+      <div class="prerot-banner" id="prerotBanner">
+        <div class="prerot-dot" id="prerotDot"></div>
+        <span id="prerotText" style="color:var(--text-dim);">θ = ±90°以内 — 事前回転なし</span>
+      </div>
+      <canvas id="triCanvas" width="640" height="400"></canvas>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-box" style="background:rgba(2,132,199,0.25);border-color:var(--accent);"></div><span style="color:var(--accent)">↑CCW (y&lt;0)</span></div>
+        <div class="legend-item"><div class="legend-box" style="background:rgba(234,88,12,0.25);border-color:var(--accent2);"></div><span style="color:var(--accent2)">↓CW (y&gt;0)</span></div>
+        <div class="legend-item"><div class="legend-box" style="background:rgba(217,119,6,0.25);border-color:var(--gold);"></div><span style="color:var(--gold)">I&lt;0→事前回転</span></div>
+        <div class="legend-item"><div class="legend-box" style="background:rgba(22,163,74,0.25);border-color:var(--green);"></div><span style="color:var(--green)">x軸(目標)・K補正</span></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><div class="dot dot-orange pulsing"></div>STEP LOG</div>
+      <div class="y-indicator" id="yIndicator">
+        <span class="y-ind-label">Q収束:</span>
+        <span class="y-ind-val" id="yIndStart">—</span>
+        <div class="y-ind-bar"><div class="y-ind-fill" id="yIndFill" style="width:100%"></div></div>
+        <span class="y-ind-zero">0</span>
+        <span class="y-ind-val" id="yIndCurrent" style="text-align:right;color:var(--accent2)">y=—</span>
+      </div>
+      <div class="step-log" id="stepLog">
+        <div class="log-row header-row">
+          <span>#</span><span>DIR</span><span>角度</span><span>推定θ</span><span>y成分</span><span>振幅est</span>
+        </div>
+      </div>
+    </div>
+  </div><!-- end main-grid (top) -->
+
     <div class="zone-body">
       <div class="zone-guide guide-orange">
         <div class="zone-guide-icon">📐</div>
@@ -730,42 +768,6 @@ canvas { display: block; width: 100%; }
     </div>
   </div>
 
-  <!-- Main grid — inside Zone 2 -->
-  <div class="main-grid" style="margin:0;border-top:1px solid var(--border);padding-top:14px;">
-    <div class="panel">
-      <div class="panel-header">
-        <div class="dot pulsing"></div>
-        TRIANGLE STACKING — 直角三角形の積み上げ
-        <span style="margin-left:auto;font-size:9px;color:var(--text-dim);">緑 = K補正後の振幅A</span>
-      </div>
-      <div class="prerot-banner" id="prerotBanner">
-        <div class="prerot-dot" id="prerotDot"></div>
-        <span id="prerotText" style="color:var(--text-dim);">θ = ±90°以内 — 事前回転なし</span>
-      </div>
-      <canvas id="triCanvas" width="640" height="460"></canvas>
-      <div class="legend">
-        <div class="legend-item"><div class="legend-box" style="background:rgba(2,132,199,0.25);border-color:var(--accent);"></div><span style="color:var(--accent)">↑CCW (y&lt;0)</span></div>
-        <div class="legend-item"><div class="legend-box" style="background:rgba(234,88,12,0.25);border-color:var(--accent2);"></div><span style="color:var(--accent2)">↓CW (y&gt;0)</span></div>
-        <div class="legend-item"><div class="legend-box" style="background:rgba(217,119,6,0.25);border-color:var(--gold);"></div><span style="color:var(--gold)">I&lt;0→事前回転</span></div>
-        <div class="legend-item"><div class="legend-box" style="background:rgba(22,163,74,0.25);border-color:var(--green);"></div><span style="color:var(--green)">x軸(目標)・K補正</span></div>
-      </div>
-    </div>
-    <div class="panel">
-      <div class="panel-header"><div class="dot dot-orange pulsing"></div>STEP LOG</div>
-      <div class="y-indicator" id="yIndicator">
-        <span class="y-ind-label">Q収束:</span>
-        <span class="y-ind-val" id="yIndStart">—</span>
-        <div class="y-ind-bar"><div class="y-ind-fill" id="yIndFill" style="width:100%"></div></div>
-        <span class="y-ind-zero">0</span>
-        <span class="y-ind-val" id="yIndCurrent" style="text-align:right;color:var(--accent2)">y=—</span>
-      </div>
-      <div class="step-log" id="stepLog">
-        <div class="log-row header-row">
-          <span>#</span><span>DIR</span><span>角度</span><span>推定θ</span><span>y成分</span><span>振幅est</span>
-        </div>
-      </div>
-    </div>
-  </div><!-- end main-grid -->
   </div><!-- end zone-analysis -->
 
   <!-- Explanation -->
