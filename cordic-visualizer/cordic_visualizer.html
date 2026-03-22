@@ -210,6 +210,22 @@ canvas { display: block; width: 100%; }
 /* ── Main grid ── */
 .main-grid { display: grid; grid-template-columns: 3fr 2fr; gap: 14px; margin-bottom: 14px; }
 @media (max-width: 720px) { .main-grid { grid-template-columns: 1fr; } }
+
+/* ── Touch device hints ── */
+.hint-touch { display: none; }
+@media (hover: none) and (pointer: coarse) {
+  .hint-mouse { display: none; }
+  .hint-touch { display: inline; }
+  /* Larger tap targets for buttons */
+  .btn       { min-height: 48px; font-size: 14px; }
+  .btn-large { min-height: 52px; padding: 12px 24px; font-size: 15px; }
+  .btn-small { min-height: 42px; padding: 8px 14px; font-size: 12px; }
+  .step-btn  { min-height: 44px; min-width: 48px; font-size: 14px; }
+  /* More comfortable spacing */
+  .ctrl-btns { gap: 10px; }
+  .steps-btns { gap: 8px; }
+  #iqCanvas  { height: 180px; }
+}
 .step-log { padding: 10px; max-height: 340px; overflow-y: auto; }
 .step-log::-webkit-scrollbar { width: 4px; }
 .step-log::-webkit-scrollbar-track { background: var(--panel2); }
@@ -587,9 +603,10 @@ canvas { display: block; width: 100%; }
           IQ SIGNAL
           <span style="margin-left:auto;font-size:9px;color:var(--text-dim);">縦線 = サンプル点θ　／　青帯 = CORDIC直接収束範囲(±90°)</span>
         </div>
-        <canvas id="iqCanvas" height="150" style="cursor:crosshair;"></canvas>
+        <canvas id="iqCanvas" height="150" style="cursor:crosshair;touch-action:none;"></canvas>
         <div style="font-size:9px;color:var(--text-dim);padding:3px 8px 0;font-family:'Space Mono',monospace;">
-          💡 クリックで角度を設定 &nbsp;／&nbsp; ドラッグ ↕ で振幅を調整
+          💡 <span class="hint-mouse">クリックで角度を設定 ／ ドラッグ ↕ で振幅を調整</span>
+          <span class="hint-touch">タップで角度を設定 ／ 指を上下にドラッグ → 振幅を調整</span>
         </div>
         <div class="iq-info-row">
           <div class="iq-val"><span class="lbl">I = A·cos(θ)</span><span class="num i-color" id="iqI">—</span></div>
@@ -1837,6 +1854,42 @@ document.addEventListener('mouseup', ()=>{
     iqCanvas.style.cursor='crosshair';
   }
 });
+
+// ─── Touch support for IQ canvas ──────────────────────────────────────────
+function iqTouchPos(e){
+  const r=iqCanvas.getBoundingClientRect(), t=e.touches[0];
+  return {
+    px:(t.clientX-r.left)*(iqCanvas.width/r.width),
+    py:(t.clientY-r.top)*(iqCanvas.height/r.height)
+  };
+}
+iqCanvas.addEventListener('touchstart', e=>{
+  e.preventDefault();
+  const {px,py}=iqTouchPos(e);
+  iqInteract.isDragging=true;
+  iqInteract.dragStartY=py;
+  iqInteract.dragStartAmp=state.amplitude;
+  iqInteract.hoverX=px;
+  iqSetAngle(iqPixelToAngle(px));
+  fullUpdate();
+},{passive:false});
+
+iqCanvas.addEventListener('touchmove', e=>{
+  e.preventDefault();
+  const {px,py}=iqTouchPos(e);
+  iqInteract.hoverX=px;
+  iqSetAngle(iqPixelToAngle(px));
+  const dy=iqInteract.dragStartY-py;
+  iqSetAmplitude(iqInteract.dragStartAmp+dy*0.012);
+  fullUpdate();
+},{passive:false});
+
+iqCanvas.addEventListener('touchend', e=>{
+  e.preventDefault();
+  iqInteract.isDragging=false;
+  iqInteract.hoverX=null;
+  drawIQCanvas();
+},{passive:false});
 
 // ─── Init ──────────────────────────────────────────────────────────────────
 state.pre=getVectoringPreRotation(state.amplitude*Math.cos(state.targetDeg*Math.PI/180),state.amplitude*Math.sin(state.targetDeg*Math.PI/180)).pre;
