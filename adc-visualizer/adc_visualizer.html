@@ -1083,9 +1083,9 @@ function update() { updateResults(); draw(); }
 let resizeTimer;
 window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(draw, 80); });
 
-// Init
+// Init — defer draw until after first layout so clientWidth is non-zero
 syncUI();
-update();
+requestAnimationFrame(() => requestAnimationFrame(update));
 </script>
 </body>
 </html>
