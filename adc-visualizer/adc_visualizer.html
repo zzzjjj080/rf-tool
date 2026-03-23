@@ -1083,9 +1083,17 @@ function update() { updateResults(); draw(); }
 let resizeTimer;
 window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(draw, 80); });
 
-// Init — defer draw until after first layout so clientWidth is non-zero
+// Init — wait until the canvas container has a real width before drawing
 syncUI();
-requestAnimationFrame(() => requestAnimationFrame(update));
+(function initDraw() {
+  const panel = document.getElementById('cvAnalog').parentElement;
+  if (panel.clientWidth > 0) {
+    update();
+  } else {
+    // Not laid out yet — retry on next frame
+    requestAnimationFrame(initDraw);
+  }
+})();
 </script>
 </body>
 </html>
