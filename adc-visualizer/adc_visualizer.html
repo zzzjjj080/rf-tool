@@ -705,12 +705,14 @@ function quantizeAbs(vinAbs) {
 // ── Canvas helpers ────────────────────────────────────────────────────
 function resizeCanvas(cv) {
   const dpr = window.devicePixelRatio || 1;
-  const w   = cv.parentElement.clientWidth;
-  const h   = parseInt(cv.getAttribute('height'), 10);
-  cv.width  = w * dpr;
-  cv.height = h * dpr;
-  cv.style.width  = w + 'px';
-  cv.style.height = h + 'px';
+  // getBoundingClientRect reflects CSS width:100% without the feedback-loop
+  // risk of overwriting cv.style.width
+  const rect = cv.getBoundingClientRect();
+  const w = Math.round(rect.width) || cv.parentElement.clientWidth || 600;
+  const h = parseInt(cv.getAttribute('height'), 10);
+  cv.width  = Math.round(w * dpr);
+  cv.height = Math.round(h * dpr);
+  cv.style.height = h + 'px';   // height only — let CSS handle width:100%
   const ctx = cv.getContext('2d');
   ctx.scale(dpr, dpr);
   return { ctx, w, h };
@@ -1083,17 +1085,11 @@ function update() { updateResults(); draw(); }
 let resizeTimer;
 window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(draw, 80); });
 
-// Init — wait until the canvas container has a real width before drawing
 syncUI();
-(function initDraw() {
-  const panel = document.getElementById('cvAnalog').parentElement;
-  if (panel.clientWidth > 0) {
-    update();
-  } else {
-    // Not laid out yet — retry on next frame
-    requestAnimationFrame(initDraw);
-  }
-})();
+// Draw immediately (works when layout is already complete at script-parse time)
+// and again on 'load' as a guaranteed fallback once CSS/fonts are fully applied.
+update();
+window.addEventListener('load', update);
 </script>
 </body>
 </html>
