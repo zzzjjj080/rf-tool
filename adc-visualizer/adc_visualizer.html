@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ADC Visualizer — サンプリング・量子化</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+JP:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f0f4f8; --panel:#ffffff; --panel2:#f1f5f9; --border:#cbd5e1;
+  --accent:#0284c7; --accent2:#ea580c; --text:#1e293b; --text-dim:#64748b;
+  --gold:#d97706; --green:#16a34a; --red:#dc2626; --purple:#7c3aed;
+  --shadow:rgba(0,0,0,0.07); --grid-line:rgba(100,116,139,0.08);
+}
+[data-theme="dark"] {
+  --bg:#0a0e1a; --panel:#111827; --panel2:#1a2235; --border:#1e3a5f;
+  --accent:#00d4ff; --accent2:#ff6b35; --text:#e2e8f0; --text-dim:#64748b;
+  --gold:#fbbf24; --green:#22c55e; --red:#f87171; --purple:#a78bfa;
+  --shadow:rgba(0,0,0,0.3); --grid-line:rgba(0,212,255,0.03);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;min-height:100vh;overflow-x:hidden;transition:background .3s,color .3s;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--grid-line) 1px,transparent 1px),linear-gradient(90deg,var(--grid-line) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+.container{position:relative;z-index:1;max-width:1140px;margin:0 auto;padding:20px 16px 40px;}
+
+header{text-align:center;margin-bottom:20px;padding:20px 0 16px;border-bottom:1px solid var(--border);position:relative;}
+.header-tag{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:4px;color:var(--accent);text-transform:uppercase;margin-bottom:6px;opacity:.8;}
+h1{font-family:'Space Mono',monospace;font-size:clamp(22px,5vw,36px);font-weight:700;letter-spacing:-1px;background:linear-gradient(135deg,var(--accent) 0%,var(--text) 50%,var(--accent2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.subtitle{font-size:11px;color:var(--text-dim);margin-top:5px;font-family:'Space Mono',monospace;letter-spacing:1px;}
+.theme-toggle{position:absolute;top:20px;right:0;padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:var(--panel);color:var(--text);cursor:pointer;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;transition:all .2s;box-shadow:0 1px 4px var(--shadow);}
+.theme-toggle:hover{border-color:var(--accent);color:var(--accent);}
+
+.intro-panel{background:var(--panel);border:1.5px solid rgba(2,132,199,.35);border-radius:12px;padding:16px 20px;margin-bottom:16px;box-shadow:0 1px 6px var(--shadow);position:relative;overflow:hidden;}
+.intro-panel::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--green));}
+[data-theme="dark"] .intro-panel{border-color:rgba(0,212,255,.3);}
+.intro-badge{display:inline-block;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);background:rgba(2,132,199,.1);border:1px solid rgba(2,132,199,.3);border-radius:20px;padding:3px 10px;margin-bottom:10px;}
+[data-theme="dark"] .intro-badge{background:rgba(0,212,255,.1);border-color:rgba(0,212,255,.3);}
+.intro-main{font-size:13px;line-height:1.9;color:var(--text);margin-bottom:12px;}
+.intro-main .hl{color:var(--accent);font-weight:700;font-family:'Space Mono',monospace;}
+.intro-main .hl2{color:var(--accent2);font-weight:700;font-family:'Space Mono',monospace;}
+.intro-main .hlg{color:var(--green);font-weight:700;}
+.intro-steps{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--panel2);border-radius:10px;padding:12px 16px;margin-bottom:10px;}
+.intro-step{display:flex;align-items:flex-start;gap:8px;font-size:12px;line-height:1.5;color:var(--text);flex:1;min-width:130px;}
+.intro-step small{color:var(--text-dim);font-size:10px;font-family:'Space Mono',monospace;}
+.intro-num{width:22px;height:22px;background:var(--accent);color:#fff;border-radius:50%;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.intro-arrow{color:var(--text-dim);font-size:20px;flex-shrink:0;align-self:center;}
+
+.zone{border-radius:12px;margin-bottom:6px;overflow:hidden;box-shadow:0 1px 4px var(--shadow);}
+.zone-header{padding:8px 18px;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;display:flex;align-items:center;gap:8px;}
+.zone-tag{font-size:9px;letter-spacing:1px;padding:2px 8px;border-radius:10px;font-weight:700;margin-left:auto;}
+.zone-body{padding:14px 18px;display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;background:var(--panel);}
+
+.zone-settings{background:var(--panel);border:1.5px solid rgba(2,132,199,.6);}
+.zone-settings .zone-header{background:rgba(2,132,199,.08);border-bottom:1px solid rgba(2,132,199,.2);color:var(--accent);}
+.zone-settings .zone-tag{background:rgba(2,132,199,.12);color:var(--accent);}
+[data-theme="dark"] .zone-settings{border-color:rgba(0,212,255,.4);}
+[data-theme="dark"] .zone-settings .zone-header{background:rgba(0,212,255,.08);border-bottom-color:rgba(0,212,255,.2);}
+[data-theme="dark"] .zone-settings .zone-tag{background:rgba(0,212,255,.12);}
+
+.zone-results{background:var(--panel);border:1.5px solid rgba(234,88,12,.6);}
+.zone-results .zone-header{background:rgba(234,88,12,.08);border-bottom:1px solid rgba(234,88,12,.2);color:var(--accent2);}
+.zone-results .zone-tag{background:rgba(234,88,12,.12);color:var(--accent2);}
+[data-theme="dark"] .zone-results{border-color:rgba(255,107,53,.4);}
+[data-theme="dark"] .zone-results .zone-header{background:rgba(255,107,53,.08);border-bottom-color:rgba(255,107,53,.2);}
+[data-theme="dark"] .zone-results .zone-tag{background:rgba(255,107,53,.12);}
+
+.input-group{display:flex;flex-direction:column;gap:5px;flex:1;min-width:160px;}
+.input-group label{font-size:10px;letter-spacing:2px;color:var(--accent);font-family:'Space Mono',monospace;text-transform:uppercase;}
+.input-group-inline{display:flex;align-items:center;gap:8px;}
+input[type="range"]{-webkit-appearance:none;width:100%;height:4px;background:var(--border);border-radius:2px;outline:none;cursor:pointer;}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;box-shadow:0 1px 4px var(--shadow);}
+.input-val{font-family:'Space Mono',monospace;font-size:14px;color:var(--gold);min-width:90px;text-align:center;font-weight:700;}
+
+.select-group{display:flex;flex-direction:column;gap:5px;flex:1;min-width:180px;}
+.select-group label{font-size:10px;letter-spacing:2px;color:var(--accent);font-family:'Space Mono',monospace;text-transform:uppercase;}
+.preset-row{flex-basis:100%;width:100%;}
+select.styled-select{-webkit-appearance:none;appearance:none;background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 28px 7px 10px;font-family:'Space Mono',monospace;font-size:11px;cursor:pointer;width:100%;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2364748b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;outline:none;transition:border-color .2s;}
+select.styled-select:focus,select.styled-select:hover{border-color:var(--accent);}
+select.styled-select option{background:var(--panel);color:var(--text);}
+select.styled-select optgroup{color:var(--text-dim);font-style:normal;}
+
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 4px var(--shadow);margin-bottom:6px;}
+.panel-header{padding:9px 14px;background:var(--panel2);border-bottom:1px solid var(--border);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;display:flex;align-items:center;gap:8px;}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--accent);}
+.dot-orange{background:var(--accent2)!important;}
+.dot-gold{background:var(--gold)!important;}
+canvas{display:block;width:100%;}
+
+.alias-banner{display:flex;align-items:center;gap:10px;padding:7px 14px;font-family:'Space Mono',monospace;font-size:10px;border-bottom:1px solid var(--border);background:var(--panel2);transition:background .3s;}
+.alias-banner.active{background:rgba(220,38,38,.08);border-bottom-color:rgba(220,38,38,.4);}
+[data-theme="dark"] .alias-banner.active{background:rgba(248,113,113,.08);border-bottom-color:rgba(248,113,113,.35);}
+.alias-dot{width:7px;height:7px;border-radius:50%;background:var(--text-dim);flex-shrink:0;transition:background .3s;}
+.alias-dot.active{background:var(--red);}
+.alias-text{color:var(--text-dim);transition:color .3s;font-size:10px;}
+.alias-banner.active .alias-text{color:var(--red);}
+.alias-freq{font-weight:700;}
+
+.clip-banner{display:flex;align-items:center;gap:8px;padding:6px 14px;font-family:'Space Mono',monospace;font-size:10px;background:var(--panel2);border-bottom:1px solid var(--border);transition:background .3s;}
+.clip-banner.active{background:rgba(220,38,38,.07);border-bottom-color:rgba(220,38,38,.3);}
+.clip-dot{width:7px;height:7px;border-radius:50%;background:var(--text-dim);flex-shrink:0;}
+.clip-banner.active .clip-dot{background:var(--red);}
+.clip-banner.active .clip-text{color:var(--red);}
+.clip-text{color:var(--text-dim);}
+
+.result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;padding:14px 18px;}
+.result-card{background:var(--panel2);border:2px solid var(--border);border-radius:10px;padding:10px;text-align:center;}
+.result-card .label{font-size:9px;letter-spacing:1.5px;color:var(--text-dim);font-family:'Space Mono',monospace;text-transform:uppercase;margin-bottom:5px;}
+.result-card .value{font-family:'Space Mono',monospace;font-size:clamp(12px,2vw,18px);font-weight:700;color:var(--accent);}
+.result-card .value.orange{color:var(--accent2);}
+.result-card .value.green{color:var(--green);}
+.result-card .value.gold{color:var(--gold);}
+.result-card .value.red{color:var(--red);}
+.result-card .value.purple{color:var(--purple);}
+.result-card .value.sm{font-size:clamp(10px,1.5vw,13px);}
+.result-card .unit{font-size:9px;color:var(--text-dim);margin-top:2px;font-family:'Space Mono',monospace;}
+.result-card.highlight{border-color:rgba(22,163,74,.5);background:rgba(22,163,74,.05);}
+[data-theme="dark"] .result-card.highlight{border-color:rgba(34,197,94,.4);}
+.result-card.warn{border-color:rgba(220,38,38,.5);background:rgba(220,38,38,.05);}
+[data-theme="dark"] .result-card.warn{border-color:rgba(248,113,113,.4);}
+
+.legend{display:flex;gap:12px;padding:8px 14px;font-family:'Space Mono',monospace;font-size:10px;border-top:1px solid var(--border);background:var(--panel2);flex-wrap:wrap;}
+.legend-item{display:flex;align-items:center;gap:5px;}
+.legend-swatch{width:18px;height:3px;border-radius:2px;}
+
+.explain-section{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:6px;box-shadow:0 1px 4px var(--shadow);}
+.explain-section h3{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--accent2);text-transform:uppercase;margin-bottom:10px;}
+.explain-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;}
+.explain-card{background:var(--panel2);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.explain-card-head{font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1px;padding:8px 14px;text-transform:uppercase;}
+.explain-card-head.gold{background:rgba(217,119,6,.12);color:var(--gold);border-bottom:1px solid rgba(217,119,6,.2);}
+.explain-card-head.accent{background:rgba(2,132,199,.10);color:var(--accent);border-bottom:1px solid rgba(2,132,199,.2);}
+.explain-card-head.green{background:rgba(22,163,74,.10);color:var(--green);border-bottom:1px solid rgba(22,163,74,.2);}
+.explain-card-head.orange{background:rgba(234,88,12,.10);color:var(--accent2);border-bottom:1px solid rgba(234,88,12,.2);}
+.explain-card-head.purple{background:rgba(124,58,237,.10);color:var(--purple);border-bottom:1px solid rgba(124,58,237,.2);}
+[data-theme="dark"] .explain-card-head.gold{background:rgba(251,191,36,.10);border-bottom-color:rgba(251,191,36,.2);}
+[data-theme="dark"] .explain-card-head.accent{background:rgba(0,212,255,.08);border-bottom-color:rgba(0,212,255,.2);}
+[data-theme="dark"] .explain-card-head.green{background:rgba(34,197,94,.08);border-bottom-color:rgba(34,197,94,.2);}
+[data-theme="dark"] .explain-card-head.orange{background:rgba(255,107,53,.08);border-bottom-color:rgba(255,107,53,.2);}
+[data-theme="dark"] .explain-card-head.purple{background:rgba(167,139,250,.08);border-bottom-color:rgba(167,139,250,.2);}
+.explain-card-body{padding:12px 14px;font-size:12px;line-height:1.8;color:var(--text);}
+.explain-card-body .hl{color:var(--accent);font-weight:700;font-family:'Space Mono',monospace;}
+.explain-card-body .hl2{color:var(--accent2);font-weight:700;font-family:'Space Mono',monospace;}
+.explain-card-body .hlg{color:var(--green);font-weight:700;font-family:'Space Mono',monospace;}
+.explain-card-body .hlp{color:var(--purple);font-weight:700;font-family:'Space Mono',monospace;}
+.explain-card-body .hl3{color:var(--gold);font-size:11px;font-family:'Space Mono',monospace;display:block;margin-top:4px;}
+
+@media(max-width:720px){.input-group{min-width:140px;}.select-group{min-width:140px;}}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <div class="header-tag">Signal Processing Visualizer</div>
+  <h1>ADC Visualizer</h1>
+  <div class="subtitle">アナログ入力 → サンプリング → 量子化 → デジタル出力</div>
+  <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙 Dark</button>
+</header>
+
+<div class="intro-panel">
+  <div class="intro-badge">ADCとは何か？</div>
+  <p class="intro-main">
+    <span class="hl">ADC（アナログ-デジタル変換器）</span>は、連続したアナログ信号を
+    <span class="hl2">サンプリング</span>（時間離散化）と<span class="hlg">量子化</span>（振幅離散化）の
+    2ステップでデジタルデータに変換します。
+    サンプリングレート・ビット数・入力モード・コード方式の設定が出力品質を決定します。
+  </p>
+  <div class="intro-steps">
+    <div class="intro-step">
+      <span class="intro-num">①</span>
+      <span><strong>サンプリング</strong><br><small>fs でアナログ波形を離散化<br>ナイキスト条件: fs ≥ 2·fin</small></span>
+    </div>
+    <div class="intro-arrow">→</div>
+    <div class="intro-step">
+      <span class="intro-num">②</span>
+      <span><strong>量子化</strong><br><small>2ᴺ レベルに振幅を丸める<br>量子化ノイズ = LSB/√12</small></span>
+    </div>
+    <div class="intro-arrow">→</div>
+    <div class="intro-step">
+      <span class="intro-num">③</span>
+      <span><strong>デジタル出力</strong><br><small>SNR・ENOB で品質評価<br>コード方式を選択</small></span>
+    </div>
+  </div>
+</div>
+
+<!-- ── Zone 1: Settings ── -->
+<div class="zone zone-settings">
+  <div class="zone-header">⚙ パラメータ設定<span class="zone-tag">ZONE 1 — INPUT</span></div>
+  <div class="zone-body">
+
+    <!-- Preset (full width) -->
+    <div class="select-group preset-row">
+      <label>部品プリセット</label>
+      <select class="styled-select" id="selPreset">
+        <option value="custom">カスタム設定（手動）</option>
+        <optgroup label="── ADI / AD9633系（4ch LVDS, 1.8V）">
+          <option value="AD9633-80">AD9633-80 — 12bit, 80MSPS, 4ch, 1.8V, Fully-Diff</option>
+          <option value="AD9233-80">AD9233-80 — 12bit, 80MSPS, 1ch, 1.8V, Fully-Diff</option>
+          <option value="AD9253-80">AD9253-80 — 14bit, 80MSPS, 4ch, 1.8V, Fully-Diff</option>
+          <option value="AD9653-125">AD9653-125 — 16bit, 125MSPS, 4ch, 1.8V, Fully-Diff</option>
+        </optgroup>
+        <optgroup label="── ADI / AD9268系（2ch, 1.8V）">
+          <option value="AD9231-80">AD9231-80 — 12bit, 80MSPS, 2ch, 1.8V, Fully-Diff</option>
+          <option value="AD9251-80">AD9251-80 — 14bit, 80MSPS, 2ch, 1.8V, Fully-Diff</option>
+          <option value="AD9258-80">AD9258-80 — 14bit, 80MSPS, 2ch, 1.8V, Fully-Diff</option>
+          <option value="AD9268-80">AD9268-80 — 16bit, 80MSPS, 2ch, 1.8V, Fully-Diff</option>
+        </optgroup>
+        <optgroup label="── ADI / シングルch（1.8V）">
+          <option value="AD9246-80">AD9246-80 — 14bit, 80MSPS, 1ch, 1.8V, Fully-Diff</option>
+          <option value="AD9255-80">AD9255-80 — 14bit, 80MSPS, 1ch, 1.8V, Fully-Diff</option>
+          <option value="AD9649-80">AD9649-80 — 14bit, 80MSPS, 1ch, 1.8V, Fully-Diff</option>
+          <option value="AD9641-80">AD9641-80 — 14bit, 80MSPS, 1ch, 1.8V, Fully-Diff</option>
+        </optgroup>
+        <optgroup label="── ADI / マルチch（1.8V）">
+          <option value="AD9637-80">AD9637-80 — 12bit, 80MSPS, 8ch, 1.8V, Fully-Diff</option>
+        </optgroup>
+        <optgroup label="── ADI / 高電圧系">
+          <option value="AD9446-80">AD9446-80 — 16bit, 80MSPS, 1ch, 3.3V+5V, Fully-Diff</option>
+        </optgroup>
+        <optgroup label="── Maxim（ADI傘下）">
+          <option value="MAX1208">MAX1208 — 12bit, 80MSPS, 1ch, 3.3V, Single-Ended</option>
+          <option value="MAX1209">MAX1209 — 12bit, 80MSPS, 1ch, 3.3V, Single-Ended</option>
+        </optgroup>
+        <optgroup label="── LTC（ADI傘下）">
+          <option value="LTC2294">LTC2294 — 12bit, 80MSPS, 2ch, 3.0V, Fully-Diff</option>
+          <option value="LTC2273">LTC2273 — 16bit, 80MSPS, 1ch, 3.3V, Fully-Diff</option>
+        </optgroup>
+        <optgroup label="── TI">
+          <option value="ADS6123">ADS6123 — 12bit, 80MSPS, 1ch, 3.3V, Fully-Diff</option>
+          <option value="ADS6143">ADS6143 — 14bit, 80MSPS, 1ch, 3.3V, Fully-Diff</option>
+          <option value="ADS5292">ADS5292 — 12bit, 80MSPS, 8ch, 1.8V, Fully-Diff</option>
+          <option value="ADS5294">ADS5294 — 14bit, 80MSPS, 8ch, 1.8V, Fully-Diff</option>
+          <option value="ADC12DL080">ADC12DL080 — 12bit, 80MSPS, 2ch, 3.3V, Fully-Diff</option>
+          <option value="ADC14DS080">ADC14DS080 — 14bit, 80MSPS, 2ch, 3.3V, Fully-Diff</option>
+          <option value="ADC12L080">ADC12L080 — 12bit, 80MSPS, 1ch, 3.3V, Single-Ended</option>
+        </optgroup>
+        <optgroup label="── Microchip">
+          <option value="MCP37D11-80">MCP37D11-80 — 12bit, 80MSPS, max8ch, 1.8V, Fully-Diff</option>
+          <option value="MCP37D21-80">MCP37D21-80 — 14bit, 80MSPS, max8ch, 1.8V, Fully-Diff</option>
+          <option value="MCP37D31-80">MCP37D31-80 — 16bit, 80MSPS, max8ch, 1.8V, Fully-Diff</option>
+        </optgroup>
+        <optgroup label="── 比較用（低速高精度）">
+          <option value="ADS1115">ADS1115 — 16bit, 860SPS, 1ch, 2.0〜5.5V, Single-Ended</option>
+        </optgroup>
+      </select>
+    </div>
+
+    <!-- fin -->
+    <div class="input-group">
+      <label>入力周波数 fin</label>
+      <div class="input-group-inline">
+        <input type="range" id="slFin" min="0.001" max="20000" step="0.001" value="3">
+        <span class="input-val" id="valFin">3.000 kHz</span>
+      </div>
+    </div>
+
+    <!-- Ain -->
+    <div class="input-group">
+      <label>入力振幅 Ain</label>
+      <div class="input-group-inline">
+        <input type="range" id="slAin" min="0.05" max="1.0" step="0.01" value="0.9">
+        <span class="input-val" id="valAin">0.90 ×Vref</span>
+      </div>
+    </div>
+
+    <!-- fs -->
+    <div class="input-group">
+      <label>サンプリングレート fs</label>
+      <div class="input-group-inline">
+        <input type="range" id="slFs" min="0.001" max="200000" step="0.001" value="20">
+        <span class="input-val" id="valFs">20 kHz</span>
+      </div>
+    </div>
+
+    <!-- N bits -->
+    <div class="input-group">
+      <label>ビット数 N</label>
+      <div class="input-group-inline">
+        <input type="range" id="slN" min="1" max="16" step="1" value="4">
+        <span class="input-val" id="valN">4 bit</span>
+      </div>
+    </div>
+
+    <!-- Vref -->
+    <div class="input-group">
+      <label>フルスケール Vref</label>
+      <div class="input-group-inline">
+        <input type="range" id="slVref" min="0.1" max="5.0" step="0.001" value="2.0">
+        <span class="input-val" id="valVref">2.000 V</span>
+      </div>
+    </div>
+
+    <!-- Vcm -->
+    <div class="input-group">
+      <label>コモンモード Vcm</label>
+      <div class="input-group-inline">
+        <input type="range" id="slVcm" min="0" max="5.0" step="0.001" value="0">
+        <span class="input-val" id="valVcm">0.000 V</span>
+      </div>
+    </div>
+
+    <!-- Input mode -->
+    <div class="select-group">
+      <label>入力モード</label>
+      <select class="styled-select" id="selInputMode">
+        <option value="single-ended">Single-Ended（単端）</option>
+        <option value="pseudo-diff">Pseudo-Diff（擬似差動）</option>
+        <option value="fully-diff">Fully-Diff（完全差動）</option>
+      </select>
+    </div>
+
+    <!-- Code format -->
+    <div class="select-group">
+      <label>出力コード方式</label>
+      <select class="styled-select" id="selCodeFormat">
+        <option value="twos-complement">2の補数（Twos-Complement）</option>
+        <option value="offset-binary">オフセットバイナリ（Offset Binary）</option>
+      </select>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Canvas 1: Analog + Samples ── -->
+<div class="panel">
+  <div class="panel-header"><span class="dot"></span>アナログ入力 &amp; サンプル点</div>
+  <div class="alias-banner" id="aliasBanner">
+    <span class="alias-dot" id="aliasDot"></span>
+    <span class="alias-text" id="aliasText">エリアシングなし — ナイキスト条件 OK</span>
+  </div>
+  <div class="clip-banner" id="clipBanner">
+    <span class="clip-dot" id="clipDot"></span>
+    <span class="clip-text" id="clipText">クリッピングなし</span>
+  </div>
+  <canvas id="cvAnalog" height="210"></canvas>
+  <div class="legend" id="legendAnalog">
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--accent)"></div><span id="lgInPlus">IN+ アナログ波形</span></div>
+    <div class="legend-item" id="lgItemInMinus" style="display:none"><div class="legend-swatch" style="background:var(--purple)"></div><span id="lgInMinus">IN−（逆相）</span></div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--green)"></div><span>サンプル点</span></div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--red);opacity:.6"></div><span>±Vref 限界（絶対値）</span></div>
+    <div class="legend-item" id="aliasLegend" style="display:none"><div class="legend-swatch" style="background:var(--red)"></div><span>エリアシング成分</span></div>
+  </div>
+</div>
+
+<!-- ── Canvas 2: Quantized staircase ── -->
+<div class="panel">
+  <div class="panel-header"><span class="dot dot-orange"></span>量子化出力（階段波形）</div>
+  <canvas id="cvQuant" height="200"></canvas>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--accent);opacity:.4"></div><span>アナログ入力（参考）</span></div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--accent2)"></div><span>量子化出力</span></div>
+  </div>
+</div>
+
+<!-- ── Canvas 3: Quantization error ── -->
+<div class="panel">
+  <div class="panel-header"><span class="dot dot-gold"></span>量子化誤差</div>
+  <canvas id="cvError" height="130"></canvas>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--gold)"></div><span>量子化誤差 (analog − quantized)</span></div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--border);border-top:1px dashed var(--text-dim)"></div><span>±LSB/2 限界</span></div>
+  </div>
+</div>
+
+<!-- ── Zone 2: Results ── -->
+<div class="zone zone-results" style="margin-top:10px">
+  <div class="zone-header">📊 計算結果<span class="zone-tag">ZONE 2 — OUTPUT</span></div>
+  <div class="result-grid">
+    <div class="result-card highlight">
+      <div class="label">SNR (実効)</div>
+      <div class="value green" id="rSNR">—</div>
+      <div class="unit">dB</div>
+    </div>
+    <div class="result-card">
+      <div class="label">SQNR (理論最大)</div>
+      <div class="value" id="rSQNR">—</div>
+      <div class="unit">dB</div>
+    </div>
+    <div class="result-card">
+      <div class="label">ENOB</div>
+      <div class="value gold" id="rENOB">—</div>
+      <div class="unit">bits</div>
+    </div>
+    <div class="result-card">
+      <div class="label">LSB サイズ</div>
+      <div class="value orange" id="rLSB">—</div>
+      <div class="unit">V / LSB</div>
+    </div>
+    <div class="result-card">
+      <div class="label">量子化レベル数</div>
+      <div class="value" id="rLevels">—</div>
+      <div class="unit">levels</div>
+    </div>
+    <div class="result-card">
+      <div class="label">ナイキスト周波数</div>
+      <div class="value" id="rNyq">—</div>
+      <div class="unit">kHz</div>
+    </div>
+    <div class="result-card" id="rAliasCard">
+      <div class="label">エリアシング先</div>
+      <div class="value" id="rAliasFreq">—</div>
+      <div class="unit">kHz</div>
+    </div>
+    <div class="result-card">
+      <div class="label">Ain / Vref 比</div>
+      <div class="value purple" id="rFullScale">—</div>
+      <div class="unit">% フルスケール</div>
+    </div>
+    <!-- New cards -->
+    <div class="result-card">
+      <div class="label">Vcm</div>
+      <div class="value purple" id="rVcm">—</div>
+      <div class="unit">V</div>
+    </div>
+    <div class="result-card">
+      <div class="label">入力レンジ</div>
+      <div class="value sm" id="rInputRange">—</div>
+      <div class="unit">V</div>
+    </div>
+    <div class="result-card">
+      <div class="label">入力モード</div>
+      <div class="value sm" id="rInputMode">—</div>
+      <div class="unit">mode</div>
+    </div>
+    <div class="result-card">
+      <div class="label">コード方式</div>
+      <div class="value sm" id="rCodeFormat">—</div>
+      <div class="unit">format</div>
+    </div>
+    <div class="result-card">
+      <div class="label">デジタルコード (Dec)</div>
+      <div class="value orange" id="rCodeDec">—</div>
+      <div class="unit">ピーク入力時</div>
+    </div>
+    <div class="result-card">
+      <div class="label">デジタルコード (Hex)</div>
+      <div class="value orange" id="rCodeHex">—</div>
+      <div class="unit">ピーク入力時</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Explain ── -->
+<div class="explain-section" style="margin-top:10px">
+  <h3>理論的背景</h3>
+  <div class="explain-cards">
+    <div class="explain-card">
+      <div class="explain-card-head accent">ナイキスト定理</div>
+      <div class="explain-card-body">
+        エリアシングを防ぐには <span class="hl">fs ≥ 2·fin</span> が必要。
+        fs &lt; 2·fin の場合、入力信号は <span class="hl">|fin mod fs|</span> の周波数として折り返されます。
+        <span class="hl3">f_alias = |fin − round(fin/fs)·fs|</span>
+      </div>
+    </div>
+    <div class="explain-card">
+      <div class="explain-card-head gold">量子化ノイズ</div>
+      <div class="explain-card-body">
+        量子化誤差は <span class="hl">±LSB/2</span> の範囲に一様分布。RMS ノイズは <span class="hl">LSB/√12</span>。
+        <span class="hl3">SQNR = 6.02·N + 1.76 dB</span>
+        入力がフルスケールより小さいと実効 SNR は低下します。
+      </div>
+    </div>
+    <div class="explain-card">
+      <div class="explain-card-head green">ENOB</div>
+      <div class="explain-card-body">
+        実効ビット数（ENOB）は理想 ADC に換算したビット数。
+        <span class="hlg">Ain &lt; Vref</span> の場合、使用ビット数が減少し実効解像度が下がります。
+        <span class="hl3">ENOB = (SNR − 1.76) / 6.02</span>
+      </div>
+    </div>
+    <div class="explain-card">
+      <div class="explain-card-head orange">差動入力モード</div>
+      <div class="explain-card-body">
+        <span class="hl2">Fully-Diff</span> では IN+ と IN- が対称に振れ、実効フルスケールが <span class="hl2">2×Vref</span>（差動）になります。
+        <span class="hl2">Pseudo-Diff</span> は IN- を固定（Vcm）にした簡易版。
+        <span class="hl3">Fully-Diff: LSB = 4·Vref / 2ᴺ</span>
+      </div>
+    </div>
+    <div class="explain-card">
+      <div class="explain-card-head purple">コード方式</div>
+      <div class="explain-card-body">
+        <span class="hlp">2の補数</span>: 入力 Vcm → コード 0x0。ゼロ基準バイポーラ表現。<br>
+        <span class="hlp">Offset Binary</span>: 入力 Vcm−Vref → コード 0x0、Vcm → 中間コード。
+        <span class="hl3">AD9xxx は原則 2の補数出力</span>
+      </div>
+    </div>
+    <div class="explain-card">
+      <div class="explain-card-head gold">クリッピング / Vcm</div>
+      <div class="explain-card-body">
+        <span class="hl">Ain &gt; Vref</span> の場合、信号が ±Vref でクリップされ激しい歪みが発生します。
+        Vcm（コモンモード電圧）は入力レンジの中心電圧で、ADC によって 0V〜AVDD/2 など異なります。
+        <span class="hl3">理想: Ain ≈ 0.7〜1.0 × Vref</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /container -->
+<script>
+// ── Presets ───────────────────────────────────────────────────────────
+const PRESETS = {
+  'AD9633-80':  {N:12,fs:80000, Vref:1.0,  Vcm:0.9,  inputMode:'fully-diff',   codeFormat:'twos-complement'},
+  'AD9233-80':  {N:12,fs:80000, Vref:1.0,  Vcm:0.9,  inputMode:'fully-diff',   codeFormat:'twos-complement'},
+  'AD9253-80':  {N:14,fs:80000, Vref:1.0,  Vcm:0.9,  inputMode:'fully-diff',   codeFormat:'twos-complement'},
+  'AD9653-125': {N:16,fs:125000,Vref:1.0,  Vcm:0.9,  inputMode:'fully-diff',   codeFormat:'twos-complement'},
+  'AD9231-80':  {N:12,fs:80000, Vref:1.0,  Vcm:0.9,  inputMode:'fully-diff',   codeFormat:'twos-complement'},
+  'AD9251-80':  {N:14,fs:80000, Vref:1.0,  Vcm:0.9,  inputMode:'fully-diff',   codeFormat:'twos-complement'},
+  'AD9258-80':  {N:14,fs:80000, Vref:1.0,  Vcm:0.9,  inputMode:'fully-diff',   codeFormat:'twos-complement'},
+  'AD9268-80':  {N:16,fs:80000, Vref:1.0,  Vcm:0.9,  inputMode:'fully-diff',   codeFormat:'twos-complement'},
+  'AD9246-80':  {N:14,fs:80000, Vref:1.0,  Vcm:0.9,  inputMode:'fully-diff',   codeFormat:'twos-complement'},
+  'AD9255-80':  {N:14,fs:80000, Vref:1.0,  Vcm:0.9,  inputMode:'fully-diff',   codeFormat:'twos-complement'},
+  'AD9649-80':  {N:14,fs:80000, Vref:1.0,  Vcm:0.9,  inputMode:'fully-diff',   codeFormat:'twos-complement'},
+  'AD9641-80':  {N:14,fs:80000, Vref:1.0,  Vcm:0.9,  inputMode:'fully-diff',   codeFormat:'twos-complement'},
+  'AD9637-80':  {N:12,fs:80000, Vref:1.0,  Vcm:0.9,  inputMode:'fully-diff',   codeFormat:'twos-complement'},
+  'AD9446-80':  {N:16,fs:80000, Vref:1.6,  Vcm:0.0,  inputMode:'fully-diff',   codeFormat:'twos-complement'},
+  'MAX1208':    {N:12,fs:80000, Vref:1.024,Vcm:1.024, inputMode:'single-ended', codeFormat:'twos-complement'},
+  'MAX1209':    {N:12,fs:80000, Vref:1.024,Vcm:1.024, inputMode:'single-ended', codeFormat:'twos-complement'},
+  'LTC2294':    {N:12,fs:80000, Vref:1.0,  Vcm:1.5,  inputMode:'fully-diff',   codeFormat:'twos-complement'},
+  'LTC2273':    {N:16,fs:80000, Vref:1.0,  Vcm:1.5,  inputMode:'fully-diff',   codeFormat:'twos-complement'},
+  'ADS6123':    {N:12,fs:80000, Vref:1.0,  Vcm:1.65, inputMode:'fully-diff',   codeFormat:'twos-complement'},
+  'ADS6143':    {N:14,fs:80000, Vref:1.0,  Vcm:1.65, inputMode:'fully-diff',   codeFormat:'twos-complement'},
+  'ADS5292':    {N:12,fs:80000, Vref:1.0,  Vcm:0.9,  inputMode:'fully-diff',   codeFormat:'twos-complement'},
+  'ADS5294':    {N:14,fs:80000, Vref:1.0,  Vcm:0.9,  inputMode:'fully-diff',   codeFormat:'twos-complement'},
+  'ADC12DL080': {N:12,fs:80000, Vref:1.0,  Vcm:1.65, inputMode:'fully-diff',   codeFormat:'twos-complement'},
+  'ADC14DS080': {N:14,fs:80000, Vref:1.0,  Vcm:1.65, inputMode:'fully-diff',   codeFormat:'twos-complement'},
+  'ADC12L080':  {N:12,fs:80000, Vref:1.0,  Vcm:1.65, inputMode:'single-ended', codeFormat:'twos-complement'},
+  'MCP37D11-80':{N:12,fs:80000, Vref:0.875,Vcm:0.9,  inputMode:'fully-diff',   codeFormat:'twos-complement'},
+  'MCP37D21-80':{N:14,fs:80000, Vref:0.875,Vcm:0.9,  inputMode:'fully-diff',   codeFormat:'twos-complement'},
+  'MCP37D31-80':{N:16,fs:80000, Vref:0.875,Vcm:0.9,  inputMode:'fully-diff',   codeFormat:'twos-complement'},
+  'ADS1115':    {N:16,fs:0.86,  Vref:2.048,Vcm:0.0,  inputMode:'single-ended', codeFormat:'twos-complement'},
+};
+
+// ── State ─────────────────────────────────────────────────────────────
+const state = {
+  fin:        3,
+  ain:        0.9,
+  fs:         20,
+  N:          4,
+  Vref:       2.0,
+  Vcm:        0.0,
+  inputMode:  'single-ended',
+  codeFormat: 'twos-complement',
+  preset:     'custom',
+};
+
+// ── Theme ─────────────────────────────────────────────────────────────
+function toggleTheme() {
+  const html = document.documentElement;
+  const dark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', dark ? 'light' : 'dark');
+  document.getElementById('themeToggle').textContent = dark ? '🌙 Dark' : '☀ Light';
+  draw();
+}
+
+function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+
+// ── Format helpers ────────────────────────────────────────────────────
+function formatFs(v) {
+  if (v >= 1000) return (v / 1000).toFixed(v >= 10000 ? 0 : 1) + ' MHz';
+  if (v >= 1)    return v.toFixed(v >= 100 ? 0 : v >= 10 ? 1 : 2) + ' kHz';
+  return (v * 1000).toFixed(0) + ' SPS';
+}
+function formatFin(v) {
+  if (v >= 1000) return (v / 1000).toFixed(3).replace(/\.?0+$/, '') + ' MHz';
+  return v.toFixed(3).replace(/\.?0+$/, '') + ' kHz';
+}
+function formatV(v) { return parseFloat(v.toFixed(4)) + ' V'; }
+
+// ── Slider wire ───────────────────────────────────────────────────────
+function wire(slId, valId, key, fmt) {
+  const sl = document.getElementById(slId);
+  sl.addEventListener('input', () => {
+    state[key] = parseFloat(sl.value);
+    document.getElementById(valId).textContent = fmt(state[key]);
+    state.preset = 'custom';
+    document.getElementById('selPreset').value = 'custom';
+    update();
+  });
+}
+wire('slFin',  'valFin',  'fin',  formatFin);
+wire('slAin',  'valAin',  'ain',  v => v.toFixed(2) + ' ×Vref');
+wire('slFs',   'valFs',   'fs',   formatFs);
+wire('slN',    'valN',    'N',    v => v.toFixed(0) + ' bit');
+wire('slVref', 'valVref', 'Vref', formatV);
+wire('slVcm',  'valVcm',  'Vcm',  formatV);
+
+document.getElementById('selInputMode').addEventListener('change', function() {
+  state.inputMode = this.value;
+  state.preset = 'custom';
+  document.getElementById('selPreset').value = 'custom';
+  update();
+});
+document.getElementById('selCodeFormat').addEventListener('change', function() {
+  state.codeFormat = this.value;
+  state.preset = 'custom';
+  document.getElementById('selPreset').value = 'custom';
+  update();
+});
+document.getElementById('selPreset').addEventListener('change', function() {
+  const key = this.value;
+  state.preset = key;
+  if (key === 'custom') { update(); return; }
+  const p = PRESETS[key];
+  if (!p) return;
+  state.N          = p.N;
+  state.fs         = p.fs;
+  state.Vref       = p.Vref;
+  state.Vcm        = p.Vcm;
+  state.inputMode  = p.inputMode;
+  state.codeFormat = p.codeFormat;
+  syncUI();
+  update();
+});
+
+function syncUI() {
+  const { fin, ain, fs, N, Vref, Vcm, inputMode, codeFormat, preset } = state;
+  const sl = (id, v) => { document.getElementById(id).value = v; };
+  const lb = (id, v) => { document.getElementById(id).textContent = v; };
+  sl('slFin',  fin);  lb('valFin',  formatFin(fin));
+  sl('slAin',  ain);  lb('valAin',  ain.toFixed(2) + ' ×Vref');
+  sl('slFs',   fs);   lb('valFs',   formatFs(fs));
+  sl('slN',    N);    lb('valN',    N + ' bit');
+  sl('slVref', Vref); lb('valVref', formatV(Vref));
+  sl('slVcm',  Vcm);  lb('valVcm',  formatV(Vcm));
+  document.getElementById('selInputMode').value  = inputMode;
+  document.getElementById('selCodeFormat').value = codeFormat;
+  document.getElementById('selPreset').value     = preset;
+}
+
+// ── ADC math ──────────────────────────────────────────────────────────
+function computePeakCode() {
+  const { Vref, N, Vcm, inputMode, codeFormat, ain } = state;
+  const Ain_V       = ain * Vref;
+  const isFullyDiff = inputMode === 'fully-diff';
+  const halfRange   = isFullyDiff ? 2 * Vref : Vref;
+  const lsb         = 2 * halfRange / Math.pow(2, N);
+  // peak signal: differential = 2*Ain_V for fully-diff, else Ain_V centered on Vcm
+  const vCentered   = isFullyDiff ? 2 * Ain_V : Ain_V;
+  const vClipped    = Math.max(-halfRange, Math.min(halfRange, vCentered));
+  const levels      = Math.pow(2, N);
+
+  if (codeFormat === 'twos-complement') {
+    const raw = Math.round(vClipped / lsb);
+    return Math.max(-levels / 2, Math.min(levels / 2 - 1, raw));
+  } else {
+    const raw = Math.floor((vClipped + halfRange) / lsb);
+    return Math.max(0, Math.min(levels - 1, raw));
+  }
+}
+
+function toHex(code, N, codeFormat) {
+  const hexDigits = Math.ceil(N / 4);
+  const levels    = Math.pow(2, N);
+  const unsigned  = codeFormat === 'twos-complement' && code < 0
+    ? (levels + code) : code;
+  return '0x' + unsigned.toString(16).toUpperCase().padStart(hexDigits, '0');
+}
+
+function adcMath() {
+  const { fin, ain, fs, N, Vref, Vcm, inputMode } = state;
+  const levels      = Math.pow(2, N);
+  const nyq         = fs / 2;
+  const Ain_V       = ain * Vref;
+  const isFullyDiff = inputMode === 'fully-diff';
+
+  // LSB: fully-diff uses differential full-scale = 4*Vref; single/pseudo = 2*Vref
+  const lsb     = isFullyDiff ? (4 * Vref / levels) : (2 * Vref / levels);
+  // Signal amplitude for SNR: differential = 2*Ain_V, single = Ain_V
+  const sigAmp  = isFullyDiff ? 2 * Ain_V : Ain_V;
+  const sigPow  = sigAmp * sigAmp / 2;
+  const noisePow = lsb * lsb / 12;
+  const snr      = 10 * Math.log10(sigPow / noisePow);
+  const sqnr     = 6.02 * N + 1.76;
+  const enob     = (snr - 1.76) / 6.02;
+
+  const isAliased = fin >= nyq;
+  let aliasFreq = null;
+  if (isAliased) {
+    let f = fin % fs;
+    if (f > nyq) f = fs - f;
+    aliasFreq = f;
+  }
+
+  const isClipped = Ain_V > Vref;
+  const fsUsage   = (Ain_V / Vref) * 100;
+  const peakCode  = computePeakCode();
+  // Input range is always expressed as absolute per-channel voltage (Vcm ± Vref)
+  const rangeMin  = Vcm - Vref;
+  const rangeMax  = Vcm + Vref;
+
+  return { levels, lsb, nyq, sqnr, snr, enob, isAliased, aliasFreq, isClipped, fsUsage, Ain_V, peakCode, rangeMin, rangeMax };
+}
+
+// ── Quantize absolute voltage → absolute quantized voltage ────────────
+// effectiveVref: fully-diff uses 2×Vref to represent the differential full-scale
+function quantizeAbs(vinAbs) {
+  const { Vref, N, Vcm, inputMode } = state;
+  const effectiveVref = inputMode === 'fully-diff' ? Vref * 2 : Vref;
+  const lsb      = (2 * effectiveVref) / Math.pow(2, N);
+  const centered = vinAbs - Vcm;
+  const clamped  = Math.max(-effectiveVref, Math.min(effectiveVref - lsb, centered));
+  return Math.round(clamped / lsb) * lsb + Vcm;
+}
+
+// ── Canvas helpers ────────────────────────────────────────────────────
+function resizeCanvas(cv) {
+  const dpr = window.devicePixelRatio || 1;
+  const w   = cv.parentElement.clientWidth;
+  const h   = parseInt(cv.getAttribute('height'), 10);
+  cv.width  = w * dpr;
+  cv.height = h * dpr;
+  cv.style.width  = w + 'px';
+  cv.style.height = h + 'px';
+  const ctx = cv.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return { ctx, w, h };
+}
+
+function drawGrid(ctx, w, h, mx, my) {
+  ctx.strokeStyle = cssVar('--border');
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i <= 4; i++) {
+    const y = my + (h - 2 * my) * (i / 4);
+    ctx.beginPath(); ctx.moveTo(mx, y); ctx.lineTo(w - mx, y); ctx.stroke();
+  }
+}
+
+// ── Canvas 1: Analog + Samples ────────────────────────────────────────
+function drawAnalog() {
+  const cv = document.getElementById('cvAnalog');
+  const { ctx, w, h } = resizeCanvas(cv);
+  const { fin, ain, fs, N, Vref, Vcm, inputMode } = state;
+  const math   = adcMath();
+  const Ain_V  = math.Ain_V;
+  const mx = 14, my = 20;
+  const pw = w - 2 * mx, ph = h - 2 * my;
+
+  ctx.clearRect(0, 0, w, h);
+  drawGrid(ctx, w, h, mx, my);
+
+  // Y axis: absolute voltage, centered at Vcm, range ±Vref + 20% margin
+  const ySpan   = Vref * 1.25;
+  const yCenter = Vcm;
+  const vy = v => my + ph * 0.5 - ((v - yCenter) / ySpan) * (ph * 0.5);
+
+  // ±Vref reference lines (absolute)
+  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = cssVar('--red');
+  ctx.globalAlpha = 0.5;
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(mx, vy(Vcm + Vref)); ctx.lineTo(w - mx, vy(Vcm + Vref)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(mx, vy(Vcm - Vref)); ctx.lineTo(w - mx, vy(Vcm - Vref)); ctx.stroke();
+  ctx.setLineDash([]); ctx.globalAlpha = 1;
+
+  // Vcm center line
+  ctx.strokeStyle = cssVar('--text-dim');
+  ctx.lineWidth = 0.5;
+  ctx.globalAlpha = 0.4;
+  ctx.beginPath(); ctx.moveTo(mx, vy(Vcm)); ctx.lineTo(w - mx, vy(Vcm)); ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  const displayCycles = 3;
+  const T_display = displayCycles / fin;
+  const pts = 500;
+
+  // IN+ = Vcm + Ain_V * sin(...)
+  ctx.beginPath();
+  ctx.strokeStyle = cssVar('--accent');
+  ctx.lineWidth = 2;
+  for (let i = 0; i <= pts; i++) {
+    const t = (i / pts) * T_display;
+    const v = Vcm + Ain_V * Math.sin(2 * Math.PI * fin * t);
+    const x = mx + (i / pts) * pw;
+    i === 0 ? ctx.moveTo(x, vy(v)) : ctx.lineTo(x, vy(v));
+  }
+  ctx.stroke();
+
+  // IN- for pseudo-diff (flat at Vcm) and fully-diff (anti-phase)
+  const showInMinus = inputMode === 'pseudo-diff' || inputMode === 'fully-diff';
+  document.getElementById('lgItemInMinus').style.display = showInMinus ? '' : 'none';
+  if (showInMinus) {
+    ctx.beginPath();
+    ctx.strokeStyle = cssVar('--purple');
+    ctx.lineWidth = inputMode === 'pseudo-diff' ? 1.5 : 2;
+    if (inputMode === 'pseudo-diff') ctx.setLineDash([5, 3]);
+    for (let i = 0; i <= pts; i++) {
+      const t = (i / pts) * T_display;
+      const v = inputMode === 'fully-diff'
+        ? Vcm - Ain_V * Math.sin(2 * Math.PI * fin * t)
+        : Vcm;
+      const x = mx + (i / pts) * pw;
+      i === 0 ? ctx.moveTo(x, vy(v)) : ctx.lineTo(x, vy(v));
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // Update legend label
+    document.getElementById('lgInMinus').textContent =
+      inputMode === 'pseudo-diff' ? 'IN− (Vcm固定)' : 'IN−（逆相）';
+  }
+
+  // Aliased component
+  if (math.isAliased && math.aliasFreq !== null) {
+    document.getElementById('aliasLegend').style.display = '';
+    ctx.beginPath();
+    ctx.strokeStyle = cssVar('--red');
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 4]);
+    ctx.globalAlpha = 0.7;
+    for (let i = 0; i <= pts; i++) {
+      const t = (i / pts) * T_display;
+      const v = Vcm + Ain_V * Math.sin(2 * Math.PI * math.aliasFreq * t);
+      const x = mx + (i / pts) * pw;
+      i === 0 ? ctx.moveTo(x, vy(v)) : ctx.lineTo(x, vy(v));
+    }
+    ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
+  } else {
+    document.getElementById('aliasLegend').style.display = 'none';
+  }
+
+  // Sample dots (capped for performance)
+  const Ts = 1 / fs;
+  const totalSamples = Math.ceil(T_display / Ts);
+  const stride = Math.max(1, Math.floor(totalSamples / 150));
+  let drawn = 0;
+  for (let k = 0; k * Ts * stride <= T_display + Ts * 0.5 && drawn < 200; k++) {
+    const t = k * Ts * stride;
+    const vRaw = Vcm + Ain_V * Math.sin(2 * Math.PI * fin * t);
+    const v    = Math.max(Vcm - Vref, Math.min(Vcm + Vref, vRaw));
+    const x    = mx + (t / T_display) * pw;
+    if (x < mx || x > w - mx + 1) continue;
+    // stem
+    ctx.beginPath();
+    ctx.strokeStyle = cssVar('--green');
+    ctx.globalAlpha = 0.25;
+    ctx.lineWidth = 1;
+    ctx.moveTo(x, vy(Vcm));
+    ctx.lineTo(x, vy(v));
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    // dot
+    const dotR = stride > 1 ? 2.5 : 4.5;
+    ctx.beginPath();
+    ctx.fillStyle   = cssVar('--green');
+    ctx.strokeStyle = cssVar('--panel');
+    ctx.lineWidth = 1.5;
+    ctx.arc(x, vy(v), dotR, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+    drawn++;
+  }
+  if (totalSamples > 200) {
+    ctx.fillStyle = cssVar('--text-dim');
+    ctx.font = '9px Space Mono, monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText('fs/fin = ' + (fs / fin).toFixed(0) + '× (' + totalSamples + ' samples/window — ' + drawn + ' shown)', w - mx, my - 4);
+  }
+
+  // Y-axis labels
+  ctx.fillStyle = cssVar('--text-dim');
+  ctx.font = '9px Space Mono, monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText((Vcm + Vref).toFixed(3) + 'V', mx - 2, vy(Vcm + Vref) + 3);
+  ctx.fillText(Vcm.toFixed(3) + 'V',           mx - 2, vy(Vcm)        + 3);
+  ctx.fillText((Vcm - Vref).toFixed(3) + 'V',  mx - 2, vy(Vcm - Vref) + 3);
+}
+
+// ── Canvas 2: Quantized staircase ─────────────────────────────────────
+function drawQuant() {
+  const cv = document.getElementById('cvQuant');
+  const { ctx, w, h } = resizeCanvas(cv);
+  const { fin, ain, fs, Vref, Vcm } = state;
+  const Ain_V = ain * Vref;
+  const mx = 14, my = 20;
+  const pw = w - 2 * mx, ph = h - 2 * my;
+
+  ctx.clearRect(0, 0, w, h);
+  drawGrid(ctx, w, h, mx, my);
+
+  const ySpan   = Vref * 1.25;
+  const vy = v => my + ph * 0.5 - ((v - Vcm) / ySpan) * (ph * 0.5);
+
+  const displayCycles = 3;
+  const T_display = displayCycles / fin;
+  const pts = 500;
+
+  // Analog reference (faint)
+  ctx.beginPath();
+  ctx.strokeStyle = cssVar('--accent');
+  ctx.globalAlpha = 0.3;
+  ctx.lineWidth = 1.5;
+  for (let i = 0; i <= pts; i++) {
+    const t = (i / pts) * T_display;
+    const v = Vcm + Ain_V * Math.sin(2 * Math.PI * fin * t);
+    const x = mx + (i / pts) * pw;
+    i === 0 ? ctx.moveTo(x, vy(v)) : ctx.lineTo(x, vy(v));
+  }
+  ctx.stroke(); ctx.globalAlpha = 1;
+
+  // Build samples
+  const Ts = 1 / fs;
+  const totalSamples = Math.ceil(T_display / Ts);
+  const stride = Math.max(1, Math.floor(totalSamples / 400));
+  const samples = [];
+  for (let k = 0; k * Ts * stride <= T_display + Ts * 0.01; k++) {
+    const t   = k * Ts * stride;
+    const vIn = Vcm + Ain_V * Math.sin(2 * Math.PI * fin * t);
+    samples.push({ t, vQ: quantizeAbs(vIn) });
+  }
+
+  // Draw staircase
+  ctx.beginPath();
+  ctx.strokeStyle = cssVar('--accent2');
+  ctx.lineWidth = 2.5;
+  for (let i = 0; i < samples.length; i++) {
+    const x0 = mx + (samples[i].t / T_display) * pw;
+    const x1 = i + 1 < samples.length
+      ? mx + (samples[i + 1].t / T_display) * pw
+      : w - mx;
+    const y = vy(samples[i].vQ);
+    if (x0 > w - mx + 2) continue;
+    const xS = Math.max(mx, x0);
+    const xE = Math.min(w - mx, x1);
+    i === 0 ? ctx.moveTo(xS, y) : ctx.lineTo(xS, y);
+    ctx.lineTo(xE, y);
+  }
+  ctx.stroke();
+
+  // Y-axis
+  ctx.fillStyle = cssVar('--text-dim');
+  ctx.font = '9px Space Mono, monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText((Vcm + Vref).toFixed(3) + 'V', mx - 2, vy(Vcm + Vref) + 3);
+  ctx.fillText(Vcm.toFixed(3) + 'V',           mx - 2, vy(Vcm)        + 3);
+  ctx.fillText((Vcm - Vref).toFixed(3) + 'V',  mx - 2, vy(Vcm - Vref) + 3);
+}
+
+// ── Canvas 3: Quantization error ──────────────────────────────────────
+function drawError() {
+  const cv = document.getElementById('cvError');
+  const { ctx, w, h } = resizeCanvas(cv);
+  const { fin, ain, fs, Vref, Vcm, inputMode } = state;
+  const Ain_V = ain * Vref;
+  const effectiveVref = inputMode === 'fully-diff' ? Vref * 2 : Vref;
+  const lsb   = (2 * effectiveVref) / Math.pow(2, state.N);
+  const mx = 14, my = 14;
+  const pw = w - 2 * mx, ph = h - 2 * my;
+
+  ctx.clearRect(0, 0, w, h);
+
+  const yZero = my + ph * 0.5;
+  const eMax  = lsb / 2;
+  const ey    = e => yZero - (e / (eMax * 1.4)) * (ph * 0.5);
+
+  // Zero / bounds
+  ctx.strokeStyle = cssVar('--border'); ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(mx, yZero); ctx.lineTo(w - mx, yZero); ctx.stroke();
+  ctx.setLineDash([4, 3]);
+  ctx.beginPath(); ctx.moveTo(mx, ey(eMax));  ctx.lineTo(w - mx, ey(eMax));  ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(mx, ey(-eMax)); ctx.lineTo(w - mx, ey(-eMax)); ctx.stroke();
+  ctx.setLineDash([]);
+
+  const displayCycles = 3;
+  const T_display = displayCycles / fin;
+  const Ts = 1 / fs;
+  const pts = 500;
+
+  // Build sample-held values
+  const totalSamples = Math.ceil(T_display / Ts);
+  const stride = Math.max(1, Math.floor(totalSamples / 400));
+  const samples = [];
+  for (let k = 0; k * Ts * stride <= T_display + Ts * 0.01; k++) {
+    const t   = k * Ts * stride;
+    const vIn = Vcm + Ain_V * Math.sin(2 * Math.PI * fin * t);
+    samples.push({ t, vQ: quantizeAbs(vIn) });
+  }
+
+  ctx.beginPath();
+  ctx.strokeStyle = cssVar('--gold');
+  ctx.lineWidth = 1.5;
+  let first = true;
+  for (let i = 0; i <= pts; i++) {
+    const t       = (i / pts) * T_display;
+    const vAnalog = Vcm + Ain_V * Math.sin(2 * Math.PI * fin * t);
+    const si      = Math.min(samples.length - 1, Math.max(0, Math.floor(t / (Ts * stride))));
+    const err     = vAnalog - samples[si].vQ;
+    const x = mx + (i / pts) * pw;
+    const y = ey(Math.max(-eMax * 1.4, Math.min(eMax * 1.4, err)));
+    first ? (ctx.moveTo(x, y), first = false) : ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Labels
+  ctx.fillStyle = cssVar('--text-dim');
+  ctx.font = '9px Space Mono, monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText('+LSB/2', mx - 2, ey(eMax) + 3);
+  ctx.fillText('0',      mx - 2, yZero    + 3);
+  ctx.fillText('-LSB/2', mx - 2, ey(-eMax) + 3);
+}
+
+// ── Update result cards + banners ────────────────────────────────────
+function updateResults() {
+  const m   = adcMath();
+  const { N, Vcm, Vref, inputMode, codeFormat } = state;
+
+  document.getElementById('rSNR').textContent    = m.snr.toFixed(1);
+  document.getElementById('rSQNR').textContent   = m.sqnr.toFixed(1);
+  document.getElementById('rENOB').textContent   = Math.max(0, m.enob).toFixed(2);
+  document.getElementById('rLSB').textContent    = m.lsb < 0.01
+    ? m.lsb.toExponential(3) : m.lsb.toFixed(5).replace(/\.?0+$/, '');
+  document.getElementById('rLevels').textContent = m.levels;
+  document.getElementById('rNyq').textContent    = formatFs(m.nyq);
+  document.getElementById('rFullScale').textContent = m.fsUsage.toFixed(1);
+  document.getElementById('rVcm').textContent    = Vcm.toFixed(3) + ' V';
+
+  // Input range (always per-channel absolute: Vcm-Vref ~ Vcm+Vref)
+  document.getElementById('rInputRange').textContent =
+    `${m.rangeMin.toFixed(2)} 〜 ${m.rangeMax.toFixed(2)}`;
+
+  // Mode / format labels
+  const modeLabel = { 'single-ended': 'Single', 'pseudo-diff': 'Pseudo-Diff', 'fully-diff': 'Fully-Diff' };
+  const fmtLabel  = { 'twos-complement': '2の補数', 'offset-binary': 'Offset Bin' };
+  document.getElementById('rInputMode').textContent  = modeLabel[inputMode]  || inputMode;
+  document.getElementById('rCodeFormat').textContent = fmtLabel[codeFormat]  || codeFormat;
+
+  // Codes
+  const peakCode = m.peakCode;
+  document.getElementById('rCodeDec').textContent = peakCode.toString();
+  document.getElementById('rCodeHex').textContent = toHex(peakCode, N, codeFormat);
+
+  // Aliasing card
+  const aliasCard = document.getElementById('rAliasCard');
+  const aliasEl   = document.getElementById('rAliasFreq');
+  if (m.isAliased) {
+    aliasCard.className = 'result-card warn';
+    aliasEl.className   = 'value red';
+    aliasEl.textContent = formatFs(m.aliasFreq);
+  } else {
+    aliasCard.className = 'result-card';
+    aliasEl.className   = 'value';
+    aliasEl.textContent = 'N/A';
+  }
+
+  // SNR color
+  document.querySelector('#rSNR').className =
+    m.snr > 60 ? 'value green' : m.snr > 30 ? 'value gold' : 'value red';
+
+  // Alias banner
+  const abanner = document.getElementById('aliasBanner');
+  const adot    = document.getElementById('aliasDot');
+  const atext   = document.getElementById('aliasText');
+  if (m.isAliased) {
+    abanner.className = 'alias-banner active';
+    adot.className    = 'alias-dot active';
+    atext.innerHTML   = `⚠ エリアシング発生！ fin=${formatFin(state.fin)} ≥ fs/2=${formatFs(m.nyq)} — 折り返し先: <span class="alias-freq">${formatFs(m.aliasFreq)}</span>`;
+  } else {
+    abanner.className = 'alias-banner';
+    adot.className    = 'alias-dot';
+    atext.innerHTML   = `エリアシングなし — ナイキスト条件 OK (fin=${formatFin(state.fin)} &lt; fs/2=${formatFs(m.nyq)})`;
+  }
+
+  // Clip banner
+  const cbanner = document.getElementById('clipBanner');
+  const cdot    = document.getElementById('clipDot');
+  const ctext   = document.getElementById('clipText');
+  if (m.isClipped) {
+    cbanner.className = 'clip-banner active';
+    cdot.className    = 'clip-dot';
+    ctext.textContent = `⚠ クリッピング発生！ Ain=${m.Ain_V.toFixed(3)}V > Vref=${Vref}V`;
+  } else {
+    cbanner.className = 'clip-banner';
+    cdot.className    = 'clip-dot';
+    ctext.textContent = `クリッピングなし (Ain=${m.Ain_V.toFixed(3)}V ≤ Vref=${Vref}V)`;
+  }
+
+  // IN+ legend label
+  document.getElementById('lgInPlus').textContent =
+    isFullyDiff ? 'IN+ アナログ波形' : 'アナログ波形 (Ain·sin)';
+}
+
+function draw() { drawAnalog(); drawQuant(); drawError(); }
+function update() { updateResults(); draw(); }
+
+let resizeTimer;
+window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(draw, 80); });
+
+// Init
+syncUI();
+update();
+</script>
+</body>
+</html>
