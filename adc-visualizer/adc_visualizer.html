@@ -332,7 +332,7 @@ canvas{display:block;width:100%;}
     <span class="clip-dot" id="clipDot"></span>
     <span class="clip-text" id="clipText">クリッピングなし</span>
   </div>
-  <canvas id="cvAnalog" height="210"></canvas>
+  <canvas id="cvAnalog" height="280"></canvas>
   <div class="legend" id="legendAnalog">
     <div class="legend-item"><div class="legend-swatch" style="background:var(--accent)"></div><span id="lgInPlus">IN+ アナログ波形</span></div>
     <div class="legend-item" id="lgItemInMinus" style="display:none"><div class="legend-swatch" style="background:var(--purple)"></div><span id="lgInMinus">IN−（逆相）</span></div>
@@ -345,7 +345,7 @@ canvas{display:block;width:100%;}
 <!-- ── Canvas 2: Quantized staircase ── -->
 <div class="panel">
   <div class="panel-header"><span class="dot dot-orange"></span>量子化出力（階段波形）</div>
-  <canvas id="cvQuant" height="200"></canvas>
+  <canvas id="cvQuant" height="260"></canvas>
   <div class="legend">
     <div class="legend-item"><div class="legend-swatch" style="background:var(--accent);opacity:.4"></div><span>アナログ入力（参考）</span></div>
     <div class="legend-item"><div class="legend-swatch" style="background:var(--accent2)"></div><span>量子化出力</span></div>
@@ -355,7 +355,7 @@ canvas{display:block;width:100%;}
 <!-- ── Canvas 3: Quantization error ── -->
 <div class="panel">
   <div class="panel-header"><span class="dot dot-gold"></span>量子化誤差</div>
-  <canvas id="cvError" height="130"></canvas>
+  <canvas id="cvError" height="160"></canvas>
   <div class="legend">
     <div class="legend-item"><div class="legend-swatch" style="background:var(--gold)"></div><span>量子化誤差 (analog − quantized)</span></div>
     <div class="legend-item"><div class="legend-swatch" style="background:var(--border);border-top:1px dashed var(--text-dim)"></div><span>±LSB/2 限界</span></div>
@@ -531,16 +531,17 @@ const PRESETS = {
 };
 
 // ── State ─────────────────────────────────────────────────────────────
+const _def = PRESETS['AD9633-80'];
 const state = {
-  fin:        3,
+  fin:        10000,           // 10 MHz — within slFin max (20 MHz)
   ain:        0.9,
-  fs:         20,
-  N:          4,
-  Vref:       2.0,
-  Vcm:        0.0,
-  inputMode:  'single-ended',
-  codeFormat: 'twos-complement',
-  preset:     'custom',
+  fs:         _def.fs,
+  N:          _def.N,
+  Vref:       _def.Vref,
+  Vcm:        _def.Vcm,
+  inputMode:  _def.inputMode,
+  codeFormat: _def.codeFormat,
+  preset:     'AD9633-80',
 };
 
 // ── Theme ─────────────────────────────────────────────────────────────
@@ -734,7 +735,7 @@ function drawAnalog() {
   const { fin, ain, fs, N, Vref, Vcm, inputMode } = state;
   const math   = adcMath();
   const Ain_V  = math.Ain_V;
-  const mx = 14, my = 20;
+  const mx = 50, my = 20;
   const pw = w - 2 * mx, ph = h - 2 * my;
 
   ctx.clearRect(0, 0, w, h);
@@ -871,7 +872,7 @@ function drawQuant() {
   const { ctx, w, h } = resizeCanvas(cv);
   const { fin, ain, fs, Vref, Vcm } = state;
   const Ain_V = ain * Vref;
-  const mx = 14, my = 20;
+  const mx = 50, my = 20;
   const pw = w - 2 * mx, ph = h - 2 * my;
 
   ctx.clearRect(0, 0, w, h);
@@ -943,7 +944,7 @@ function drawError() {
   const Ain_V = ain * Vref;
   const effectiveVref = inputMode === 'fully-diff' ? Vref * 2 : Vref;
   const lsb   = (2 * effectiveVref) / Math.pow(2, state.N);
-  const mx = 14, my = 14;
+  const mx = 50, my = 14;
   const pw = w - 2 * mx, ph = h - 2 * my;
 
   ctx.clearRect(0, 0, w, h);
@@ -1086,10 +1087,19 @@ let resizeTimer;
 window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(draw, 80); });
 
 syncUI();
-// Draw immediately (works when layout is already complete at script-parse time)
-// and again on 'load' as a guaranteed fallback once CSS/fonts are fully applied.
-update();
-window.addEventListener('load', update);
+updateResults(); // text cards don't depend on canvas layout
+
+// ResizeObserver fires with correct element dimensions after layout is complete.
+// This is the most reliable way to trigger the first draw, because
+// getBoundingClientRect() returns 0 until the browser has actually painted the element.
+if (window.ResizeObserver) {
+  let roTimer;
+  const ro = new ResizeObserver(() => { clearTimeout(roTimer); roTimer = setTimeout(draw, 0); });
+  ro.observe(document.getElementById('cvAnalog'));
+} else {
+  // Fallback for old browsers
+  window.addEventListener('load', update);
+}
 </script>
 </body>
 </html>
