@@ -1078,7 +1078,7 @@ function updateResults() {
 
   // IN+ legend label
   document.getElementById('lgInPlus').textContent =
-    isFullyDiff ? 'IN+ アナログ波形' : 'アナログ波形 (Ain·sin)';
+    (state.inputMode === 'fully-diff') ? 'IN+ アナログ波形' : 'アナログ波形 (Ain·sin)';
 }
 
 function draw() { drawAnalog(); drawQuant(); drawError(); }
