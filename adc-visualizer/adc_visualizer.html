@@ -706,14 +706,15 @@ function quantizeAbs(vinAbs) {
 // ── Canvas helpers ────────────────────────────────────────────────────
 function resizeCanvas(cv) {
   const dpr = window.devicePixelRatio || 1;
-  // getBoundingClientRect reflects CSS width:100% without the feedback-loop
-  // risk of overwriting cv.style.width
-  const rect = cv.getBoundingClientRect();
-  const w = Math.round(rect.width) || cv.parentElement.clientWidth || 600;
-  const h = parseInt(cv.getAttribute('height'), 10);
+  // Use parent.clientWidth — this is the committed CSS layout width and is
+  // reliable both in ResizeObserver callbacks and in synchronous event handlers.
+  // getBoundingClientRect() can return 0 during layout phases; clientWidth does not.
+  const w   = cv.parentElement.clientWidth || 600;
+  const h   = parseInt(cv.getAttribute('height'), 10);
+  cv.style.width  = w + 'px';   // lock CSS display width to measured value
+  cv.style.height = h + 'px';   // lock CSS display height (independent of DPR buffer size)
   cv.width  = Math.round(w * dpr);
   cv.height = Math.round(h * dpr);
-  cv.style.height = h + 'px';   // height only — let CSS handle width:100%
   const ctx = cv.getContext('2d');
   ctx.scale(dpr, dpr);
   return { ctx, w, h };
@@ -1087,17 +1088,20 @@ let resizeTimer;
 window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(draw, 80); });
 
 syncUI();
-updateResults(); // text cards don't depend on canvas layout
+updateResults();
 
-// ResizeObserver fires with correct element dimensions after layout is complete.
-// This is the most reliable way to trigger the first draw, because
-// getBoundingClientRect() returns 0 until the browser has actually painted the element.
+// One-shot ResizeObserver: waits until the canvas parent has a real layout width
+// (clientWidth > 0), then draws once and disconnects.
+// After this initial draw, all subsequent updates come from user input or window resize.
 if (window.ResizeObserver) {
-  let roTimer;
-  const ro = new ResizeObserver(() => { clearTimeout(roTimer); roTimer = setTimeout(draw, 0); });
+  const ro = new ResizeObserver(() => {
+    if (document.getElementById('cvAnalog').parentElement.clientWidth > 0) {
+      ro.disconnect();
+      draw();
+    }
+  });
   ro.observe(document.getElementById('cvAnalog'));
 } else {
-  // Fallback for old browsers
   window.addEventListener('load', update);
 }
 </script>
