@@ -1090,15 +1090,13 @@ window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer
 syncUI();
 updateResults();
 
-// One-shot ResizeObserver: waits until the canvas parent has a real layout width
-// (clientWidth > 0), then draws once and disconnects.
-// After this initial draw, all subsequent updates come from user input or window resize.
+// One-shot ResizeObserver: fires once the canvas element has a real size,
+// then disconnects. The draw is deferred with setTimeout(0) so that
+// parentElement.clientWidth is fully committed before we measure it.
 if (window.ResizeObserver) {
   const ro = new ResizeObserver(() => {
-    if (document.getElementById('cvAnalog').parentElement.clientWidth > 0) {
-      ro.disconnect();
-      draw();
-    }
+    ro.disconnect();           // Stop observing immediately
+    setTimeout(draw, 0);      // Defer draw to next event-loop tick so layout is committed
   });
   ro.observe(document.getElementById('cvAnalog'));
 } else {
