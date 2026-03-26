@@ -196,7 +196,7 @@ const CLR=['#1D9E75','#D85A30','#7c6fcd'];
 const N=240,T=2,FM=13,STEP=0.04;
 const SVM=[0.1,0.2,0.3,0.4,0.5],SLB=['×0.1','×0.2','×0.3','×0.4','×0.5'];
 let SG=[{A:1,f:2,en:true},{A:.6,f:5,en:false},{A:.4,f:8,en:false}];
-let sig=[],sp=[],ph='idle',fw=0,raf=null;
+let sig=[],sp=[],ph='idle',fw=0,raf=null,compressT=0,compressRaf=null;
 const dpr=()=>window.devicePixelRatio||1;
 const mA=()=>Math.max(SG.reduce((s,g)=>s+(g.en?g.A:0),0),.01);
 const isDark=()=>document.body.classList.contains('dark');
@@ -239,6 +239,45 @@ function drawComp(){
   let tx=5;ctx.globalAlpha=.8;ctx.font='10px monospace';
   for(let i=0;i<3;i++){if(!SG[i].en||SG[i].A<.01)continue;ctx.fillStyle=CLR[i];ctx.fillText(SG[i].f+'Hz',tx,H-4);tx+=30;}
   ctx.globalAlpha=1;
+}
+
+function drawCompSqueezed(scale){
+  const cv=document.getElementById('cvc'),d=dpr(),W=cv.offsetWidth,H=80,ma=mA();
+  cv.width=W*d;cv.height=H*d;
+  const ctx=cv.getContext('2d');ctx.scale(d,d);ctx.clearRect(0,0,W,H);
+  if(scale>0.005){
+    ctx.save();
+    ctx.translate(W/2,0);ctx.scale(scale,1);ctx.translate(-W/2,0);
+    for(let i=0;i<3;i++){
+      if(!SG[i].en||SG[i].A<.01)continue;
+      ctx.beginPath();ctx.strokeStyle=CLR[i];ctx.lineWidth=1.5;ctx.globalAlpha=.3*scale;
+      for(let k=0;k<=N;k++){const x=k/N*W,t2=k/N*T,y=H/2-SG[i].A/ma*(H/2-6)*Math.sin(2*Math.PI*SG[i].f*t2);k?ctx.lineTo(x,y):ctx.moveTo(x,y);}
+      ctx.stroke();
+    }
+    ctx.beginPath();ctx.strokeStyle=tc('#2a2a28','#2a2a28');ctx.lineWidth=2;ctx.globalAlpha=Math.min(1,scale*3);
+    for(let k=0;k<=N;k++){const x=k/N*W,y=H/2-sig[k]/ma*(H/2-6);k?ctx.lineTo(x,y):ctx.moveTo(x,y);}
+    ctx.stroke();ctx.restore();
+  }
+  const la=Math.max(0,1-scale*5);
+  if(la>0){
+    ctx.beginPath();ctx.strokeStyle=`rgba(58,126,240,${la*0.9})`;ctx.lineWidth=3;
+    ctx.moveTo(W/2,6);ctx.lineTo(W/2,H-6);ctx.stroke();
+  }
+  ctx.globalAlpha=1;
+}
+function animateCompress(){
+  compressT=Math.min(compressT+0.045,1);
+  const scale=1-compressT*compressT; // ease-in
+  drawCompSqueezed(scale);
+  if(compressT>=1){
+    setTimeout(()=>{
+      if(ph!=='compressing')return;
+      ph='running';document.getElementById('btn').textContent='⏸ 一時停止';
+      drawComp();frame();
+    },150);
+    return;
+  }
+  compressRaf=requestAnimationFrame(animateCompress);
 }
 
 function wpts(f,n){
@@ -396,13 +435,23 @@ function frame(){
 }
 
 function tog(){
-  if(ph==='idle'||ph==='done'){rst();ph='running';document.getElementById('btn').textContent='⏸ 一時停止';frame();}
+  if(ph==='idle'||ph==='done'){
+    rst();compressT=0;ph='compressing';
+    document.getElementById('btn').textContent='⏸ 一時停止';
+    animateCompress();
+  }
+  else if(ph==='compressing'){
+    if(compressRaf)cancelAnimationFrame(compressRaf);
+    ph='running';document.getElementById('btn').textContent='⏸ 一時停止';
+    drawComp();frame();
+  }
   else if(ph==='running'){ph='paused';cancelAnimationFrame(raf);document.getElementById('btn').textContent='▶ 再開';}
   else if(ph==='paused'){ph='running';document.getElementById('btn').textContent='⏸ 一時停止';frame();}
 }
 function rst(){
   if(raf)cancelAnimationFrame(raf);
-  ph='idle';fw=0;sp=[];
+  if(compressRaf)cancelAnimationFrame(compressRaf);
+  ph='idle';fw=0;sp=[];compressT=0;
   document.getElementById('btn').textContent='▶ 開始';
   document.getElementById('wt').textContent='巻きつけ平面';
   document.getElementById('st').textContent='待機中';
