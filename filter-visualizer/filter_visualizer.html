@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>フィルター Visualizer — アナログフィルター設計</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+JP:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f0f4f8; --panel:#ffffff; --panel2:#f1f5f9; --border:#cbd5e1;
+  --accent:#0284c7; --accent2:#ea580c; --text:#1e293b; --text-dim:#64748b;
+  --gold:#d97706; --green:#16a34a; --red:#dc2626; --purple:#7c3aed;
+  --shadow:rgba(0,0,0,0.07); --grid-line:rgba(100,116,139,0.08);
+}
+[data-theme="dark"] {
+  --bg:#0a0e1a; --panel:#111827; --panel2:#1a2235; --border:#1e3a5f;
+  --accent:#00d4ff; --accent2:#ff6b35; --text:#e2e8f0; --text-dim:#64748b;
+  --gold:#fbbf24; --green:#22c55e; --red:#f87171; --purple:#a78bfa;
+  --shadow:rgba(0,0,0,0.3); --grid-line:rgba(0,212,255,0.03);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;min-height:100vh;overflow-x:hidden;transition:background .3s,color .3s}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--grid-line) 1px,transparent 1px),linear-gradient(90deg,var(--grid-line) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+.container{position:relative;z-index:1;max-width:1140px;margin:0 auto;padding:20px 16px 40px}
+header{text-align:center;margin-bottom:20px;padding:20px 0 16px;border-bottom:1px solid var(--border);position:relative}
+.header-tag{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:4px;color:var(--accent);text-transform:uppercase;margin-bottom:6px;opacity:.8}
+h1{font-family:'Space Mono',monospace;font-size:clamp(22px,5vw,36px);font-weight:700;letter-spacing:-1px;background:linear-gradient(135deg,var(--accent) 0%,var(--text) 50%,var(--accent2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.subtitle{font-size:11px;color:var(--text-dim);margin-top:5px;font-family:'Space Mono',monospace;letter-spacing:1px}
+.theme-toggle{position:absolute;top:20px;right:0;padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:var(--panel);color:var(--text);cursor:pointer;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;transition:all .2s;box-shadow:0 1px 4px var(--shadow)}
+.theme-toggle:hover{border-color:var(--accent);color:var(--accent)}
+.explain-section{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:14px;box-shadow:0 1px 4px var(--shadow)}
+.explain-section h3{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--accent2);text-transform:uppercase;margin-bottom:10px}
+.explain-text{font-size:13px;line-height:1.9;color:var(--text);margin-bottom:12px}
+.explain-text .hl{color:var(--accent);font-weight:700} .explain-text .hl2{color:var(--accent2);font-weight:700}
+.explain-text .hl3{color:var(--gold);font-weight:700}
+.explain-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.explain-card{background:var(--panel2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.explain-card-head{font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1px;padding:8px 14px;text-transform:uppercase}
+.explain-card-head.accent{background:rgba(2,132,199,.1);color:var(--accent);border-bottom:1px solid rgba(2,132,199,.2)}
+.explain-card-head.gold{background:rgba(217,119,6,.12);color:var(--gold);border-bottom:1px solid rgba(217,119,6,.2)}
+.explain-card-head.green{background:rgba(22,163,74,.1);color:var(--green);border-bottom:1px solid rgba(22,163,74,.2)}
+.explain-card-head.purple{background:rgba(124,58,237,.1);color:var(--purple);border-bottom:1px solid rgba(124,58,237,.2)}
+.explain-card-head.hilbert{background:rgba(217,119,6,.1);color:var(--gold);border-bottom:1px solid rgba(217,119,6,.2)}
+[data-theme="dark"] .explain-card-head.accent{background:rgba(0,212,255,.08);border-bottom-color:rgba(0,212,255,.2)}
+[data-theme="dark"] .explain-card-head.gold{background:rgba(251,191,36,.1);border-bottom-color:rgba(251,191,36,.2)}
+[data-theme="dark"] .explain-card-head.green{background:rgba(34,197,94,.08);border-bottom-color:rgba(34,197,94,.2)}
+[data-theme="dark"] .explain-card-head.purple{background:rgba(167,139,250,.08);border-bottom-color:rgba(167,139,250,.2)}
+.explain-card-body{padding:10px 14px;font-size:12px;line-height:1.8;color:var(--text)}
+.explain-card-body .hl{color:var(--accent);font-weight:700;font-family:'Space Mono',monospace}
+.explain-card-body .hl3{color:var(--gold);font-size:11px;font-family:'Space Mono',monospace;display:block;margin-top:4px}
+.zone{border-radius:12px;margin-bottom:14px;overflow:hidden;box-shadow:0 1px 4px var(--shadow)}
+.zone-header{padding:8px 18px;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.zone-settings{background:var(--panel);border:1.5px solid rgba(2,132,199,.6)}
+.zone-settings .zone-header{background:rgba(2,132,199,.08);border-bottom:1px solid rgba(2,132,199,.2);color:var(--accent)}
+[data-theme="dark"] .zone-settings{border-color:rgba(0,212,255,.4)}
+[data-theme="dark"] .zone-settings .zone-header{background:rgba(0,212,255,.08);border-bottom-color:rgba(0,212,255,.2)}
+.preset-row{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;padding:12px 18px;background:var(--panel2);border-bottom:1px solid var(--border)}
+.select-group{display:flex;flex-direction:column;gap:4px}
+.select-group label{font-size:10px;letter-spacing:2px;font-family:'Space Mono',monospace;text-transform:uppercase}
+.select-group.accent-sel label{color:var(--accent)}
+.select-group.orange-sel label{color:var(--accent2)}
+select{background:var(--panel2);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:12px;padding:6px 10px;border-radius:6px;cursor:pointer;outline:none;transition:border-color .2s}
+select:focus{border-color:var(--accent)}
+.select-group.orange-sel select{border-color:rgba(234,88,12,.4)}
+[data-theme="dark"] .select-group.orange-sel select{border-color:rgba(255,107,53,.4)}
+.settings-flex{display:flex;align-items:stretch;gap:0}
+.settings-main{flex:1;min-width:0}
+.tf-sidebar{width:260px;min-width:220px;background:var(--panel2);border-left:1px solid var(--border);padding:14px 16px;display:flex;flex-direction:column;gap:4px;overflow:hidden}
+.tf-sidebar-title{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-bottom:6px}
+.tf-formula{font-family:'Space Mono',monospace;font-size:10.5px;color:var(--text);line-height:1.7;word-break:break-all}
+.tf-line{display:block;padding:2px 7px;background:rgba(2,132,199,.06);border-radius:4px;margin-bottom:3px;border-left:2px solid var(--accent);font-size:10.5px}
+[data-theme="dark"] .tf-line{background:rgba(0,212,255,.05)}
+.tf-hl{color:var(--accent);font-weight:700}
+.tf-hl2{color:var(--accent2)}
+@media(max-width:700px){.settings-flex{flex-direction:column}.tf-sidebar{width:100%;border-left:none;border-top:1px solid var(--border)}}
+.param-sections{display:flex;flex-direction:column;background:var(--panel)}
+.param-section{padding:10px 18px 14px}
+.param-row{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end}
+.input-group{display:flex;flex-direction:column;gap:5px;flex:1;min-width:130px}
+.input-group label{font-size:10px;letter-spacing:2px;font-family:'Space Mono',monospace;text-transform:uppercase}
+.input-group.signal label{color:var(--accent)}
+.input-group.device label{color:var(--accent2)}
+.input-group-inline{display:flex;align-items:center;gap:8px}
+input[type="range"]{-webkit-appearance:none;width:100%;height:4px;background:var(--border);border-radius:2px;outline:none;cursor:pointer}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;box-shadow:0 1px 4px var(--shadow)}
+.input-group.device input[type="range"]::-webkit-slider-thumb{background:var(--accent2)}
+.input-val{font-family:'Space Mono',monospace;font-size:15px;color:var(--gold);min-width:85px;text-align:center;font-weight:700;white-space:nowrap}
+.param-unit{font-size:10px;color:var(--text-dim);font-family:'Space Mono',monospace}
+.hidden{display:none!important}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 4px var(--shadow);margin-bottom:10px}
+.panel-header{padding:9px 14px;background:var(--panel2);border-bottom:1px solid var(--border);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0}
+canvas{display:block;width:100%}
+.cv-wrap{position:relative;display:block}
+.cv-overlay{position:absolute;top:0;left:0;pointer-events:none;display:block}
+.legend{display:flex;gap:14px;padding:8px 14px;font-family:'Space Mono',monospace;font-size:10px;border-top:1px solid var(--border);background:var(--panel2);flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:5px}
+.legend-swatch{width:20px;height:3px;border-radius:1px}
+.legend-dash{width:20px;border-top:2px dashed}
+.result-section{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:14px;box-shadow:0 1px 4px var(--shadow)}
+.section-label{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.section-label span{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--accent);text-transform:uppercase}
+.result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.result-card{background:var(--panel2);border:2px solid var(--border);border-radius:10px;padding:12px;text-align:center;position:relative;overflow:hidden;transition:border-color .2s,background .2s,transform .1s,box-shadow .15s}
+.result-card[data-info]{cursor:pointer;padding-bottom:28px}
+.result-card[data-info]:hover{border-color:var(--accent)!important;transform:translateY(-2px);box-shadow:0 4px 14px var(--shadow)}
+.result-card[data-info]:hover .card-hint{opacity:1}
+.card-hint{position:absolute;bottom:0;left:0;right:0;background:var(--accent);color:#fff;font-family:'Space Mono',monospace;font-size:8px;font-weight:700;padding:3px 0;text-align:center;opacity:0;transition:opacity .15s;letter-spacing:.5px}
+.result-card .label{font-size:9px;letter-spacing:2px;color:var(--text-dim);font-family:'Space Mono',monospace;text-transform:uppercase;margin-bottom:5px}
+.result-card .value{font-family:'Space Mono',monospace;font-size:clamp(13px,1.8vw,16px);font-weight:700;color:var(--accent)}
+.result-card .value.orange{color:var(--accent2)} .result-card .value.green{color:var(--green)}
+.result-card .value.gold{color:var(--gold)} .result-card .value.purple{color:var(--purple)}
+.result-card .unit{font-size:9px;color:var(--text-dim);margin-top:2px;font-family:'Space Mono',monospace}
+.modal-overlay{display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal-card{background:var(--panel);border:1px solid var(--border);border-radius:16px;width:100%;max-width:600px;max-height:82vh;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.25);display:flex;flex-direction:column}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:var(--panel2);border-bottom:1px solid var(--border)}
+.modal-title{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;letter-spacing:1px;color:var(--accent);text-transform:uppercase}
+.modal-close{background:none;border:1px solid var(--border);border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:14px;color:var(--text-dim);display:flex;align-items:center;justify-content:center;transition:all .15s}
+.modal-close:hover{background:var(--accent2);color:#fff;border-color:var(--accent2)}
+.modal-body{overflow-y:auto;padding:16px 18px;flex:1}
+.modal-body::-webkit-scrollbar{width:4px}
+.modal-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.modal-desc{font-size:13px;line-height:1.9;color:var(--text);margin-bottom:14px}
+.modal-formula-box{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:14px;font-family:'Space Mono',monospace;font-size:12px;color:var(--accent);line-height:1.8}
+.calc-row{display:grid;grid-template-columns:1fr 2fr;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-family:'Space Mono',monospace;font-size:11px;align-items:start}
+.calc-row:last-child{border-bottom:none}
+.calc-key{color:var(--text-dim);font-size:10px}
+.calc-val{color:var(--text);word-break:break-all}
+.calc-val.accent{color:var(--accent);font-weight:700}
+#cvTooltip{position:fixed;display:none;pointer-events:none;background:var(--panel);border:1.5px solid var(--accent2);border-radius:8px;padding:8px 12px;font-family:'Space Mono',monospace;font-size:11px;color:var(--text);box-shadow:0 4px 16px rgba(0,0,0,.2);z-index:9999;white-space:nowrap;line-height:1.9}
+footer{text-align:center;padding:20px 0 0;font-family:'Space Mono',monospace;font-size:10px;color:var(--text-dim);border-top:1px solid var(--border);margin-top:20px}
+footer a{color:var(--accent);text-decoration:none}
+footer a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<div id="cvTooltip"></div>
+
+<div class="modal-overlay" id="infoModal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle"></span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<div class="container">
+  <header>
+    <div class="header-tag">RF-TOOL / FILTER</div>
+    <h1>フィルター Visualizer</h1>
+    <div class="subtitle">アナログフィルター設計 → 振幅 / 位相 / 群遅延</div>
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">DARK</button>
+  </header>
+
+  <section class="explain-section">
+    <h3>フィルターとは？</h3>
+    <p class="explain-text">
+      <span class="hl">アナログフィルター</span>は特定の周波数成分を通過・阻止する回路です。
+      <span class="hl2">カットオフ周波数 fc</span> を境に通過域と阻止域が分かれ、
+      <span class="hl3">次数 N</span> が高いほど急峻な遮断特性が得られます（ロールオフ = −20N dB/dec）。
+    </p>
+    <div class="explain-cards">
+      <div class="explain-card">
+        <div class="explain-card-head accent">Butterworth</div>
+        <div class="explain-card-body">通過域が<span class="hl">最大平坦</span>。リップルなし。設計が単純。<span class="hl3">−3dB が ωc で厳密に定義</span></div>
+      </div>
+      <div class="explain-card">
+        <div class="explain-card-head gold">Chebyshev I / II</div>
+        <div class="explain-card-body">I型：<span class="hl">通過域リップル</span>と引き換えに急峻。II型：<span class="hl">阻止域リップル</span>（通過域は単調）。</div>
+      </div>
+      <div class="explain-card">
+        <div class="explain-card-head green">Bessel</div>
+        <div class="explain-card-body"><span class="hl">群遅延最大平坦</span>（位相線形）。パルス伝送・オーディオに最適。ロールオフは緩やか。</div>
+      </div>
+      <div class="explain-card">
+        <div class="explain-card-head purple">群遅延</div>
+        <div class="explain-card-body"><span class="hl">τ(ω) = −dφ/dω</span>。各周波数成分の遅延時間。Bessel で一定（周波数非依存）になる。</div>
+      </div>
+      <div class="explain-card">
+        <div class="explain-card-head hilbert">Hilbert 変換</div>
+        <div class="explain-card-body"><span class="hl">H(jω) = −j·sgn(ω)</span>。全周波数を 90° 遅相。SSB 変調・解析信号生成に使用。因果的 IIR では近似のみ可能。</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="zone zone-settings">
+    <div class="zone-header">⚙ パラメータ設定</div>
+    <div class="preset-row">
+      <div class="select-group accent-sel">
+        <label>フィルタータイプ</label>
+        <select id="selType" onchange="onSelectType()">
+          <option value="LPF">LPF（ローパス）</option>
+          <option value="HPF">HPF（ハイパス）</option>
+          <option value="BPF">BPF（バンドパス）</option>
+          <option value="BSF">BSF（バンドストップ / ノッチ）</option>
+          <option value="hilbert">Hilbert（理想ヒルベルト変換）</option>
+          <option value="hilbert_fir">FIR ヒルベルト（窓関数法・実装可能）</option>
+        </select>
+      </div>
+      <div class="select-group orange-sel" id="groupDesign">
+        <label>設計手法</label>
+        <select id="selDesign" onchange="onSelectDesign()">
+          <option value="butterworth">Butterworth（最大平坦）</option>
+          <option value="chebyshev1">Chebyshev I（通過域リップル）</option>
+          <option value="chebyshev2">Chebyshev II（阻止域リップル）</option>
+          <option value="bessel">Bessel（最大平坦群遅延）</option>
+        </select>
+      </div>
+    </div>
+    <div class="settings-flex">
+      <div class="settings-main">
+        <div class="param-sections">
+          <div class="param-section">
+            <div class="param-row">
+              <div class="input-group signal">
+                <label id="lblFc">カットオフ周波数 f<sub>c</sub></label>
+                <div class="input-group-inline">
+                  <input type="range" id="slFc" min="0" max="10" step="0.001" oninput="onSliderFc(+this.value)">
+                  <span class="input-val" id="valFc">—</span>
+                </div>
+                <div class="param-unit">Hz（log スケール）</div>
+              </div>
+              <div class="input-group signal" id="groupN">
+                <label>フィルター次数 N</label>
+                <div class="input-group-inline">
+                  <input type="range" id="slN" min="1" max="10" step="1" oninput="onSlider('N',+this.value)">
+                  <span class="input-val" id="valN">—</span>
+                </div>
+                <div class="param-unit">次数</div>
+              </div>
+              <div class="input-group device" id="groupQ">
+                <label>Q 値（BPF/BSF）</label>
+                <div class="input-group-inline">
+                  <input type="range" id="slQ" min="0.5" max="50" step="0.1" oninput="onSlider('Q',+this.value)">
+                  <span class="input-val" id="valQ">—</span>
+                </div>
+                <div class="param-unit">無次元</div>
+              </div>
+              <div class="input-group device" id="groupRipple">
+                <label>通過域リップル（Cheb I）</label>
+                <div class="input-group-inline">
+                  <input type="range" id="slRipple" min="0.1" max="3.0" step="0.1" oninput="onSlider('ripple',+this.value)">
+                  <span class="input-val" id="valRipple">—</span>
+                </div>
+                <div class="param-unit">dB</div>
+              </div>
+              <div class="input-group device" id="groupStop">
+                <label>阻止域減衰（Cheb II）</label>
+                <div class="input-group-inline">
+                  <input type="range" id="slStop" min="20" max="80" step="1" oninput="onSlider('stopAtten',+this.value)">
+                  <span class="input-val" id="valStop">—</span>
+                </div>
+                <div class="param-unit">dB</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tf-sidebar">
+        <div class="tf-sidebar-title">伝達関数 H(s)</div>
+        <div class="tf-formula" id="tfFormula">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header"><div class="dot"></div>ボード線図 — 振幅 / 位相 / 群遅延（マウスで詳細値を表示）</div>
+    <div class="cv-wrap">
+      <canvas id="cvMain" height="320"></canvas>
+      <canvas id="cvMainOv" height="320" class="cv-overlay" style="cursor:crosshair"></canvas>
+    </div>
+    <div class="legend">
+      <span class="legend-item"><span class="legend-swatch" style="background:#0284c7"></span>振幅 [dB]（左軸）</span>
+      <span class="legend-item"><span class="legend-swatch" style="background:#ea580c"></span>位相 [°]（右-1軸）</span>
+      <span class="legend-item"><span class="legend-swatch" style="background:#7c3aed"></span>群遅延（右-2軸）</span>
+      <span class="legend-item"><span class="legend-dash" style="border-color:#dc2626"></span>−3 dB</span>
+      <span class="legend-item"><span class="legend-dash" style="border-color:#d97706"></span>f<sub>c</sub></span>
+    </div>
+  </div>
+
+  <div class="result-section">
+    <div class="section-label"><div class="dot"></div><span>計算結果 — カードをクリックすると詳細を表示</span></div>
+    <div class="result-grid">
+      <div class="result-card" data-info="fc3db" onclick="openModal('fc3db')">
+        <div class="label">−3dB 周波数</div>
+        <div class="value" id="rcFc3db">—</div>
+        <div class="unit"></div>
+        <div class="card-hint">▶ 詳細</div>
+      </div>
+      <div class="result-card" data-info="rolloff" onclick="openModal('rolloff')">
+        <div class="label">ロールオフ</div>
+        <div class="value orange" id="rcRolloff">—</div>
+        <div class="unit">dB/dec</div>
+        <div class="card-hint">▶ 詳細</div>
+      </div>
+      <div class="result-card">
+        <div class="label">次数</div>
+        <div class="value green" id="rcOrder">—</div>
+        <div class="unit" id="rcOrderUnit">次</div>
+      </div>
+      <div class="result-card" data-info="gd" onclick="openModal('gd')">
+        <div class="label">群遅延 @ f<sub>c</sub></div>
+        <div class="value purple" id="rcGD">—</div>
+        <div class="unit" id="rcGDUnit"></div>
+        <div class="card-hint">▶ 詳細</div>
+      </div>
+      <div class="result-card">
+        <div class="label">極の数</div>
+        <div class="value" id="rcPoles">—</div>
+        <div class="unit">個</div>
+      </div>
+      <div class="result-card" data-info="iir" onclick="openModal('iir')">
+        <div class="label">IIR 次数</div>
+        <div class="value green" id="rcIIR">—</div>
+        <div class="unit">次（双一次変換）</div>
+        <div class="card-hint">▶ 詳細</div>
+      </div>
+      <div class="result-card" data-info="fir" onclick="openModal('fir')">
+        <div class="label">FIR タップ数</div>
+        <div class="value gold" id="rcFIR">—</div>
+        <div class="unit" id="rcFIRUnit">タップ（Kaiser 推定）</div>
+        <div class="card-hint">▶ 設計条件</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panelImpulse">
+    <div class="panel-header"><div class="dot" style="background:var(--accent2)"></div>インパルス応答 h(t)（正規化表示）</div>
+    <div class="cv-wrap">
+      <canvas id="cvImpulse" height="200"></canvas>
+    </div>
+    <div class="legend">
+      <span class="legend-item"><span class="legend-swatch" style="background:#0284c7"></span>h(t) 正規化</span>
+      <span class="legend-item"><span class="legend-dash" style="border-color:#d97706"></span>1/f<sub>c</sub></span>
+    </div>
+  </div>
+
+  <footer><a href="../index.html">← rf-tool トップへ戻る</a> &nbsp;|&nbsp; Filter Visualizer — static demo</footer>
+</div>
+
+<script>
+'use strict';
+
+/* ═══ STATE ═══ */
+const state = {
+  filterType:'LPF', design:'butterworth',
+  fc:1000, N:4, ripple:1.0, stopAtten:40, Q:2.0,
+};
+
+/* ═══ COMPLEX EVAL: H(jΩ) = gain * ∏(jΩ−z_k) / ∏(jΩ−p_k) ═══ */
+function evalH(poles, zeros, gain, Omega) {
+  let hr=gain, hi=0;
+  for(const z of zeros){
+    const nr=hr*(-z.r)-hi*(Omega-z.i), ni=hr*(Omega-z.i)+hi*(-z.r);
+    hr=nr; hi=ni;
+  }
+  for(const p of poles){
+    const ar=-p.r, ai=Omega-p.i, d2=ar*ar+ai*ai;
+    if(d2<1e-30) continue;
+    const nr=(hr*ar+hi*ai)/d2, ni=(hi*ar-hr*ai)/d2;
+    hr=nr; hi=ni;
+  }
+  return {r:hr, i:hi};
+}
+function normalizeGain(poles, zeros){
+  const h=evalH(poles,zeros,1,0);
+  const m=Math.sqrt(h.r*h.r+h.i*h.i);
+  return m>1e-15?1/m:1;
+}
+function find3dB(poles, zeros, gain, lo, hi){
+  lo=lo||1e-5; hi=hi||1e4;
+  for(let i=0;i<80;i++){
+    const m=(lo+hi)/2, h=evalH(poles,zeros,gain,m);
+    if(h.r*h.r+h.i*h.i>0.5) lo=m; else hi=m;
+  }
+  return (lo+hi)/2;
+}
+
+/* ═══ BESSEL POLYNOMIAL ROOTS (Durand-Kerner) ═══ */
+function besselCoeffs(N){
+  const f=n=>{let v=1;for(let i=2;i<=n;i++)v*=i;return v;};
+  return Array.from({length:N+1},(_,k)=>f(2*N-k)/(Math.pow(2,N-k)*f(k)*f(N-k)));
+}
+function durandKerner(a){
+  const N=a.length-1;
+  if(N<=0) return [];
+  if(N===1) return [{r:-a[0]/a[1],i:0}];
+  const pe=z=>{let hr=a[N],hi=0;for(let j=N-1;j>=0;j--){const nr=hr*z.r-hi*z.i+a[j],ni=hr*z.i+hi*z.r;hr=nr;hi=ni;}return{r:hr,i:hi};};
+  const r=Array.from({length:N},(_,k)=>{const th=2*Math.PI*k/N+0.3;return{r:-N*0.4+N*0.3*Math.cos(th),i:N*0.4*Math.sin(th)};});
+  for(let it=0;it<300;it++)
+    for(let k=0;k<N;k++){
+      const p=pe(r[k]);let dr=1,di=0;
+      for(let j=0;j<N;j++){if(j===k)continue;const ar=r[k].r-r[j].r,ai=r[k].i-r[j].i,nr=dr*ar-di*ai,ni=dr*ai+di*ar;dr=nr;di=ni;}
+      const d2=dr*dr+di*di;if(d2<1e-40)continue;
+      r[k]={r:r[k].r-(p.r*dr+p.i*di)/d2,i:r[k].i-(p.i*dr-p.r*di)/d2};
+    }
+  return r;
+}
+function besselPoles(N){return durandKerner(besselCoeffs(N)).filter(p=>p.r<-1e-6);}
+
+/* ═══ FILTER PROTOTYPE (normalized, -3dB at Ω=1) ═══ */
+let _proto=null;
+function getPrototype(){
+  const N=state.N;
+  let poles=[],zeros=[];
+  if(state.design==='butterworth'){
+    for(let k=0;k<N;k++){const th=Math.PI*(2*k+N+1)/(2*N);poles.push({r:Math.cos(th),i:Math.sin(th)});}
+    return {poles,zeros,gain:normalizeGain(poles,zeros)};
+  }
+  if(state.design==='chebyshev1'){
+    const eps=Math.sqrt(Math.pow(10,state.ripple/10)-1);
+    const ga=Math.asinh(1/eps)/N,sh=Math.sinh(ga),ch=Math.cosh(ga);
+    for(let k=1;k<=N;k++){const th=(2*k-1)*Math.PI/(2*N);poles.push({r:-sh*Math.sin(th),i:ch*Math.cos(th)});}
+    const om3=eps<=1?Math.cosh(Math.acosh(1/eps)/N):find3dB(poles,zeros,normalizeGain(poles,zeros));
+    if(om3>0.01) poles=poles.map(p=>({r:p.r/om3,i:p.i/om3}));
+    return {poles,zeros,gain:normalizeGain(poles,zeros)};
+  }
+  if(state.design==='chebyshev2'){
+    const eps=1/Math.sqrt(Math.pow(10,state.stopAtten/10)-1);
+    const ga=Math.asinh(1/eps)/N,sh=Math.sinh(ga),ch=Math.cosh(ga);
+    for(let k=1;k<=N;k++){
+      const th=(2*k-1)*Math.PI/(2*N),pr=-sh*Math.sin(th),pi=ch*Math.cos(th),d=pr*pr+pi*pi;
+      poles.push({r:pr/d,i:-pi/d});
+      const ck=Math.cos(th);if(Math.abs(ck)>1e-9)zeros.push({r:0,i:1/ck});
+    }
+    const minZ=zeros.reduce((m,z)=>Math.min(m,Math.abs(z.i)),Infinity);
+    const g0=normalizeGain(poles,zeros);
+    const om3=find3dB(poles,zeros,g0,1e-5,isFinite(minZ)?minZ*0.999:1e3);
+    if(om3>0.001){poles=poles.map(p=>({r:p.r/om3,i:p.i/om3}));zeros=zeros.map(z=>({r:z.r/om3,i:z.i/om3}));}
+    return {poles,zeros,gain:normalizeGain(poles,zeros)};
+  }
+  // bessel
+  poles=besselPoles(N);if(!poles.length)poles=[{r:-1,i:0}];
+  const g0=normalizeGain(poles,zeros);
+  const om3=find3dB(poles,zeros,g0);
+  if(om3>0.001) poles=poles.map(p=>({r:p.r/om3,i:p.i/om3}));
+  return {poles,zeros,gain:normalizeGain(poles,zeros)};
+}
+
+/* ═══ FREQUENCY TRANSFORM ═══ */
+function protoOmega(w){
+  const wc=2*Math.PI*state.fc, BW=wc/state.Q;
+  if(state.filterType==='LPF') return w/wc;
+  if(state.filterType==='HPF') return w>0?wc/w:1e15;
+  if(state.filterType==='BPF') return w>0?(w*w-wc*wc)/(w*BW):-1e15;
+  if(state.filterType==='BSF'){const d=wc*wc-w*w;return Math.abs(d)<1e-20?1e15:(w*BW/d);}
+  return w/wc;
+}
+
+/* ═══ COMPUTE RESPONSE ═══ */
+let _resp=null;
+function computeResponse(proto){
+  const fcHz=state.fc;
+  const fMin=fcHz*1e-2, fMax=fcHz*1e2;
+  const NPTS=600;
+  const lMin=Math.log10(fMin),lMax=Math.log10(fMax);
+  // Hilbert: ideal 90° phase shift
+  if(state.filterType==='hilbert'){
+    return Array.from({length:NPTS},(_,i)=>{
+      const f=Math.pow(10,lMin+(i/(NPTS-1))*(lMax-lMin));
+      return {f,w:2*Math.PI*f,mag_db:0,phase:-90,gd:0};
+    });
+  }
+  const {poles,zeros,gain}=proto;
+  const resp=[];let prevPh=null,phOff=0;
+  for(let i=0;i<NPTS;i++){
+    const f=Math.pow(10,lMin+(i/(NPTS-1))*(lMax-lMin));
+    const w=2*Math.PI*f, Om=protoOmega(w);
+    const h=evalH(poles,zeros,gain,Om);
+    const mag=Math.sqrt(h.r*h.r+h.i*h.i);
+    const mag_db=mag>1e-15?20*Math.log10(mag):-300;
+    let ph=Math.atan2(h.i,h.r)*180/Math.PI;
+    if(prevPh!==null){let d=ph-prevPh;while(d>180)d-=360;while(d<-180)d+=360;phOff+=(d-(ph-prevPh));ph+=phOff;}
+    prevPh=ph-phOff;
+    resp.push({f,w,mag_db,phase:ph});
+  }
+  // Group delay via numerical diff
+  for(let i=0;i<resp.length;i++){
+    const dw=resp[i].w*1e-5||1e-5;
+    const Om1=protoOmega(resp[i].w-dw),Om2=protoOmega(resp[i].w+dw);
+    const h1=evalH(poles,zeros,gain,Om1),h2=evalH(poles,zeros,gain,Om2);
+    let dphi=Math.atan2(h2.i,h2.r)-Math.atan2(h1.i,h1.r);
+    while(dphi>Math.PI)dphi-=2*Math.PI;while(dphi<-Math.PI)dphi+=2*Math.PI;
+    resp[i].gd=-dphi/(2*dw);
+  }
+  return resp;
+}
+
+/* ═══ FFT (radix-2 in-place, N must be power of 2) ═══ */
+function fftIP(re,im,inv){
+  const N=re.length;
+  for(let i=1,j=0;i<N;i++){let bit=N>>1;for(;j&bit;bit>>=1)j^=bit;j^=bit;if(i<j){let t=re[i];re[i]=re[j];re[j]=t;t=im[i];im[i]=im[j];im[j]=t;}}
+  for(let len=2;len<=N;len<<=1){const ang=(inv?1:-1)*2*Math.PI/len,wr=Math.cos(ang),wi=Math.sin(ang);
+    for(let i=0;i<N;i+=len){let cr=1,ci=0;for(let k=0;k<(len>>1);k++){const ur=re[i+k],ui=im[i+k],vr=re[i+k+(len>>1)]*cr-im[i+k+(len>>1)]*ci,vi=re[i+k+(len>>1)]*ci+im[i+k+(len>>1)]*cr;re[i+k]=ur+vr;im[i+k]=ui+vi;re[i+k+(len>>1)]=ur-vr;im[i+k+(len>>1)]=ui-vi;const nr=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=nr;}}}
+  if(inv){for(let i=0;i<N;i++){re[i]/=N;im[i]/=N;}}
+}
+
+/* ═══ IMPULSE RESPONSE ═══ */
+function computeImpulse(proto){
+  if(!proto||state.filterType==='hilbert'||state.filterType==='hilbert_fir')return null;
+  if(!proto.poles.length)return null;
+  const NFFT=512;
+  const isBP=state.filterType==='BPF'||state.filterType==='BSF';
+  const TN=isBP?Math.max(24,state.Q*8):Math.max(24,state.N*4);
+  const T=TN/state.fc;
+  const fsIR=NFFT/T;
+  const re=new Float64Array(NFFT),im=new Float64Array(NFFT);
+  for(let k=0;k<NFFT;k++){
+    const kk=k<=NFFT/2?k:k-NFFT;
+    const w=2*Math.PI*kk/T;
+    const Om=Math.abs(w)<1e-10?protoOmega(2*Math.PI*state.fc*1e-6):Math.max(-1e12,Math.min(1e12,protoOmega(w)));
+    const h=evalH(proto.poles,proto.zeros,proto.gain,Om);
+    re[k]=h.r;im[k]=h.i;
+  }
+  fftIP(re,im,true); // IFFT
+  for(let k=0;k<NFFT;k++)re[k]*=fsIR;
+  return{h:re,dt:1/fsIR,T,NFFT};
+}
+
+/* ═══ FIR HILBERT RESPONSE ═══ */
+function computeFIRHilbert(){
+  const taps=state.N*10-3; // odd taps: N=1→7 ... N=10→97
+  const c=(taps-1)/2;
+  const h=new Float64Array(taps);
+  for(let k=0;k<taps;k++){
+    const n=k-c;
+    if(n===0||n%2===0){h[k]=0;continue;}
+    const win=0.54-0.46*Math.cos(2*Math.PI*k/(taps-1)); // Hamming
+    h[k]=(2/(Math.PI*n))*win;
+  }
+  const NPTS=250;
+  const resp=[];let prevPh=null,phOff=0;
+  for(let i=0;i<NPTS;i++){
+    const fn=i/(NPTS-1)*0.5; // normalized frequency 0..0.5 (= 0..Nyquist)
+    const omega=2*Math.PI*fn;
+    let re=0,imi=0;
+    for(let k=0;k<taps;k++){re+=h[k]*Math.cos(omega*k);imi-=h[k]*Math.sin(omega*k);}
+    const mag=Math.sqrt(re*re+imi*imi);
+    const mag_db=mag>1e-12?20*Math.log10(mag):-120;
+    let ph=Math.atan2(imi,re)*180/Math.PI;
+    if(prevPh!==null){let d=ph-prevPh;while(d>180)d-=360;while(d<-180)d+=360;phOff+=(d-(ph-prevPh));ph+=phOff;}
+    prevPh=ph-phOff;
+    let re2=0,im2=0,re1=0,im1=0;
+    for(let k=0;k<taps;k++){re2+=h[k]*Math.cos((omega+0.001)*k);im2-=h[k]*Math.sin((omega+0.001)*k);re1+=h[k]*Math.cos((omega-0.001)*k);im1-=h[k]*Math.sin((omega-0.001)*k);}
+    let dphi=Math.atan2(im2,re2)-Math.atan2(im1,re1);
+    while(dphi>Math.PI)dphi-=2*Math.PI;while(dphi<-Math.PI)dphi+=2*Math.PI;
+    resp.push({fn,mag_db,phase:ph,gd:-dphi/0.002});
+  }
+  return{resp,taps};
+}
+
+/* ═══ CANVAS HELPERS ═══ */
+const CV_DESIGN_H={cvMain:320,cvImpulse:200};
+function initCanvases(){
+  const dpr=window.devicePixelRatio||1;
+  ['cvMain','cvMainOv','cvImpulse'].forEach(id=>{
+    const cv=document.getElementById(id);if(!cv)return;
+    const w=cv.parentElement.clientWidth||600,h=CV_DESIGN_H[id]||CV_DESIGN_H.cvMain;
+    cv.style.width=w+'px';cv.style.height=h+'px';
+    cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);
+  });
+}
+function getCtx(cv){
+  const dpr=window.devicePixelRatio||1;
+  const w=Math.round(cv.width/dpr)||600,h=Math.round(cv.height/dpr)||480;
+  const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
+  return{ctx,w,h};
+}
+const isDark=()=>document.documentElement.getAttribute('data-theme')==='dark';
+const bgColor=()=>isDark()?'#111827':'#ffffff';
+const gridClr=()=>isDark()?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.06)';
+const labelClr=()=>isDark()?'#94a3b8':'#475569';
+const accentClr=()=>isDark()?'#00d4ff':'#0284c7';
+
+function fmtFreq(hz){
+  if(hz>=1e9)return (hz/1e9).toPrecision(3)+'GHz';
+  if(hz>=1e6)return (hz/1e6).toPrecision(3)+'MHz';
+  if(hz>=1e3)return (hz/1e3).toPrecision(3)+'kHz';
+  return hz.toPrecision(3)+'Hz';
+}
+function fmtTime(s){
+  const a=Math.abs(s);if(a===0||!isFinite(s))return '0';
+  if(a>=1)return s.toFixed(3)+'s';
+  if(a>=1e-3)return (s*1e3).toFixed(3)+'ms';
+  if(a>=1e-6)return (s*1e6).toFixed(3)+'µs';
+  if(a>=1e-9)return (s*1e9).toFixed(3)+'ns';
+  return (s*1e12).toFixed(3)+'ps';
+}
+function timeUnit(s){
+  const a=Math.abs(s);
+  if(a>=1)return{scale:1,unit:'s'};
+  if(a>=1e-3)return{scale:1e3,unit:'ms'};
+  if(a>=1e-6)return{scale:1e6,unit:'µs'};
+  if(a>=1e-9)return{scale:1e9,unit:'ns'};
+  return{scale:1e12,unit:'ps'};
+}
+function logTicks(fMin,fMax){
+  const ticks=[];
+  const d0=Math.floor(Math.log10(fMin)),d1=Math.ceil(Math.log10(fMax));
+  for(let d=d0;d<=d1;d++)for(const m of[1,2,5]){const f=m*Math.pow(10,d);if(f>=fMin*0.999&&f<=fMax*1.001)ticks.push(f);}
+  return ticks;
+}
+
+/* ═══ DRAW ALL (triple-axis single canvas) ═══ */
+function drawAll(resp){
+  const cv=document.getElementById('cvMain');
+  const{ctx,w,h}=getCtx(cv);
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle=bgColor();ctx.fillRect(0,0,w,h);
+  if(!resp||resp.length<2){return;}
+
+  const MX=65,MR=115,MT=22,MB=36;
+  const pw=w-MX-MR,ph=h-MT-MB;
+  const fMin=resp[0].f,fMax=resp[resp.length-1].f;
+  const R1=MX+pw; // right edge of plot (= left of right-margin = phase axis)
+  const R2=w-54;  // GD axis x
+
+  // === Y SCALES ===
+  const dbMin=-90,dbMax=10;
+  const yDb=db=>MT+(1-(db-dbMin)/(dbMax-dbMin))*ph;
+
+  const vPh=resp.map(p=>p.phase).filter(isFinite);
+  let phMin=vPh.length?Math.min(...vPh):-180,phMax=vPh.length?Math.max(...vPh):0;
+  phMin=Math.floor((phMin-10)/90)*90;phMax=Math.ceil((phMax+10)/90)*90;
+  phMin=Math.max(phMin,-400);phMax=Math.min(phMax,100);
+  if(phMax<=phMin){phMin=-180;phMax=0;}
+  const yPh=p=>MT+(1-(p-phMin)/(phMax-phMin))*ph;
+
+  const vGD=resp.map(p=>p.gd).filter(v=>isFinite(v)&&Math.abs(v)<1e10);
+  if(!vGD.length){vGD.push(0);}
+  const gdMin=Math.min(...vGD),gdMax=Math.max(...vGD);
+  const gdR=(gdMax-gdMin)||Math.max(Math.abs(gdMax),1e-9);
+  const gdPadMin=gdMin-gdR*0.05,gdPadMax=gdMax+gdR*0.15;
+  const gdRef=Math.max(Math.abs(gdPadMin),Math.abs(gdPadMax))||1e-9;
+  const{scale:gdSc,unit:gdU}=timeUnit(gdRef);
+  const yGD=gd=>MT+(1-(gd-gdPadMin)/(gdPadMax-gdPadMin))*ph;
+
+  const xF=f=>MX+(Math.log10(f/fMin)/Math.log10(fMax/fMin))*pw;
+
+  // === GRID ===
+  ctx.strokeStyle=gridClr();ctx.lineWidth=1;
+  for(let db=dbMin;db<=dbMax;db+=10){const y=yDb(db);if(y<MT||y>MT+ph)continue;ctx.beginPath();ctx.moveTo(MX,y);ctx.lineTo(R1,y);ctx.stroke();}
+  logTicks(fMin,fMax).forEach(f=>{const x=xF(f);ctx.beginPath();ctx.moveTo(x,MT);ctx.lineTo(x,MT+ph);ctx.stroke();});
+
+  // -3dB reference
+  const y3=yDb(-3);
+  if(y3>=MT&&y3<=MT+ph){
+    ctx.strokeStyle=isDark()?'rgba(248,113,113,.6)':'rgba(220,38,38,.6)';
+    ctx.lineWidth=1;ctx.setLineDash([5,5]);
+    ctx.beginPath();ctx.moveTo(MX,y3);ctx.lineTo(R1,y3);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=isDark()?'#f87171':'#dc2626';ctx.font='9px "Space Mono",monospace';ctx.textAlign='left';
+    ctx.fillText('−3dB',MX+4,y3-4);
+  }
+  // 0° phase reference (subtle)
+  const y0p=yPh(0);
+  if(y0p>=MT&&y0p<=MT+ph){
+    ctx.strokeStyle=isDark()?'rgba(255,107,53,.2)':'rgba(234,88,12,.2)';
+    ctx.lineWidth=1;ctx.setLineDash([4,4]);
+    ctx.beginPath();ctx.moveTo(MX,y0p);ctx.lineTo(R1,y0p);ctx.stroke();ctx.setLineDash([]);
+  }
+  // fc marker
+  const fc=state.fc;
+  if(fc>=fMin&&fc<=fMax){
+    const xc=xF(fc);
+    ctx.strokeStyle=isDark()?'rgba(251,191,36,.55)':'rgba(217,119,6,.55)';
+    ctx.lineWidth=1;ctx.setLineDash([3,4]);
+    ctx.beginPath();ctx.moveTo(xc,MT);ctx.lineTo(xc,MT+ph);ctx.stroke();ctx.setLineDash([]);
+  }
+
+  // === CURVES ===
+  // Amplitude (blue/accent)
+  ctx.strokeStyle=accentClr();ctx.lineWidth=2.5;
+  ctx.beginPath();let first=true;
+  for(const pt of resp){const x=xF(pt.f),y=Math.max(MT-2,Math.min(MT+ph+2,yDb(pt.mag_db)));first?(ctx.moveTo(x,y),first=false):ctx.lineTo(x,y);}
+  ctx.stroke();
+  // Phase (orange)
+  ctx.strokeStyle=isDark()?'#ff6b35':'#ea580c';ctx.lineWidth=2;
+  ctx.beginPath();first=true;
+  for(const pt of resp){if(!isFinite(pt.phase))continue;const x=xF(pt.f),y=Math.max(MT-2,Math.min(MT+ph+2,yPh(pt.phase)));first?(ctx.moveTo(x,y),first=false):ctx.lineTo(x,y);}
+  ctx.stroke();
+  // Group delay (purple)
+  ctx.strokeStyle=isDark()?'#a78bfa':'#7c3aed';ctx.lineWidth=2;
+  ctx.beginPath();first=true;
+  for(const pt of resp){if(!isFinite(pt.gd)||Math.abs(pt.gd)>1e10)continue;const x=xF(pt.f),y=Math.max(MT-2,Math.min(MT+ph+2,yGD(pt.gd)));first?(ctx.moveTo(x,y),first=false):ctx.lineTo(x,y);}
+  ctx.stroke();
+
+  // === LEFT AXIS (dB) ===
+  ctx.fillStyle=labelClr();ctx.font='11px "Space Mono",monospace';ctx.textAlign='right';
+  for(let db=dbMin;db<=dbMax;db+=20){
+    const y=yDb(db);if(y<MT-8||y>MT+ph+8)continue;
+    ctx.fillText(db+'dB',MX-5,y+4);
+    ctx.strokeStyle=labelClr();ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(MX-4,y);ctx.lineTo(MX,y);ctx.stroke();
+  }
+  ctx.save();ctx.translate(13,MT+ph/2);ctx.rotate(-Math.PI/2);
+  ctx.textAlign='center';ctx.font='10px "Space Mono",monospace';ctx.fillStyle=accentClr();ctx.fillText('振幅 [dB]',0,0);ctx.restore();
+
+  // === RIGHT AXIS 1: phase ===
+  const phC=isDark()?'#ff6b35':'#ea580c';
+  ctx.fillStyle=phC;ctx.font='10px "Space Mono",monospace';ctx.textAlign='left';
+  for(let p=Math.ceil(phMin/90)*90;p<=phMax;p+=90){
+    const y=yPh(p);if(y<MT-8||y>MT+ph+8)continue;
+    ctx.strokeStyle=phC;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(R1,y);ctx.lineTo(R1+4,y);ctx.stroke();
+    ctx.fillText(p+'°',R1+7,y+4);
+  }
+  ctx.save();ctx.translate(R1+35,MT+ph/2);ctx.rotate(Math.PI/2);
+  ctx.textAlign='center';ctx.font='10px "Space Mono",monospace';ctx.fillStyle=phC;ctx.fillText('位相 [°]',0,0);ctx.restore();
+
+  // === RIGHT AXIS 2: group delay ===
+  const gdC=isDark()?'#a78bfa':'#7c3aed';
+  ctx.fillStyle=gdC;ctx.font='10px "Space Mono",monospace';ctx.textAlign='left';
+  for(let i=0;i<=4;i++){
+    const gd=gdPadMin+(i/4)*(gdPadMax-gdPadMin);
+    const y=MT+((4-i)/4)*ph;
+    if(y<MT-8||y>MT+ph+8)continue;
+    ctx.strokeStyle=gdC;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(R2,y);ctx.lineTo(R2+4,y);ctx.stroke();
+    ctx.fillText((gd*gdSc).toFixed(2),R2+7,y+4);
+  }
+  ctx.save();ctx.translate(w-8,MT+ph/2);ctx.rotate(Math.PI/2);
+  ctx.textAlign='center';ctx.font='10px "Space Mono",monospace';ctx.fillStyle=gdC;ctx.fillText('群遅延 ['+gdU+']',0,0);ctx.restore();
+
+  // === X AXIS ===
+  ctx.fillStyle=labelClr();ctx.font='10px "Space Mono",monospace';ctx.textAlign='center';
+  logTicks(fMin,fMax).forEach(f=>{
+    const x=xF(f);if(x<MX+14||x>R1-14)return;
+    ctx.fillText(fmtFreq(f),x,MT+ph+18);
+  });
+
+  // Border
+  ctx.strokeStyle=isDark()?'rgba(255,255,255,.1)':'rgba(0,0,0,.1)';
+  ctx.lineWidth=1;ctx.strokeRect(MX,MT,pw,ph);
+
+  // Store scale info for crosshair
+  document.getElementById('cvMain')._sc={MX,R1,MT,ph,pw,fMin,fMax,dbMin,dbMax,phMin,phMax,gdPadMin,gdPadMax,gdSc,gdU,yDb,yPh,yGD,xF};
+}
+
+/* ═══ DRAW FIR HILBERT (normalized freq, linear x-axis) ═══ */
+function drawFIRHilbert(firData){
+  const cv=document.getElementById('cvMain');
+  const{ctx,w,h}=getCtx(cv);
+  ctx.clearRect(0,0,w,h);ctx.fillStyle=bgColor();ctx.fillRect(0,0,w,h);
+  if(!firData)return;
+  const{resp,taps}=firData;
+  const MX=65,MR=115,MT=22,MB=36,pw=w-MX-MR,ph=h-MT-MB;
+  const R1=MX+pw,R2=w-54;
+  const dbMin=-100,dbMax=10;
+  const yDb=db=>MT+(1-(db-dbMin)/(dbMax-dbMin))*ph;
+  const phMin=-360,phMax=90;
+  const yPh=p=>MT+(1-(p-phMin)/(phMax-phMin))*ph;
+  const vGD=resp.map(p=>p.gd).filter(v=>isFinite(v)&&Math.abs(v)<1e6);
+  const gdMin=Math.min(...vGD,0),gdMax=Math.max(...vGD,taps);
+  const gdR=(gdMax-gdMin)||taps;
+  const gdPadMin=gdMin-gdR*.05,gdPadMax=gdMax+gdR*.15;
+  const yGD=gd=>MT+(1-(gd-gdPadMin)/(gdPadMax-gdPadMin))*ph;
+  const xFn=fn=>MX+fn/0.5*pw; // fn=0..0.5
+
+  // Grid
+  ctx.strokeStyle=gridClr();ctx.lineWidth=1;
+  for(let db=dbMin;db<=dbMax;db+=20){const y=yDb(db);if(y>=MT&&y<=MT+ph){ctx.beginPath();ctx.moveTo(MX,y);ctx.lineTo(R1,y);ctx.stroke();}}
+  for(let fn=0;fn<=0.5;fn+=0.1){const x=xFn(fn);ctx.beginPath();ctx.moveTo(x,MT);ctx.lineTo(x,MT+ph);ctx.stroke();}
+  // 0dB / -3dB refs
+  const y0=yDb(0);if(y0>=MT&&y0<=MT+ph){ctx.strokeStyle=isDark()?'rgba(255,255,255,.2)':'rgba(0,0,0,.2)';ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(MX,y0);ctx.lineTo(R1,y0);ctx.stroke();ctx.setLineDash([]);}
+  const y3=yDb(-3);if(y3>=MT&&y3<=MT+ph){ctx.strokeStyle=isDark()?'rgba(248,113,113,.6)':'rgba(220,38,38,.6)';ctx.setLineDash([5,5]);ctx.beginPath();ctx.moveTo(MX,y3);ctx.lineTo(R1,y3);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=isDark()?'#f87171':'#dc2626';ctx.font='9px "Space Mono",monospace';ctx.textAlign='left';ctx.fillText('−3dB',MX+4,y3-4);}
+  // Curves
+  const ac=accentClr(),oc=isDark()?'#ff6b35':'#ea580c',pc=isDark()?'#a78bfa':'#7c3aed';
+  [[r=>r.mag_db,yDb,ac,2.5],[r=>r.phase,yPh,oc,2],[r=>r.gd,yGD,pc,2]].forEach(([fn,yFn,clr,lw])=>{
+    ctx.strokeStyle=clr;ctx.lineWidth=lw;ctx.beginPath();let first=true;
+    for(const pt of resp){if(!isFinite(fn(pt)))continue;const x=xFn(pt.fn),y=Math.max(MT-2,Math.min(MT+ph+2,yFn(fn(pt))));first?(ctx.moveTo(x,y),first=false):ctx.lineTo(x,y);}
+    ctx.stroke();
+  });
+  // Left axis dB
+  ctx.fillStyle=labelClr();ctx.font='11px "Space Mono",monospace';ctx.textAlign='right';
+  for(let db=dbMin;db<=dbMax;db+=20){const y=yDb(db);if(y<MT-8||y>MT+ph+8)continue;ctx.fillText(db+'dB',MX-5,y+4);ctx.strokeStyle=labelClr();ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(MX-4,y);ctx.lineTo(MX,y);ctx.stroke();}
+  ctx.save();ctx.translate(13,MT+ph/2);ctx.rotate(-Math.PI/2);ctx.textAlign='center';ctx.font='10px "Space Mono",monospace';ctx.fillStyle=ac;ctx.fillText('振幅 [dB]',0,0);ctx.restore();
+  // Right axis phase
+  ctx.fillStyle=oc;ctx.font='10px "Space Mono",monospace';ctx.textAlign='left';
+  for(let p=-360;p<=90;p+=90){const y=yPh(p);if(y<MT-8||y>MT+ph+8)continue;ctx.strokeStyle=oc;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(R1,y);ctx.lineTo(R1+4,y);ctx.stroke();ctx.fillText(p+'°',R1+7,y+4);}
+  ctx.save();ctx.translate(R1+35,MT+ph/2);ctx.rotate(Math.PI/2);ctx.textAlign='center';ctx.font='10px "Space Mono",monospace';ctx.fillStyle=oc;ctx.fillText('位相 [°]',0,0);ctx.restore();
+  // Right axis GD (samples)
+  ctx.fillStyle=pc;ctx.font='10px "Space Mono",monospace';ctx.textAlign='left';
+  for(let i=0;i<=4;i++){const gd=gdPadMin+(i/4)*(gdPadMax-gdPadMin);const y=MT+((4-i)/4)*ph;if(y<MT-8||y>MT+ph+8)continue;ctx.strokeStyle=pc;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(R2,y);ctx.lineTo(R2+4,y);ctx.stroke();ctx.fillText(gd.toFixed(0),R2+7,y+4);}
+  ctx.save();ctx.translate(w-8,MT+ph/2);ctx.rotate(Math.PI/2);ctx.textAlign='center';ctx.font='10px "Space Mono",monospace';ctx.fillStyle=pc;ctx.fillText('群遅延 [samples]',0,0);ctx.restore();
+  // X axis
+  ctx.fillStyle=labelClr();ctx.font='10px "Space Mono",monospace';ctx.textAlign='center';
+  for(let fn=0;fn<=0.5;fn+=0.1){const x=xFn(fn);if(x<MX+5||x>R1-5)continue;ctx.fillText(fn.toFixed(1)+'·Nyq',x,MT+ph+18);}
+  // Title
+  ctx.fillStyle=isDark()?'#a78bfa':'#7c3aed';ctx.font='bold 10px "Space Mono",monospace';ctx.textAlign='left';
+  ctx.fillText('FIR Hilbert: '+taps+' taps (Hamming窓, Type III)',MX+4,MT+14);
+  ctx.strokeStyle=isDark()?'rgba(255,255,255,.1)':'rgba(0,0,0,.1)';ctx.lineWidth=1;ctx.strokeRect(MX,MT,pw,ph);
+}
+
+/* ═══ DRAW IMPULSE RESPONSE ═══ */
+function drawImpulse(data){
+  const cv=document.getElementById('cvImpulse');if(!cv)return;
+  const{ctx,w,h}=getCtx(cv);
+  ctx.clearRect(0,0,w,h);ctx.fillStyle=bgColor();ctx.fillRect(0,0,w,h);
+  const MX=65,MR=20,MT=18,MB=30,pw=w-MX-MR,ph=h-MT-MB;
+  if(!data){
+    ctx.fillStyle=labelClr();ctx.font='12px "Noto Sans JP",sans-serif';ctx.textAlign='center';
+    ctx.fillText('Hilbert 変換はインパルス応答なし（非因果）',w/2,h/2);return;
+  }
+  const{h:hArr,dt,T,NFFT}=data;
+  const nShow=Math.ceil(NFFT*0.88);
+  const vals=Array.from(hArr).slice(0,nShow);
+  const maxH=Math.max(...vals.map(Math.abs))||1;
+  const xT=t=>MX+(t/T)*pw;
+  const yCtr=MT+ph/2;
+  const yH=v=>yCtr-v/maxH*(ph*0.46);
+  // Zero line
+  ctx.strokeStyle=gridClr();ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(MX,yCtr);ctx.lineTo(MX+pw,yCtr);ctx.stroke();
+  // 1/fc marker
+  const xFc=xT(1/state.fc);
+  if(xFc>MX&&xFc<MX+pw){ctx.strokeStyle=isDark()?'rgba(251,191,36,.4)':'rgba(217,119,6,.4)';ctx.lineWidth=1;ctx.setLineDash([3,4]);ctx.beginPath();ctx.moveTo(xFc,MT);ctx.lineTo(xFc,MT+ph);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=isDark()?'#fbbf24':'#d97706';ctx.font='9px "Space Mono",monospace';ctx.textAlign='left';ctx.fillText('1/fc',xFc+3,MT+12);}
+  // Impulse curve
+  ctx.strokeStyle=accentClr();ctx.lineWidth=2;ctx.beginPath();let first=true;
+  for(let n=0;n<nShow;n++){const t=n*dt;if(t>T)break;const x=xT(t),y=Math.max(MT,Math.min(MT+ph,yH(hArr[n])));first?(ctx.moveTo(x,y),first=false):ctx.lineTo(x,y);}
+  ctx.stroke();
+  // Y axis labels
+  ctx.fillStyle=labelClr();ctx.font='10px "Space Mono",monospace';ctx.textAlign='right';
+  [1,0,-1].forEach(s=>{const y=yH(s*maxH*0.9);if(y<MT||y>MT+ph)return;ctx.fillText((s>0?'+':s<0?'−':'')+(s!==0?'1.0':'0')+'',MX-5,y+4);ctx.strokeStyle=labelClr();ctx.lineWidth=.5;ctx.beginPath();ctx.moveTo(MX-4,y);ctx.lineTo(MX,y);ctx.stroke();});
+  ctx.save();ctx.translate(12,MT+ph/2);ctx.rotate(-Math.PI/2);ctx.textAlign='center';ctx.font='10px "Space Mono",monospace';ctx.fillStyle=accentClr();ctx.fillText('h(t) 正規化',0,0);ctx.restore();
+  // X axis
+  ctx.fillStyle=labelClr();ctx.font='10px "Space Mono",monospace';ctx.textAlign='center';
+  [0,.25,.5,.75,1].forEach(tf=>{const t=tf*T,x=xT(t);if(x<MX+5||x>MX+pw-5)return;ctx.fillText(fmtTime(t),x,MT+ph+18);ctx.strokeStyle=labelClr();ctx.lineWidth=.5;ctx.beginPath();ctx.moveTo(x,MT+ph);ctx.lineTo(x,MT+ph+4);ctx.stroke();});
+  ctx.strokeStyle=isDark()?'rgba(255,255,255,.1)':'rgba(0,0,0,.1)';ctx.lineWidth=1;ctx.strokeRect(MX,MT,pw,ph);
+}
+
+/* ═══ CROSSHAIR + TOOLTIP ═══ */
+function drawCrosshair(mx,my){
+  const ov=document.getElementById('cvMainOv');
+  const{ctx,w,h}=getCtx(ov);
+  ctx.clearRect(0,0,w,h);
+  const sc=document.getElementById('cvMain')._sc;
+  if(!sc||!_resp||mx<sc.MX||mx>sc.R1){hideTip();return;}
+
+  // Find nearest point
+  const logFc=Math.log10(sc.fMin)+(mx-sc.MX)/sc.pw*Math.log10(sc.fMax/sc.fMin);
+  const fCur=Math.pow(10,logFc);
+  let near=_resp[0],minD=Infinity;
+  for(const pt of _resp){const d=Math.abs(Math.log10(pt.f/fCur));if(d<minD){minD=d;near=pt;}}
+
+  const xL=sc.xF(near.f);
+  ctx.strokeStyle='rgba(148,163,184,.55)';ctx.lineWidth=1;ctx.setLineDash([5,3]);
+  ctx.beginPath();ctx.moveTo(xL,sc.MT);ctx.lineTo(xL,sc.MT+sc.ph);ctx.stroke();ctx.setLineDash([]);
+  // Dots on curves
+  const dotY=[sc.yDb(near.mag_db),sc.yPh(near.phase),sc.yGD(near.gd)];
+  const dotC=[accentClr(),isDark()?'#ff6b35':'#ea580c',isDark()?'#a78bfa':'#7c3aed'];
+  dotY.forEach((y,i)=>{
+    if(!isFinite(y)||y<sc.MT-4||y>sc.MT+sc.ph+4)return;
+    ctx.beginPath();ctx.arc(xL,y,4,0,2*Math.PI);
+    ctx.fillStyle=dotC[i];ctx.fill();
+    ctx.strokeStyle=isDark()?'rgba(255,255,255,.3)':'rgba(0,0,0,.2)';ctx.lineWidth=1;ctx.stroke();
+  });
+
+  showTip(near,xL,my);
+}
+function showTip(pt,xL,my){
+  const tip=document.getElementById('cvTooltip');
+  const cv=document.getElementById('cvMain');
+  const rect=cv.getBoundingClientRect();
+  const ac=accentClr(),oc=isDark()?'#ff6b35':'#ea580c',pc=isDark()?'#a78bfa':'#7c3aed';
+  const{scale:sc,unit:u}=timeUnit(Math.abs(pt.gd)||1e-9);
+  tip.innerHTML=
+    `<div style="color:var(--text-dim);font-size:9px;margin-bottom:3px;letter-spacing:1px">f = ${fmtFreq(pt.f)}</div>`+
+    `<div style="color:${ac}">|H| = ${isFinite(pt.mag_db)?pt.mag_db.toFixed(2):'—'} dB</div>`+
+    `<div style="color:${oc}">∠H = ${isFinite(pt.phase)?pt.phase.toFixed(1):'—'}°</div>`+
+    `<div style="color:${pc}">τ = ${isFinite(pt.gd)?fmtTime(pt.gd):'—'}</div>`;
+  const tipW=170,tipH=85;
+  let tx=rect.left+xL+14,ty=rect.top+my-20;
+  if(tx+tipW>window.innerWidth-8)tx=rect.left+xL-tipW-10;
+  if(ty<4)ty=4;if(ty+tipH>window.innerHeight-8)ty=window.innerHeight-tipH-8;
+  tip.style.left=tx+'px';tip.style.top=ty+'px';tip.style.display='block';
+}
+function hideTip(){document.getElementById('cvTooltip').style.display='none';}
+
+/* Wire up mouse events on overlay */
+(function(){
+  const ov=document.getElementById('cvMainOv');
+  ov.addEventListener('mousemove',e=>{drawCrosshair(e.offsetX,e.offsetY);});
+  ov.addEventListener('mouseleave',()=>{
+    const cv=document.getElementById('cvMainOv');const{ctx,w,h}=getCtx(cv);ctx.clearRect(0,0,w,h);hideTip();
+  });
+  // pointer-events on overlay must be 'auto'
+  ov.style.pointerEvents='auto';
+})();
+
+/* ═══ TF SIDEBAR ═══ */
+function expandRealPoly(roots){
+  // Returns real polynomial coeffs [c0,c1,...,cN] from conjugate-paired roots
+  let c=[1];
+  const used=new Array(roots.length).fill(false);
+  for(let i=0;i<roots.length;i++){
+    if(used[i])continue;
+    const r=roots[i];
+    if(Math.abs(r.i)<1e-5){
+      // Real root: multiply by (s - r.r)
+      const n=new Array(c.length+1).fill(0);
+      for(let k=0;k<c.length;k++){n[k+1]+=c[k];n[k]-=r.r*c[k];}
+      c=n;used[i]=true;
+    } else {
+      // Conjugate pair: multiply by (s²-2r.r*s+(r.r²+r.i²))
+      const a=-2*r.r,b=r.r*r.r+r.i*r.i;
+      const n=new Array(c.length+2).fill(0);
+      for(let k=0;k<c.length;k++){n[k+2]+=c[k];n[k+1]+=a*c[k];n[k]+=b*c[k];}
+      c=n;used[i]=true;
+      for(let j=i+1;j<roots.length;j++){
+        if(!used[j]&&Math.abs(roots[j].r-r.r)<1e-5&&Math.abs(roots[j].i+r.i)<1e-5){used[j]=true;break;}
+      }
+    }
+  }
+  return c;
+}
+function polyStr(c){
+  // c[0]=const, c[N]=leading. Returns human-readable string.
+  const N=c.length-1;const terms=[];
+  for(let k=N;k>=0;k--){
+    const v=c[k];if(Math.abs(v)<1e-8)continue;
+    const vs=v.toPrecision(3);
+    if(k===0)terms.push(vs);
+    else if(k===1)terms.push(vs+'s');
+    else terms.push(vs+'s^'+k);
+  }
+  return terms.join(' + ').replace(/\+ -/g,'- ')||'1';
+}
+function updateTFSidebar(proto){
+  const el=document.getElementById('tfFormula');
+  if(state.filterType==='hilbert'){
+    el.innerHTML=
+      `<span class="tf-line"><span class="tf-hl">H(jω) = −j · sgn(ω)</span></span>`+
+      `<span class="tf-line">|H| = 1.000 (0 dB 平坦)</span>`+
+      `<span class="tf-line">∠H = −90°（全周波数）</span>`+
+      `<span class="tf-line">群遅延 τ = 0</span>`+
+      `<span style="font-size:9.5px;color:var(--text-dim);line-height:1.6;display:block;margin-top:5px">理想ヒルベルト変換は因果的アナログ回路では実現不可（FIR / 近似 IIR で実装）</span>`;
+    return;
+  }
+  if(!proto){el.textContent='—';return;}
+  const{poles,zeros,gain}=proto;
+  const N=state.N;
+  const dN={butterworth:'Butterworth',chebyshev1:'Chebyshev I',chebyshev2:'Chebyshev II',bessel:'Bessel'};
+  const tM={LPF:'s → s/ωc',HPF:'s → ωc/s',BPF:'s →(s²+ω₀²)/(sBW)',BSF:'s → sBW/(s²+ω₀²)'};
+  const lines=[
+    `<span class="tf-line"><span class="tf-hl2">${dN[state.design]}</span> N=${N}</span>`,
+    `<span class="tf-line">K = ${gain.toPrecision(4)}</span>`,
+  ];
+  if(N<=4){
+    const numC=expandRealPoly(zeros).map(v=>v*gain);
+    const denC=expandRealPoly(poles);
+    lines.push(`<span class="tf-line">N(s): ${polyStr(numC)}</span>`);
+    lines.push(`<span class="tf-line">D(s): ${polyStr(denC)}</span>`);
+  } else {
+    const ps=poles.filter(p=>p.i>=0).map(p=>{
+      if(Math.abs(p.i)<1e-5)return `(s+${(-p.r).toPrecision(3)})`;
+      return `(s²+${(-2*p.r).toPrecision(3)}s+${(p.r*p.r+p.i*p.i).toPrecision(3)})`;
+    }).join('');
+    lines.push(`<span class="tf-line" style="font-size:9px;word-break:break-all">D=${ps}</span>`);
+  }
+  if(state.filterType!=='LPF')
+    lines.push(`<span class="tf-line" style="font-size:9.5px">変換: ${tM[state.filterType]||''}</span>`);
+  lines.push(`<span class="tf-line" style="font-size:9.5px">ωc=2π·${fmtFreq(state.fc)}</span>`);
+  el.innerHTML=lines.join('');
+}
+
+/* ═══ RESULT CARDS ═══ */
+function updateResults(proto,resp){
+  if(!proto||!resp)return;
+  const{poles,zeros}=proto;
+  const N=state.N;
+
+  // -3dB from response
+  const bpsbf=state.filterType==='BPF'||state.filterType==='BSF';
+  let f3=state.fc;
+  if(state.filterType==='hilbert'){f3=null;}
+  else{
+    // Find crossing
+    for(let i=1;i<resp.length;i++){
+      if(resp[i-1].mag_db>=-3&&resp[i].mag_db<-3){f3=(resp[i-1].f+resp[i].f)/2;break;}
+    }
+  }
+  document.getElementById('rcFc3db').textContent=f3!=null?fmtFreq(f3):'∞（平坦）';
+
+  document.getElementById('rcRolloff').textContent=state.filterType==='hilbert'?'0':(-20*N).toFixed(0);
+  const effN=bpsbf?N*2:N;
+  document.getElementById('rcOrder').textContent=effN;
+  document.getElementById('rcOrderUnit').textContent=bpsbf?'次（2N）':'次';
+
+  // GD at fc
+  const fcPts=resp.filter(p=>Math.abs(p.f-state.fc)/state.fc<0.05);
+  const gdFc=fcPts.length?fcPts[Math.floor(fcPts.length/2)].gd:0;
+  document.getElementById('rcGD').textContent=isFinite(gdFc)?fmtTime(gdFc):'—';
+  document.getElementById('rcGDUnit').textContent='';
+
+  const pCount=state.filterType==='hilbert'?0:(bpsbf?N*2:N);
+  document.getElementById('rcPoles').textContent=pCount;
+
+  // IIR / FIR digital order
+  const isBPBSF=state.filterType==='BPF'||state.filterType==='BSF';
+  const iirOrder=isBPBSF?N*2:N;
+  document.getElementById('rcIIR').textContent=state.filterType==='hilbert'?'N/A':iirOrder;
+  // Kaiser FIR estimate: fs_dig=10*fc, transition band Δf
+  const As=Math.max(21,20*N);
+  const df_norm=isBPBSF?(1/(2*state.Q))/(5):0.5/(5); // Δf/(fs_dig/2)
+  const nFIR=Math.ceil((As-7.95)/(14.36*df_norm));
+  document.getElementById('rcFIR').textContent=state.filterType==='hilbert'?'N/A':(nFIR%2===0?nFIR+1:nFIR);
+  document.getElementById('rcFIRUnit').textContent=isBPBSF?`タップ（Q=${state.Q}）`:'タップ（Kaiser推定, fs=10fc）';
+}
+
+/* FIR Hilbert results */
+function updateResultsFIRHilbert(firData){
+  const taps=firData?firData.taps:0;
+  document.getElementById('rcFc3db').textContent='全帯域（近似）';
+  document.getElementById('rcRolloff').textContent='0';
+  document.getElementById('rcOrder').textContent=taps;document.getElementById('rcOrderUnit').textContent='タップ';
+  document.getElementById('rcGD').textContent=(taps>0?((taps-1)/2).toFixed(0):'—');document.getElementById('rcGDUnit').textContent='サンプル';
+  document.getElementById('rcPoles').textContent='0';
+  document.getElementById('rcIIR').textContent='N/A';
+  document.getElementById('rcFIR').textContent=taps;document.getElementById('rcFIRUnit').textContent='タップ（Type III）';
+}
+
+/* ═══ MODAL ═══ */
+const MODAL_CONTENT={
+  fc3db:{title:'−3dB カットオフ周波数',body:()=>{
+    const fc=state.fc;
+    return `<p class="modal-desc">|H(jω)|² = 0.5 となる周波数です（電力 1/2 = 振幅 1/√2）。<br>設定値: fc = ${fmtFreq(fc)}</p>
+    <div class="modal-formula-box">Butterworth: ω_3dB = ωc（定義）<br>Chebyshev I: Ω_3dB = cosh(acosh(1/ε)/N)<br>Chebyshev II / Bessel: 数値探索</div>
+    <div class="calc-row"><div class="calc-key">fc 設定値</div><div class="calc-val accent">${fmtFreq(fc)}</div></div>
+    <div class="calc-row"><div class="calc-key">設計手法</div><div class="calc-val">${state.design}</div></div>
+    <div class="calc-row"><div class="calc-key">次数 N</div><div class="calc-val">${state.N}</div></div>`;
+  }},
+  rolloff:{title:'ロールオフ勾配',body:()=>`
+    <p class="modal-desc">阻止域では N 次フィルターは 1 decade あたり <strong>−20N dB</strong> の傾きで減衰します。</p>
+    <div class="modal-formula-box">rolloff = −20 × N = ${-20*state.N} dB/decade</div>
+    <div class="calc-row"><div class="calc-key">N</div><div class="calc-val accent">${state.N}</div></div>
+    <div class="calc-row"><div class="calc-key">勾配</div><div class="calc-val gold">${-20*state.N} dB/dec</div></div>`
+  },
+  gd:{title:'群遅延',body:()=>`
+    <p class="modal-desc"><strong>τ(ω) = −dφ/dω</strong> は各周波数成分の遅延時間。<br>Bessel フィルターは通過域で群遅延が一定になり、パルス波形の歪みを最小化します。</p>
+    <div class="modal-formula-box">τ(ω) ≈ −(φ(ω+Δω) − φ(ω−Δω)) / (2Δω)<br>fc = ${fmtFreq(state.fc)}</div>`
+  },
+  tf:{title:'伝達関数 H(s) — 詳細',body:()=>{
+    if(!_proto)return '<p>データなし</p>';
+    const{poles,zeros,gain}=_proto;
+    const pStr=poles.map((p,i)=>`p${i+1} = ${p.r.toPrecision(5)} + j·${p.i.toPrecision(5)}`).join('<br>');
+    const zStr=zeros.length?zeros.map((z,i)=>`z${i+1} = j·${z.i.toPrecision(5)}`).join('<br>'):'なし（全極フィルター）';
+    return `<p class="modal-desc">プロトタイプ LPF（ωc = 1 rad/s 正規化）の極・零点一覧。実回路は fc でスケーリング。</p>
+    <div class="modal-formula-box">K = ${gain.toPrecision(5)}<br>H(s) = K · ∏(s−z_k) / ∏(s−p_k)</div>
+    <p style="font-family:Space Mono,monospace;font-size:11px;margin-bottom:6px;color:var(--accent2)">▼ 極</p>
+    <div class="modal-formula-box">${pStr}</div>
+    <p style="font-family:Space Mono,monospace;font-size:11px;margin-bottom:6px;color:var(--accent2)">▼ 零点</p>
+    <div class="modal-formula-box">${zStr}</div>`;
+  }},
+  iir:{title:'デジタル IIR 次数（双一次変換）',body:()=>{
+    const isBP=state.filterType==='BPF'||state.filterType==='BSF';
+    const iirN=isBP?state.N*2:state.N;
+    return `<p class="modal-desc">双一次変換（Bilinear Transform）によってアナログフィルターをデジタル IIR フィルターへ変換すると、フィルター次数はアナログと同じになります。BPF/BSF は周波数変換により 2N 次になります。</p>
+    <div class="modal-formula-box">s = (2/T)·(z−1)/(z+1)<br>アナログ次数 N=${state.N} → デジタル IIR 次数 = ${iirN}</div>
+    <div class="calc-row"><div class="calc-key">フィルタータイプ</div><div class="calc-val">${state.filterType}</div></div>
+    <div class="calc-row"><div class="calc-key">アナログ次数</div><div class="calc-val accent">${state.N}</div></div>
+    <div class="calc-row"><div class="calc-key">IIR 次数</div><div class="calc-val green">${iirN}</div></div>
+    <div class="calc-row"><div class="calc-key">注意</div><div class="calc-val">周波数プリウォーピング必要（fc = (2/T)·tan(π·fc/fs)）</div></div>`;
+  }},
+  fir:{title:'FIR 推定次数（Kaiser 法）',body:()=>{
+    const isBP=state.filterType==='BPF'||state.filterType==='BSF';
+    const As=Math.max(21,20*state.N);
+    const df_norm=isBP?(1/(2*state.Q))/5:0.5/5;
+    const nFIR=Math.ceil((As-7.95)/(14.36*df_norm));
+    const taps=nFIR%2===0?nFIR+1:nFIR;
+    return `<p class="modal-desc">Kaiser 公式によるFIRフィルター次数の推定です。アナログフィルターと同等の減衰特性を持つ FIR フィルターを設計する際の目安になります。</p>
+    <div class="modal-formula-box">N_FIR ≈ (As − 7.95) / (14.36 × Δf/f_Nyquist)<br>設計前提: デジタル fs = 10×fc</div>
+    <div class="calc-row"><div class="calc-key">阻止域減衰 As</div><div class="calc-val accent">${As} dB</div></div>
+    <div class="calc-row"><div class="calc-key">遷移帯域 Δf</div><div class="calc-val">${isBP?'fc/(2Q) = '+fmtFreq(state.fc/(2*state.Q)):'fc/2 = '+fmtFreq(state.fc/2)}</div></div>
+    <div class="calc-row"><div class="calc-key">正規化遷移帯域</div><div class="calc-val">${df_norm.toFixed(4)}</div></div>
+    <div class="calc-row"><div class="calc-key">推定 FIR タップ数</div><div class="calc-val gold">${taps} タップ</div></div>
+    <p class="modal-desc" style="margin-top:10px;font-size:11px">IIR (${isBP?state.N*2:state.N}次) に対し FIR は ${Math.round(taps/(isBP?state.N*2:state.N))}倍のタップが必要。IIR は再帰演算なので少ない係数で急峻な特性を実現できます。</p>`;
+  }}
+};
+function openModal(key){
+  const c=MODAL_CONTENT[key];if(!c)return;
+  document.getElementById('modalTitle').textContent=c.title;
+  document.getElementById('modalBody').innerHTML=typeof c.body==='function'?c.body():c.body;
+  document.getElementById('infoModal').classList.add('open');
+}
+function closeModal(){document.getElementById('infoModal').classList.remove('open');}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+
+/* ═══ DRAW ═══ */
+function draw(){
+  const isFIRH=state.filterType==='hilbert_fir';
+  const isHilbert=state.filterType==='hilbert';
+  if(isFIRH){
+    _proto={poles:[],zeros:[],gain:1};_resp=null;
+    const firData=computeFIRHilbert();
+    drawFIRHilbert(firData);
+    drawImpulse(null);
+    updateTFSidebar(null);
+    updateResultsFIRHilbert(firData);
+    return;
+  }
+  const proto=isHilbert?{poles:[],zeros:[],gain:1}:getPrototype();
+  _proto=proto;
+  _resp=computeResponse(proto);
+  drawAll(_resp);
+  const irData=computeImpulse(proto);
+  drawImpulse(irData);
+  updateTFSidebar(isHilbert?null:proto);
+  updateResults(proto,_resp);
+}
+
+/* ═══ UI SYNC ═══ */
+function syncUI(){
+  document.getElementById('slFc').value=Math.log10(Math.max(1,state.fc));
+  document.getElementById('valFc').textContent=fmtFreq(state.fc);
+  document.getElementById('slN').value=state.N;document.getElementById('valN').textContent=state.N;
+  document.getElementById('slQ').value=state.Q;document.getElementById('valQ').textContent=state.Q.toFixed(1);
+  document.getElementById('slRipple').value=state.ripple;document.getElementById('valRipple').textContent=state.ripple.toFixed(1);
+  document.getElementById('slStop').value=state.stopAtten;document.getElementById('valStop').textContent=state.stopAtten.toFixed(0);
+  document.getElementById('selType').value=state.filterType;
+  document.getElementById('selDesign').value=state.design;
+  const isHilbert=state.filterType==='hilbert';
+  const isFIRH=state.filterType==='hilbert_fir';
+  const isBPBSF=state.filterType==='BPF'||state.filterType==='BSF';
+  document.getElementById('groupN').classList.toggle('hidden',isHilbert);
+  document.getElementById('groupDesign').classList.toggle('hidden',isHilbert||isFIRH);
+  document.getElementById('groupQ').classList.toggle('hidden',!isBPBSF||isHilbert||isFIRH);
+  document.getElementById('groupRipple').classList.toggle('hidden',state.design!=='chebyshev1'||isHilbert||isFIRH);
+  document.getElementById('groupStop').classList.toggle('hidden',state.design!=='chebyshev2'||isHilbert||isFIRH);
+  // For FIR Hilbert: N slider = tap count control, hide fc
+  document.getElementById('slFc').closest('.input-group').classList.toggle('hidden',isFIRH);
+  if(isFIRH){
+    document.getElementById('valN').textContent=(state.N*10-3)+' taps';
+    document.getElementById('groupN').querySelector('label').textContent='タップ数（7〜97）';
+    document.getElementById('slN').style.maxWidth='48%';
+  } else {
+    document.getElementById('valN').textContent=state.N;
+    document.getElementById('groupN').querySelector('label').textContent='フィルター次数 N';
+    document.getElementById('slN').style.maxWidth='';
+  }
+  document.getElementById('lblFc').innerHTML=isBPBSF?'中心周波数 f<sub>0</sub>':'カットオフ周波数 f<sub>c</sub>';
+}
+function onSliderFc(v){state.fc=Math.pow(10,v);document.getElementById('valFc').textContent=fmtFreq(state.fc);draw();}
+function onSlider(key,v){
+  state[key]=v;
+  const ids={N:'valN',Q:'valQ',ripple:'valRipple',stopAtten:'valStop'};
+  const fms={N:x=>x,Q:x=>x.toFixed(1),ripple:x=>x.toFixed(1),stopAtten:x=>x.toFixed(0)};
+  if(ids[key])document.getElementById(ids[key]).textContent=fms[key](v);
+  draw();
+}
+function onSelectType(){state.filterType=document.getElementById('selType').value;syncUI();draw();}
+function onSelectDesign(){state.design=document.getElementById('selDesign').value;syncUI();draw();}
+function toggleTheme(){
+  const html=document.documentElement;
+  const next=html.getAttribute('data-theme')==='light'?'dark':'light';
+  html.setAttribute('data-theme',next);
+  document.getElementById('themeBtn').textContent=next==='dark'?'LIGHT':'DARK';
+  draw();
+}
+
+/* ═══ INIT ═══ */
+let resizeTimer;
+syncUI();
+if(window.ResizeObserver){
+  const ro=new ResizeObserver(()=>{ro.disconnect();setTimeout(()=>{initCanvases();draw();},0);});
+  ro.observe(document.getElementById('cvMain'));
+} else {
+  window.addEventListener('load',()=>{initCanvases();draw();});
+}
+window.addEventListener('resize',()=>{
+  clearTimeout(resizeTimer);
+  resizeTimer=setTimeout(()=>{initCanvases();draw();},80);
+});
+</script>
+</body>
+</html>
