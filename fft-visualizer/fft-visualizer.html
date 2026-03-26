@@ -176,9 +176,15 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
       <div class="panel-label" id="wt">巻きつけ平面</div>
       <canvas id="cvw"></canvas>
     </div>
-    <div class="panel">
-      <div class="panel-label">周波数スペクトル  0 – 13 Hz</div>
-      <canvas id="cvs"></canvas>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="panel">
+        <div class="panel-label">周波数スペクトル  0 – 13 Hz</div>
+        <canvas id="cvs"></canvas>
+      </div>
+      <div class="panel">
+        <div class="panel-label" id="plt">複素平面トレース  Re(X) – Im(X)</div>
+        <canvas id="cvp" style="width:100%;height:140px;display:block"></canvas>
+      </div>
     </div>
   </div>
 </div>
@@ -245,7 +251,7 @@ function cg(P){let rx=0,ry=0;P.forEach(p=>{rx+=p[0];ry+=p[1];});const n=P.length
 function drawW(f,n){
   const cv=document.getElementById('cvw'),d=dpr(),SZ=cv.offsetWidth;
   cv.width=SZ*d;cv.height=SZ*d;
-  const ctx=cv.getContext('2d'),cx=SZ/2,cy=SZ/2,sc=SZ*.37;
+  const ctx=cv.getContext('2d'),cx=SZ/2,cy=SZ/2,sc=SZ*.44;
   ctx.scale(d,d);ctx.clearRect(0,0,SZ,SZ);
   const GR=tc('rgba(255,255,255,.07)','rgba(0,0,0,.09)');
   const GL=tc('rgba(255,255,255,.22)','rgba(0,0,0,.32)');
@@ -317,12 +323,54 @@ function drawSp(){
   if(sp.length){const p=sp[sp.length-1],x=p.f/FM*W,y=yb-p.m/mm*(yb-10);ctx.beginPath();ctx.fillStyle='#3a7ef0';ctx.arc(x,y,4,0,Math.PI*2);ctx.fill();}
 }
 
+function drawP(){
+  const cv=document.getElementById('cvp'),d=dpr(),W=cv.offsetWidth,H=140;
+  cv.width=W*d;cv.height=H*d;
+  const ctx=cv.getContext('2d'),cx=W/2,cy=H/2;
+  ctx.scale(d,d);ctx.clearRect(0,0,W,H);
+  const GL=tc('rgba(255,255,255,.22)','rgba(0,0,0,.32)');
+  const GR=tc('rgba(255,255,255,.07)','rgba(0,0,0,.09)');
+  // axes
+  ctx.strokeStyle=GR;ctx.lineWidth=.5;
+  ctx.beginPath();ctx.moveTo(cx,4);ctx.lineTo(cx,H-4);ctx.moveTo(4,cy);ctx.lineTo(W-4,cy);ctx.stroke();
+  ctx.fillStyle=GL;ctx.font='8px monospace';
+  ctx.textAlign='right';ctx.fillText('Re',W-3,cy-3);ctx.textAlign='left';ctx.fillText('Im',cx+3,9);
+  if(!sp.length)return;
+  // scale: fit all points
+  const mm=Math.max(...sp.map(p=>Math.sqrt(p.rx*p.rx+p.ry*p.ry)),.001);
+  const sc=Math.min(cx,cy)*.85/mm;
+  // path colored by frequency progress
+  for(let i=1;i<sp.length;i++){
+    const t=i/(sp.length-1||1);
+    const al=.25+t*.65;
+    ctx.beginPath();
+    ctx.strokeStyle=`hsla(${210+t*60},75%,${isDark()?62:42}%,${al})`;
+    ctx.lineWidth=1.6;
+    ctx.moveTo(cx+sp[i-1].rx*sc,cy-sp[i-1].ry*sc);
+    ctx.lineTo(cx+sp[i].rx*sc,cy-sp[i].ry*sc);
+    ctx.stroke();
+  }
+  // current dot
+  const lp=sp[sp.length-1];
+  ctx.beginPath();ctx.fillStyle='#3a7ef0';
+  ctx.arc(cx+lp.rx*sc,cy-lp.ry*sc,4.5,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.strokeStyle='rgba(58,126,240,.3)';ctx.lineWidth=2.5;
+  ctx.arc(cx+lp.rx*sc,cy-lp.ry*sc,7.5,0,Math.PI*2);ctx.stroke();
+  // origin
+  ctx.beginPath();ctx.fillStyle=tc('rgba(0,0,0,.2)','rgba(0,0,0,.2)');
+  ctx.arc(cx,cy,2.5,0,Math.PI*2);ctx.fill();
+  // label
+  ctx.font='9px monospace';ctx.fillStyle=GL;
+  ctx.fillText(`fw=${fw.toFixed(2)}Hz`,4,H-4);
+  ctx.textAlign='right';ctx.fillStyle='rgba(58,126,240,.8)';
+  ctx.fillText(`|X|=${lp.m.toFixed(3)}`,W-4,H-4);ctx.textAlign='left';
+}
 function toggleTheme(){
   document.body.classList.toggle('dark');
   document.getElementById('thbtn').textContent=isDark()?'☀ ライト':'🌙 ダーク';
   drawComp();
   if(sp.length||ph!=='idle')drawW(fw,N);
-  drawSp();
+  drawSp();drawP();
 }
 function updS(){const v=+document.getElementById('sls').value;document.getElementById('sv').textContent=SLB[v-1];}
 
@@ -331,9 +379,9 @@ function frame(){
   const spd=SVM[+document.getElementById('sls').value-1];
   fw=Math.round((fw+STEP*spd)*1000)/1000;
   if(fw>FM)fw=FM;
-  const P=wpts(fw,N),[rx,ry]=cg(P),m=Math.sqrt(rx*rx+ry*ry)*mA();
-  sp.push({f:fw,m});
-  drawW(fw,N);drawSp();
+  const ma=mA(),P=wpts(fw,N),[rx,ry]=cg(P),m=Math.sqrt(rx*rx+ry*ry)*ma;
+  sp.push({f:fw,m,rx:rx*ma,ry:ry*ma});
+  drawW(fw,N);drawSp();drawP();
   document.getElementById('pg').style.width=(fw/FM*100).toFixed(1)+'%';
   document.getElementById('wt').textContent=`巻きつけ中… ${fw.toFixed(2)} Hz`;
   document.getElementById('st').textContent=`f = ${fw.toFixed(2)} Hz  |  |X| = ${m.toFixed(3)}`;
@@ -342,7 +390,7 @@ function frame(){
     document.getElementById('wt').textContent='完成！ピークが設定周波数に一致';
     document.getElementById('st').textContent='A と f を変えて再実行してください。';
     document.getElementById('pg').style.width='100%';
-    drawSp();return;
+    drawSp();drawP();return;
   }
   raf=requestAnimationFrame(frame);
 }
@@ -361,12 +409,12 @@ function rst(){
   document.getElementById('pg').style.width='0%';
   const cv=document.getElementById('cvw'),d=dpr(),SZ=cv.offsetWidth;
   cv.width=SZ*d;cv.height=SZ*d;cv.getContext('2d').clearRect(0,0,cv.width,cv.height);
-  drawSp();
+  drawSp();drawP();
 }
 function upd(){rd();bld();drawComp();rst();}
 
 window.addEventListener('load',()=>{rd();bld();drawComp();updS();});
-window.addEventListener('resize',()=>{drawComp();if(sp.length)drawSp();});
+window.addEventListener('resize',()=>{drawComp();if(sp.length){drawSp();drawP();}});
 </script>
 </body>
 </html>
