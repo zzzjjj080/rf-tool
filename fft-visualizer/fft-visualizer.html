@@ -166,10 +166,11 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
 
 <script>
 const CLR=['#1D9E75','#D85A30','#7c6fcd'];
-const N=240,T=2,FM=13,FS=0.2;
-const SVM=[2,5,12,30,80],SLB=['1×','2×','4×','10×','26×'];
+const N=240,T=2,FM=13;
+const STEP=0.04; // 1× 時の1フレームあたり周波数増分 [Hz]
+const SVM=[0.5,1,2,4,10],SLB=['½×','1×','2×','4×','10×'];
 let SG=[{A:1,f:2},{A:.6,f:5},{A:.4,f:8}];
-let sig=[],sp=[],ph='idle',fw=0,wi=0,raf=null;
+let sig=[],sp=[],ph='idle',fw=0,raf=null;
 const dpr=()=>window.devicePixelRatio||1;
 const mA=()=>Math.max(SG.reduce((s,g)=>s+g.A,0),.01);
 
@@ -301,22 +302,20 @@ function updS(){const v=+document.getElementById('sls').value;document.getElemen
 function frame(){
   if(ph!=='running')return;
   const spd=SVM[+document.getElementById('sls').value-1];
-  wi=Math.min(wi+spd,N);
-  drawW(fw,wi);drawSp();
-  const pct=Math.round(wi/N*100);
+  fw=Math.round((fw+STEP*spd)*1000)/1000;
+  if(fw>FM)fw=FM;
+  const P=wpts(fw,N),[rx,ry]=cg(P),m=Math.sqrt(rx*rx+ry*ry)*mA();
+  sp.push({f:fw,m});
+  drawW(fw,N);drawSp();
   document.getElementById('pg').style.width=(fw/FM*100).toFixed(1)+'%';
-  document.getElementById('wt').textContent=`巻きつけ中… ${fw.toFixed(2)} Hz  (${pct}%)`;
-  document.getElementById('st').textContent=`f = ${fw.toFixed(2)} Hz  |  t = ${(wi/N*T).toFixed(2)}s / ${T}s`;
-  if(wi>=N){
-    const P=wpts(fw,N),[rx,ry]=cg(P),m=Math.sqrt(rx*rx+ry*ry)*mA();
-    sp.push({f:fw,m});fw=Math.round((fw+FS)*100)/100;wi=0;
-    if(fw>FM){
-      ph='done';document.getElementById('btn').textContent='↺ もう一度';
-      document.getElementById('wt').textContent='完成！ピークが設定周波数に一致';
-      document.getElementById('st').textContent='A と f を変えて再実行してください。';
-      document.getElementById('pg').style.width='100%';
-      drawSp();return;
-    }
+  document.getElementById('wt').textContent=`巻きつけ中… ${fw.toFixed(2)} Hz`;
+  document.getElementById('st').textContent=`f = ${fw.toFixed(2)} Hz  |  |X| = ${m.toFixed(3)}`;
+  if(fw>=FM){
+    ph='done';document.getElementById('btn').textContent='↺ もう一度';
+    document.getElementById('wt').textContent='完成！ピークが設定周波数に一致';
+    document.getElementById('st').textContent='A と f を変えて再実行してください。';
+    document.getElementById('pg').style.width='100%';
+    drawSp();return;
   }
   raf=requestAnimationFrame(frame);
 }
@@ -328,7 +327,7 @@ function tog(){
 }
 function rst(){
   if(raf)cancelAnimationFrame(raf);
-  ph='idle';fw=0;wi=0;sp=[];
+  ph='idle';fw=0;sp=[];
   document.getElementById('btn').textContent='▶ 開始';
   document.getElementById('wt').textContent='巻きつけ平面';
   document.getElementById('st').textContent='待機中';
