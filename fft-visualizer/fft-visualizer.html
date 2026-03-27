@@ -217,7 +217,7 @@ const CLR=['#1D9E75','#D85A30','#7c6fcd'];
 const N=240,T=2,FM=13,STEP=0.04;
 const SVM=[0.1,0.2,0.3,0.4,0.5],SLB=['×0.1','×0.2','×0.3','×0.4','×0.5'];
 let SG=[{A:1,f:2,en:true},{A:.6,f:5,en:false},{A:.4,f:8,en:false}];
-let sig=[],sigDisp=[],sigMin=0,sigMax=0,sigMinIdx=0,sp=[],spHoverX=null,ph='idle',fw=0,raf=null,compressT=0,compressRaf=null,dropLine=null,dropRaf=null;
+let sig=[],sigDisp=[],sigMin=0,sigMax=0,sigMinIdx=0,sp=[],spMax=0.001,spHoverX=null,ph='idle',fw=0,raf=null,compressT=0,compressRaf=null,dropLine=null,dropRaf=null;
 const dpr=()=>window.devicePixelRatio||1;
 const mA=()=>Math.max(SG.reduce((s,g)=>s+(g.en?g.A:0),0),.01);
 const isDark=()=>document.body.classList.contains('dark');
@@ -447,7 +447,7 @@ function drawSp(){
     ctx.fillStyle=CLR[i];ctx.fillText(SG[i].f+'Hz',x+2,13);
   }
   if(!sp.length)return;
-  const mm=Math.max(...sp.map(p=>p.m),.001);
+  const mm=spMax; // fixed at start — no rescaling during animation
   // Y-axis reference lines + labels (right-aligned)
   ctx.font='11px monospace';ctx.textAlign='right';
   ctx.strokeStyle=tc('rgba(255,255,255,.06)','rgba(0,0,0,.07)');ctx.lineWidth=.5;ctx.setLineDash([2,3]);
@@ -562,9 +562,17 @@ function frame(){
   raf=requestAnimationFrame(frame);
 }
 
+function computeSpMax(){
+  let mx=0;
+  for(let f=STEP;f<=FM;f=Math.round((f+STEP)*1000)/1000){
+    const Po=wptsOrig(f,N),[orx,ory]=cg(Po),m=Math.sqrt(orx*orx+ory*ory)*mA();
+    if(m>mx)mx=m;
+  }
+  return mx||0.001;
+}
 function tog(){
   if(ph==='idle'||ph==='done'){
-    rst();compressT=0;ph='compressing';
+    rst();spMax=computeSpMax();compressT=0;ph='compressing';
     document.getElementById('btn').textContent='⏸ 一時停止';
     animateCompress();
   }
