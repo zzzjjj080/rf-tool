@@ -124,11 +124,7 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
 .panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 4px var(--shadow);margin-bottom:10px}
 .panel-header{padding:9px 14px;background:var(--panel2);border-bottom:1px solid var(--border);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;display:flex;align-items:center;gap:8px}
 .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0}
-canvas{display:block;width:100%}
-/* Fixed heights — prevent zoom-induced resize */
-#cv1,#ov1{height:220px}
-#cv2,#ov2{height:130px}
-#cv3,#ov3{height:130px}
+canvas{display:block;width:100%;height:auto}
 .cv-wrap{position:relative;cursor:crosshair;user-select:none}
 .cv-overlay{position:absolute;top:0;left:0;pointer-events:none;display:block}
 .legend{display:flex;gap:14px;padding:8px 14px;font-family:'Space Mono',monospace;font-size:10px;border-top:1px solid var(--border);background:var(--panel2);flex-wrap:wrap}
@@ -145,12 +141,31 @@ canvas{display:block;width:100%}
 .result-section-title{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px}
 .result-section-title small{font-size:9px;color:var(--text-dim);letter-spacing:0;text-transform:none;font-family:'Noto Sans JP',sans-serif;font-weight:400}
 .result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
-.result-card{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;cursor:pointer;transition:border-color .2s,box-shadow .2s}
-.result-card:hover{border-color:var(--accent);box-shadow:0 2px 8px var(--shadow)}
+/* Quality color tiers (same pattern as adc-visualizer) */
+.q-ex  {background:rgba(37,99,235,.10)!important;border-color:rgba(37,99,235,.45)!important}
+.q-good{background:rgba(16,185,129,.10)!important;border-color:rgba(16,185,129,.45)!important}
+.q-fair{background:rgba(245,158,11,.10)!important;border-color:rgba(245,158,11,.45)!important}
+.q-poor{background:rgba(220,38,38,.10)!important;border-color:rgba(220,38,38,.45)!important}
+[data-theme="dark"] .q-ex  {background:rgba(59,130,246,.12)!important;border-color:rgba(59,130,246,.5)!important}
+[data-theme="dark"] .q-good{background:rgba(34,197,94,.10)!important;border-color:rgba(34,197,94,.45)!important}
+[data-theme="dark"] .q-fair{background:rgba(251,191,36,.10)!important;border-color:rgba(251,191,36,.45)!important}
+[data-theme="dark"] .q-poor{background:rgba(248,113,113,.10)!important;border-color:rgba(248,113,113,.45)!important}
+/* Quality badge inside card */
+.q-badge{font-family:'Space Mono',monospace;font-size:8px;font-weight:700;padding:2px 7px;border-radius:8px;margin-top:4px;display:inline-block;letter-spacing:.3px}
+.q-ex  .q-badge{background:rgba(37,99,235,.15);color:rgb(37,99,235)}
+.q-good .q-badge{background:rgba(16,185,129,.18);color:rgb(5,150,105)}
+.q-fair .q-badge{background:rgba(245,158,11,.15);color:rgb(180,110,0)}
+.q-poor .q-badge{background:rgba(220,38,38,.15);color:rgb(185,28,28)}
+[data-theme="dark"] .q-ex  .q-badge{color:#93c5fd}
+[data-theme="dark"] .q-good .q-badge{color:#6ee7b7}
+[data-theme="dark"] .q-fair .q-badge{color:#fcd34d}
+[data-theme="dark"] .q-poor .q-badge{color:#fca5a5}
+.result-card{background:var(--panel2);border:2px solid var(--border);border-radius:10px;padding:12px;text-align:center;cursor:pointer;position:relative;overflow:hidden;transition:border-color .2s,background .2s,box-shadow .2s}
+.result-card:hover:not(.q-ex):not(.q-good):not(.q-fair):not(.q-poor){border-color:var(--accent)}
+.result-card:hover{box-shadow:0 2px 8px var(--shadow)}
 .rc-label{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--text-dim);text-transform:uppercase;margin-bottom:5px}
-.rc-value{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;transition:color .4s}
+.rc-value{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent)}
 .rc-unit{font-family:'Space Mono',monospace;font-size:9px;color:var(--text-dim);margin-top:2px}
-.rc-badge{font-size:9px;margin-top:4px;padding:2px 6px;border-radius:4px;display:inline-block;font-family:'Space Mono',monospace;font-weight:700}
 
 /* canvas crosshair tooltip */
 #cv-tip{position:fixed;display:none;pointer-events:none;background:var(--panel);border:1.5px solid var(--accent);border-radius:8px;padding:8px 12px;font-family:'Space Mono',monospace;font-size:11px;color:var(--text);box-shadow:0 4px 16px var(--shadow);z-index:999;white-space:nowrap;line-height:1.9}
@@ -417,41 +432,41 @@ footer a:hover{text-decoration:underline}
 <div class="result-section">
   <div class="result-section-title"><div class="dot"></div>評価指標 <small>— カードをクリックで詳細表示</small></div>
   <div class="result-grid">
-    <div class="result-card" onclick="showMetricDetail('os')">
+    <div class="result-card" id="card-os" onclick="showMetricDetail('os')">
       <div class="rc-label">オーバーシュート</div>
       <div class="rc-value" id="m-os">—</div>
       <div class="rc-unit">%</div>
-      <div class="rc-badge" id="b-os"></div>
+      <div class="q-badge" id="b-os"></div>
     </div>
-    <div class="result-card" onclick="showMetricDetail('ts')">
+    <div class="result-card" id="card-ts" onclick="showMetricDetail('ts')">
       <div class="rc-label">整定時間</div>
       <div class="rc-value" id="m-ts">—</div>
       <div class="rc-unit">ms</div>
-      <div class="rc-badge" id="b-ts"></div>
+      <div class="q-badge" id="b-ts"></div>
     </div>
-    <div class="result-card" onclick="showMetricDetail('tr')">
+    <div class="result-card" id="card-tr" onclick="showMetricDetail('tr')">
       <div class="rc-label">立ち上がり時間</div>
       <div class="rc-value" id="m-tr">—</div>
       <div class="rc-unit">ms</div>
-      <div class="rc-badge" id="b-tr"></div>
+      <div class="q-badge" id="b-tr"></div>
     </div>
-    <div class="result-card" onclick="showMetricDetail('ss')">
+    <div class="result-card" id="card-ss" onclick="showMetricDetail('ss')">
       <div class="rc-label">定常偏差</div>
       <div class="rc-value" id="m-ss">—</div>
       <div class="rc-unit">W</div>
-      <div class="rc-badge" id="b-ss"></div>
+      <div class="q-badge" id="b-ss"></div>
     </div>
-    <div class="result-card" onclick="showMetricDetail('itae')">
+    <div class="result-card" id="card-itae" onclick="showMetricDetail('itae')">
       <div class="rc-label">ITAE</div>
       <div class="rc-value" id="m-itae">—</div>
       <div class="rc-unit">W·ms²</div>
-      <div class="rc-badge" id="b-itae"></div>
+      <div class="q-badge" id="b-itae"></div>
     </div>
-    <div class="result-card" onclick="showMetricDetail('energy')">
+    <div class="result-card" id="card-energy" onclick="showMetricDetail('energy')">
       <div class="rc-label">総制御エネルギー</div>
       <div class="rc-value" id="m-energy">—</div>
       <div class="rc-unit">W²·ms</div>
-      <div class="rc-badge" id="b-energy"></div>
+      <div class="q-badge" id="b-energy"></div>
     </div>
   </div>
 </div>
@@ -705,40 +720,58 @@ function calcMetrics(d) {
 }
 
 // ============================================================
-// METRIC COLORING
+// METRIC COLORING (ADC visualizer style: q-ex/q-good/q-fair/q-poor classes)
 // ============================================================
-function scoreToColor(score) {
-  // blue (220°) at score=1, red (0°) at score=0
-  const hue = Math.round(score * 220);
-  return `hsl(${hue},75%,48%)`;
+function metricQClass(key, m) {
+  const range = S.levelH - S.levelL;
+  switch (key) {
+    case 'os': {
+      const v = m.os;
+      if (v <= 5)  return ['q-ex',   '★ 優秀 ≤5%'];
+      if (v <= 15) return ['q-good', '✓ 良好 ≤15%'];
+      if (v <= 30) return ['q-fair', '△ 許容 ≤30%'];
+      return              ['q-poor', '✗ 要改善 >30%'];
+    }
+    case 'ts': {
+      const pct = m.ts / S.period * 100;
+      if (pct <= 20) return ['q-ex',   '★ 優秀 ≤20%周期'];
+      if (pct <= 50) return ['q-good', '✓ 良好 ≤50%周期'];
+      if (pct <= 90) return ['q-fair', '△ 許容 ≤90%周期'];
+      return                ['q-poor', '✗ 要改善 >90%周期'];
+    }
+    case 'tr': {
+      if (m.tr < 0) return ['q-fair', '△ 未計測'];
+      const pct = m.tr / S.period * 100;
+      if (pct <= 15) return ['q-ex',   '★ 優秀 ≤15%周期'];
+      if (pct <= 40) return ['q-good', '✓ 良好 ≤40%周期'];
+      if (pct <= 80) return ['q-fair', '△ 許容 ≤80%周期'];
+      return                ['q-poor', '✗ 要改善 >80%周期'];
+    }
+    case 'ss': {
+      const pct = range > 0 ? m.ss / range * 100 : 100;
+      if (pct <= 1)  return ['q-ex',   '★ 優秀 ≤1%'];
+      if (pct <= 5)  return ['q-good', '✓ 良好 ≤5%'];
+      if (pct <= 15) return ['q-fair', '△ 許容 ≤15%'];
+      return                ['q-poor', '✗ 要改善 >15%'];
+    }
+    default:
+      return [null, ''];
+  }
 }
 
-function scoreToBadge(score) {
-  if (score >= 0.75) return { text:'優良', bg:'#16a34a' };
-  if (score >= 0.45) return { text:'良好', bg:'#d97706' };
-  return { text:'要改善', bg:'#dc2626' };
+function setQCard(id, qCls) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('q-ex','q-good','q-fair','q-poor');
+  if (qCls) el.classList.add(qCls);
 }
 
 function updateMetricColors(m) {
-  const keys = ['os','ts','tr','ss','itae','energy'];
-  for (const key of keys) {
-    const info = METRIC_INFO[key];
-    const score = info.score(m);
-    const color = scoreToColor(score);
-    const valEl = document.getElementById('m-' + key);
+  for (const key of ['os','ts','tr','ss','itae','energy']) {
+    const [qCls, badgeText] = metricQClass(key, m);
+    setQCard('card-' + key, qCls);
     const badgeEl = document.getElementById('b-' + key);
-    if (valEl) valEl.style.color = color;
-    if (badgeEl) {
-      const b = scoreToBadge(score);
-      if (key === 'itae' || key === 'energy') {
-        badgeEl.textContent = '';
-        badgeEl.style.background = 'transparent';
-      } else {
-        badgeEl.textContent = b.text;
-        badgeEl.style.background = b.bg;
-        badgeEl.style.color = '#fff';
-      }
-    }
+    if (badgeEl) badgeEl.textContent = badgeText;
   }
 }
 
@@ -755,8 +788,9 @@ function showMetricDetail(key) {
   const valText = el ? el.textContent : '—';
   const unitText = { os:'%', ts:'ms', tr:'ms', ss:'W', itae:'W·ms²', energy:'W²·ms' }[key];
 
-  const score = info.score(m);
-  const color = scoreToColor(score);
+  const [qCls, badgeText] = metricQClass(key, m);
+  const qColors = { 'q-ex':'rgb(37,99,235)', 'q-good':'rgb(5,150,105)', 'q-fair':'rgb(180,110,0)', 'q-poor':'rgb(185,28,28)' };
+  const color = qColors[qCls] || 'var(--accent)';
 
   document.getElementById('modal-name').textContent = info.name;
   document.getElementById('modal-value').textContent = valText;
@@ -775,12 +809,11 @@ function showMetricDetail(key) {
 
   // Judge
   const judgeEl = document.getElementById('modal-judge');
-  if (key !== 'itae' && key !== 'energy') {
-    const b = scoreToBadge(score);
-    judgeEl.textContent = `現在の評価: ${b.text}`;
-    judgeEl.style.background = b.bg + '22';
-    judgeEl.style.color = b.bg;
-    judgeEl.style.border = `1px solid ${b.bg}66`;
+  if (qCls) {
+    judgeEl.textContent = `現在の評価: ${badgeText}`;
+    judgeEl.style.background = color.replace('rgb','rgba').replace(')',', .12)');
+    judgeEl.style.color = color;
+    judgeEl.style.border = `1px solid ${color.replace('rgb','rgba').replace(')',', .4)')}`;
     judgeEl.style.display = 'block';
   } else {
     judgeEl.style.display = 'none';
@@ -819,10 +852,15 @@ function getCol() {
   };
 }
 
+// Cache original canvas heights (cv.height IDL attr is modified by DPR scaling,
+// so we must not re-read getAttribute('height') after the first resizeCv call)
+const CV_H = {};
+
 function resizeCv(cv) {
+  if (!CV_H[cv.id]) CV_H[cv.id] = parseInt(cv.getAttribute('height'), 10);
   const dpr = window.devicePixelRatio || 1;
   const w = cv.parentElement.clientWidth || 600;
-  const h = parseInt(cv.getAttribute('height'), 10);
+  const h = CV_H[cv.id];
   cv.style.width  = w + 'px';
   cv.style.height = h + 'px';
   cv.width  = Math.round(w * dpr);
@@ -1032,7 +1070,8 @@ function drawOv(ovId, mainId) {
   const ov = document.getElementById(ovId);
   const dpr = window.devicePixelRatio || 1;
   const w   = cv.parentElement.clientWidth || 600;
-  const h   = parseInt(cv.getAttribute('height'), 10);
+  if (!CV_H[cv.id]) CV_H[cv.id] = parseInt(cv.getAttribute('height'), 10);
+  const h   = CV_H[cv.id];
   ov.style.width  = w + 'px';
   ov.style.height = h + 'px';
   ov.width  = Math.round(w * dpr);
