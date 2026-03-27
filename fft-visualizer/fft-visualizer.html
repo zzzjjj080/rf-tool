@@ -217,7 +217,7 @@ const CLR=['#1D9E75','#D85A30','#7c6fcd'];
 const N=240,T=2,FM=13,STEP=0.04;
 const SVM=[0.1,0.2,0.3,0.4,0.5],SLB=['×0.1','×0.2','×0.3','×0.4','×0.5'];
 let SG=[{A:1,f:2,en:true},{A:.6,f:5,en:false},{A:.4,f:8,en:false}];
-let sig=[],sigMin=0,sigMax=0,sp=[],spHoverX=null,ph='idle',fw=0,raf=null,compressT=0,compressRaf=null,dropLine=null,dropRaf=null;
+let sig=[],sigDisp=[],sigMin=0,sigMax=0,sp=[],spHoverX=null,ph='idle',fw=0,raf=null,compressT=0,compressRaf=null,dropLine=null,dropRaf=null;
 const dpr=()=>window.devicePixelRatio||1;
 const mA=()=>Math.max(SG.reduce((s,g)=>s+(g.en?g.A:0),0),.01);
 const isDark=()=>document.body.classList.contains('dark');
@@ -235,14 +235,14 @@ function rd(){
   }
 }
 function bld(){
-  sig=[];
+  sigDisp=[];
   for(let k=0;k<=N;k++){
     const t=k/N*T;
-    sig.push(SG.reduce((s,g)=>s+(g.en?g.A:0)*Math.sin(2*Math.PI*g.f*t),0));
+    sigDisp.push(SG.reduce((s,g)=>s+(g.en?g.A:0)*Math.sin(2*Math.PI*g.f*t),0));
   }
-  // Rotate to start at minimum → radius=0 at start (no floating tail)
-  let mi=0;for(let k=1;k<=N;k++)if(sig[k]<sig[mi])mi=k;
-  sig=[...sig.slice(mi),...sig.slice(0,mi)];
+  // Rotate for winding: start at minimum → radius=0 at winding start
+  let mi=0;for(let k=1;k<=N;k++)if(sigDisp[k]<sigDisp[mi])mi=k;
+  sig=[...sigDisp.slice(mi),...sigDisp.slice(0,mi)];
   sigMin=sig[0];
   sigMax=Math.max(...sig);
 }
@@ -260,7 +260,7 @@ function drawComp(){
     ctx.stroke();
   }
   ctx.beginPath();ctx.strokeStyle=tc('#c8c6c0','#2a2a28');ctx.lineWidth=2;ctx.globalAlpha=1;
-  for(let k=0;k<=N;k++){const x=k/N*W,y=H/2-sig[k]/ma*(H/2-6);k?ctx.lineTo(x,y):ctx.moveTo(x,y);}
+  for(let k=0;k<=N;k++){const x=k/N*W,y=H/2-sigDisp[k]/ma*(H/2-6);k?ctx.lineTo(x,y):ctx.moveTo(x,y);}
   ctx.stroke();
   let tx=5;ctx.globalAlpha=.8;ctx.font='10px monospace';
   for(let i=0;i<3;i++){if(!SG[i].en||SG[i].A<.01)continue;ctx.fillStyle=CLR[i];ctx.fillText(SG[i].f+'Hz',tx,H-4);tx+=30;}
@@ -281,7 +281,7 @@ function drawCompSqueezed(scale){
       ctx.stroke();
     }
     ctx.beginPath();ctx.strokeStyle=tc('#2a2a28','#2a2a28');ctx.lineWidth=2;ctx.globalAlpha=Math.min(1,scale*3);
-    for(let k=0;k<=N;k++){const x=k/N*W,y=H/2-sig[k]/ma*(H/2-6);k?ctx.lineTo(x,y):ctx.moveTo(x,y);}
+    for(let k=0;k<=N;k++){const x=k/N*W,y=H/2-sigDisp[k]/ma*(H/2-6);k?ctx.lineTo(x,y):ctx.moveTo(x,y);}
     ctx.stroke();ctx.restore();
   }
   const la=Math.max(0,1-scale*5);
