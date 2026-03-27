@@ -217,7 +217,7 @@ const CLR=['#1D9E75','#D85A30','#7c6fcd'];
 const N=240,T=2,FM=13,STEP=0.04;
 const SVM=[0.1,0.2,0.3,0.4,0.5],SLB=['×0.1','×0.2','×0.3','×0.4','×0.5'];
 let SG=[{A:1,f:2,en:true},{A:.6,f:5,en:false},{A:.4,f:8,en:false}];
-let sig=[],sp=[],ph='idle',fw=0,raf=null,compressT=0,compressRaf=null,dropLine=null,dropRaf=null;
+let sig=[],sigMin=0,sp=[],ph='idle',fw=0,raf=null,compressT=0,compressRaf=null,dropLine=null,dropRaf=null;
 const dpr=()=>window.devicePixelRatio||1;
 const mA=()=>Math.max(SG.reduce((s,g)=>s+(g.en?g.A:0),0),.01);
 const isDark=()=>document.body.classList.contains('dark');
@@ -240,6 +240,7 @@ function bld(){
     const t=k/N*T;
     sig.push(SG.reduce((s,g)=>s+(g.en?g.A:0)*Math.sin(2*Math.PI*g.f*t),0));
   }
+  sigMin=Math.min(...sig);
 }
 
 function drawComp(){
@@ -338,7 +339,7 @@ function animateCompress(){
 
 function wpts(f,n){
   const ma=mA(),r=[];
-  for(let k=0;k<=Math.min(n,N);k++){const t2=k/N*T,v=sig[k]/ma,a=2*Math.PI*f*t2+Math.PI/2;r.push([v*Math.cos(a),v*Math.sin(a)]);}
+  for(let k=0;k<=Math.min(n,N);k++){const t2=k/N*T,v=(sig[k]-sigMin)/ma,a=2*Math.PI*f*t2+Math.PI/2;r.push([v*Math.cos(a),v*Math.sin(a)]);}
   return r;
 }
 function cg(P){let rx=0,ry=0;P.forEach(p=>{rx+=p[0];ry+=p[1];});const n=P.length||1;return[rx/n,ry/n];}
