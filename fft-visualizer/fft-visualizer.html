@@ -338,7 +338,7 @@ function animateCompress(){
 
 function wpts(f,n){
   const ma=mA(),r=[];
-  for(let k=0;k<=Math.min(n,N);k++){const t2=k/N*T,v=sig[k]/ma,a=2*Math.PI*f*t2;r.push([v*Math.cos(a),v*Math.sin(a)]);}
+  for(let k=0;k<=Math.min(n,N);k++){const t2=k/N*T,v=sig[k]/ma,a=2*Math.PI*f*t2+Math.PI/2;r.push([v*Math.cos(a),v*Math.sin(a)]);}
   return r;
 }
 function cg(P){let rx=0,ry=0;P.forEach(p=>{rx+=p[0];ry+=p[1];});const n=P.length||1;return[rx/n,ry/n];}
