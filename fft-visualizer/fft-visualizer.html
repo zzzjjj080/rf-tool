@@ -111,11 +111,11 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
 #cvw{width:100%;aspect-ratio:1;display:block;max-height:min(54vh,520px);max-width:min(54vh,520px)}
 #cvs{width:100%;height:160px;display:block}
 .winding-panel{display:flex;gap:12px;align-items:flex-start}
-.winfo{flex:1;min-width:100px;padding-top:2px;display:flex;flex-direction:column;gap:6px}
+.winfo{flex:0 0 150px;padding-top:2px;display:flex;flex-direction:column;gap:6px}
 .ib{background:var(--bg3);border-radius:var(--radius-sm);padding:8px 10px}
 .ib-label{font-size:10px;letter-spacing:.05em;color:var(--text3);margin-bottom:3px;text-transform:uppercase}
 .ib-val{font-size:15px;color:var(--blue);font-weight:500;letter-spacing:.02em}
-.ib-val.dark{color:var(--text)}
+.ib-val-dk{font-size:15px;color:var(--text);font-weight:500;letter-spacing:.02em}
 .ib-sub{font-size:10px;color:var(--text3);margin-top:2px}
 </style>
 </head>
@@ -192,7 +192,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
         </div>
         <div class="ib">
           <div class="ib-label">全回転数</div>
-          <div class="ib-val dark" id="inf-turns">—</div>
+          <div class="ib-val-dk" id="inf-turns">—</div>
           <div class="ib-sub" id="inf-sub">巻きつけ周波数 × 信号長</div>
         </div>
       </div>
