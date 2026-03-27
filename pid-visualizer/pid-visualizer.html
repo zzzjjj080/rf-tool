@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PID制御ビジュアライザー — 高電力RF制御系</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+JP:wght@300;400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto Sans+JP:wght@300;400;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#f0f4f8;--panel:#ffffff;--panel2:#f1f5f9;--border:#cbd5e1;
@@ -75,13 +75,43 @@ h1{font-family:'Space Mono',monospace;font-size:clamp(20px,4vw,32px);font-weight
 .param-section-title.orange{color:var(--accent2)}
 .param-section-title.green{color:var(--green)}
 .param-row{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:flex-end}
-.input-group{display:flex;flex-direction:column;gap:5px;flex:1;min-width:130px;max-width:220px}
-.input-group label{font-size:10px;letter-spacing:1.5px;font-family:'Space Mono',monospace;text-transform:uppercase;color:var(--text-dim)}
+
+/* input-group with tooltip */
+.input-group{display:flex;flex-direction:column;gap:5px;flex:1;min-width:130px;max-width:220px;position:relative}
+.input-group label{font-size:10px;letter-spacing:1.5px;font-family:'Space Mono',monospace;text-transform:uppercase;color:var(--text-dim);cursor:help}
 .input-group.accent label{color:var(--accent)}
 .input-group.orange label{color:var(--accent2)}
 .input-group.green label{color:var(--green)}
 .input-group.purple label{color:var(--purple)}
 .input-group-inline{display:flex;align-items:center;gap:8px}
+
+/* tooltip */
+.input-group[data-tip]::before{
+  content: attr(data-tip);
+  position:absolute;
+  bottom:calc(100% + 8px);
+  left:0;
+  background:var(--panel);
+  border:1px solid var(--accent);
+  border-radius:8px;
+  padding:8px 12px;
+  font-size:12px;
+  font-family:'Noto Sans JP',sans-serif;
+  font-weight:400;
+  color:var(--text);
+  line-height:1.6;
+  text-transform:none;
+  letter-spacing:0;
+  white-space:normal;
+  width:220px;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity .15s;
+  z-index:200;
+  box-shadow:0 4px 16px var(--shadow);
+}
+.input-group[data-tip]:hover::before{opacity:1}
+
 input[type="range"]{-webkit-appearance:none;width:100%;height:4px;background:var(--border);border-radius:2px;outline:none;cursor:pointer}
 input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;box-shadow:0 1px 4px var(--shadow)}
 .input-group.orange input[type="range"]::-webkit-slider-thumb{background:var(--accent2)}
@@ -95,6 +125,10 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
 .panel-header{padding:9px 14px;background:var(--panel2);border-bottom:1px solid var(--border);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;display:flex;align-items:center;gap:8px}
 .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0}
 canvas{display:block;width:100%}
+/* Fixed heights — prevent zoom-induced resize */
+#cv1,#ov1{height:220px}
+#cv2,#ov2{height:130px}
+#cv3,#ov3{height:130px}
 .cv-wrap{position:relative;cursor:crosshair;user-select:none}
 .cv-overlay{position:absolute;top:0;left:0;pointer-events:none;display:block}
 .legend{display:flex;gap:14px;padding:8px 14px;font-family:'Space Mono',monospace;font-size:10px;border-top:1px solid var(--border);background:var(--panel2);flex-wrap:wrap}
@@ -109,35 +143,34 @@ canvas{display:block;width:100%}
 /* results */
 .result-section{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:14px;box-shadow:0 1px 4px var(--shadow)}
 .result-section-title{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.result-section-title small{font-size:9px;color:var(--text-dim);letter-spacing:0;text-transform:none;font-family:'Noto Sans JP',sans-serif;font-weight:400}
 .result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
-.result-card{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
-.result-card.hl2{border-color:rgba(234,88,12,.5);background:rgba(234,88,12,.05)}
-[data-theme="dark"] .result-card.hl2{background:rgba(255,107,53,.05)}
+.result-card{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;cursor:pointer;transition:border-color .2s,box-shadow .2s}
+.result-card:hover{border-color:var(--accent);box-shadow:0 2px 8px var(--shadow)}
 .rc-label{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--text-dim);text-transform:uppercase;margin-bottom:5px}
-.rc-value{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent)}
-.rc-value.orange{color:var(--accent2)}
-.rc-value.green{color:var(--green)}
-.rc-value.gold{color:var(--gold)}
+.rc-value{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;transition:color .4s}
 .rc-unit{font-family:'Space Mono',monospace;font-size:9px;color:var(--text-dim);margin-top:2px}
+.rc-badge{font-size:9px;margin-top:4px;padding:2px 6px;border-radius:4px;display:inline-block;font-family:'Space Mono',monospace;font-weight:700}
 
-/* log */
-.log-wrap{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:14px;box-shadow:0 1px 4px var(--shadow)}
-.log-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px}
-.log-title{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--accent);text-transform:uppercase}
-.log-actions{display:flex;gap:8px}
-.btn-sm{padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--panel2);color:var(--text);font-size:11px;font-family:'Space Mono',monospace;cursor:pointer;transition:all .2s}
-.btn-sm:hover{border-color:var(--accent);color:var(--accent)}
-.btn-sm.danger:hover{border-color:var(--red);color:var(--red)}
-.log-body{max-height:200px;overflow-y:auto;background:var(--panel2);border-radius:8px;border:1px solid var(--border)}
-.log-body::-webkit-scrollbar{width:4px}
-.log-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
-.log-entry{display:flex;gap:10px;padding:5px 10px;border-bottom:1px solid var(--border);font-size:11px;font-family:'Space Mono',monospace}
-.log-entry:last-child{border-bottom:none}
-.log-ts{color:var(--text-dim);white-space:nowrap;flex-shrink:0}
-.log-msg{color:var(--text);word-break:break-all}
-
-/* tooltip */
+/* canvas crosshair tooltip */
 #cv-tip{position:fixed;display:none;pointer-events:none;background:var(--panel);border:1.5px solid var(--accent);border-radius:8px;padding:8px 12px;font-family:'Space Mono',monospace;font-size:11px;color:var(--text);box-shadow:0 4px 16px var(--shadow);z-index:999;white-space:nowrap;line-height:1.9}
+
+/* metric detail modal */
+#metric-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center}
+#metric-modal.open{display:flex}
+.modal-box{background:var(--panel);border:1.5px solid var(--accent);border-radius:14px;padding:24px 28px;max-width:420px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.3);position:relative}
+.modal-close{position:absolute;top:12px;right:14px;background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-dim);line-height:1}
+.modal-close:hover{color:var(--text)}
+.modal-name{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px;letter-spacing:1px}
+.modal-value{font-family:'Space Mono',monospace;font-size:28px;font-weight:700;margin-bottom:4px;transition:color .3s}
+.modal-unit{font-family:'Space Mono',monospace;font-size:11px;color:var(--text-dim);margin-bottom:14px}
+.modal-formula{background:var(--panel2);border-radius:8px;padding:8px 12px;font-family:'Space Mono',monospace;font-size:11px;color:var(--text-dim);margin-bottom:14px;border-left:3px solid var(--accent)}
+.modal-desc{font-size:13px;line-height:1.8;color:var(--text);margin-bottom:14px}
+.modal-ranges{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.modal-range{border-radius:6px;padding:6px 8px;text-align:center;font-size:10px;font-family:'Space Mono',monospace}
+.modal-range-label{color:#fff;font-weight:700;margin-bottom:2px}
+.modal-range-val{color:rgba(255,255,255,.85)}
+.modal-judge{font-size:12px;margin-top:12px;padding:8px 12px;border-radius:8px;text-align:center;font-family:'Space Mono',monospace;font-weight:700}
 
 footer{text-align:center;padding:20px 0 0;font-family:'Space Mono',monospace;font-size:10px;color:var(--text-dim);border-top:1px solid var(--border);margin-top:20px}
 footer a{color:var(--accent);text-decoration:none}
@@ -154,10 +187,25 @@ footer a:hover{text-decoration:underline}
 </head>
 <body>
 <div id="cv-tip"></div>
+
+<!-- Metric detail modal -->
+<div id="metric-modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-name" id="modal-name"></div>
+    <div class="modal-value" id="modal-value"></div>
+    <div class="modal-unit" id="modal-unit"></div>
+    <div class="modal-formula" id="modal-formula"></div>
+    <div class="modal-desc" id="modal-desc"></div>
+    <div class="modal-ranges" id="modal-ranges"></div>
+    <div class="modal-judge" id="modal-judge"></div>
+  </div>
+</div>
+
 <div class="container">
 
 <header>
-  <a href="index.html" class="back-link">← RF ツール</a>
+  <a href="../index.html" class="back-link">← RF ツール</a>
   <div class="header-tag">RF-TOOL / PID CONTROL</div>
   <h1>PID制御ビジュアライザー</h1>
   <div class="subtitle">高電力RF制御系の学習・パラメータ調整支援ツール</div>
@@ -209,29 +257,29 @@ footer a:hover{text-decoration:underline}
     <div class="param-section">
       <div class="param-section-title accent">① 目標波形（Setpoint）</div>
       <div class="param-row">
-        <div class="input-group accent">
-          <label>繰り返し周期<span class="param-unit">ms</span></label>
+        <div class="input-group accent" data-tip="目標値をHIGH→LOW→HIGHと繰り返す1周期の長さ。短いほど高速な追従性能が必要になる。">
+          <label>繰り返し周期 [ms]</label>
           <div class="input-group-inline">
             <input type="range" id="sl-period" min="1" max="100" step="1" value="10" oninput="onSl('period',this,0)">
             <span class="input-val" id="dsp-period">10</span>
           </div>
         </div>
-        <div class="input-group accent">
-          <label>デューティ比<span class="param-unit">%</span></label>
+        <div class="input-group accent" data-tip="1周期中、出力目標がHIGHレベルである割合。50%なら前半がHIGH、後半がLOW。">
+          <label>デューティ比 [%]</label>
           <div class="input-group-inline">
             <input type="range" id="sl-duty" min="5" max="95" step="5" value="50" oninput="onSl('duty',this,0)">
             <span class="input-val" id="dsp-duty">50</span>
           </div>
         </div>
-        <div class="input-group accent">
-          <label>出力レベル H<span class="param-unit">W</span></label>
+        <div class="input-group accent" data-tip="HIGHフェーズの目標出力電力 [W]。コントローラーはこの値に追従させようとする。デフォルト3000 W。">
+          <label>出力レベル H [W]</label>
           <div class="input-group-inline">
-            <input type="range" id="sl-levelH" min="100" max="5000" step="100" value="1000" oninput="onSl('levelH',this,0)">
-            <span class="input-val" id="dsp-levelH">1000</span>
+            <input type="range" id="sl-levelH" min="100" max="5000" step="100" value="3000" oninput="onSl('levelH',this,0)">
+            <span class="input-val" id="dsp-levelH">3000</span>
           </div>
         </div>
-        <div class="input-group accent">
-          <label>出力レベル L<span class="param-unit">W</span></label>
+        <div class="input-group accent" data-tip="LOWフェーズの目標出力電力 [W]。通常0 W（送信停止）。0より大きくすると部分負荷の追従シミュレーションになる。">
+          <label>出力レベル L [W]</label>
           <div class="input-group-inline">
             <input type="range" id="sl-levelL" min="0" max="500" step="10" value="0" oninput="onSl('levelL',this,0)">
             <span class="input-val" id="dsp-levelL">0</span>
@@ -243,36 +291,36 @@ footer a:hover{text-decoration:underline}
     <div class="param-section">
       <div class="param-section-title orange">② プラントモデル（RFアンプ特性）</div>
       <div class="param-row">
-        <div class="input-group orange">
-          <label>プラントゲイン Kₚ<span class="param-unit">—</span></label>
+        <div class="input-group orange" data-tip="アンプの直流ゲイン [—]。制御入力 1 W に対して出力が Kp_plant W 変化する。温度・電圧により変動するため、実機では同定が重要。">
+          <label>プラントゲイン Kp [—]</label>
           <div class="input-group-inline">
             <input type="range" id="sl-Kpplant" min="0.5" max="2.0" step="0.1" value="1.0" oninput="onSl('Kpplant',this,1)">
             <span class="input-val" id="dsp-Kpplant">1.0</span>
           </div>
         </div>
-        <div class="input-group orange">
-          <label>時定数 Tp<span class="param-unit">ms</span></label>
+        <div class="input-group orange" data-tip="アンプ出力が最終値の63.2%に達するまでの時間 [ms]（一次遅れの時定数）。大きいほど応答が遅く、PIDの積分ゲインを下げる必要がある。">
+          <label>時定数 Tp [ms]</label>
           <div class="input-group-inline">
             <input type="range" id="sl-Tp" min="0.1" max="20" step="0.1" value="2.0" oninput="onSl('Tp',this,1)">
             <span class="input-val" id="dsp-Tp">2.0</span>
           </div>
         </div>
-        <div class="input-group orange">
-          <label>むだ時間 Lp<span class="param-unit">ms</span></label>
+        <div class="input-group orange" data-tip="制御入力の変化がアンプ出力に現れるまでの遅延時間 [ms]。センサー遅れ・伝播遅延に対応。大きいほど不安定化しやすく、制御ゲインを低くせざるを得ない。">
+          <label>むだ時間 Lp [ms]</label>
           <div class="input-group-inline">
             <input type="range" id="sl-Lp" min="0" max="5" step="0.1" value="0.5" oninput="onSl('Lp',this,1)">
             <span class="input-val" id="dsp-Lp">0.5</span>
           </div>
         </div>
-        <div class="input-group orange">
-          <label>飽和上限<span class="param-unit">W</span></label>
+        <div class="input-group orange" data-tip="プラントへの制御入力 u[k] の上限値 [W]。アンプの最大ドライブレベルに対応する。これを超える出力要求はクリップされる。">
+          <label>飽和上限 [W]</label>
           <div class="input-group-inline">
-            <input type="range" id="sl-satMax" min="500" max="5000" step="100" value="5000" oninput="onSl('satMax',this,0)">
+            <input type="range" id="sl-satMax" min="500" max="10000" step="100" value="5000" oninput="onSl('satMax',this,0)">
             <span class="input-val" id="dsp-satMax">5000</span>
           </div>
         </div>
-        <div class="input-group orange">
-          <label>飽和下限<span class="param-unit">W</span></label>
+        <div class="input-group orange" data-tip="プラントへの制御入力 u[k] の下限値 [W]。負の入力が不可など物理的制約を表す。通常は 0（送信停止以下にはならない）。">
+          <label>飽和下限 [W]</label>
           <div class="input-group-inline">
             <input type="range" id="sl-satMin" min="0" max="100" step="5" value="0" oninput="onSl('satMin',this,0)">
             <span class="input-val" id="dsp-satMin">0</span>
@@ -282,38 +330,38 @@ footer a:hover{text-decoration:underline}
     </div>
     <!-- ③ PID controller -->
     <div class="param-section">
-      <div class="param-section-title green">③ PIDコントローラー</div>
+      <div class="param-section-title green">③ PIDパラメーター</div>
       <div class="param-row">
-        <div class="input-group green">
-          <label>比例ゲイン Kp<span class="param-unit">—</span></label>
+        <div class="input-group green" data-tip="P（比例）ゲイン [—]。偏差に比例した制御量を出力する。大きいほど速い応答になるが、振動や不安定の原因になる。">
+          <label>P 比例ゲイン [—]</label>
           <div class="input-group-inline">
             <input type="range" id="sl-Kp" min="0" max="10" step="0.1" value="2.0" oninput="onSl('Kp',this,1)">
             <span class="input-val" id="dsp-Kp">2.0</span>
           </div>
         </div>
-        <div class="input-group green">
-          <label>積分ゲイン Ki<span class="param-unit">1/s</span></label>
+        <div class="input-group green" data-tip="I（積分）ゲイン [s⁻¹]。偏差の時間積分に比例した制御量を出力する。定常偏差を除去するが、大きすぎるとオーバーシュートが増大する。Tp=2 ms のプラントでは 100〜800 が目安。">
+          <label>I 積分ゲイン [s⁻¹]</label>
           <div class="input-group-inline">
             <input type="range" id="sl-Ki" min="0" max="2000" step="10" value="400" oninput="onSl('Ki',this,0)">
             <span class="input-val" id="dsp-Ki">400</span>
           </div>
         </div>
-        <div class="input-group green">
-          <label>微分ゲイン Kd<span class="param-unit">s</span></label>
+        <div class="input-group green" data-tip="D（微分）ゲイン [s]。偏差の変化率に比例した制御量を出力する。振動を抑制するが、ステップ入力時に「微分キック」が発生する。RF PA制御では Kd=0（PIのみ）が一般的。">
+          <label>D 微分ゲイン [s]</label>
           <div class="input-group-inline">
             <input type="range" id="sl-Kd" min="0" max="1" step="0.005" value="0.000" oninput="onSl('Kd',this,3)">
             <span class="input-val" id="dsp-Kd">0.000</span>
           </div>
         </div>
-        <div class="input-group purple">
-          <label>ILimit<span class="param-unit">W</span></label>
+        <div class="input-group purple" data-tip="アンチワインドアップ上限 [W]。積分項 I がこの値を超えるとクリップされる。小さすぎると積分の効きが弱く、大きすぎるとワインドアップ現象が発生する。">
+          <label>アンチワインドアップ [W]</label>
           <div class="input-group-inline">
-            <input type="range" id="sl-ILimit" min="0" max="2000" step="50" value="500" oninput="onSl('ILimit',this,0)">
+            <input type="range" id="sl-ILimit" min="0" max="5000" step="50" value="500" oninput="onSl('ILimit',this,0)">
             <span class="input-val" id="dsp-ILimit">500</span>
           </div>
         </div>
-        <div class="input-group purple">
-          <label>サンプリング Ts<span class="param-unit">ms</span></label>
+        <div class="input-group purple" data-tip="制御器のサンプリング周期 [ms]。小さいほど精度が高い。Ts > Tp/2 になるとオイラー積分が不安定になるため警告が出る。通常は Tp の 1/10 以下を推奨。">
+          <label>サンプリング Ts [ms]</label>
           <div class="input-group-inline">
             <input type="range" id="sl-Ts" min="0.01" max="1" step="0.01" value="0.1" oninput="onSl('Ts',this,2)">
             <span class="input-val" id="dsp-Ts">0.10</span>
@@ -328,12 +376,12 @@ footer a:hover{text-decoration:underline}
 <div class="panel">
   <div class="panel-header"><div class="dot" style="background:var(--green)"></div>出力波形 — Setpoint vs Output</div>
   <div class="cv-wrap" id="w1">
-    <canvas id="cv1" height="200"></canvas>
-    <canvas id="ov1" height="200" class="cv-overlay"></canvas>
+    <canvas id="cv1" height="220"></canvas>
+    <canvas id="ov1" height="220" class="cv-overlay"></canvas>
   </div>
   <div class="legend">
     <span class="legend-item"><span class="legend-dash" style="border-color:#9ca3af"></span>目標値 (Setpoint)</span>
-    <span class="legend-item"><span class="legend-swatch" style="background:var(--green)"></span>プラント出力 (Output) [W]</span>
+    <span class="legend-item"><span class="legend-swatch" style="background:var(--green)"></span>プラント出力 [W]</span>
     <span class="legend-item" style="margin-left:auto;color:var(--text-dim);font-size:9px">右軸: dBm</span>
   </div>
 </div>
@@ -342,8 +390,8 @@ footer a:hover{text-decoration:underline}
 <div class="panel">
   <div class="panel-header"><div class="dot" style="background:var(--gold)"></div>制御偏差 — Error [W]</div>
   <div class="cv-wrap" id="w2">
-    <canvas id="cv2" height="120"></canvas>
-    <canvas id="ov2" height="120" class="cv-overlay"></canvas>
+    <canvas id="cv2" height="130"></canvas>
+    <canvas id="ov2" height="130" class="cv-overlay"></canvas>
   </div>
   <div class="legend">
     <span class="legend-item"><span class="legend-swatch" style="background:var(--gold)"></span>偏差 e[k] = Setpoint − Output</span>
@@ -354,8 +402,8 @@ footer a:hover{text-decoration:underline}
 <div class="panel">
   <div class="panel-header"><div class="dot" style="background:var(--red)"></div>PID各成分 — Control Input Breakdown [W]</div>
   <div class="cv-wrap" id="w3">
-    <canvas id="cv3" height="120"></canvas>
-    <canvas id="ov3" height="120" class="cv-overlay"></canvas>
+    <canvas id="cv3" height="130"></canvas>
+    <canvas id="ov3" height="130" class="cv-overlay"></canvas>
   </div>
   <div class="legend">
     <span class="legend-item"><span class="legend-swatch" style="background:#3b82f6"></span>P成分</span>
@@ -367,57 +415,49 @@ footer a:hover{text-decoration:underline}
 
 <!-- Metrics -->
 <div class="result-section">
-  <div class="result-section-title"><div class="dot"></div>評価指標</div>
+  <div class="result-section-title"><div class="dot"></div>評価指標 <small>— カードをクリックで詳細表示</small></div>
   <div class="result-grid">
-    <div class="result-card hl2">
+    <div class="result-card" onclick="showMetricDetail('os')">
       <div class="rc-label">オーバーシュート</div>
-      <div class="rc-value orange" id="m-os">—</div>
+      <div class="rc-value" id="m-os">—</div>
       <div class="rc-unit">%</div>
+      <div class="rc-badge" id="b-os"></div>
     </div>
-    <div class="result-card">
+    <div class="result-card" onclick="showMetricDetail('ts')">
       <div class="rc-label">整定時間</div>
-      <div class="rc-value green" id="m-ts">—</div>
+      <div class="rc-value" id="m-ts">—</div>
       <div class="rc-unit">ms</div>
+      <div class="rc-badge" id="b-ts"></div>
     </div>
-    <div class="result-card">
+    <div class="result-card" onclick="showMetricDetail('tr')">
       <div class="rc-label">立ち上がり時間</div>
       <div class="rc-value" id="m-tr">—</div>
       <div class="rc-unit">ms</div>
+      <div class="rc-badge" id="b-tr"></div>
     </div>
-    <div class="result-card">
+    <div class="result-card" onclick="showMetricDetail('ss')">
       <div class="rc-label">定常偏差</div>
-      <div class="rc-value gold" id="m-ss">—</div>
+      <div class="rc-value" id="m-ss">—</div>
       <div class="rc-unit">W</div>
+      <div class="rc-badge" id="b-ss"></div>
     </div>
-    <div class="result-card">
+    <div class="result-card" onclick="showMetricDetail('itae')">
       <div class="rc-label">ITAE</div>
       <div class="rc-value" id="m-itae">—</div>
       <div class="rc-unit">W·ms²</div>
+      <div class="rc-badge" id="b-itae"></div>
     </div>
-    <div class="result-card">
+    <div class="result-card" onclick="showMetricDetail('energy')">
       <div class="rc-label">総制御エネルギー</div>
       <div class="rc-value" id="m-energy">—</div>
       <div class="rc-unit">W²·ms</div>
+      <div class="rc-badge" id="b-energy"></div>
     </div>
-  </div>
-</div>
-
-<!-- History log -->
-<div class="log-wrap">
-  <div class="log-header">
-    <div class="log-title">履歴ログ</div>
-    <div class="log-actions">
-      <button class="btn-sm" onclick="exportCSV()">⬇ CSV</button>
-      <button class="btn-sm danger" onclick="clearLog()">✕ クリア</button>
-    </div>
-  </div>
-  <div class="log-body" id="log-body">
-    <div class="log-entry"><span class="log-ts">——</span><span class="log-msg">パラメーターを変更するとログが記録されます</span></div>
   </div>
 </div>
 
 <footer>
-  <a href="index.html">← RF ツール一覧</a> &nbsp;|&nbsp; PID制御ビジュアライザー
+  <a href="../index.html">← RF ツール一覧</a> &nbsp;|&nbsp; PID制御ビジュアライザー
 </footer>
 </div><!-- /container -->
 
@@ -429,7 +469,7 @@ footer a:hover{text-decoration:underline}
 const S = {
   period:  10,    // ms
   duty:    50,    // %
-  levelH:  1000,  // W
+  levelH:  3000,  // W  (default changed to 3000)
   levelL:  0,     // W
   Kpplant: 1.0,
   Tp:      2.0,   // ms
@@ -437,8 +477,8 @@ const S = {
   satMax:  5000,  // W
   satMin:  0,     // W
   Kp:      2.0,
-  Ki:      400,   // 1/s  (NOTE: reasonable range is 100-800 for Tp=2ms plant)
-  Kd:      0.0,   // s    (use carefully: causes large "derivative kick" on step inputs)
+  Ki:      400,   // s⁻¹
+  Kd:      0.0,   // s
   ILimit:  500,   // W
   Ts:      0.1,   // ms
 };
@@ -449,23 +489,97 @@ const DECIMALS = {
   Kp:1, Ki:0, Kd:3, ILimit:0, Ts:2
 };
 
-// NOTE: Kd (derivative on error) causes a large "derivative kick" on step inputs
-// because D = Kd * Δe / Ts_s and Ts is small (0.1ms). For RF PA control, PI (Kd=0)
-// is typically used. Try increasing Kd via the slider to see the derivative kick effect.
 const PRESETS = {
-  tutorial:{ Kp:2.0, Ki:0,   Kd:0.000, ILimit:500,  Tp:2.0,  Lp:0.5, Kpplant:1.0, satMax:5000, satMin:0, Ts:0.1, period:10, duty:50, levelH:1000, levelL:0 },
-  // P-only (Ki=0): steady-state error = SP/(1+Kp·Kp_plant) = 333W — shows why I is needed
-  fast:    { Kp:3.0, Ki:400, Kd:0.000, ILimit:800,  Tp:2.0,  Lp:0.5, Kpplant:1.0, satMax:5000, satMin:0, Ts:0.1, period:10, duty:50, levelH:1000, levelL:0 },
-  // Aggressive PI: fast rise (tr≈0.6ms) with ~9% overshoot
-  optimal: { Kp:2.0, Ki:600, Kd:0.000, ILimit:500,  Tp:2.0,  Lp:0.5, Kpplant:1.0, satMax:5000, satMin:0, Ts:0.1, period:10, duty:50, levelH:1000, levelL:0 },
-  // Balanced PI: zero overshoot, settle ≈ 1–2ms — recommended starting point
-  slow:    { Kp:2.0, Ki:100, Kd:0.000, ILimit:500,  Tp:10.0, Lp:0.5, Kpplant:1.0, satMax:5000, satMin:0, Ts:0.1, period:40, duty:50, levelH:1000, levelL:0 },
-  // Slow amp (Tp=10ms): sluggish response, settle ≈ 20ms — shows large time-constant effect
-  windup:  { Kp:2.0, Ki:600, Kd:0.000, ILimit:2000, Tp:2.0,  Lp:1.0, Kpplant:0.8, satMax:5000, satMin:0, Ts:0.1, period:15, duty:50, levelH:1000, levelL:0 },
-  // Integral windup: large ILimit + longer dead time → I overshoots before anti-windup clamps
-  real:    { Kp:3.0, Ki:200, Kd:0.000, ILimit:500,  Tp:2.0,  Lp:0.5, Kpplant:1.0, satMax:5000, satMin:0, Ts:0.1, period:10, duty:50, levelH:1000, levelL:0 },
-  // Real RF PA: Tp=2ms, Lp=0.5ms — 5% OS, tr≈0.6ms, practical balance
+  tutorial:{ Kp:2.0, Ki:0,   Kd:0.000, ILimit:500,  Tp:2.0,  Lp:0.5, Kpplant:1.0, satMax:5000, satMin:0, Ts:0.1, period:10, duty:50, levelH:3000, levelL:0 },
+  fast:    { Kp:3.0, Ki:400, Kd:0.000, ILimit:800,  Tp:2.0,  Lp:0.5, Kpplant:1.0, satMax:5000, satMin:0, Ts:0.1, period:10, duty:50, levelH:3000, levelL:0 },
+  optimal: { Kp:2.0, Ki:600, Kd:0.000, ILimit:500,  Tp:2.0,  Lp:0.5, Kpplant:1.0, satMax:5000, satMin:0, Ts:0.1, period:10, duty:50, levelH:3000, levelL:0 },
+  slow:    { Kp:2.0, Ki:100, Kd:0.000, ILimit:500,  Tp:10.0, Lp:0.5, Kpplant:1.0, satMax:5000, satMin:0, Ts:0.1, period:40, duty:50, levelH:3000, levelL:0 },
+  windup:  { Kp:2.0, Ki:600, Kd:0.000, ILimit:2000, Tp:2.0,  Lp:1.0, Kpplant:0.8, satMax:5000, satMin:0, Ts:0.1, period:15, duty:50, levelH:3000, levelL:0 },
+  real:    { Kp:3.0, Ki:200, Kd:0.000, ILimit:500,  Tp:2.0,  Lp:0.5, Kpplant:1.0, satMax:5000, satMin:0, Ts:0.1, period:10, duty:50, levelH:3000, levelL:0 },
 };
+
+// ============================================================
+// METRIC INFO (for modal)
+// ============================================================
+const METRIC_INFO = {
+  os: {
+    name: 'オーバーシュート',
+    formula: 'OS = (y_max − y_H) / (y_H − y_L) × 100 [%]',
+    unit: '%',
+    desc: '目標値を超えて行き過ぎる割合。RFアンプ制御では過大な出力が素子を破損させるため、できるだけ低く抑えることが重要。Kp や Ki を下げると減少する。',
+    ranges: [
+      { label: '優良', val: '0 〜 5%',  color: '#16a34a' },
+      { label: '良好', val: '5 〜 15%', color: '#d97706' },
+      { label: '要改善', val: '> 15%',  color: '#dc2626' },
+    ],
+    score: m => Math.max(0, 1 - m.os / 15),
+  },
+  ts: {
+    name: '整定時間',
+    formula: 'ts = 出力が目標値の ±2% 帯域に最後に入った時刻',
+    unit: 'ms',
+    desc: '出力が目標値の ±2% 以内に収まって安定するまでの時間。短いほど高速な制御。Kp・Ki を大きくすると短くなるが、オーバーシュートとのトレードオフ。',
+    ranges: [
+      { label: '優良', val: '< 周期の20%',  color: '#16a34a' },
+      { label: '良好', val: '< 周期の50%',  color: '#d97706' },
+      { label: '要改善', val: '> 周期の50%', color: '#dc2626' },
+    ],
+    score: m => m.ts <= 0 ? 1 : Math.max(0, 1 - m.ts / (S.period * 0.5)),
+  },
+  tr: {
+    name: '立ち上がり時間',
+    formula: 'tr = y が 90% に達した時刻 − y が 10% に達した時刻',
+    unit: 'ms',
+    desc: '出力が目標値の 10% から 90% に達するまでの時間。最初のステップ応答で計測。Kp を大きくすると短くなるが振動が生じやすい。',
+    ranges: [
+      { label: '優良', val: '< 周期の15%',  color: '#16a34a' },
+      { label: '良好', val: '< 周期の40%',  color: '#d97706' },
+      { label: '遅い', val: '> 周期の40%', color: '#dc2626' },
+    ],
+    score: m => m.tr < 0 ? 0.3 : Math.max(0, 1 - m.tr / (S.period * 0.4)),
+  },
+  ss: {
+    name: '定常偏差',
+    formula: 'ss = mean |e[k]| （シミュレーション末尾 20%、HIGH フェーズのみ）',
+    unit: 'W',
+    desc: '整定後に残る目標値との差。積分項（I）があると理論上ゼロになる。Ki=0（P のみ）の場合は必ず残差が生じる。ワインドアップや時定数の影響でも増大する。',
+    ranges: [
+      { label: '優良', val: '< 目標の 1%',  color: '#16a34a' },
+      { label: '良好', val: '< 目標の 5%',  color: '#d97706' },
+      { label: '要改善', val: '> 目標の 5%', color: '#dc2626' },
+    ],
+    score: m => {
+      const range = S.levelH - S.levelL;
+      return range > 0 ? Math.max(0, 1 - m.ss / (range * 0.05)) : 0.5;
+    },
+  },
+  itae: {
+    name: 'ITAE（時間加重絶対偏差積分）',
+    formula: 'ITAE = Σ t·|e[k]|·Ts',
+    unit: 'W·ms²',
+    desc: '時間が経過するほど偏差に大きなペナルティを与える評価指標。小さいほど「早く・正確に整定できている」ことを示す。PID チューニングの最適化指標として広く使用される。',
+    ranges: [
+      { label: '小さいほど良い', val: '↓', color: '#0284c7' },
+      { label: '', val: '', color: 'transparent' },
+      { label: '', val: '', color: 'transparent' },
+    ],
+    score: () => 0.6,
+  },
+  energy: {
+    name: '総制御エネルギー',
+    formula: 'E = Σ u[k]²·Ts',
+    unit: 'W²·ms',
+    desc: '制御入力 u[k] の 2 乗和（積分）。大きいほど激しい制御動作を示す。速い応答は一般にエネルギーが高く、穏やかな制御は低い。エネルギー効率の評価に使用。',
+    ranges: [
+      { label: '小さいほど良い', val: '↓', color: '#0284c7' },
+      { label: '', val: '', color: 'transparent' },
+      { label: '', val: '', color: 'transparent' },
+    ],
+    score: () => 0.6,
+  },
+};
+
+let _lastMetrics = null;
 
 // ============================================================
 // SIMULATION
@@ -491,17 +605,12 @@ function simulate() {
   const D  = new Float32Array(N);
   const u  = new Float32Array(N);
 
-  // Dead-time ring buffer (FIFO, size = delaySteps)
   const delaySteps = Math.max(0, Math.round(Lp / Ts));
   const dbuf = delaySteps > 0 ? new Float32Array(delaySteps).fill(0) : null;
   let dIdx = 0;
 
-  // Stability ratio for Euler integration
-  const ratio = Ts_s / Tp_s;
-
-  let integral = 0;
-  let prevErr  = 0;
-  let yPrev    = levelL;
+  let integral = 0, yPrev = levelL, ePrev = 0;
+  const ratio = Tp_s > 0 ? Ts_s / Tp_s : 1;
 
   for (let k = 0; k < N; k++) {
     const tk = k * Ts;
@@ -509,33 +618,29 @@ function simulate() {
     const tMod = tk % period;
     sp[k] = tMod < (duty * 0.01) * period ? levelH : levelL;
 
-    // PID
     const e = sp[k] - yPrev;
     er[k] = e;
     integral = clamp(integral + Ki * e * Ts_s, -ILimit, ILimit);
-    const dTerm = Kd * (e - prevErr) / Ts_s;
-    const uRaw  = Kp * e + integral + dTerm;
+    const dTerm = Kd * (e - ePrev) / Ts_s;
+    const uRaw = Kp * e + integral + dTerm;
     u[k] = clamp(uRaw, satMin, satMax);
+
     P[k] = Kp * e;
     I[k] = integral;
     D[k] = dTerm;
-    prevErr = e;
 
-    // Dead time
     let uDel;
     if (dbuf) {
-      uDel = dbuf[dIdx];
-      dbuf[dIdx] = u[k];
+      uDel = dbuf[dIdx]; dbuf[dIdx] = u[k];
       dIdx = (dIdx + 1) % delaySteps;
-    } else {
-      uDel = u[k];
-    }
+    } else { uDel = u[k]; }
 
-    // First-order lag plant (Euler, capped at ratio≤0.95 for stability)
     const r = Math.min(ratio, 0.95);
     y[k] = yPrev + r * (Kpplant * uDel - yPrev);
     y[k] = clamp(y[k], satMin, satMax);
+
     yPrev = y[k];
+    ePrev = e;
   }
 
   return { t, sp, y, er, P, I, D, u, N, totalTime };
@@ -550,7 +655,7 @@ function calcMetrics(d) {
   const range = levelH - levelL;
   if (range <= 0) return { os:0, tr:-1, ts:-1, ss:0, itae:0, energy:0 };
 
-  const hiEnd = period * duty * 0.01;   // end of first HIGH phase [ms]
+  const hiEnd = period * duty * 0.01;
 
   // Overshoot: max output during first HIGH phase
   let maxOut = -Infinity;
@@ -559,7 +664,7 @@ function calcMetrics(d) {
   }
   const os = maxOut > levelH ? (maxOut - levelH) / range * 100 : 0;
 
-  // Rise time: 10% → 90% of range
+  // Rise time: 10% → 90% in first HIGH phase
   const lo10 = levelL + range * 0.1, hi90 = levelL + range * 0.9;
   let t10 = -1, t90 = -1;
   for (let k = 0; k < N && t[k] <= hiEnd; k++) {
@@ -569,7 +674,6 @@ function calcMetrics(d) {
   const tr = (t10 >= 0 && t90 >= 0) ? t90 - t10 : -1;
 
   // Settling time: last exit from ±2% band across ALL HIGH-phase samples
-  // Exclude boundary sample at exactly totalTime (tMod=0 starts a new period, y not yet settled)
   const band = range * 0.02;
   let lastOut = -1;
   for (let k = 0; k < N; k++) {
@@ -579,7 +683,7 @@ function calcMetrics(d) {
   }
   const ts = lastOut >= 0 ? t[Math.min(lastOut + 1, N - 1)] : 0;
 
-  // Steady-state error: mean |err| in last 20% of TOTAL simulation time, HIGH phase only
+  // Steady-state error: last 20% of total simulation, HIGH phase only
   const ssStart = d.totalTime * 0.8;
   let ssSum = 0, ssCnt = 0;
   for (let k = 0; k < N; k++) {
@@ -589,16 +693,107 @@ function calcMetrics(d) {
   }
   const ss = ssCnt > 0 ? ssSum / ssCnt : 0;
 
-  // ITAE  [W·ms²]
+  // ITAE
   let itae = 0;
   for (let k = 0; k < N; k++) itae += t[k] * Math.abs(er[k]) * Ts;
 
-  // Control energy  [W²·ms]
+  // Control energy
   let energy = 0;
   for (let k = 0; k < N; k++) energy += u[k] * u[k] * Ts;
 
   return { os, tr, ts, ss, itae, energy };
 }
+
+// ============================================================
+// METRIC COLORING
+// ============================================================
+function scoreToColor(score) {
+  // blue (220°) at score=1, red (0°) at score=0
+  const hue = Math.round(score * 220);
+  return `hsl(${hue},75%,48%)`;
+}
+
+function scoreToBadge(score) {
+  if (score >= 0.75) return { text:'優良', bg:'#16a34a' };
+  if (score >= 0.45) return { text:'良好', bg:'#d97706' };
+  return { text:'要改善', bg:'#dc2626' };
+}
+
+function updateMetricColors(m) {
+  const keys = ['os','ts','tr','ss','itae','energy'];
+  for (const key of keys) {
+    const info = METRIC_INFO[key];
+    const score = info.score(m);
+    const color = scoreToColor(score);
+    const valEl = document.getElementById('m-' + key);
+    const badgeEl = document.getElementById('b-' + key);
+    if (valEl) valEl.style.color = color;
+    if (badgeEl) {
+      const b = scoreToBadge(score);
+      if (key === 'itae' || key === 'energy') {
+        badgeEl.textContent = '';
+        badgeEl.style.background = 'transparent';
+      } else {
+        badgeEl.textContent = b.text;
+        badgeEl.style.background = b.bg;
+        badgeEl.style.color = '#fff';
+      }
+    }
+  }
+}
+
+// ============================================================
+// METRIC MODAL
+// ============================================================
+function showMetricDetail(key) {
+  if (!_lastMetrics) return;
+  const info = METRIC_INFO[key];
+  const m = _lastMetrics;
+
+  // Value text
+  const el = document.getElementById('m-' + key);
+  const valText = el ? el.textContent : '—';
+  const unitText = { os:'%', ts:'ms', tr:'ms', ss:'W', itae:'W·ms²', energy:'W²·ms' }[key];
+
+  const score = info.score(m);
+  const color = scoreToColor(score);
+
+  document.getElementById('modal-name').textContent = info.name;
+  document.getElementById('modal-value').textContent = valText;
+  document.getElementById('modal-value').style.color = color;
+  document.getElementById('modal-unit').textContent = '[' + unitText + ']';
+  document.getElementById('modal-formula').textContent = info.formula;
+  document.getElementById('modal-desc').textContent = info.desc;
+
+  // Ranges
+  const rangesEl = document.getElementById('modal-ranges');
+  rangesEl.innerHTML = info.ranges.map(r => r.label ? `
+    <div class="modal-range" style="background:${r.color}">
+      <div class="modal-range-label">${r.label}</div>
+      <div class="modal-range-val">${r.val}</div>
+    </div>` : '<div></div>').join('');
+
+  // Judge
+  const judgeEl = document.getElementById('modal-judge');
+  if (key !== 'itae' && key !== 'energy') {
+    const b = scoreToBadge(score);
+    judgeEl.textContent = `現在の評価: ${b.text}`;
+    judgeEl.style.background = b.bg + '22';
+    judgeEl.style.color = b.bg;
+    judgeEl.style.border = `1px solid ${b.bg}66`;
+    judgeEl.style.display = 'block';
+  } else {
+    judgeEl.style.display = 'none';
+  }
+
+  document.getElementById('metric-modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('metric-modal').classList.remove('open');
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
 // ============================================================
 // CANVAS HELPERS
@@ -674,7 +869,6 @@ function drawAxes(ctx, w, h, yLo, yHi, yTicks, xMax, col, showDbm) {
 
   ctx.font = '10px "Space Mono",monospace';
 
-  // Horizontal grid + left Y labels
   ctx.strokeStyle = col.grid;
   ctx.lineWidth = 1;
   ctx.setLineDash([3, 4]);
@@ -689,7 +883,6 @@ function drawAxes(ctx, w, h, yLo, yHi, yTicks, xMax, col, showDbm) {
     ctx.fillText(fmtVal(yv), PAD.l - 5, py);
   }
 
-  // Right Y labels: dBm
   if (showDbm) {
     ctx.textAlign = 'left';
     for (const yv of yTicks) {
@@ -701,7 +894,6 @@ function drawAxes(ctx, w, h, yLo, yHi, yTicks, xMax, col, showDbm) {
     }
   }
 
-  // Vertical grid + X labels
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
   const xSteps = 6;
@@ -713,12 +905,10 @@ function drawAxes(ctx, w, h, yLo, yHi, yTicks, xMax, col, showDbm) {
   }
   ctx.setLineDash([]);
 
-  // Border
   ctx.strokeStyle = col.text + '40';
   ctx.lineWidth = 1;
   ctx.strokeRect(PAD.l, PAD.t, cw, ch);
 
-  // Axis unit labels
   ctx.fillStyle = col.text;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'bottom';
@@ -733,7 +923,6 @@ function drawAxes(ctx, w, h, yLo, yHi, yTicks, xMax, col, showDbm) {
   return { toY, toX, cw, ch };
 }
 
-// Draw a step-function line (setpoint is a rectangular pulse)
 function drawStepLine(ctx, t, arr, N, toX, toY, color, width, dash) {
   ctx.strokeStyle = color;
   ctx.lineWidth = width;
@@ -741,8 +930,8 @@ function drawStepLine(ctx, t, arr, N, toX, toY, color, width, dash) {
   ctx.beginPath();
   ctx.moveTo(toX(t[0]), toY(arr[0]));
   for (let k = 1; k < N; k++) {
-    ctx.lineTo(toX(t[k]), toY(arr[k - 1])); // horizontal
-    ctx.lineTo(toX(t[k]), toY(arr[k]));     // vertical
+    ctx.lineTo(toX(t[k]), toY(arr[k - 1]));
+    ctx.lineTo(toX(t[k]), toY(arr[k]));
   }
   ctx.stroke();
   ctx.setLineDash([]);
@@ -760,7 +949,6 @@ function drawLine(ctx, t, arr, N, toX, toY, color, width) {
   ctx.stroke();
 }
 
-// Draw zero line
 function drawZero(ctx, w, toY, col) {
   const py = toY(0);
   ctx.strokeStyle = col.zero;
@@ -833,7 +1021,6 @@ function drawCv3() {
   drawLine(ctx, t, u, N, toX, toY, col.U, 2);
 }
 
-// Overlay crosshairs
 function drawOverlays() {
   drawOv('ov1', 'cv1');
   drawOv('ov2', 'cv2');
@@ -896,7 +1083,6 @@ function setupCrosshair() {
           `err: ${er[k].toFixed(1)} W &nbsp; u: ${u[k].toFixed(0)} W<br>` +
           `P: ${P[k].toFixed(0)} &nbsp; I: ${I[k].toFixed(0)} &nbsp; D: ${D[k].toFixed(0)}`;
         tip.style.display = 'block';
-        // Position tooltip (avoid overflow)
         const tw = 200, th = 80;
         const tx = e.clientX + 16 + tw > window.innerWidth ? e.clientX - tw - 8 : e.clientX + 16;
         const ty = e.clientY - 10 + th > window.innerHeight ? e.clientY - th - 4 : e.clientY - 10;
@@ -931,7 +1117,7 @@ function setupCrosshair() {
 function onSl(key, el, dec) {
   S[key] = parseFloat(el.value);
   document.getElementById('dsp-' + key).textContent = S[key].toFixed(dec);
-  update(true);
+  update();
 }
 
 function syncUI() {
@@ -953,22 +1139,19 @@ function applyPreset(btn, name) {
   syncUI();
   document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  update(false);
+  update();
 }
 
 // ============================================================
 // UPDATE
 // ============================================================
-let logEntries = [];
-let logFirstRun = true;
-
-function update(doLog) {
-  // Stability warning
+function update() {
   document.getElementById('warn-stability').style.display =
     S.Ts > S.Tp * 0.5 ? 'block' : 'none';
 
   simData = simulate();
   const m = calcMetrics(simData);
+  _lastMetrics = m;
 
   document.getElementById('m-os').textContent     = m.os.toFixed(1);
   document.getElementById('m-ts').textContent     = m.ts >= 0 ? m.ts.toFixed(2) : '—';
@@ -977,9 +1160,9 @@ function update(doLog) {
   document.getElementById('m-itae').textContent   = fmtSci(m.itae);
   document.getElementById('m-energy').textContent = fmtSci(m.energy);
 
+  updateMetricColors(m);
   schedDraw();
   saveState();
-  if (doLog) addLog(m);
 }
 
 function fmtSci(v) {
@@ -987,54 +1170,6 @@ function fmtSci(v) {
   const e = Math.floor(Math.log10(Math.abs(v)));
   const m = v / Math.pow(10, e);
   return m.toFixed(2) + 'e' + e;
-}
-
-// ============================================================
-// LOG
-// ============================================================
-function addLog(m) {
-  const ts  = new Date().toLocaleTimeString('ja-JP');
-  const msg = `Kp=${S.Kp} Ki=${S.Ki} Kd=${S.Kd.toFixed(3)} Tp=${S.Tp}ms | OS=${m.os.toFixed(1)}% settle=${m.ts >= 0 ? m.ts.toFixed(2) : '—'}ms`;
-  logEntries.push({ ts, state: { ...S }, metrics: m });
-
-  const body = document.getElementById('log-body');
-  if (logFirstRun) { body.innerHTML = ''; logFirstRun = false; }
-  const div = document.createElement('div');
-  div.className = 'log-entry';
-  div.innerHTML = `<span class="log-ts">${ts}</span><span class="log-msg">${msg}</span>`;
-  body.appendChild(div);
-  body.scrollTop = body.scrollHeight;
-
-  if (logEntries.length > 100) {
-    logEntries.shift();
-    body.removeChild(body.firstChild);
-  }
-}
-
-function clearLog() {
-  logEntries = []; logFirstRun = true;
-  document.getElementById('log-body').innerHTML =
-    '<div class="log-entry"><span class="log-ts">——</span><span class="log-msg">ログをクリアしました</span></div>';
-}
-
-// ============================================================
-// CSV EXPORT
-// ============================================================
-function exportCSV() {
-  if (!simData) return;
-  const { t, sp, y, er, P, I, D, u, N } = simData;
-  const rows = ['time_ms,setpoint_W,output_W,error_W,P_W,I_W,D_W,u_W'];
-  for (let k = 0; k < N; k++) {
-    rows.push([t[k].toFixed(4), sp[k].toFixed(2), y[k].toFixed(3),
-               er[k].toFixed(3), P[k].toFixed(3), I[k].toFixed(3),
-               D[k].toFixed(3), u[k].toFixed(3)].join(','));
-  }
-  const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `pid_Kp${S.Kp}_Ki${S.Ki}_Kd${S.Kd.toFixed(3)}.csv`;
-  a.click();
-  URL.revokeObjectURL(a.href);
 }
 
 // ============================================================
@@ -1057,7 +1192,6 @@ function loadState() {
     const s = localStorage.getItem('pid-state');
     if (s) {
       const parsed = JSON.parse(s);
-      // Only load keys we know about
       for (const k of Object.keys(S)) { if (k in parsed) S[k] = parsed[k]; }
     }
   } catch(e) {}
@@ -1073,13 +1207,11 @@ loadState();
 syncUI();
 setupCrosshair();
 
-// Initial draw: ResizeObserver fires once when element is first measured,
-// with a setTimeout(0) to let the layout commit first.
 let _initDone = false;
 function _initDraw() {
   if (_initDone) return;
   _initDone = true;
-  update(false);
+  update();
 }
 if (window.ResizeObserver) {
   const ro = new ResizeObserver(() => {
@@ -1088,7 +1220,6 @@ if (window.ResizeObserver) {
   });
   ro.observe(document.getElementById('cv1'));
 }
-// Fallback: also run on load event (covers cases where RO fires too late)
 window.addEventListener('load', () => setTimeout(_initDraw, 0));
 
 let resizeTimer;
