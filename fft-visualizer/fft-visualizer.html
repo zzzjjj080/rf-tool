@@ -110,6 +110,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
 .panel-label{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);margin-bottom:8px;min-height:14px}
 #cvw{width:100%;aspect-ratio:1;display:block;max-height:min(54vh,520px);max-width:min(54vh,520px)}
 #cvs{width:100%;height:160px;display:block}
+.winding-panel{display:flex;gap:12px;align-items:flex-start}
+.winfo{flex:1;min-width:100px;padding-top:2px;display:flex;flex-direction:column;gap:6px}
+.ib{background:var(--bg3);border-radius:var(--radius-sm);padding:8px 10px}
+.ib-label{font-size:10px;letter-spacing:.05em;color:var(--text3);margin-bottom:3px;text-transform:uppercase}
+.ib-val{font-size:15px;color:var(--blue);font-weight:500;letter-spacing:.02em}
+.ib-sub{font-size:10px;color:var(--text3);margin-top:2px}
 </style>
 </head>
 <body>
@@ -145,8 +151,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
     </div>
     <div class="spd-row">
       <span>速度</span>
-      <input type="range" id="sls" min="1" max="5" value="4" oninput="updS()">
-      <span id="sv">×0.4</span>
+      <input type="range" id="sls" min="1" max="5" value="1" oninput="updS()">
+      <span id="sv">×0.1</span>
     </div>
     <div class="prog-wrap"><div id="pg"></div></div>
     <div class="status" id="st">待機中</div>
@@ -172,9 +178,32 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
     <canvas id="cvc"></canvas>
   </div>
   <div class="panels">
-    <div class="panel">
-      <div class="panel-label" id="wt">巻きつけ平面</div>
-      <canvas id="cvw"></canvas>
+    <div class="panel winding-panel">
+      <div style="flex:0 0 auto">
+        <div class="panel-label" id="wt">巻きつけ平面</div>
+        <canvas id="cvw"></canvas>
+      </div>
+      <div class="winfo">
+        <div class="ib">
+          <div class="ib-label">巻きつけ周波数</div>
+          <div class="ib-val" id="inf-fw">—</div>
+        </div>
+        <div class="ib">
+          <div class="ib-label">全回転数</div>
+          <div class="ib-val" id="inf-turns">—</div>
+          <div class="ib-sub" id="inf-sub">fw × T 秒</div>
+        </div>
+        <div class="ib">
+          <div class="ib-label">重心距離  |X(f)|</div>
+          <div class="ib-val" id="inf-mag">—</div>
+          <div class="ib-sub">スペクトルの高さに対応</div>
+        </div>
+        <div class="ib">
+          <div class="ib-label">位相  ∠X(f)</div>
+          <div class="ib-val" id="inf-phase">—</div>
+          <div class="ib-sub">重心の方向（複素角度）</div>
+        </div>
+      </div>
     </div>
     <div style="display:flex;flex-direction:column;gap:8px">
       <div class="panel">
@@ -459,6 +488,12 @@ function frame(){
   document.getElementById('pg').style.width=(fw/FM*100).toFixed(1)+'%';
   document.getElementById('wt').textContent=`巻きつけ中… ${fw.toFixed(2)} Hz`;
   document.getElementById('st').textContent=`f = ${fw.toFixed(2)} Hz  |  |X| = ${m.toFixed(3)}`;
+  const turns=fw*T;const phase=Math.atan2(ry,rx)*180/Math.PI;
+  document.getElementById('inf-fw').textContent=fw.toFixed(2)+' Hz';
+  document.getElementById('inf-turns').textContent=turns.toFixed(2)+'  回転';
+  document.getElementById('inf-sub').textContent=fw.toFixed(2)+' Hz × '+T+'s = '+turns.toFixed(2);
+  document.getElementById('inf-mag').textContent=m.toFixed(4);
+  document.getElementById('inf-phase').textContent=phase.toFixed(1)+'°';
   if(fw>=FM){
     ph='done';document.getElementById('btn').textContent='↺ もう一度';
     document.getElementById('wt').textContent='完成！ピークが設定周波数に一致';
@@ -493,6 +528,8 @@ function rst(){
   document.getElementById('pg').style.width='0%';
   const cv=document.getElementById('cvw'),d=dpr(),SZ=cv.offsetWidth;
   cv.width=SZ*d;cv.height=SZ*d;cv.getContext('2d').clearRect(0,0,cv.width,cv.height);
+  ['inf-fw','inf-turns','inf-mag','inf-phase'].forEach(id=>document.getElementById(id).textContent='—');
+  document.getElementById('inf-sub').textContent='fw × T 秒';
   drawSp();drawP();
 }
 function upd(){rd();bld();drawComp();rst();}
