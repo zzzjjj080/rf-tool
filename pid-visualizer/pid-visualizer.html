@@ -497,12 +497,12 @@ const DECIMALS = {
 };
 
 const PRESETS = {
-  tutorial:{ Kp:2.0, Ki:0,   Kd:0.000, ILimit:500,  Tp:2.0,  Lp:0.5, Kpplant:1.0, satMax:5000, satMin:0, Ts:0.1, period:10, duty:50, levelH:3000, levelL:0 },
-  fast:    { Kp:3.0, Ki:400, Kd:0.000, ILimit:800,  Tp:2.0,  Lp:0.5, Kpplant:1.0, satMax:5000, satMin:0, Ts:0.1, period:10, duty:50, levelH:3000, levelL:0 },
-  optimal: { Kp:2.0, Ki:600, Kd:0.000, ILimit:500,  Tp:2.0,  Lp:0.5, Kpplant:1.0, satMax:5000, satMin:0, Ts:0.1, period:10, duty:50, levelH:3000, levelL:0 },
-  slow:    { Kp:2.0, Ki:100, Kd:0.000, ILimit:500,  Tp:10.0, Lp:0.5, Kpplant:1.0, satMax:5000, satMin:0, Ts:0.1, period:40, duty:50, levelH:3000, levelL:0 },
-  windup:  { Kp:2.0, Ki:600, Kd:0.000, ILimit:2000, Tp:2.0,  Lp:1.0, Kpplant:0.8, satMax:5000, satMin:0, Ts:0.1, period:15, duty:50, levelH:3000, levelL:0 },
-  real:    { Kp:3.0, Ki:200, Kd:0.000, ILimit:500,  Tp:2.0,  Lp:0.5, Kpplant:1.0, satMax:5000, satMin:0, Ts:0.1, period:10, duty:50, levelH:3000, levelL:0 },
+  tutorial:{ Kp:2.0, Ki:0,    Kd:0.000, ILimit:500,   Tp:2.0, Lp:0.5, Kpplant:1.0, satMax:5000, satMin:0, Ts:0.1, period:10, duty:50, levelH:3000, levelL:0 },
+  fast:    { Kp:5.0, Ki:1000, Kd:0.000, ILimit:3500,  Tp:2.0, Lp:0.2, Kpplant:1.0, satMax:5000, satMin:0, Ts:0.1, period:10, duty:50, levelH:3000, levelL:0 },
+  optimal: { Kp:6.0, Ki:1500, Kd:0.000, ILimit:3500,  Tp:1.5, Lp:0.1, Kpplant:1.0, satMax:5000, satMin:0, Ts:0.1, period:10, duty:50, levelH:3000, levelL:0 },
+  slow:    { Kp:5.0, Ki:250,  Kd:0.000, ILimit:3500,  Tp:8.0, Lp:0.5, Kpplant:1.0, satMax:5000, satMin:0, Ts:0.1, period:40, duty:50, levelH:3000, levelL:0 },
+  windup:  { Kp:2.0, Ki:600,  Kd:0.000, ILimit:10000, Tp:2.0, Lp:2.0, Kpplant:1.0, satMax:5000, satMin:0, Ts:0.1, period:20, duty:50, levelH:3000, levelL:0 },
+  real:    { Kp:4.0, Ki:800,  Kd:0.000, ILimit:3500,  Tp:2.0, Lp:0.5, Kpplant:1.0, satMax:5000, satMin:0, Ts:0.1, period:10, duty:50, levelH:3000, levelL:0 },
 };
 
 // ============================================================
@@ -680,21 +680,21 @@ function calcMetrics(d) {
   }
   const tr = (t10 >= 0 && t90 >= 0) ? t90 - t10 : -1;
 
-  // Settling time: last exit from ±2% band across ALL HIGH-phase samples
+  // Settling time: first HIGH phase only (educational step-response metric)
   const band = range * 0.02;
   let lastOut = -1;
-  for (let k = 0; k < N; k++) {
+  for (let k = 0; k < N && t[k] <= hiEnd; k++) {
     if (sp[k] < levelH) continue;
-    if (t[k] >= d.totalTime) continue;
     if (Math.abs(y[k] - levelH) > band) lastOut = k;
   }
   const ts = lastOut >= 0 ? t[Math.min(lastOut + 1, N - 1)] : 0;
 
-  // Steady-state error: last 20% of total simulation, HIGH phase only
-  const ssStart = d.totalTime * 0.8;
+  // Steady-state error: last 50% of first HIGH phase (system has settled there)
+  const ssWinStart = hiEnd * 0.5;
+  const ssWinEnd   = hiEnd;
   let ssSum = 0, ssCnt = 0;
-  for (let k = 0; k < N; k++) {
-    if (t[k] < ssStart || sp[k] < levelH) continue;
+  for (let k = 0; k < N && t[k] <= ssWinEnd; k++) {
+    if (t[k] < ssWinStart || sp[k] < levelH) continue;
     ssSum += Math.abs(er[k]);
     ssCnt++;
   }
