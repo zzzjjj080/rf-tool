@@ -217,7 +217,7 @@ const CLR=['#1D9E75','#D85A30','#7c6fcd'];
 const N=240,T=2,FM=13,STEP=0.04;
 const SVM=[0.1,0.2,0.3,0.4,0.5],SLB=['×0.1','×0.2','×0.3','×0.4','×0.5'];
 let SG=[{A:1,f:2,en:true},{A:.6,f:5,en:false},{A:.4,f:8,en:false}];
-let sig=[],sigMin=0,sigMax=0,sp=[],ph='idle',fw=0,raf=null,compressT=0,compressRaf=null,dropLine=null,dropRaf=null;
+let sig=[],sigMin=0,sigMax=0,sp=[],spHoverX=null,ph='idle',fw=0,raf=null,compressT=0,compressRaf=null,dropLine=null,dropRaf=null;
 const dpr=()=>window.devicePixelRatio||1;
 const mA=()=>Math.max(SG.reduce((s,g)=>s+(g.en?g.A:0),0),.01);
 const isDark=()=>document.body.classList.contains('dark');
@@ -240,7 +240,10 @@ function bld(){
     const t=k/N*T;
     sig.push(SG.reduce((s,g)=>s+(g.en?g.A:0)*Math.sin(2*Math.PI*g.f*t),0));
   }
-  sigMin=Math.min(...sig);
+  // Rotate to start at minimum → radius=0 at start (no floating tail)
+  let mi=0;for(let k=1;k<=N;k++)if(sig[k]<sig[mi])mi=k;
+  sig=[...sig.slice(mi),...sig.slice(0,mi)];
+  sigMin=sig[0];
   sigMax=Math.max(...sig);
 }
 
@@ -373,6 +376,12 @@ function wpts(f,n){
   for(let k=0;k<=Math.min(n,N);k++){const t2=k/N*T,v=(sig[k]-sigMin)/rng,a=2*Math.PI*f*t2-Math.PI/2;r.push([v*Math.cos(a),v*Math.sin(a)]);}
   return r;
 }
+// Unshifted winding — for correct centroid magnitude (no DC contamination)
+function wptsOrig(f,n){
+  const ma=mA(),r=[];
+  for(let k=0;k<=Math.min(n,N);k++){const t2=k/N*T,v=sig[k]/ma,a=2*Math.PI*f*t2-Math.PI/2;r.push([v*Math.cos(a),v*Math.sin(a)]);}
+  return r;
+}
 function cg(P){let rx=0,ry=0;P.forEach(p=>{rx+=p[0];ry+=p[1];});const n=P.length||1;return[rx/n,ry/n];}
 
 function drawW(f,n){
@@ -402,9 +411,9 @@ function drawW(f,n){
   // Moving dot
   ctx.beginPath();ctx.fillStyle='#3fcfab';ctx.arc(cx+lp[0]*sc,cy+lp[1]*sc,5,0,Math.PI*2);ctx.fill();
   ctx.beginPath();ctx.strokeStyle='rgba(63,207,171,.3)';ctx.lineWidth=2;ctx.arc(cx+lp[0]*sc,cy+lp[1]*sc,8,0,Math.PI*2);ctx.stroke();
-  // Centroid — BLUE (same as spectrum line)
-  const[rx,ry]=cg(P),DS=3;
-  const cmx=Math.max(8,Math.min(SZ-8,cx+rx*sc*DS)),cmy=Math.max(8,Math.min(SZ-8,cy+ry*sc*DS));
+  // Centroid — BLUE. Use unshifted winding for correct magnitude (no DC spike)
+  const Po=wptsOrig(f,n),[orx,ory]=cg(Po),DS=3;
+  const cmx=Math.max(8,Math.min(SZ-8,cx+orx*sc*DS)),cmy=Math.max(8,Math.min(SZ-8,cy+ory*sc*DS));
   ctx.beginPath();ctx.setLineDash([5,3]);ctx.lineWidth=2.8;ctx.strokeStyle='rgba(58,126,240,.9)';
   ctx.moveTo(cx,cy);ctx.lineTo(cmx,cmy);ctx.stroke();ctx.setLineDash([]);
   ctx.beginPath();ctx.fillStyle='#3a7ef0';ctx.arc(cmx,cmy,6,0,Math.PI*2);ctx.fill();
@@ -412,7 +421,7 @@ function drawW(f,n){
   // Origin dot
   ctx.beginPath();ctx.fillStyle=tc('rgba(255,255,255,.22)','rgba(0,0,0,.22)');ctx.arc(cx,cy,3,0,Math.PI*2);ctx.fill();
   // Labels
-  const mag=Math.sqrt(rx*rx+ry*ry)*(sigMax-sigMin||0.001);
+  const mag=Math.sqrt(orx*orx+ory*ory)*mA();
   ctx.font='9px monospace';
   ctx.fillStyle=GL;ctx.fillText(`fw=${f.toFixed(2)}Hz`,4,SZ-4);
   ctx.textAlign='right';ctx.fillStyle='rgba(58,126,240,.85)';ctx.fillText(`|X|=${mag.toFixed(3)}`,SZ-4,SZ-4);ctx.textAlign='left';
@@ -421,7 +430,7 @@ function drawW(f,n){
 function drawSp(){
   const cv=document.getElementById('cvs'),d=dpr(),W=cv.offsetWidth,H=160;
   cv.width=W*d;cv.height=H*d;
-  const ctx=cv.getContext('2d'),yb=H-18;
+  const ctx=cv.getContext('2d'),yb=H-18,yt=10;
   ctx.scale(d,d);ctx.clearRect(0,0,W,H);
   const GL=tc('rgba(255,255,255,.22)','rgba(0,0,0,.32)');
   ctx.strokeStyle=tc('rgba(255,255,255,.08)','rgba(0,0,0,.1)');ctx.lineWidth=.5;
@@ -437,17 +446,42 @@ function drawSp(){
   }
   if(!sp.length)return;
   const mm=Math.max(...sp.map(p=>p.m),.001);
+  // Y-axis reference lines + labels (right-aligned)
+  ctx.font='8px monospace';ctx.textAlign='right';
+  ctx.strokeStyle=tc('rgba(255,255,255,.06)','rgba(0,0,0,.07)');ctx.lineWidth=.5;ctx.setLineDash([2,3]);
+  ctx.beginPath();ctx.moveTo(0,(yb-yt)/2+yt);ctx.lineTo(W,(yb-yt)/2+yt);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle=GL;
+  ctx.fillText(mm.toFixed(2),W-2,yt+9);
+  ctx.fillText((mm*.5).toFixed(2),W-2,(yb-yt)/2+yt-2);
+  ctx.fillText('0',W-2,yb-2);
+  ctx.textAlign='left';
+  // Spectrum fill + stroke
   ctx.beginPath();ctx.moveTo(sp[0].f/FM*W,yb);
-  sp.forEach(p=>ctx.lineTo(p.f/FM*W,yb-p.m/mm*(yb-10)));
+  sp.forEach(p=>ctx.lineTo(p.f/FM*W,yb-p.m/mm*(yb-yt)));
   ctx.lineTo(sp[sp.length-1].f/FM*W,yb);
   ctx.fillStyle=tc('rgba(58,126,240,.15)','rgba(58,126,240,.12)');ctx.fill();
   ctx.beginPath();ctx.strokeStyle='#3a7ef0';ctx.lineWidth=2;
-  sp.forEach((p,i)=>{const x=p.f/FM*W,y=yb-p.m/mm*(yb-10);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();
+  sp.forEach((p,i)=>{const x=p.f/FM*W,y=yb-p.m/mm*(yb-yt);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();
   if(ph==='running'&&fw<=FM){
     const x=fw/FM*W;ctx.strokeStyle='rgba(58,126,240,.4)';ctx.lineWidth=1;ctx.setLineDash([2,2]);
     ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,yb);ctx.stroke();ctx.setLineDash([]);
   }
-  if(sp.length){const p=sp[sp.length-1],x=p.f/FM*W,y=yb-p.m/mm*(yb-10);ctx.beginPath();ctx.fillStyle='#3a7ef0';ctx.arc(x,y,4,0,Math.PI*2);ctx.fill();}
+  const lp=sp[sp.length-1],lx=lp.f/FM*W,ly=yb-lp.m/mm*(yb-yt);
+  ctx.beginPath();ctx.fillStyle='#3a7ef0';ctx.arc(lx,ly,4,0,Math.PI*2);ctx.fill();
+  // Hover tooltip
+  if(spHoverX!==null){
+    const hf=spHoverX*FM;
+    let best=sp[0];for(const p of sp)if(Math.abs(p.f-hf)<Math.abs(best.f-hf))best=p;
+    const hx=best.f/FM*W,hy=yb-best.m/mm*(yb-yt);
+    ctx.strokeStyle=tc('rgba(0,0,0,.28)','rgba(255,255,255,.28)');ctx.lineWidth=1;ctx.setLineDash([3,2]);
+    ctx.beginPath();ctx.moveTo(hx,0);ctx.lineTo(hx,yb);ctx.stroke();ctx.setLineDash([]);
+    const lbl=`${best.f.toFixed(2)} Hz  |X|=${best.m.toFixed(3)}`;
+    ctx.font='9px monospace';const tw=ctx.measureText(lbl).width;
+    const tx=hx+8+tw>W?hx-8-tw:hx+8,ty=Math.max(16,Math.min(hy,yb-6));
+    ctx.fillStyle=tc('rgba(238,236,230,.93)','rgba(22,24,28,.93)');ctx.fillRect(tx-3,ty-13,tw+8,15);
+    ctx.fillStyle=tc('rgba(20,20,18,.88)','rgba(220,220,215,.88)');ctx.fillText(lbl,tx+1,ty-1);
+    ctx.beginPath();ctx.fillStyle='#3a7ef0';ctx.arc(hx,hy,4.5,0,Math.PI*2);ctx.fill();
+  }
 }
 
 function drawP(){
@@ -506,8 +540,8 @@ function frame(){
   const spd=SVM[+document.getElementById('sls').value-1];
   fw=Math.round((fw+STEP*spd)*1000)/1000;
   if(fw>FM)fw=FM;
-  const rng=sigMax-sigMin||0.001,P=wpts(fw,N),[rx,ry]=cg(P),m=Math.sqrt(rx*rx+ry*ry)*rng;
-  sp.push({f:fw,m,rx:rx*rng,ry:ry*rng});
+  const P=wpts(fw,N),Po=wptsOrig(fw,N),[orx,ory]=cg(Po),m=Math.sqrt(orx*orx+ory*ory)*mA();
+  sp.push({f:fw,m,rx:orx*mA(),ry:ory*mA()});
   drawW(fw,N);drawSp();drawP();
   document.getElementById('pg').style.width=(fw/FM*100).toFixed(1)+'%';
   document.getElementById('wt').textContent=`巻きつけ中… ${fw.toFixed(2)} Hz`;
@@ -556,7 +590,16 @@ function rst(){
 }
 function upd(){rd();bld();drawComp();rst();}
 
-window.addEventListener('load',()=>{rd();bld();drawComp();updS();});
+window.addEventListener('load',()=>{
+  rd();bld();drawComp();updS();
+  const cvs=document.getElementById('cvs');
+  cvs.addEventListener('mousemove',e=>{
+    const r=cvs.getBoundingClientRect();
+    spHoverX=(e.clientX-r.left)/r.width;
+    drawSp();
+  });
+  cvs.addEventListener('mouseleave',()=>{spHoverX=null;drawSp();});
+});
 window.addEventListener('resize',()=>{drawComp();if(sp.length){drawSp();drawP();}});
 </script>
 </body>
