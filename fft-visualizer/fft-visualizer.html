@@ -196,7 +196,7 @@ const CLR=['#1D9E75','#D85A30','#7c6fcd'];
 const N=240,T=2,FM=13,STEP=0.04;
 const SVM=[0.1,0.2,0.3,0.4,0.5],SLB=['×0.1','×0.2','×0.3','×0.4','×0.5'];
 let SG=[{A:1,f:2,en:true},{A:.6,f:5,en:false},{A:.4,f:8,en:false}];
-let sig=[],sp=[],ph='idle',fw=0,raf=null,compressT=0,compressRaf=null;
+let sig=[],sp=[],ph='idle',fw=0,raf=null,compressT=0,compressRaf=null,dropLine=null,dropRaf=null;
 const dpr=()=>window.devicePixelRatio||1;
 const mA=()=>Math.max(SG.reduce((s,g)=>s+(g.en?g.A:0),0),.01);
 const isDark=()=>document.body.classList.contains('dark');
@@ -265,16 +265,51 @@ function drawCompSqueezed(scale){
   }
   ctx.globalAlpha=1;
 }
+function cancelDrop(){
+  if(dropRaf)cancelAnimationFrame(dropRaf);dropRaf=null;
+  if(dropLine&&dropLine.parentNode)dropLine.parentNode.removeChild(dropLine);dropLine=null;
+}
+function animateLineDrop(cb){
+  const cvc=document.getElementById('cvc'),cvw=document.getElementById('cvw');
+  const r1=cvc.getBoundingClientRect(),r2=cvw.getBoundingClientRect();
+  const sx=r1.left+r1.width/2,sy=r1.top,sh=r1.height;
+  const ex=r2.left+r2.width/2,ey=r2.top+r2.height/2;
+  dropLine=document.createElement('div');
+  dropLine.style.cssText='position:fixed;width:3px;border-radius:2px;pointer-events:none;z-index:9999;background:rgba(58,126,240,0.85);box-shadow:0 0 6px rgba(58,126,240,0.5);';
+  document.body.appendChild(dropLine);
+  let t=0;const dur=38;
+  function step(){
+    t++;const p=t/dur,e=p<.5?2*p*p:-1+(4-2*p)*p;
+    const x=sx+(ex-sx)*e;
+    const h=sh+(5-sh)*e; // height: full → tiny dot
+    const cy2=sy+sh/2+(ey-sy-sh/2)*e;
+    dropLine.style.left=(x-1.5)+'px';
+    dropLine.style.top=(cy2-h/2)+'px';
+    dropLine.style.height=h+'px';
+    dropLine.style.opacity=0.9-e*0.5;
+    if(t>=dur){
+      let ft=0;
+      function fade(){ft++;if(dropLine)dropLine.style.opacity=(1-ft/8)*0.4;
+        if(ft>=8){cancelDrop();cb();return;}dropRaf=requestAnimationFrame(fade);}
+      dropRaf=requestAnimationFrame(fade);return;
+    }
+    dropRaf=requestAnimationFrame(step);
+  }
+  dropRaf=requestAnimationFrame(step);
+}
 function animateCompress(){
   compressT=Math.min(compressT+0.045,1);
-  const scale=1-compressT*compressT; // ease-in
+  const scale=1-compressT*compressT;
   drawCompSqueezed(scale);
   if(compressT>=1){
     setTimeout(()=>{
       if(ph!=='compressing')return;
-      ph='running';document.getElementById('btn').textContent='⏸ 一時停止';
-      drawComp();frame();
-    },150);
+      animateLineDrop(()=>{
+        if(ph!=='compressing')return;
+        ph='running';document.getElementById('btn').textContent='⏸ 一時停止';
+        drawComp();frame();
+      });
+    },80);
     return;
   }
   compressRaf=requestAnimationFrame(animateCompress);
@@ -441,7 +476,7 @@ function tog(){
     animateCompress();
   }
   else if(ph==='compressing'){
-    if(compressRaf)cancelAnimationFrame(compressRaf);
+    if(compressRaf)cancelAnimationFrame(compressRaf);cancelDrop();
     ph='running';document.getElementById('btn').textContent='⏸ 一時停止';
     drawComp();frame();
   }
@@ -450,7 +485,7 @@ function tog(){
 }
 function rst(){
   if(raf)cancelAnimationFrame(raf);
-  if(compressRaf)cancelAnimationFrame(compressRaf);
+  if(compressRaf)cancelAnimationFrame(compressRaf);cancelDrop();
   ph='idle';fw=0;sp=[];compressT=0;
   document.getElementById('btn').textContent='▶ 開始';
   document.getElementById('wt').textContent='巻きつけ平面';
