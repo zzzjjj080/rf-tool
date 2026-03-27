@@ -79,6 +79,7 @@ h1{font-family:'Space Mono',monospace;font-size:clamp(20px,4vw,32px);font-weight
 /* input-group with tooltip */
 .input-group{display:flex;flex-direction:column;gap:5px;flex:1;min-width:130px;max-width:220px;position:relative}
 .input-group label{font-size:10px;letter-spacing:1.5px;font-family:'Space Mono',monospace;text-transform:uppercase;color:var(--text-dim);cursor:help}
+.input-group label .u{text-transform:none}
 .input-group.accent label{color:var(--accent)}
 .input-group.orange label{color:var(--accent2)}
 .input-group.green label{color:var(--green)}
@@ -274,7 +275,7 @@ footer a:hover{text-decoration:underline}
       <div class="param-section-title accent">① 目標波形（Setpoint）</div>
       <div class="param-row">
         <div class="input-group accent" data-tip="目標値をHIGH→LOW→HIGHと繰り返す1周期の長さ。短いほど高速な追従性能が必要になる。">
-          <label>繰り返し周期 [ms]</label>
+          <label>繰り返し周期 <span class="u">[ms]</span></label>
           <div class="input-group-inline">
             <input type="range" id="sl-period" min="1" max="100" step="1" value="10" oninput="onSl('period',this,0)">
             <span class="input-val" id="dsp-period">10</span>
@@ -288,14 +289,14 @@ footer a:hover{text-decoration:underline}
           </div>
         </div>
         <div class="input-group accent" data-tip="HIGHフェーズの目標出力電力 [W]。コントローラーはこの値に追従させようとする。デフォルト3000 W。">
-          <label>出力レベル H [W]</label>
+          <label>出力レベル H <span class="u">[W]</span></label>
           <div class="input-group-inline">
             <input type="range" id="sl-levelH" min="100" max="5000" step="100" value="3000" oninput="onSl('levelH',this,0)">
             <span class="input-val" id="dsp-levelH">3000</span>
           </div>
         </div>
         <div class="input-group accent" data-tip="LOWフェーズの目標出力電力 [W]。通常0 W（送信停止）。0より大きくすると部分負荷の追従シミュレーションになる。">
-          <label>出力レベル L [W]</label>
+          <label>出力レベル L <span class="u">[W]</span></label>
           <div class="input-group-inline">
             <input type="range" id="sl-levelL" min="0" max="500" step="10" value="0" oninput="onSl('levelL',this,0)">
             <span class="input-val" id="dsp-levelL">0</span>
@@ -308,35 +309,35 @@ footer a:hover{text-decoration:underline}
       <div class="param-section-title orange">② プラントモデル（RFアンプ特性）</div>
       <div class="param-row">
         <div class="input-group orange" data-tip="アンプの直流ゲイン [—]。制御入力 1 W に対して出力が Kp_plant W 変化する。温度・電圧により変動するため、実機では同定が重要。">
-          <label>プラントゲイン Kp [—]</label>
+          <label>プラントゲイン Kp <span class="u">[—]</span></label>
           <div class="input-group-inline">
             <input type="range" id="sl-Kpplant" min="0.5" max="2.0" step="0.1" value="1.0" oninput="onSl('Kpplant',this,1)">
             <span class="input-val" id="dsp-Kpplant">1.0</span>
           </div>
         </div>
         <div class="input-group orange" data-tip="アンプ出力が最終値の63.2%に達するまでの時間 [ms]（一次遅れの時定数）。大きいほど応答が遅く、PIDの積分ゲインを下げる必要がある。">
-          <label>時定数 Tp [ms]</label>
+          <label>時定数 Tp <span class="u">[ms]</span></label>
           <div class="input-group-inline">
             <input type="range" id="sl-Tp" min="0.1" max="20" step="0.1" value="2.0" oninput="onSl('Tp',this,1)">
             <span class="input-val" id="dsp-Tp">2.0</span>
           </div>
         </div>
         <div class="input-group orange" data-tip="制御入力の変化がアンプ出力に現れるまでの遅延時間 [ms]。センサー遅れ・伝播遅延に対応。大きいほど不安定化しやすく、制御ゲインを低くせざるを得ない。">
-          <label>むだ時間 Lp [ms]</label>
+          <label>むだ時間 Lp <span class="u">[ms]</span></label>
           <div class="input-group-inline">
             <input type="range" id="sl-Lp" min="0" max="5" step="0.1" value="0.5" oninput="onSl('Lp',this,1)">
             <span class="input-val" id="dsp-Lp">0.5</span>
           </div>
         </div>
         <div class="input-group orange" data-tip="プラントへの制御入力 u[k] の上限値 [W]。アンプの最大ドライブレベルに対応する。これを超える出力要求はクリップされる。">
-          <label>飽和上限 [W]</label>
+          <label>飽和上限 <span class="u">[W]</span></label>
           <div class="input-group-inline">
             <input type="range" id="sl-satMax" min="500" max="10000" step="100" value="5000" oninput="onSl('satMax',this,0)">
             <span class="input-val" id="dsp-satMax">5000</span>
           </div>
         </div>
         <div class="input-group orange" data-tip="プラントへの制御入力 u[k] の下限値 [W]。負の入力が不可など物理的制約を表す。通常は 0（送信停止以下にはならない）。">
-          <label>飽和下限 [W]</label>
+          <label>飽和下限 <span class="u">[W]</span></label>
           <div class="input-group-inline">
             <input type="range" id="sl-satMin" min="0" max="100" step="5" value="0" oninput="onSl('satMin',this,0)">
             <span class="input-val" id="dsp-satMin">0</span>
@@ -349,35 +350,35 @@ footer a:hover{text-decoration:underline}
       <div class="param-section-title green">③ PIDパラメーター</div>
       <div class="param-row">
         <div class="input-group green" data-tip="P（比例）ゲイン [—]。偏差に比例した制御量を出力する。大きいほど速い応答になるが、振動や不安定の原因になる。">
-          <label>P 比例ゲイン [—]</label>
+          <label>P 比例ゲイン <span class="u">[—]</span></label>
           <div class="input-group-inline">
             <input type="range" id="sl-Kp" min="0" max="10" step="0.1" value="2.0" oninput="onSl('Kp',this,1)">
             <span class="input-val" id="dsp-Kp">2.0</span>
           </div>
         </div>
         <div class="input-group green" data-tip="I（積分）ゲイン [s⁻¹]。偏差の時間積分に比例した制御量を出力する。定常偏差を除去するが、大きすぎるとオーバーシュートが増大する。Tp=2 ms のプラントでは 100〜800 が目安。">
-          <label>I 積分ゲイン [s⁻¹]</label>
+          <label>I 積分ゲイン <span class="u">[s⁻¹]</span></label>
           <div class="input-group-inline">
             <input type="range" id="sl-Ki" min="0" max="2000" step="10" value="400" oninput="onSl('Ki',this,0)">
             <span class="input-val" id="dsp-Ki">400</span>
           </div>
         </div>
         <div class="input-group green" data-tip="D（微分）ゲイン [s]。偏差の変化率に比例した制御量を出力する。振動を抑制するが、ステップ入力時に「微分キック」が発生する。RF PA制御では Kd=0（PIのみ）が一般的。">
-          <label>D 微分ゲイン [s]</label>
+          <label>D 微分ゲイン <span class="u">[s]</span></label>
           <div class="input-group-inline">
             <input type="range" id="sl-Kd" min="0" max="1" step="0.005" value="0.000" oninput="onSl('Kd',this,3)">
             <span class="input-val" id="dsp-Kd">0.000</span>
           </div>
         </div>
         <div class="input-group purple" data-tip="アンチワインドアップ上限 [W]。積分項 I がこの値を超えるとクリップされる。小さすぎると積分の効きが弱く、大きすぎるとワインドアップ現象が発生する。">
-          <label>アンチワインドアップ [W]</label>
+          <label>アンチワインドアップ <span class="u">[W]</span></label>
           <div class="input-group-inline">
             <input type="range" id="sl-ILimit" min="0" max="5000" step="50" value="500" oninput="onSl('ILimit',this,0)">
             <span class="input-val" id="dsp-ILimit">500</span>
           </div>
         </div>
         <div class="input-group purple" data-tip="制御器のサンプリング周期 [ms]。小さいほど精度が高い。Ts > Tp/2 になるとオイラー積分が不安定になるため警告が出る。通常は Tp の 1/10 以下を推奨。">
-          <label>サンプリング Ts [ms]</label>
+          <label>サンプリング Ts <span class="u">[ms]</span></label>
           <div class="input-group-inline">
             <input type="range" id="sl-Ts" min="0.01" max="1" step="0.01" value="0.1" oninput="onSl('Ts',this,2)">
             <span class="input-val" id="dsp-Ts">0.10</span>
