@@ -115,6 +115,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
 .ib{background:var(--bg3);border-radius:var(--radius-sm);padding:8px 10px}
 .ib-label{font-size:10px;letter-spacing:.05em;color:var(--text3);margin-bottom:3px;text-transform:uppercase}
 .ib-val{font-size:15px;color:var(--blue);font-weight:500;letter-spacing:.02em}
+.ib-val.dark{color:var(--text)}
 .ib-sub{font-size:10px;color:var(--text3);margin-top:2px}
 </style>
 </head>
@@ -185,23 +186,14 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
       </div>
       <div class="winfo">
         <div class="ib">
-          <div class="ib-label">巻きつけ周波数</div>
-          <div class="ib-val" id="inf-fw">—</div>
-        </div>
-        <div class="ib">
-          <div class="ib-label">全回転数</div>
-          <div class="ib-val" id="inf-turns">—</div>
-          <div class="ib-sub" id="inf-sub">fw × T 秒</div>
-        </div>
-        <div class="ib">
           <div class="ib-label">重心距離  |X(f)|</div>
           <div class="ib-val" id="inf-mag">—</div>
           <div class="ib-sub">スペクトルの高さに対応</div>
         </div>
         <div class="ib">
-          <div class="ib-label">位相  ∠X(f)</div>
-          <div class="ib-val" id="inf-phase">—</div>
-          <div class="ib-sub">重心の方向（複素角度）</div>
+          <div class="ib-label">全回転数</div>
+          <div class="ib-val dark" id="inf-turns">—</div>
+          <div class="ib-sub" id="inf-sub">巻きつけ周波数 × 信号長</div>
         </div>
       </div>
     </div>
@@ -488,12 +480,10 @@ function frame(){
   document.getElementById('pg').style.width=(fw/FM*100).toFixed(1)+'%';
   document.getElementById('wt').textContent=`巻きつけ中… ${fw.toFixed(2)} Hz`;
   document.getElementById('st').textContent=`f = ${fw.toFixed(2)} Hz  |  |X| = ${m.toFixed(3)}`;
-  const turns=fw*T;const phase=Math.atan2(ry,rx)*180/Math.PI;
-  document.getElementById('inf-fw').textContent=fw.toFixed(2)+' Hz';
-  document.getElementById('inf-turns').textContent=turns.toFixed(2)+'  回転';
-  document.getElementById('inf-sub').textContent=fw.toFixed(2)+' Hz × '+T+'s = '+turns.toFixed(2);
+  const turns=fw*T;
   document.getElementById('inf-mag').textContent=m.toFixed(4);
-  document.getElementById('inf-phase').textContent=phase.toFixed(1)+'°';
+  document.getElementById('inf-turns').textContent=turns.toFixed(2)+'  回転';
+  document.getElementById('inf-sub').textContent=fw.toFixed(2)+' Hz × '+T+'s';
   if(fw>=FM){
     ph='done';document.getElementById('btn').textContent='↺ もう一度';
     document.getElementById('wt').textContent='完成！ピークが設定周波数に一致';
@@ -528,8 +518,8 @@ function rst(){
   document.getElementById('pg').style.width='0%';
   const cv=document.getElementById('cvw'),d=dpr(),SZ=cv.offsetWidth;
   cv.width=SZ*d;cv.height=SZ*d;cv.getContext('2d').clearRect(0,0,cv.width,cv.height);
-  ['inf-fw','inf-turns','inf-mag','inf-phase'].forEach(id=>document.getElementById(id).textContent='—');
-  document.getElementById('inf-sub').textContent='fw × T 秒';
+  ['inf-mag','inf-turns'].forEach(id=>document.getElementById(id).textContent='—');
+  document.getElementById('inf-sub').textContent='巻きつけ周波数 × 信号長';
   drawSp();drawP();
 }
 function upd(){rd();bld();drawComp();rst();}
