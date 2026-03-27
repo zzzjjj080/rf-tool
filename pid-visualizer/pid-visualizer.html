@@ -265,6 +265,7 @@ footer a:hover{text-decoration:underline}
     <button class="preset-btn" onclick="applyPreset(this,'slow')">🐌 低速アンプ</button>
     <button class="preset-btn" onclick="applyPreset(this,'windup')">🔥 ワインドアップ</button>
     <button class="preset-btn" onclick="applyPreset(this,'real')">📡 実機想定</button>
+    <button class="preset-btn" onclick="resetDefaults()" style="margin-left:auto;border-color:var(--red);color:var(--red)" title="すべてのパラメーターを初期値に戻す">↺ リセット</button>
   </div>
   <div id="warn-stability" class="warn-banner">⚠ Ts &gt; Tp/2 — オイラー積分が不安定になる場合があります。Ts を小さくするか Tp を大きくしてください</div>
   <div class="param-sections">
@@ -481,22 +482,13 @@ footer a:hover{text-decoration:underline}
 // ============================================================
 // STATE
 // ============================================================
-const S = {
-  period:  10,    // ms
-  duty:    50,    // %
-  levelH:  3000,  // W  (default changed to 3000)
-  levelL:  0,     // W
-  Kpplant: 1.0,
-  Tp:      2.0,   // ms
-  Lp:      0.5,   // ms
-  satMax:  5000,  // W
-  satMin:  0,     // W
-  Kp:      2.0,
-  Ki:      400,   // s⁻¹
-  Kd:      0.0,   // s
-  ILimit:  500,   // W
-  Ts:      0.1,   // ms
+const DEFAULTS = {
+  period:  10, duty: 50, levelH: 3000, levelL: 0,
+  Kpplant: 1.0, Tp: 2.0, Lp: 0.5, satMax: 5000, satMin: 0,
+  Kp: 2.0, Ki: 400, Kd: 0.0, ILimit: 500, Ts: 0.1,
 };
+
+const S = { ...DEFAULTS };
 
 const DECIMALS = {
   period:0, duty:0, levelH:0, levelL:0,
@@ -1116,11 +1108,17 @@ function setupCrosshair() {
         xhTime = xFrac * simData.totalTime;
         const k = Math.min(Math.floor(xhTime / S.Ts), simData.N - 1);
         const { t, sp, y, er, u, P, I, D } = simData;
+        const col = getCol();
+        const c = (color, text) => `<span style="color:${color}">${text}</span>`;
         tip.innerHTML =
-          `<b>${t[k].toFixed(2)} ms</b><br>` +
-          `SP: ${sp[k].toFixed(0)} W &nbsp; Out: ${y[k].toFixed(1)} W<br>` +
-          `err: ${er[k].toFixed(1)} W &nbsp; u: ${u[k].toFixed(0)} W<br>` +
-          `P: ${P[k].toFixed(0)} &nbsp; I: ${I[k].toFixed(0)} &nbsp; D: ${D[k].toFixed(0)}`;
+          `<b style="color:var(--text)">${t[k].toFixed(2)} [ms]</b><br>` +
+          `${c(col.sp,  '目標値')}: ${sp[k].toFixed(0)} [W] &nbsp; ` +
+          `${c(col.out, '出力')}: ${y[k].toFixed(1)} [W]<br>` +
+          `${c(col.err, '偏差')}: ${er[k].toFixed(1)} [W] &nbsp; ` +
+          `${c(col.U,   '制御入力')}: ${u[k].toFixed(0)} [W]<br>` +
+          `${c(col.P,'P')}: ${P[k].toFixed(0)} &nbsp; ` +
+          `${c(col.I,'I')}: ${I[k].toFixed(0)} &nbsp; ` +
+          `${c(col.D,'D')}: ${D[k].toFixed(0)}`;
         tip.style.display = 'block';
         const tw = 200, th = 80;
         const tx = e.clientX + 16 + tw > window.innerWidth ? e.clientX - tw - 8 : e.clientX + 16;
@@ -1178,6 +1176,14 @@ function applyPreset(btn, name) {
   syncUI();
   document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  update();
+}
+
+function resetDefaults() {
+  Object.assign(S, DEFAULTS);
+  syncUI();
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  try { localStorage.removeItem('pid-state'); } catch(e) {}
   update();
 }
 
