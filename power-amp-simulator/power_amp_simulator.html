@@ -29,6 +29,12 @@ h1{font-family:'Space Mono',monospace;font-size:clamp(22px,5vw,36px);font-weight
 .theme-toggle{position:absolute;top:20px;right:0;padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:var(--panel);color:var(--text);cursor:pointer;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;transition:all .2s;box-shadow:0 1px 4px var(--shadow)}
 .theme-toggle:hover{border-color:var(--accent);color:var(--accent)}
 .explain-section{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:14px;box-shadow:0 1px 4px var(--shadow)}
+/* Unified amp section: description + canvas in one box */
+.amp-section{background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 4px var(--shadow);margin-bottom:10px}
+.amp-section-desc{padding:14px 20px 0;border-bottom:1px solid var(--border)}
+.amp-section-desc h3{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--accent2);text-transform:uppercase;margin-bottom:8px}
+.amp-section-desc h3.orange{color:var(--accent2)}
+.amp-section-desc h3.green-h{color:var(--green)}
 .explain-section h3{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--accent2);text-transform:uppercase;margin-bottom:10px}
 .explain-text{font-size:13px;line-height:1.9;color:var(--text);margin-bottom:12px}
 .explain-text:last-child{margin-bottom:0}
@@ -184,16 +190,16 @@ select{background:var(--panel2);border:1px solid var(--border);color:var(--text)
 </section>
 
 <!-- ② A級アンプ -->
-<section class="explain-section">
-  <h3>&#x1F535; A級アンプ — 回路と動作原理</h3>
-  <p class="explain-text">
-    トランジスタに<span class="hl">常時バイアス電流</span>を流し、入力信号の全周期にわたって導通状態を維持します。<br>
-    バイアス点（Vgs）を上げると導通角が広がり歪みが減りますが、無信号時の消費電力が増えます。<br>
-    左の回路図で<span class="hl2">電流の流れ</span>を確認し、右の波形でパラメータ変更の影響を観察してください。
-  </p>
-</section>
-<div class="panel">
-  <div class="panel-header"><div class="dot"></div>A級 — 回路図 & 入出力波形</div>
+<div class="amp-section">
+  <div class="amp-section-desc">
+    <h3>&#x1F535; A級アンプ — 回路と動作原理</h3>
+    <p class="explain-text">
+      トランジスタに<span class="hl">常時バイアス電流</span>を流し、入力信号の全周期にわたって導通状態を維持します。<br>
+      バイアス点（Vbe）を上げると導通角が広がり歪みが減りますが、無信号時の消費電力が増えます。<br>
+      左の回路図で<span class="hl2">電流の流れ</span>を確認し、右の波形でパラメータ変更の影響を観察してください。
+    </p>
+  </div>
+  <div class="panel-header" style="border-radius:0"><div class="dot"></div>A級 — 回路図 & 入出力波形</div>
   <canvas id="cvA" height="380"></canvas>
   <div class="legend">
     <div class="legend-item"><div class="legend-swatch" style="background:var(--accent)"></div>Vin 入力</div>
@@ -228,16 +234,16 @@ select{background:var(--panel2);border:1px solid var(--border);color:var(--text)
 </div>
 
 <!-- ③ D級アンプ -->
-<section class="explain-section">
-  <h3>&#x1F7E0; D級アンプ — 回路と動作原理</h3>
-  <p class="explain-text">
-    入力正弦波と三角波を比較し、<span class="hl2">PWM信号</span>を生成してハーフブリッジのMOSFETを高速ON/OFFします。<br>
-    スイッチノードの矩形波をLCフィルタに通して元の正弦波を復元します。デューティ比が50%から外れると歪みが増加します。<br>
-    <span class="hlg">LCカットオフ</span>を下げるとリップルが減りますが、信号の遅延が大きくなります。
-  </p>
-</section>
-<div class="panel">
-  <div class="panel-header"><div class="dot dot-orange"></div>D級 — 回路図 & PWM → フィルタ波形</div>
+<div class="amp-section">
+  <div class="amp-section-desc">
+    <h3 class="orange">&#x1F7E0; D級アンプ — 回路と動作原理</h3>
+    <p class="explain-text">
+      入力正弦波と三角波を比較し、<span class="hl2">PWM信号</span>を生成してハーフブリッジのMOSFETを高速ON/OFFします。<br>
+      スイッチノードの矩形波をLCフィルタに通して元の正弦波を復元します。デューティ比が50%から外れると歪みが増加します。<br>
+      <span class="hlg">LCカットオフ</span>を下げるとリップルが減りますが、信号の遅延が大きくなります。
+    </p>
+  </div>
+  <div class="panel-header" style="border-radius:0"><div class="dot dot-orange"></div>D級 — 回路図 & PWM → フィルタ波形</div>
   <canvas id="cvD" height="380"></canvas>
   <div class="legend">
     <div class="legend-item"><div class="legend-swatch" style="background:var(--accent)"></div>入力 + 三角波</div>
@@ -272,16 +278,16 @@ select{background:var(--panel2);border:1px solid var(--border);color:var(--text)
 </div>
 
 <!-- ④ E級アンプ -->
-<section class="explain-section">
-  <h3>&#x1F7E2; E級アンプ — 回路と動作原理</h3>
-  <p class="explain-text">
-    LC共振タンク回路により、スイッチON時にドレイン電圧が<span class="hlg">ゼロ</span>となるZVS条件を実現します。<br>
-    <span class="hl3">fsw/f0 = 1.0</span>（スイッチング周波数＝共振周波数）で効率が最大化。ずれると損失が発生し赤で表示されます。<br>
-    Q値を上げると出力がよりきれいな正弦波に近づきますが、帯域幅が狭くなります。
-  </p>
-</section>
-<div class="panel">
-  <div class="panel-header"><div class="dot dot-green"></div>E級 — 回路図 & ドレイン / 出力波形</div>
+<div class="amp-section">
+  <div class="amp-section-desc">
+    <h3 class="green-h">&#x1F7E2; E級アンプ — 回路と動作原理</h3>
+    <p class="explain-text">
+      LC共振タンク回路により、スイッチON時にドレイン電圧が<span class="hlg">ゼロ</span>となるZVS条件を実現します。<br>
+      <span class="hl3">fsw/f0 = 1.0</span>（スイッチング周波数＝共振周波数）で効率が最大化。ずれると損失が発生し赤で表示されます。<br>
+      Q値を上げると出力がよりきれいな正弦波に近づきますが、帯域幅が狭くなります。
+    </p>
+  </div>
+  <div class="panel-header" style="border-radius:0"><div class="dot dot-green"></div>E級 — 回路図 & ドレイン / 出力波形</div>
   <canvas id="cvE" height="380"></canvas>
   <div class="legend">
     <div class="legend-item"><div class="legend-swatch" style="background:var(--gold)"></div>Vds ドレイン電圧</div>
@@ -317,7 +323,10 @@ select{background:var(--panel2);border:1px solid var(--border);color:var(--text)
 
 <!-- ⑤ 比較 -->
 <div class="result-section">
-  <div class="section-label"><div class="dot"></div><span>3クラス 性能比較</span></div>
+  <div class="section-label" style="justify-content:space-between">
+    <div style="display:flex;align-items:center;gap:8px"><div class="dot"></div><span>3クラス 性能比較</span></div>
+    <button class="preset-btn" onclick="presetAll()" style="font-size:11px">&#x26A1; 全クラス最大効率で比較</button>
+  </div>
   <table class="compare-table">
     <thead><tr><th></th><th class="col-a">A級</th><th class="col-d">D級</th><th class="col-e">E級</th></tr></thead>
     <tbody>
@@ -414,6 +423,14 @@ function presetE() {
   state.amplitude = 0.80;
   state.e_fswRatio = 1.00;
   state.e_Q = 15;
+  syncUI(); drawAll(); updateResults();
+}
+function presetAll() {
+  // Apply all three class presets simultaneously for side-by-side comparison
+  state.amplitude = 0.85;
+  state.a_vgs = 0.25; state.a_rl = 50;
+  state.d_duty = 0.50; state.d_lcCutoff = 0.90;
+  state.e_fswRatio = 1.00; state.e_Q = 15;
   syncUI(); drawAll(); updateResults();
 }
 
