@@ -1129,28 +1129,28 @@ function exCircuit3(){ // π型ATT
 }
 function exCircuit4(){ // LPF: series L + shunt C
   return exSvg(exPorts('50Ω','50Ω') +
-    exW(26,40,46,40) + exL(46,40,'11 nH') + exW(82,40,120,40) + exW(120,40,174,40) +
-    exDot(120,40) + exCsh(120,40,'4.5 pF') +
-    `<text x="75" y="13" text-anchor="middle" font-size="7.5" fill="var(--text-dim)" font-family="Space Mono,monospace">直列 L → シャント C</text>`);
+    exW(26,40,46,40) + exL(46,40,'400 nH') + exW(82,40,120,40) + exW(120,40,174,40) +
+    exDot(120,40) + exCsh(120,40,'470 pF') +
+    `<text x="75" y="13" text-anchor="middle" font-size="7.5" fill="var(--text-dim)" font-family="Space Mono,monospace">直列 L → シャント C  fc=20 MHz</text>`);
 }
 function exCircuit5(){ // BPF: series resonant (L + C in series)
   return exSvg(exPorts('50Ω','50Ω') +
-    exW(26,40,46,40) + exL(46,40,'L') + exW(82,40,89,40) +
+    exW(26,40,46,40) + exL(46,40,'3.2 µH') + exW(82,40,89,40) +
     exCser(91,40,'') + exW(93,40,174,40) +
-    `<text x="100" y="13" text-anchor="middle" font-size="8" fill="var(--text-dim)" font-family="Space Mono,monospace">直列共振回路（L + C 直列）</text>` +
-    `<text x="100" y="68" text-anchor="middle" font-size="7.5" fill="var(--accent2)" font-family="Space Mono,monospace">f₀ = 2 GHz で Z → 0（通過）</text>`);
+    `<text x="100" y="13" text-anchor="middle" font-size="8" fill="var(--text-dim)" font-family="Space Mono,monospace">直列共振（L + C）f₀=20 MHz</text>` +
+    `<text x="100" y="68" text-anchor="middle" font-size="7.5" fill="var(--accent2)" font-family="Space Mono,monospace">f₀=20 MHz で Z → 0（通過）</text>`);
 }
-function exCircuit6(){ // 並列C（寄生容量）
+function exCircuit6(){ // 並列C
   return exSvg(exPorts('50Ω','50Ω') +
     exW(26,40,100,40) + exW(100,40,174,40) +
-    exDot(100,40) + exCsh(100,40,'5 pF') +
-    `<text x="100" y="23" text-anchor="middle" font-size="8" fill="var(--text-dim)" font-family="Space Mono,monospace">シャント C（寄生容量）</text>`);
+    exDot(100,40) + exCsh(100,40,'470 pF') +
+    `<text x="100" y="13" text-anchor="middle" font-size="8" fill="var(--text-dim)" font-family="Space Mono,monospace">シャント C 470 pF</text>`);
 }
-function exCircuit7(){ // LC L型整合 50→100Ω
+function exCircuit7(){ // LC L型整合 50→100Ω @ 20 MHz
   return exSvg(exPorts('50Ω','100Ω') +
-    exW(26,40,46,40) + exL(46,40,'7.96 nH') + exW(82,40,120,40) + exW(120,40,174,40) +
-    exDot(120,40) + exCsh(120,40,'1.59 pF') +
-    `<text x="100" y="13" text-anchor="middle" font-size="7.5" fill="var(--text-dim)" font-family="Space Mono,monospace">L 型整合 50Ω → 100Ω @ 1 GHz</text>`);
+    exW(26,40,46,40) + exL(46,40,'400 nH') + exW(82,40,120,40) + exW(120,40,174,40) +
+    exDot(120,40) + exCsh(120,40,'79.6 pF') +
+    `<text x="100" y="13" text-anchor="middle" font-size="7.5" fill="var(--text-dim)" font-family="Space Mono,monospace">L 型整合 50→100Ω @ 20 MHz</text>`);
 }
 function exCircuit8(){ // RFアンプ
   return exSvg(exPorts('50Ω','50Ω') +
@@ -1170,7 +1170,7 @@ function exCircuit9(){ // フェライトビーズ
     `<line x1="86" y1="33" x2="86" y2="47" stroke="var(--text)" stroke-width="1"/>` +
     `<line x1="93" y1="33" x2="93" y2="47" stroke="var(--text)" stroke-width="1"/>` +
     exW(100,40,174,40) +
-    `<text x="86" y="27" text-anchor="middle" font-size="7.5" fill="var(--accent2)" font-family="Space Mono,monospace">100Ω @ 300 MHz</text>` +
+    `<text x="86" y="27" text-anchor="middle" font-size="7.5" fill="var(--accent2)" font-family="Space Mono,monospace">ピーク損失 @ 20 MHz</text>` +
     `<text x="100" y="13" text-anchor="middle" font-size="7.5" fill="var(--text-dim)" font-family="Space Mono,monospace">フェライトビーズ（損失型）</text>`);
 }
 function exCircuit10(){ // LNA
@@ -1184,6 +1184,7 @@ function exCircuit10(){ // LNA
 }
 const EX_CIRCUITS = [exCircuit1, exCircuit2, exCircuit3, exCircuit4, exCircuit5, exCircuit6, exCircuit7, exCircuit8, exCircuit9, exCircuit10];
 
+// ── compute(f): f は MHz 単位 ──
 const EXAMPLES = [
   {
     title: '① 理想スルー（整合 50 Ω）',
@@ -1193,13 +1194,13 @@ const EXAMPLES = [
     gamma:   () => ({ re: 0, im: 0 }),
   },
   {
-    title: '② SMA ケーブル（0.15 dB/GHz 損失）',
-    desc:  '高品質 SMA 同軸ケーブル。表皮効果の影響で損失は周波数に比例して増大。S11 は低いまま（整合されている）、S21 が周波数とともに緩やかに低下。スミスチャートは中心付近の小さな円弧。',
+    title: '② 同軸ケーブル（損失 0.002 dB/MHz）',
+    desc:  '低損失同軸ケーブル。10〜30 MHz では損失は 0.02〜0.06 dB と微小。S11 は整合されており低く一定。S21 が周波数に比例してわずかに低下。スミスチャートは中心付近の小さな弧。',
     tags:  [{cls:'ts11', txt:'S11 ≈ −30 dB'}, {cls:'ts21', txt:'S21 ∝ −αf'}],
-    compute: f => ({ s11: -30, s21: -0.15 * f }),
+    compute: f => ({ s11: -30, s21: -0.002 * f }),
     gamma:   f => {
-      const mag = 0.0316; // 10^(-30/20)
-      const phi = -Math.PI * f / 4;
+      const mag = 0.0316;
+      const phi = -Math.PI * f / 300;
       return { re: mag * Math.cos(phi), im: mag * Math.sin(phi) };
     },
   },
@@ -1208,16 +1209,15 @@ const EXAMPLES = [
     desc:  '抵抗 3 本（π型）で構成。全周波数で S21 = −10 dB がフラット、かつ S11 が非常に低い（入出力ともに 50 Ω 整合）。SWR 改善に有効。スミスチャートはほぼ中心の点。',
     tags:  [{cls:'ts11', txt:'S11 = −∞ dB'}, {cls:'ts21', txt:'S21 = −10 dB'}, {cls:'twarn', txt:'全帯域フラット'}],
     compute: () => ({ s11: -50, s21: -10 }),
-    gamma:   () => ({ re: 0.003, im: 0 }), // -50dB ≈ purely resistive, near center
+    gamma:   () => ({ re: 0.003, im: 0 }),
   },
   {
-    title: '④ ローパスフィルタ（2 次 BW, fc = 1 GHz）',
-    desc:  '2 次バターワース LPF。fc = 1 GHz でロールオフ。S21 は fc で −3 dB、fc 以上は急峻に低下。S11 は通過帯で低く、阻止帯では大きくなる。スミスチャートは中心から外側へのスパイラル。',
-    tags:  [{cls:'ts11', txt:'S11: 通過帯で低い'}, {cls:'ts21', txt:'S21: −3dB @ 1 GHz'}, {cls:'twarn', txt:'阻止帯 S21 ↓↓'}],
-    compute: f => bw2(f, 1.0),
+    title: '④ ローパスフィルタ（2 次 BW, fc = 20 MHz）',
+    desc:  '2 次バターワース LPF、カットオフ 20 MHz。S21 は 20 MHz で −3 dB、それ以上は急峻に低下。直列 L（400 nH）＋シャント C（470 pF）で構成。スミスチャートは通過帯で中心、阻止帯で外周へ。',
+    tags:  [{cls:'ts11', txt:'S11: 通過帯で低い'}, {cls:'ts21', txt:'S21: −3dB @ 20 MHz'}, {cls:'twarn', txt:'阻止帯 S21 ↓↓'}],
+    compute: f => bw2(f, 20),
     gamma:   f => {
-      const Om = f / 1.0;
-      // S11 = -Om² / (1 - Om² + j√2·Om)
+      const Om = f / 20;
       const numRe = -Om * Om;
       const denRe = 1 - Om * Om, denIm = Math.SQRT2 * Om;
       const d = denRe * denRe + denIm * denIm;
@@ -1225,12 +1225,12 @@ const EXAMPLES = [
     },
   },
   {
-    title: '⑤ バンドパスフィルタ（2 次, f₀ = 2 GHz, Q = 2）',
-    desc:  '中心周波数 2 GHz、帯域幅 1 GHz の BPF。S21 は 2 GHz でピーク（0 dB）。2 GHz から離れるほど急峻に低下。スミスチャートは f₀ で中心を通るループ。',
-    tags:  [{cls:'ts21', txt:'S21 peak @ 2 GHz'}, {cls:'twarn', txt:'帯域外は遮断'}],
+    title: '⑤ バンドパスフィルタ（2 次, f₀ = 20 MHz, Q = 2）',
+    desc:  '中心周波数 20 MHz、帯域幅 10 MHz の BPF。S21 は 20 MHz でピーク（0 dB）。20 MHz から離れるほど急峻に低下。スミスチャートは f₀ で中心を通るループ。',
+    tags:  [{cls:'ts21', txt:'S21 peak @ 20 MHz'}, {cls:'twarn', txt:'帯域外は遮断'}],
     compute: f => {
-      if (f < 0.05) return { s11: 0, s21: -120 };
-      const Om = 2 * (f / 2 - 2 / f);
+      if (f < 1) return { s11: 0, s21: -120 };
+      const Om = 2 * (f / 20 - 20 / f);
       const s21sq = 1 / (1 + Om * Om);
       return {
         s21: 10 * Math.log10(Math.max(s21sq, 1e-12)),
@@ -1238,19 +1238,18 @@ const EXAMPLES = [
       };
     },
     gamma: f => {
-      if (f < 0.04) return { re: 1, im: 0 };
-      const Om = 2 * (f / 2 - 2 / f);
-      // Series LC: S11 = (Om² + jOm) / (1 + Om²)
+      if (f < 1) return { re: 1, im: 0 };
+      const Om = 2 * (f / 20 - 20 / f);
       const d = 1 + Om * Om;
       return { re: Om * Om / d, im: Om / d };
     },
   },
   {
-    title: '⑥ 並列 C 5 pF（基板の寄生容量）',
-    desc:  '実装部品の端子間や配線パターン間に発生する寄生容量。低周波は通過するが、高周波ほど GND へバイパスされ S21 が低下。スミスチャートは下半円（容量性）を外へ向かう弧。',
-    tags:  [{cls:'ts11', txt:'S11 悪化 @ 高周波'}, {cls:'ts21', txt:'S21 LP 的低下'}, {cls:'twarn', txt:'寄生容量に注意'}],
+    title: '⑥ 並列 C 470 pF（シャント容量）',
+    desc:  '配線や部品の端子間に発生するシャント容量。470 pF @ 20 MHz では ωCZ₀ ≈ 3 なので S21 が −5 dB 程度低下。高周波ほど GND へのバイパスが増えて損失増大。スミスチャートは容量性（下半円弧）。',
+    tags:  [{cls:'ts11', txt:'S11 悪化 @ HF'}, {cls:'ts21', txt:'S21 LP 的低下'}, {cls:'twarn', txt:'シャント容量に注意'}],
     compute: f => {
-      const x = 2 * Math.PI * f * 1e9 * 5e-12 * 50;
+      const x = 2 * Math.PI * f * 1e6 * 470e-12 * 50;
       const s21sq = 4 / (4 + x * x);
       return {
         s21: 10 * Math.log10(Math.max(s21sq, 1e-12)),
@@ -1258,30 +1257,28 @@ const EXAMPLES = [
       };
     },
     gamma: f => {
-      const x = 2 * Math.PI * f * 1e9 * 5e-12 * 50;
-      // Shunt Y: S11 = -jx/(2+jx)
+      const x = 2 * Math.PI * f * 1e6 * 470e-12 * 50;
       const d = 4 + x * x;
       return { re: -x * x / d, im: -2 * x / d };
     },
   },
   {
-    title: '⑦ LC L 型整合回路（50 → 100 Ω @ 1 GHz）',
-    desc:  '直列 L（7.96 nH）＋並列 C（1.59 pF）で 50 Ω 源を 100 Ω 負荷に整合。設計周波数 1 GHz でのみ S11 が最小（−∞ dB 理論値）。スミスチャートは 1 GHz で中心を通る弧。',
-    tags:  [{cls:'ts11', txt:'S11 ディップ @ 1 GHz'}, {cls:'ts21', txt:'S21 ≈ 0 dB @ 1 GHz'}, {cls:'twarn', txt:'狭帯域整合'}],
+    title: '⑦ LC L 型整合回路（50 → 100 Ω @ 20 MHz）',
+    desc:  '直列 L（400 nH）＋シャント C（79.6 pF）で 50 Ω 源を 100 Ω 負荷に整合。設計周波数 20 MHz でのみ S11 が最小（−∞ dB 理論値）。スミスチャートは 20 MHz 付近で中心を通る弧。',
+    tags:  [{cls:'ts11', txt:'S11 ディップ @ 20 MHz'}, {cls:'ts21', txt:'S21 ≈ 0 dB @ 20 MHz'}, {cls:'twarn', txt:'狭帯域整合'}],
     compute: f => {
-      const L = 7.958e-9, C = 1.592e-12;
-      const w = 2 * Math.PI * f * 1e9;
-      const a = 1 - w * w * L * C, bl = w * L, cc5 = w * C * 5000;
-      const numSq = (100*a - 50) ** 2 + (bl - cc5) ** 2;
-      const denSq = (100*a + 50) ** 2 + (bl + cc5) ** 2;
+      const L = 397.9e-9, C = 79.6e-12;
+      const w = 2 * Math.PI * f * 1e6;
+      const a = 1 - w*w*L*C, bl = w*L, cc5 = w*C*5000;
+      const numSq = (100*a - 50)**2 + (bl - cc5)**2;
+      const denSq = (100*a + 50)**2 + (bl + cc5)**2;
       const s11sq = numSq / denSq;
       return { s11: 10*Math.log10(Math.max(s11sq,1e-12)), s21: 10*Math.log10(Math.max(1-s11sq,1e-12)) };
     },
     gamma: f => {
-      const L = 7.958e-9, C = 1.592e-12;
-      const w = 2 * Math.PI * f * 1e9;
+      const L = 397.9e-9, C = 79.6e-12;
+      const w = 2 * Math.PI * f * 1e6;
       const a = 1 - w*w*L*C, bl = w*L, cc = w*C;
-      // ABCD→S11 with Zs=50, ZL=100
       const numRe = 100*a - 50, numIm = bl - 5000*cc;
       const denRe = 100*a + 50, denIm = bl + 5000*cc;
       const d = denRe*denRe + denIm*denIm;
@@ -1289,22 +1286,22 @@ const EXAMPLES = [
     },
   },
   {
-    title: '⑧ RF アンプ（+15 dB, BW ≈ 3 GHz）',
-    desc:  '能動素子（トランジスタ等）による増幅器。S21 > 0 dB（利得）は受動回路では不可能。3 GHz 以上は利得が低下。スミスチャートは小さな円弧（入力整合ネットワークの影響）。',
-    tags:  [{cls:'tgain', txt:'S21 = +15 dB'}, {cls:'ts11', txt:'S11 = −15 dB'}, {cls:'twarn', txt:'能動素子のみ S21 > 0 dB'}],
-    compute: f => ({ s21: 15 - 10*Math.log10(1+(f/3)*(f/3)), s11: -15 }),
+    title: '⑧ RF アンプ（+15 dB, BW ≈ 50 MHz）',
+    desc:  '能動素子（トランジスタ等）による増幅器。10〜30 MHz では S21 ≈ +15 dB がほぼフラット。S11 ≈ −15 dB は入力整合ネットワークの品質を示す。スミスチャートは中心付近の小円弧。',
+    tags:  [{cls:'tgain', txt:'S21 ≈ +15 dB'}, {cls:'ts11', txt:'S11 = −15 dB'}, {cls:'twarn', txt:'能動素子のみ S21 > 0 dB'}],
+    compute: f => ({ s21: 15 - 10*Math.log10(1+(f/50)*(f/50)), s11: -15 }),
     gamma:   f => {
-      const mag = Math.pow(10, -15/20); // |Γ| from -15dB
-      const phi = -Math.PI * f / 3;
+      const mag = Math.pow(10, -15/20);
+      const phi = -Math.PI * f / 50;
       return { re: mag*Math.cos(phi), im: mag*Math.sin(phi) };
     },
   },
   {
-    title: '⑨ フェライトビーズ（100 Ω @ 300 MHz）',
-    desc:  'フェライト材の磁気損失を利用した EMI 対策部品。高周波ほど直列抵抗として機能し RF を熱に変換。低周波は通過するが 300 MHz 付近から急速に損失が増える。スミスチャートは誘導性から抵抗性へ移行する独特の弧。',
-    tags:  [{cls:'ts11', txt:'S11 上昇 @ HF'}, {cls:'ts21', txt:'S21 損失型低下'}, {cls:'twarn', txt:'EMI フィルタ用途'}],
+    title: '⑨ フェライトビーズ（ピーク @ 20 MHz）',
+    desc:  'フェライト材の磁気損失を利用した EMI 対策部品。20 MHz 付近で直列抵抗として最大損失。低周波は通過するが 10 MHz 以上から損失が増加し始める。スミスチャートは誘導性から抵抗性へ移行する弧。',
+    tags:  [{cls:'ts11', txt:'S11 上昇 @ 20 MHz+'}, {cls:'ts21', txt:'S21 損失型低下'}, {cls:'twarn', txt:'EMI フィルタ用途'}],
     compute: f => {
-      const u = f / 0.3; // normalized to peak freq 300 MHz
+      const u = f / 20;
       const d = 1 + 4*u*u;
       return {
         s21: 10*Math.log10(Math.max((1+u*u)/d, 1e-12)),
@@ -1312,21 +1309,19 @@ const EXAMPLES = [
       };
     },
     gamma: f => {
-      const u = f / 0.3;
-      // Z_fb=100·ju/(1+ju), S11=Z_fb/(2Z0+Z_fb): S11=(2u²+ju)/(1+2ju)... recalc:
-      // S11 = ju/(1+2ju) = ju(1-2ju)/((1+2ju)(1-2ju)) = (2u²+ju)/(1+4u²)
+      const u = f / 20;
       const d = 1 + 4*u*u;
       return { re: 2*u*u/d, im: u/d };
     },
   },
   {
     title: '⑩ 低雑音アンプ（LNA, +20 dB, NF &lt; 1 dB）',
-    desc:  '受信フロントエンドに使用する低雑音増幅器。S21 = +20 dB の高利得と NF < 1 dB を両立。入力整合（S11 ≈ −20 dB）が重要で、スミスチャートは中心付近の小さな周波数依存弧を描く。',
-    tags:  [{cls:'tgain', txt:'S21 = +20 dB'}, {cls:'ts11', txt:'S11 = −20 dB'}, {cls:'twarn', txt:'NF &lt; 1 dB'}],
-    compute: f => ({ s21: 20 - 10*Math.log10(1+(f/3)*(f/3)), s11: -20 }),
+    desc:  '受信フロントエンドに使用する低雑音増幅器。10〜30 MHz では S21 ≈ +20 dB がほぼフラット。入力整合（S11 ≈ −20 dB）が重要。スミスチャートは中心付近のきわめて小さな弧。',
+    tags:  [{cls:'tgain', txt:'S21 ≈ +20 dB'}, {cls:'ts11', txt:'S11 = −20 dB'}, {cls:'twarn', txt:'NF &lt; 1 dB'}],
+    compute: f => ({ s21: 20 - 10*Math.log10(1+(f/50)*(f/50)), s11: -20 }),
     gamma:   f => {
-      const mag = Math.pow(10, -20/20); // 0.1
-      const phi = -Math.PI * f / 2;
+      const mag = Math.pow(10, -20/20);
+      const phi = -Math.PI * f / 50;
       return { re: mag*Math.cos(phi), im: mag*Math.sin(phi) };
     },
   },
@@ -1406,7 +1401,7 @@ function drawMiniSparam(idx) {
 
   const mx = 34, my = 10, bx = w - 8, by = h - 22;
   const pw = bx - mx, ph = by - my;
-  const fMax = 4.0, dBmin = -55, dBmax = 20;
+  const fMax = 30, dBmin = -55, dBmax = 20;  // f in MHz, 0–30 MHz
 
   const fToX  = f  => mx + (f / fMax) * pw;
   const dBToY = db => by - ((db - dBmin) / (dBmax - dBmin)) * ph;
@@ -1415,7 +1410,7 @@ function drawMiniSparam(idx) {
   [-50,-40,-30,-20,-10,0,10,20].forEach(db => {
     if (db < dBmin || db > dBmax) return;
     const y = dBToY(db);
-    ctx.strokeStyle = db === 0 ? c.border : c.border;
+    ctx.strokeStyle = c.border;
     ctx.lineWidth = db === 0 ? 0.8 : 0.4;
     ctx.beginPath(); ctx.moveTo(mx, y); ctx.lineTo(bx, y); ctx.stroke();
     if (db % 10 === 0) {
@@ -1424,8 +1419,8 @@ function drawMiniSparam(idx) {
       ctx.fillText(db === 0 ? '0' : db.toString(), mx - 2, y);
     }
   });
-  // Grid V
-  [1,2,3,4].forEach(f => {
+  // Grid V — 5, 10, 15, 20, 25, 30 MHz
+  [5,10,15,20,25,30].forEach(f => {
     const x = fToX(f);
     ctx.strokeStyle = c.border; ctx.lineWidth = 0.4;
     ctx.beginPath(); ctx.moveTo(x, my); ctx.lineTo(x, by); ctx.stroke();
@@ -1445,7 +1440,7 @@ function drawMiniSparam(idx) {
   // freq label
   ctx.fillStyle = c.dim; ctx.font = `10px 'Space Mono', monospace`;
   ctx.textAlign = 'right'; ctx.textBaseline = 'top';
-  ctx.fillText('GHz', bx, by + 3);
+  ctx.fillText('MHz', bx, by + 3);
 
   const ex = EXAMPLES[idx];
 
@@ -1454,7 +1449,7 @@ function drawMiniSparam(idx) {
     let prev = null;
     for (let px = 0; px <= pw; px++) {
       const f = (px / pw) * fMax;
-      if (f < 0.04) { prev = null; continue; }
+      if (f < 0.5) { prev = null; continue; }
       const db = Math.max(Math.min(getVal(f), dBmax), dBmin);
       const x = mx + px, y = dBToY(db);
       const col = (colorGain && getVal(f) > 0.05) ? colorGain : color;
@@ -1504,7 +1499,7 @@ function drawMiniSparam(idx) {
         // ツールチップ
         const s21str = vals.s21 > -100 ? (vals.s21 >= 0 ? '+' : '') + vals.s21.toFixed(1) + ' dB' : '−∞';
         const s11str = vals.s11 > -100 ? (vals.s11 >= 0 ? '+' : '') + vals.s11.toFixed(1) + ' dB' : '−∞';
-        const fstr   = f.toFixed(2) + ' GHz';
+        const fstr   = f.toFixed(1) + ' MHz';
         const lines  = [`f = ${fstr}`, `S21 = ${s21str}`, `S11 = ${s11str}`];
         ctx.font = `bold 12px 'Space Mono', monospace`;
         const lineH = 17, pad = 8;
@@ -1597,7 +1592,7 @@ function drawMiniSmith(idx) {
   const ex = EXAMPLES[idx];
   if (!ex.gamma) return;
 
-  const fMin = 0.04, fMax = 4.0, steps = 300;
+  const fMin = 1, fMax = 30, steps = 300;  // MHz
   const pts = [];
   for (let i = 0; i <= steps; i++) {
     const f = fMin + (fMax - fMin) * i / steps;
@@ -1612,8 +1607,8 @@ function drawMiniSmith(idx) {
   pts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
   ctx.stroke();
 
-  // Freq tick markers at 1, 2, 3 GHz
-  [1, 2, 3].forEach(ftick => {
+  // Freq tick markers at 10, 20, 30 MHz
+  [10, 20, 30].forEach(ftick => {
     const g = ex.gamma(ftick);
     const p = toC(g.re, g.im);
     ctx.fillStyle = c.bg; ctx.beginPath(); ctx.arc(p.x, p.y, 3.5, 0, 2 * Math.PI); ctx.fill();
@@ -1621,7 +1616,7 @@ function drawMiniSmith(idx) {
     ctx.beginPath(); ctx.arc(p.x, p.y, 3.5, 0, 2 * Math.PI); ctx.stroke();
     ctx.fillStyle = c.dim; ctx.font = `8px 'Space Mono',monospace`;
     ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-    ctx.fillText(ftick + 'G', p.x + 5, p.y);
+    ctx.fillText(ftick + 'M', p.x + 5, p.y);
   });
 
   // Hover overlay
@@ -1647,7 +1642,7 @@ function drawMiniSmith(idx) {
     const dz = (1 - re) * (1 - re) + im * im;
     const zRe = 50 * (1 - re * re - im * im) / dz;
     const zIm = 50 * 2 * im / dz;
-    const fstr = nearest.f.toFixed(2) + ' GHz';
+    const fstr = nearest.f.toFixed(1) + ' MHz';
     const s11str = s11db.toFixed(1) + ' dB';
     const zsign = zIm >= 0 ? '+' : '-';
     const zstr = zRe.toFixed(0) + zsign + Math.abs(zIm).toFixed(0) + 'j Ω';
@@ -1664,7 +1659,7 @@ function drawMiniSmith(idx) {
 
     ctx.fillStyle = 'rgba(0,0,0,0.75)';
     ctx.beginPath(); ctx.roundRect(tx, ty, tw2, th2, 4); ctx.fill();
-    [c.dim, c.accent, c.text].forEach((col, li) => {
+    ['#aaa', c.accent, c.accent2].forEach((col, li) => {
       ctx.fillStyle = col; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
       ctx.fillText(lines[li], tx + pad, ty + pad + li * lineH);
     });
