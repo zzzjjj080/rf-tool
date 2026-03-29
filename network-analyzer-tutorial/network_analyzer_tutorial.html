@@ -1113,24 +1113,24 @@ function exCircuit2(){ // SMAケーブル
 }
 function exCircuit3(){ // π型ATT
   return exSvg(exPorts('50Ω','50Ω') +
-    exW(26,40,56,40) + exW(86,40,114,40) + exW(144,40,174,40) +
+    exW(26,40,56,40) + exW(56,40,86,40) + exW(114,40,144,40) + exW(144,40,174,40) +
     exRh(100,40,'R_s = 96Ω') +
     exDot(56,40) + exW(56,40,56,42) + exRv(56,53,'71Ω') + exW(56,64,56,69) + exGnd(56,69) +
     exDot(144,40) + exW(144,40,144,42) + exRv(144,53,'71Ω') + exW(144,64,144,69) + exGnd(144,69) +
-    `<text x="100" y="23" text-anchor="middle" font-size="7.5" fill="var(--text-dim)" font-family="Space Mono,monospace">π 型アッテネーター −10 dB</text>`);
+    `<text x="100" y="13" text-anchor="middle" font-size="7.5" fill="var(--text-dim)" font-family="Space Mono,monospace">π 型アッテネーター −10 dB</text>`);
 }
 function exCircuit4(){ // LPF: series L + shunt C
   return exSvg(exPorts('50Ω','50Ω') +
     exW(26,40,46,40) + exL(46,40,'11 nH') + exW(82,40,120,40) + exW(120,40,174,40) +
     exDot(120,40) + exCsh(120,40,'4.5 pF') +
-    `<text x="75" y="23" text-anchor="middle" font-size="7.5" fill="var(--text-dim)" font-family="Space Mono,monospace">直列 L → シャント C</text>`);
+    `<text x="75" y="13" text-anchor="middle" font-size="7.5" fill="var(--text-dim)" font-family="Space Mono,monospace">直列 L → シャント C</text>`);
 }
 function exCircuit5(){ // BPF: series resonant (L + C in series)
   return exSvg(exPorts('50Ω','50Ω') +
     exW(26,40,46,40) + exL(46,40,'L') + exW(82,40,89,40) +
-    exCser(91,40,'C') + exW(93,40,174,40) +
-    `<text x="100" y="22" text-anchor="middle" font-size="8" fill="var(--text-dim)" font-family="Space Mono,monospace">直列共振回路（L + C 直列）</text>` +
-    `<text x="100" y="60" text-anchor="middle" font-size="7.5" fill="var(--accent2)" font-family="Space Mono,monospace">f₀ = 2 GHz で Z → 0（通過）</text>`);
+    exCser(91,40,'') + exW(93,40,174,40) +
+    `<text x="100" y="13" text-anchor="middle" font-size="8" fill="var(--text-dim)" font-family="Space Mono,monospace">直列共振回路（L + C 直列）</text>` +
+    `<text x="100" y="68" text-anchor="middle" font-size="7.5" fill="var(--accent2)" font-family="Space Mono,monospace">f₀ = 2 GHz で Z → 0（通過）</text>`);
 }
 function exCircuit6(){ // 並列C（寄生容量）
   return exSvg(exPorts('50Ω','50Ω') +
@@ -1142,16 +1142,16 @@ function exCircuit7(){ // LC L型整合 50→100Ω
   return exSvg(exPorts('50Ω','100Ω') +
     exW(26,40,46,40) + exL(46,40,'7.96 nH') + exW(82,40,120,40) + exW(120,40,174,40) +
     exDot(120,40) + exCsh(120,40,'1.59 pF') +
-    `<text x="100" y="22" text-anchor="middle" font-size="7.5" fill="var(--text-dim)" font-family="Space Mono,monospace">L 型整合 50Ω → 100Ω @ 1 GHz</text>`);
+    `<text x="100" y="13" text-anchor="middle" font-size="7.5" fill="var(--text-dim)" font-family="Space Mono,monospace">L 型整合 50Ω → 100Ω @ 1 GHz</text>`);
 }
 function exCircuit8(){ // RFアンプ
   return exSvg(exPorts('50Ω','50Ω') +
     exW(26,40,70,40) +
     `<polygon points="70,18 70,62 152,40" fill="none" stroke="var(--text)" stroke-width="1.8"/>` +
     exW(152,40,174,40) +
-    `<text x="111" y="43" text-anchor="middle" font-size="10" fill="var(--accent2)" font-family="Space Mono,monospace" font-weight="700">+15dB</text>` +
-    `<text x="111" y="55" text-anchor="middle" font-size="8" fill="var(--text-dim)" font-family="Space Mono,monospace">AMP</text>` +
-    `<text x="100" y="13" text-anchor="middle" font-size="7.5" fill="var(--text)" font-family="Space Mono,monospace">能動素子（S21 &gt; 0 dB）</text>`);
+    `<text x="97" y="37" text-anchor="middle" font-size="9" fill="var(--accent2)" font-family="Space Mono,monospace" font-weight="700">+15 dB</text>` +
+    `<text x="90" y="50" text-anchor="middle" font-size="8" fill="var(--text-dim)" font-family="Space Mono,monospace">AMP</text>` +
+    `<text x="111" y="13" text-anchor="middle" font-size="7.5" fill="var(--text)" font-family="Space Mono,monospace">能動素子（S21 &gt; 0 dB）</text>`);
 }
 
 const EX_CIRCUITS = [exCircuit1, exCircuit2, exCircuit3, exCircuit4, exCircuit5, exCircuit6, exCircuit7, exCircuit8];
