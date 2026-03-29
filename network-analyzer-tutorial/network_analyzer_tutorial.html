@@ -210,6 +210,10 @@ input[type="range"]::-webkit-slider-thumb {
 .ex-svg-wrap { display: block; width: 100%; background: var(--panel); border: 1px solid var(--border); border-radius: 7px; overflow: hidden; }
 .ex-svg-wrap svg { display: block; width: 100%; height: auto; }
 .ex-card-desc { font-size: 10.5px; color: var(--text-dim); line-height: 1.6; }
+.ex-view-toggle { display: flex; gap: 6px; margin-bottom: 10px; }
+.ex-view-btn { padding: 5px 14px; border-radius: 14px; border: 1.5px solid var(--border); background: var(--panel2); color: var(--text-dim); font-family: 'Space Mono', monospace; font-size: 10px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+.ex-view-btn:hover { border-color: var(--accent); color: var(--accent); }
+.ex-view-btn.active { border-color: var(--accent); background: var(--accent); color: #fff; }
 .ex-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
 .ex-tag { font-family: 'Space Mono', monospace; font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--border); color: var(--text-dim); }
 .ex-tag.ts11  { border-color: var(--accent);  color: var(--accent);  }
@@ -830,6 +834,10 @@ input[type="range"]::-webkit-slider-thumb {
       <span style="color:var(--accent2)">橙線 = S21（透過・利得）</span>、
       <span style="color:var(--green)">緑線 = S21（利得 &gt; 0 dB）</span>。
     </p>
+    <div class="ex-view-toggle">
+      <button class="ex-view-btn active" id="exViewSparam" onclick="setExView('sparam')">S パラメータ</button>
+      <button class="ex-view-btn" id="exViewSmith" onclick="setExView('smith')">スミスチャート（S11）</button>
+    </div>
     <div class="ex-grid" id="exGrid"></div>
   </div>
 </div>
@@ -1154,51 +1162,92 @@ function exCircuit8(){ // RFアンプ
     `<text x="111" y="13" text-anchor="middle" font-size="7.5" fill="var(--text)" font-family="Space Mono,monospace">能動素子（S21 &gt; 0 dB）</text>`);
 }
 
-const EX_CIRCUITS = [exCircuit1, exCircuit2, exCircuit3, exCircuit4, exCircuit5, exCircuit6, exCircuit7, exCircuit8];
+function exCircuit9(){ // フェライトビーズ
+  return exSvg(exPorts('50Ω','50Ω') +
+    exW(26,40,72,40) +
+    `<rect x="72" y="33" width="28" height="14" rx="2" fill="none" stroke="var(--text)" stroke-width="1.5"/>` +
+    `<line x1="79" y1="33" x2="79" y2="47" stroke="var(--text)" stroke-width="1"/>` +
+    `<line x1="86" y1="33" x2="86" y2="47" stroke="var(--text)" stroke-width="1"/>` +
+    `<line x1="93" y1="33" x2="93" y2="47" stroke="var(--text)" stroke-width="1"/>` +
+    exW(100,40,174,40) +
+    `<text x="86" y="27" text-anchor="middle" font-size="7.5" fill="var(--accent2)" font-family="Space Mono,monospace">100Ω @ 300 MHz</text>` +
+    `<text x="100" y="13" text-anchor="middle" font-size="7.5" fill="var(--text-dim)" font-family="Space Mono,monospace">フェライトビーズ（損失型）</text>`);
+}
+function exCircuit10(){ // LNA
+  return exSvg(exPorts('50Ω','50Ω') +
+    exW(26,40,70,40) +
+    `<polygon points="70,22 70,58 148,40" fill="none" stroke="var(--text)" stroke-width="1.8"/>` +
+    exW(148,40,174,40) +
+    `<text x="95" y="37" text-anchor="middle" font-size="9" fill="var(--accent2)" font-family="Space Mono,monospace" font-weight="700">+20 dB</text>` +
+    `<text x="88" y="50" text-anchor="middle" font-size="8" fill="var(--text-dim)" font-family="Space Mono,monospace">LNA</text>` +
+    `<text x="100" y="13" text-anchor="middle" font-size="7.5" fill="var(--text)" font-family="Space Mono,monospace">低雑音アンプ（LNA）</text>`);
+}
+const EX_CIRCUITS = [exCircuit1, exCircuit2, exCircuit3, exCircuit4, exCircuit5, exCircuit6, exCircuit7, exCircuit8, exCircuit9, exCircuit10];
 
 const EXAMPLES = [
   {
     title: '① 理想スルー（整合 50 Ω）',
-    desc:  'Port1–Port2 をロスレスで直結。VNA キャリブレーションの THRU 標準の理想値。S11 = −∞ dB、S21 = 0 dB がすべての周波数でフラット。',
+    desc:  'Port1–Port2 をロスレスで直結。VNA キャリブレーションの THRU 標準の理想値。S11 = −∞ dB、S21 = 0 dB がすべての周波数でフラット。スミスチャートは中心（Z=50Ω）の点。',
     tags:  [{cls:'ts11', txt:'S11 = −∞ dB'}, {cls:'ts21', txt:'S21 = 0 dB'}],
     compute: () => ({ s11: -120, s21: 0 }),
+    gamma:   () => ({ re: 0, im: 0 }),
   },
   {
     title: '② SMA ケーブル（0.15 dB/GHz 損失）',
-    desc:  '高品質 SMA 同軸ケーブル。表皮効果の影響で損失は周波数に比例して増大。S11 は低いまま（整合されている）、S21 が周波数とともに緩やかに低下。',
+    desc:  '高品質 SMA 同軸ケーブル。表皮効果の影響で損失は周波数に比例して増大。S11 は低いまま（整合されている）、S21 が周波数とともに緩やかに低下。スミスチャートは中心付近の小さな円弧。',
     tags:  [{cls:'ts11', txt:'S11 ≈ −30 dB'}, {cls:'ts21', txt:'S21 ∝ −αf'}],
     compute: f => ({ s11: -30, s21: -0.15 * f }),
+    gamma:   f => {
+      const mag = 0.0316; // 10^(-30/20)
+      const phi = -Math.PI * f / 4;
+      return { re: mag * Math.cos(phi), im: mag * Math.sin(phi) };
+    },
   },
   {
     title: '③ アッテネーター（−10 dB π型）',
-    desc:  '抵抗 3 本（π型）で構成。全周波数で S21 = −10 dB がフラット、かつ S11 が非常に低い（入出力ともに 50 Ω 整合）。SWR 改善に有効。',
+    desc:  '抵抗 3 本（π型）で構成。全周波数で S21 = −10 dB がフラット、かつ S11 が非常に低い（入出力ともに 50 Ω 整合）。SWR 改善に有効。スミスチャートはほぼ中心の点。',
     tags:  [{cls:'ts11', txt:'S11 = −∞ dB'}, {cls:'ts21', txt:'S21 = −10 dB'}, {cls:'twarn', txt:'全帯域フラット'}],
     compute: () => ({ s11: -50, s21: -10 }),
+    gamma:   () => ({ re: 0.003, im: 0 }), // -50dB ≈ purely resistive, near center
   },
   {
     title: '④ ローパスフィルタ（2 次 BW, fc = 1 GHz）',
-    desc:  '2 次バターワース LPF。fc = 1 GHz でロールオフ。S21 は fc で −3 dB、fc 以上は急峻に低下。S11 は通過帯で低く、阻止帯では大きくなる。',
+    desc:  '2 次バターワース LPF。fc = 1 GHz でロールオフ。S21 は fc で −3 dB、fc 以上は急峻に低下。S11 は通過帯で低く、阻止帯では大きくなる。スミスチャートは中心から外側へのスパイラル。',
     tags:  [{cls:'ts11', txt:'S11: 通過帯で低い'}, {cls:'ts21', txt:'S21: −3dB @ 1 GHz'}, {cls:'twarn', txt:'阻止帯 S21 ↓↓'}],
     compute: f => bw2(f, 1.0),
+    gamma:   f => {
+      const Om = f / 1.0;
+      // S11 = -Om² / (1 - Om² + j√2·Om)
+      const numRe = -Om * Om;
+      const denRe = 1 - Om * Om, denIm = Math.SQRT2 * Om;
+      const d = denRe * denRe + denIm * denIm;
+      return { re: numRe * denRe / d, im: -numRe * denIm / d };
+    },
   },
   {
     title: '⑤ バンドパスフィルタ（2 次, f₀ = 2 GHz, Q = 2）',
-    desc:  '中心周波数 2 GHz、帯域幅 1 GHz の BPF。S21 は 2 GHz でピーク（0 dB）。2 GHz から離れるほど急峻に低下。S11 は通過帯でのみ深くなる。',
+    desc:  '中心周波数 2 GHz、帯域幅 1 GHz の BPF。S21 は 2 GHz でピーク（0 dB）。2 GHz から離れるほど急峻に低下。スミスチャートは f₀ で中心を通るループ。',
     tags:  [{cls:'ts21', txt:'S21 peak @ 2 GHz'}, {cls:'twarn', txt:'帯域外は遮断'}],
     compute: f => {
       if (f < 0.05) return { s11: 0, s21: -120 };
-      const Om = 2 * (f / 2 - 2 / f); // BPF frequency variable
+      const Om = 2 * (f / 2 - 2 / f);
       const s21sq = 1 / (1 + Om * Om);
-      const s11sq = 1 - s21sq;
       return {
         s21: 10 * Math.log10(Math.max(s21sq, 1e-12)),
-        s11: 10 * Math.log10(Math.max(s11sq, 1e-12)),
+        s11: 10 * Math.log10(Math.max(1 - s21sq, 1e-12)),
       };
+    },
+    gamma: f => {
+      if (f < 0.04) return { re: 1, im: 0 };
+      const Om = 2 * (f / 2 - 2 / f);
+      // Series LC: S11 = (Om² + jOm) / (1 + Om²)
+      const d = 1 + Om * Om;
+      return { re: Om * Om / d, im: Om / d };
     },
   },
   {
     title: '⑥ 並列 C 5 pF（基板の寄生容量）',
-    desc:  '実装部品の端子間や配線パターン間に発生する寄生容量。低周波は通過するが、高周波ほど GND へバイパスされ S21 が低下。リターンロス（S11）も増大。',
+    desc:  '実装部品の端子間や配線パターン間に発生する寄生容量。低周波は通過するが、高周波ほど GND へバイパスされ S21 が低下。スミスチャートは下半円（容量性）を外へ向かう弧。',
     tags:  [{cls:'ts11', txt:'S11 悪化 @ 高周波'}, {cls:'ts21', txt:'S21 LP 的低下'}, {cls:'twarn', txt:'寄生容量に注意'}],
     compute: f => {
       const x = 2 * Math.PI * f * 1e9 * 5e-12 * 50;
@@ -1208,39 +1257,90 @@ const EXAMPLES = [
         s11: 10 * Math.log10(Math.max(x * x / (4 + x * x), 1e-12)),
       };
     },
+    gamma: f => {
+      const x = 2 * Math.PI * f * 1e9 * 5e-12 * 50;
+      // Shunt Y: S11 = -jx/(2+jx)
+      const d = 4 + x * x;
+      return { re: -x * x / d, im: -2 * x / d };
+    },
   },
   {
     title: '⑦ LC L 型整合回路（50 → 100 Ω @ 1 GHz）',
-    desc:  '直列 L（7.96 nH）＋並列 C（1.59 pF）で 50 Ω 源を 100 Ω 負荷に整合。設計周波数 1 GHz でのみ S11 が最小（−∞ dB 理論値）。帯域外は整合が崩れる。',
+    desc:  '直列 L（7.96 nH）＋並列 C（1.59 pF）で 50 Ω 源を 100 Ω 負荷に整合。設計周波数 1 GHz でのみ S11 が最小（−∞ dB 理論値）。スミスチャートは 1 GHz で中心を通る弧。',
     tags:  [{cls:'ts11', txt:'S11 ディップ @ 1 GHz'}, {cls:'ts21', txt:'S21 ≈ 0 dB @ 1 GHz'}, {cls:'twarn', txt:'狭帯域整合'}],
     compute: f => {
       const L = 7.958e-9, C = 1.592e-12;
       const w = 2 * Math.PI * f * 1e9;
-      const a   = 1 - w * w * L * C;
-      const bl  = w * L;
-      const cc5 = w * C * 5000; // ωC * Z0s * Z0l = ωC * 50 * 100
+      const a = 1 - w * w * L * C, bl = w * L, cc5 = w * C * 5000;
       const numSq = (100*a - 50) ** 2 + (bl - cc5) ** 2;
       const denSq = (100*a + 50) ** 2 + (bl + cc5) ** 2;
       const s11sq = numSq / denSq;
-      return {
-        s11: 10 * Math.log10(Math.max(s11sq, 1e-12)),
-        s21: 10 * Math.log10(Math.max(1 - s11sq, 1e-12)),
-      };
+      return { s11: 10*Math.log10(Math.max(s11sq,1e-12)), s21: 10*Math.log10(Math.max(1-s11sq,1e-12)) };
+    },
+    gamma: f => {
+      const L = 7.958e-9, C = 1.592e-12;
+      const w = 2 * Math.PI * f * 1e9;
+      const a = 1 - w*w*L*C, bl = w*L, cc = w*C;
+      // ABCD→S11 with Zs=50, ZL=100
+      const numRe = 100*a - 50, numIm = bl - 5000*cc;
+      const denRe = 100*a + 50, denIm = bl + 5000*cc;
+      const d = denRe*denRe + denIm*denIm;
+      return { re: (numRe*denRe + numIm*denIm)/d, im: (numIm*denRe - numRe*denIm)/d };
     },
   },
   {
     title: '⑧ RF アンプ（+15 dB, BW ≈ 3 GHz）',
-    desc:  '能動素子（トランジスタ等）による増幅器。S21 > 0 dB（利得）は受動回路では不可能。3 GHz 以上は利得が低下。S11 はアンプ入力の整合を示す（−15 dB）。',
+    desc:  '能動素子（トランジスタ等）による増幅器。S21 > 0 dB（利得）は受動回路では不可能。3 GHz 以上は利得が低下。スミスチャートは小さな円弧（入力整合ネットワークの影響）。',
     tags:  [{cls:'tgain', txt:'S21 = +15 dB'}, {cls:'ts11', txt:'S11 = −15 dB'}, {cls:'twarn', txt:'能動素子のみ S21 > 0 dB'}],
-    compute: f => ({
-      s21: 15 - 10 * Math.log10(1 + (f / 3) * (f / 3)),
-      s11: -15,
-    }),
+    compute: f => ({ s21: 15 - 10*Math.log10(1+(f/3)*(f/3)), s11: -15 }),
+    gamma:   f => {
+      const mag = Math.pow(10, -15/20); // |Γ| from -15dB
+      const phi = -Math.PI * f / 3;
+      return { re: mag*Math.cos(phi), im: mag*Math.sin(phi) };
+    },
+  },
+  {
+    title: '⑨ フェライトビーズ（100 Ω @ 300 MHz）',
+    desc:  'フェライト材の磁気損失を利用した EMI 対策部品。高周波ほど直列抵抗として機能し RF を熱に変換。低周波は通過するが 300 MHz 付近から急速に損失が増える。スミスチャートは誘導性から抵抗性へ移行する独特の弧。',
+    tags:  [{cls:'ts11', txt:'S11 上昇 @ HF'}, {cls:'ts21', txt:'S21 損失型低下'}, {cls:'twarn', txt:'EMI フィルタ用途'}],
+    compute: f => {
+      const u = f / 0.3; // normalized to peak freq 300 MHz
+      const d = 1 + 4*u*u;
+      return {
+        s21: 10*Math.log10(Math.max((1+u*u)/d, 1e-12)),
+        s11: 10*Math.log10(Math.max(u*u/d, 1e-12)),
+      };
+    },
+    gamma: f => {
+      const u = f / 0.3;
+      // Z_fb=100·ju/(1+ju), S11=Z_fb/(2Z0+Z_fb): S11=(2u²+ju)/(1+2ju)... recalc:
+      // S11 = ju/(1+2ju) = ju(1-2ju)/((1+2ju)(1-2ju)) = (2u²+ju)/(1+4u²)
+      const d = 1 + 4*u*u;
+      return { re: 2*u*u/d, im: u/d };
+    },
+  },
+  {
+    title: '⑩ 低雑音アンプ（LNA, +20 dB, NF &lt; 1 dB）',
+    desc:  '受信フロントエンドに使用する低雑音増幅器。S21 = +20 dB の高利得と NF < 1 dB を両立。入力整合（S11 ≈ −20 dB）が重要で、スミスチャートは中心付近の小さな周波数依存弧を描く。',
+    tags:  [{cls:'tgain', txt:'S21 = +20 dB'}, {cls:'ts11', txt:'S11 = −20 dB'}, {cls:'twarn', txt:'NF &lt; 1 dB'}],
+    compute: f => ({ s21: 20 - 10*Math.log10(1+(f/3)*(f/3)), s11: -20 }),
+    gamma:   f => {
+      const mag = Math.pow(10, -20/20); // 0.1
+      const phi = -Math.PI * f / 2;
+      return { re: mag*Math.cos(phi), im: mag*Math.sin(phi) };
+    },
   },
 ];
 
-// ホバー状態 (インデックス → {x, active})
+// ホバー状態 (インデックス → {x, y, active})
 const exHoverState = {};
+let exViewMode = 'sparam';
+function setExView(mode) {
+  exViewMode = mode;
+  document.getElementById('exViewSparam').classList.toggle('active', mode === 'sparam');
+  document.getElementById('exViewSmith').classList.toggle('active', mode === 'smith');
+  drawAllExamples();
+}
 
 // カードを動的生成
 function buildExGrid() {
@@ -1251,7 +1351,7 @@ function buildExGrid() {
     const card = document.createElement('div');
     card.className = 'ex-card';
     const tags = ex.tags.map(t => `<span class="ex-tag ${t.cls}">${t.txt}</span>`).join('');
-    const numStr = ['①','②','③','④','⑤','⑥','⑦','⑧'][i] || (i+1);
+    const numStr = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'][i] || (i+1);
     const svgHTML = EX_CIRCUITS[i] ? EX_CIRCUITS[i]() : '';
     // strip title number prefix since it's shown in num badge
     const titleText = ex.title.replace(/^[①-⑧]\s*/,'');
@@ -1279,12 +1379,13 @@ function buildExGrid() {
       function onMove(e) {
         const rect = cv.getBoundingClientRect();
         const cx = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
-        exHoverState[i] = { x: cx, active: true };
-        drawMiniSparam(i);
+        const cy = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+        exHoverState[i] = { x: cx, y: cy, active: true };
+        exViewMode === 'smith' ? drawMiniSmith(i) : drawMiniSparam(i);
       }
       function onLeave() {
         exHoverState[i] = { active: false };
-        drawMiniSparam(i);
+        exViewMode === 'smith' ? drawMiniSmith(i) : drawMiniSparam(i);
       }
       cv.addEventListener('mousemove', onMove);
       cv.addEventListener('mouseleave', onLeave);
@@ -1428,7 +1529,146 @@ function drawMiniSparam(idx) {
 }
 
 function drawAllExamples() {
-  EXAMPLES.forEach((_, i) => drawMiniSparam(i));
+  EXAMPLES.forEach((_, i) => exViewMode === 'smith' ? drawMiniSmith(i) : drawMiniSparam(i));
+}
+
+function drawMiniSmith(idx) {
+  const cv = document.getElementById('cvEx' + idx);
+  if (!cv) return;
+  const { ctx, w, h } = getCtx(cv);
+  const c = C();
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = c.bg; ctx.fillRect(0, 0, w, h);
+
+  // Chart geometry — centered square
+  const margin = 22;
+  const size = Math.min(w, h) - margin * 2;
+  const R = size / 2;
+  const scx = w / 2, scy = h / 2 + 2;
+
+  // Γ → canvas
+  const toC = (re, im) => ({ x: scx + R * re, y: scy - R * im });
+
+  // Outer circle
+  ctx.strokeStyle = c.text; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.arc(scx, scy, R, 0, 2 * Math.PI); ctx.stroke();
+
+  // Clip grid to outer circle
+  ctx.save();
+  ctx.beginPath(); ctx.arc(scx, scy, R, 0, 2 * Math.PI); ctx.clip();
+
+  // Real axis
+  ctx.strokeStyle = c.border; ctx.lineWidth = 0.6;
+  ctx.beginPath(); ctx.moveTo(scx - R, scy); ctx.lineTo(scx + R, scy); ctx.stroke();
+
+  // Constant-R circles
+  [0.2, 0.5, 1, 2, 5].forEach(r => {
+    const cc = toC(r / (r + 1), 0);
+    ctx.strokeStyle = c.border; ctx.lineWidth = r === 1 ? 0.8 : 0.4;
+    ctx.beginPath(); ctx.arc(cc.x, cc.y, R / (r + 1), 0, 2 * Math.PI); ctx.stroke();
+  });
+
+  // Constant-X arcs (upper + lower half)
+  [0.2, 0.5, 1, 2, 5].forEach(x => {
+    [-1, 1].forEach(sign => {
+      const xv = sign * x;
+      const cc = toC(1, 1 / xv);
+      ctx.strokeStyle = c.border; ctx.lineWidth = Math.abs(xv) === 1 ? 0.8 : 0.4;
+      ctx.beginPath(); ctx.arc(cc.x, cc.y, R / Math.abs(xv), 0, 2 * Math.PI); ctx.stroke();
+    });
+  });
+  ctx.restore();
+
+  // R=0,0.5,1,2 labels on real axis (below)
+  ctx.fillStyle = c.dim; ctx.font = `8px 'Space Mono',monospace`; ctx.textBaseline = 'top';
+  [[0, -1], [0.5, -1/3], [1, 0], [2, 1/3]].forEach(([r, rePos]) => {
+    const pt = toC(rePos, 0);
+    ctx.textAlign = rePos < 0 ? 'right' : 'center';
+    ctx.fillText(r.toString(), pt.x + (rePos < 0 ? -2 : 0), scy + 3);
+  });
+  ctx.textAlign = 'left'; ctx.fillText('∞', toC(1, 0).x + 2, scy + 3);
+
+  // "S11" legend
+  ctx.fillStyle = c.accent2; ctx.font = `bold 9px 'Space Mono',monospace`;
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  ctx.fillText('S11 →', 4, 4);
+
+  // Draw trace
+  const ex = EXAMPLES[idx];
+  if (!ex.gamma) return;
+
+  const fMin = 0.04, fMax = 4.0, steps = 300;
+  const pts = [];
+  for (let i = 0; i <= steps; i++) {
+    const f = fMin + (fMax - fMin) * i / steps;
+    const g = ex.gamma(f);
+    const p = toC(g.re, g.im);
+    pts.push({ f, x: p.x, y: p.y, re: g.re, im: g.im });
+  }
+
+  // Trace
+  ctx.strokeStyle = c.accent2; ctx.lineWidth = 2;
+  ctx.beginPath();
+  pts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+  ctx.stroke();
+
+  // Freq tick markers at 1, 2, 3 GHz
+  [1, 2, 3].forEach(ftick => {
+    const g = ex.gamma(ftick);
+    const p = toC(g.re, g.im);
+    ctx.fillStyle = c.bg; ctx.beginPath(); ctx.arc(p.x, p.y, 3.5, 0, 2 * Math.PI); ctx.fill();
+    ctx.strokeStyle = c.text; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(p.x, p.y, 3.5, 0, 2 * Math.PI); ctx.stroke();
+    ctx.fillStyle = c.dim; ctx.font = `8px 'Space Mono',monospace`;
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText(ftick + 'G', p.x + 5, p.y);
+  });
+
+  // Hover overlay
+  const hs = exHoverState[idx];
+  if (hs && hs.active) {
+    const mx = hs.x, my = hs.y ?? scy;
+    let nearest = pts[0], minDist = Infinity;
+    pts.forEach(p => {
+      const d = Math.hypot(p.x - mx, p.y - my);
+      if (d < minDist) { minDist = d; nearest = p; }
+    });
+
+    // Dot on trace
+    ctx.fillStyle = c.accent2;
+    ctx.beginPath(); ctx.arc(nearest.x, nearest.y, 4, 0, 2 * Math.PI); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(nearest.x, nearest.y, 4, 0, 2 * Math.PI); ctx.stroke();
+
+    // Compute Z = Z0 · (1+Γ)/(1-Γ)
+    const re = nearest.re, im = nearest.im;
+    const mag = Math.sqrt(re * re + im * im);
+    const s11db = 20 * Math.log10(Math.max(mag, 1e-6));
+    const dz = (1 - re) * (1 - re) + im * im;
+    const zRe = 50 * (1 - re * re - im * im) / dz;
+    const zIm = 50 * 2 * im / dz;
+    const fstr = nearest.f.toFixed(2) + ' GHz';
+    const s11str = s11db.toFixed(1) + ' dB';
+    const zsign = zIm >= 0 ? '+' : '-';
+    const zstr = zRe.toFixed(0) + zsign + Math.abs(zIm).toFixed(0) + 'j Ω';
+    const lines = [`f = ${fstr}`, `S11= ${s11str}`, `Z = ${zstr}`];
+
+    ctx.font = `bold 12px 'Space Mono',monospace`;
+    const lineH = 17, pad = 8;
+    const tw = Math.max(...lines.map(l => ctx.measureText(l).width));
+    const tw2 = tw + pad * 2, th2 = lineH * lines.length + pad * 2;
+    let tx = nearest.x + 8, ty = nearest.y - th2 / 2;
+    if (tx + tw2 > w) tx = nearest.x - tw2 - 8;
+    if (ty < 2) ty = 2;
+    if (ty + th2 > h - 2) ty = h - th2 - 2;
+
+    ctx.fillStyle = 'rgba(0,0,0,0.75)';
+    ctx.beginPath(); ctx.roundRect(tx, ty, tw2, th2, 4); ctx.fill();
+    [c.dim, c.accent, c.text].forEach((col, li) => {
+      ctx.fillStyle = col; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lines[li], tx + pad, ty + pad + li * lineH);
+    });
+  }
 }
 
 // ══════════════════════════════════════════
