@@ -28,7 +28,7 @@
   .tab-btn { padding: 8px 16px; color: rgba(255,255,255,0.75); border: none; background: none; cursor: pointer; font-size: 11px; white-space: nowrap; border-bottom: 3px solid transparent; transition: all 0.2s; }
   .tab-btn:hover { color: #fff; background: rgba(255,255,255,0.08); }
   .tab-btn.active { color: #fff; border-bottom-color: var(--accent); background: rgba(255,255,255,0.1); }
-  .tab-divider { padding: 8px 20px; color: var(--accent); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border-left: 3px solid var(--accent); border-right: 3px solid var(--accent); cursor: default; background: rgba(0,0,0,0.2); display: flex; align-items: center; gap: 4px; margin: 0 4px; }
+  .tab-divider { padding: 8px 16px; color: rgba(255,255,255,0.9); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border-left: 2px solid rgba(255,255,255,0.3); border-right: 2px solid rgba(255,255,255,0.3); cursor: default; background: rgba(0,0,0,0.6); display: flex; align-items: center; gap: 6px; margin: 0 2px; }
   .visualizer-btn { background: rgba(255,255,255,0.05); }
   .container { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
   .tab-panel { display: none; }
@@ -208,7 +208,7 @@
   <button class="tab-btn" onclick="switchTab('mod3')">③ スミスチャート解析</button>
   <button class="tab-btn" onclick="switchTab('mod4')">④ 電力単位換算</button>
   <button class="tab-btn" onclick="switchTab('mod5')">⑤ ケーブル損失補正</button>
-  <div class="tab-divider">📊 ビジュアライザー</div>
+  <div class="tab-divider">📊 ビジュアライザー ▶</div>
   <button class="tab-btn visualizer-btn" onclick="window.location.href='cordic-visualizer/cordic_visualizer.html'">⑥ CORDIC IQ ↗</button>
   <button class="tab-btn visualizer-btn" onclick="window.location.href='adc-visualizer/adc_visualizer.html'">⑦ ADC ↗</button>
   <button class="tab-btn visualizer-btn" onclick="window.location.href='digital-filter-designer/digital_filter_designer.html'">⑧ フィルター ↗</button>
