@@ -25,7 +25,7 @@
   header h1 { font-size: 20px; font-weight: 700; letter-spacing: 0.5px; }
   header span { font-size: 12px; opacity: 0.8; }
   .tabs { display: flex; flex-wrap: wrap; background: var(--primary-dark); overflow-x: auto; }
-  .tab-btn { padding: 8px 16px; color: rgba(255,255,255,0.75); border: none; background: none; cursor: pointer; font-size: 13px; white-space: nowrap; border-bottom: 3px solid transparent; transition: all 0.2s; }
+  .tab-btn { padding: 8px 16px; color: rgba(255,255,255,0.75); border: none; background: none; cursor: pointer; font-size: 12px; white-space: nowrap; border-bottom: 3px solid transparent; transition: all 0.2s; }
   .tab-btn:hover { color: #fff; background: rgba(255,255,255,0.08); }
   .tab-btn.active { color: #fff; border-bottom-color: var(--accent); background: rgba(255,255,255,0.1); }
   .container { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
@@ -206,7 +206,6 @@
   <button class="tab-btn" onclick="switchTab('mod3')">③ スミスチャート解析</button>
   <button class="tab-btn" onclick="switchTab('mod4')">④ 電力単位換算</button>
   <button class="tab-btn" onclick="switchTab('mod5')">⑤ ケーブル損失補正</button>
-  <button class="tab-btn" onclick="switchTab('log')">🗒 履歴ログ</button>
   <button class="tab-btn" onclick="window.location.href='cordic-visualizer/cordic_visualizer.html'" style="border-left:2px solid rgba(255,255,255,0.2);">⑥ CORDIC IQ ↗</button>
   <button class="tab-btn" onclick="window.location.href='adc-visualizer/adc_visualizer.html'" style="border-left:2px solid rgba(255,255,255,0.2);">⑦ ADC ↗</button>
   <button class="tab-btn" onclick="window.location.href='digital-filter-designer/digital_filter_designer.html'" style="border-left:2px solid rgba(255,255,255,0.2);">⑧ フィルター ↗</button>
