@@ -218,11 +218,14 @@ input[type="range"]::-webkit-slider-thumb {
 /* ── Section ⑦ 変換解説 ── */
 .conv-intro { font-size: 11px; color: var(--text-dim); line-height: 1.7; margin-bottom: 14px; }
 .conv-steps { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
-.conv-step { flex: 1 1 180px; background: var(--panel2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; }
+.conv-step { flex: 1 1 200px; background: var(--panel2); border: 1px solid var(--border); border-radius: 10px; padding: 11px 14px; }
 .conv-step-num { font-family: 'Space Mono', monospace; font-size: 10px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
-.conv-step-title { font-size: 11px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
-.conv-formula { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--accent2); background: var(--panel); border-radius: 6px; padding: 5px 8px; margin-bottom: 5px; white-space: pre; line-height: 1.6; }
-.conv-step-note { font-size: 10px; color: var(--text-dim); line-height: 1.5; }
+.conv-step-title { font-size: 11px; font-weight: 700; color: var(--text); margin-bottom: 7px; }
+.conv-formula { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--accent2); background: var(--panel); border-radius: 6px; padding: 5px 8px; margin-bottom: 5px; white-space: pre; line-height: 1.7; }
+.conv-formula-sub { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--gold); background: var(--panel); border-radius: 6px; padding: 4px 8px; margin-bottom: 5px; white-space: pre; line-height: 1.6; }
+.conv-step-note { font-size: 10px; color: var(--text-dim); line-height: 1.6; }
+.conv-step-note b { color: var(--text); }
+.conv-arrow { text-align: center; font-size: 14px; color: var(--accent); opacity: 0.5; line-height: 1; padding: 4px 0 0; align-self: center; flex: 0 0 auto; }
 .conv-dual { display: flex; gap: 12px; align-items: flex-start; }
 .conv-pane { flex: 1; min-width: 0; }
 .conv-pane-label { font-family: 'Space Mono', monospace; font-size: 10px; font-weight: 700; color: var(--text-dim); margin: 6px 0 4px; text-align: center; }
@@ -868,41 +871,71 @@ input[type="range"]::-webkit-slider-thumb {
       グラフにマウスを当てると、同じ周波数の点が左右同時にハイライトされます。
     </p>
 
-    <!-- 変換ステップ 3 枚 -->
+    <!-- 変換ステップ 4 枚 -->
     <div class="conv-steps">
       <div class="conv-step">
-        <div class="conv-step-num">STEP 1</div>
-        <div class="conv-step-title">S11[dB] → |Γ| （反射係数の大きさ）</div>
-        <div class="conv-formula">|Γ| = 10 ^ (S11 / 20)</div>
+        <div class="conv-step-num">STEP 1 — 大きさ</div>
+        <div class="conv-step-title">S11[dB] から反射の強さ |Γ| を求める</div>
+        <div class="conv-formula">|Γ| = 10 ^ (S11[dB] / 20)</div>
         <div class="conv-step-note">
-          S11 = −6 dB なら |Γ| = 0.50。<br>
-          S11 = −20 dB なら |Γ| = 0.10。<br>
-          S11 = −∞ dB → |Γ| = 0（完全整合）。
+          |Γ| は「入射した信号のうち何割が反射するか」。<br><br>
+          <b>S11 = 0 dB</b> → |Γ| = 1.0（全反射）<br>
+          <b>S11 = −6 dB</b> → |Γ| = 0.50（半分反射）<br>
+          <b>S11 = −20 dB</b> → |Γ| = 0.10（10%反射）<br>
+          <b>S11 = −∞ dB</b> → |Γ| = 0（完全整合）<br><br>
+          ⚠️ これは<b>大きさだけ</b>。スミスチャートには
+          さらに「方向（位相）」が必要。
         </div>
       </div>
       <div class="conv-step">
-        <div class="conv-step-num">STEP 2</div>
-        <div class="conv-step-title">Γ を複素数で計算（位相を含む）</div>
-        <div class="conv-formula">x = ωCZ₀  （無次元）
-Γ = −jx / (2 + jx)
-  = −x² / (4+x²)
-  − j·2x / (4+x²)</div>
+        <div class="conv-step-num">STEP 2 — 方向（位相）</div>
+        <div class="conv-step-title">Γ はなぜ複素数なのか？</div>
         <div class="conv-step-note">
-          470 pF @ 20 MHz:<br>
-          x = 2π×20M×470p×50 ≈ 2.95<br>
-          Γ ≈ −0.69 − j0.48
+          <b>Γ は「大きさ」＋「方向」</b>を持つ複素数。<br>
+          方向はインピーダンスの種類で決まる：<br><br>
+          <b style="color:var(--text)">R（抵抗）</b> → 実軸（右側）に乗る<br>
+          <b style="color:var(--accent2)">C（容量）</b> → 下半円（−j 方向）<br>
+          <b style="color:var(--green)">L（誘導）</b> → 上半円（+j 方向）<br><br>
+          並列 C の場合、電流は周波数が上がるほど
+          容量を通り GND に逃げ、反射波は
+          <b>容量性の位相</b>（−j 方向）を帯びる。
         </div>
       </div>
       <div class="conv-step">
-        <div class="conv-step-num">STEP 3</div>
-        <div class="conv-step-title">Γ → Z （インピーダンス変換）</div>
-        <div class="conv-formula">Z = Z₀ × (1 + Γ) / (1 − Γ)
-  = R + jX  [Ω]</div>
+        <div class="conv-step-num">STEP 3 — 回路から Γ を計算</div>
+        <div class="conv-step-title">並列 C の Γ を式で導く</div>
+        <div class="conv-formula">x = ωCZ₀  ← まず無次元化</div>
+        <div class="conv-formula-sub">  470 pF @ 20 MHz:
+  x = 2π×20×10⁶×470×10⁻¹²×50
+    ≈ 2.95</div>
+        <div class="conv-formula">Γ = −jx / (2 + jx)
+  分母・分子を共役乗算で展開:
+  Re(Γ) = −x² / (4 + x²)
+  Im(Γ) = −2x  / (4 + x²)</div>
+        <div class="conv-formula-sub">  x=2.95 のとき:
+  Re = −8.70/12.70 ≈ −0.69
+  Im = −5.90/12.70 ≈ −0.46
+  → Γ ≈ −0.69 − 0.46j</div>
         <div class="conv-step-note">
-          スミスチャートはこの変換を<br>
-          グラフィカルに表現したもの。<br>
-          中心 = Z₀ = 50 Ω（完全整合）。<br>
-          外周 = |Γ| = 1（完全反射）。
+          スミスチャート上の座標は (Re, Im)。<br>
+          Im が負 = 下半円 = 容量性。
+        </div>
+      </div>
+      <div class="conv-step">
+        <div class="conv-step-num">STEP 4 — インピーダンス</div>
+        <div class="conv-step-title">Γ からインピーダンス Z を求める</div>
+        <div class="conv-formula">Z = Z₀ × (1 + Γ) / (1 − Γ)</div>
+        <div class="conv-formula-sub">  Γ = −0.69 − 0.46j のとき:
+  1+Γ = 0.31 − 0.46j
+  1−Γ = 1.69 + 0.46j
+  Z ≈ 50 × (0.31−0.46j)/(1.69+0.46j)
+    ≈ 8 − 11j  [Ω]</div>
+        <div class="conv-step-note">
+          <b>R = 8 Ω</b>：50 Ω と並列になった実効抵抗分。<br>
+          <b>X = −11 Ω</b>：容量性リアクタンス（マイナス）。<br><br>
+          スミスチャートはこの変換を全周波数・
+          全インピーダンスに対してグラフ化したもの。<br>
+          中心 = 50 Ω（整合）、外周 = 全反射。
         </div>
       </div>
     </div>
