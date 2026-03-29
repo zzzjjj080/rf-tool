@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PLL シミュレーター — フェーズロックドループ</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+JP:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f0f4f8;--panel:#ffffff;--panel2:#f1f5f9;--border:#cbd5e1;
+  --accent:#0284c7;--accent2:#ea580c;--text:#1e293b;--text-dim:#64748b;
+  --gold:#d97706;--green:#16a34a;--red:#dc2626;--purple:#7c3aed;
+  --shadow:rgba(0,0,0,0.07);--grid-line:rgba(100,116,139,0.08);
+}
+[data-theme="dark"]{
+  --bg:#0a0e1a;--panel:#111827;--panel2:#1a2235;--border:#1e3a5f;
+  --accent:#00d4ff;--accent2:#ff6b35;--text:#e2e8f0;--text-dim:#64748b;
+  --gold:#fbbf24;--green:#22c55e;--red:#f87171;--purple:#a78bfa;
+  --shadow:rgba(0,0,0,0.3);--grid-line:rgba(0,212,255,0.03);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;min-height:100vh;overflow-x:hidden;transition:background .3s,color .3s}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--grid-line) 1px,transparent 1px),linear-gradient(90deg,var(--grid-line) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+.container{position:relative;z-index:1;max-width:1140px;margin:0 auto;padding:20px 16px 40px}
+header{text-align:center;margin-bottom:20px;padding:20px 0 16px;border-bottom:1px solid var(--border);position:relative}
+.header-tag{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:4px;color:var(--accent);text-transform:uppercase;margin-bottom:6px;opacity:.8}
+h1{font-family:'Space Mono',monospace;font-size:clamp(22px,5vw,36px);font-weight:700;letter-spacing:-1px;background:linear-gradient(135deg,var(--accent) 0%,var(--text) 50%,var(--accent2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.subtitle{font-size:11px;color:var(--text-dim);margin-top:5px;font-family:'Space Mono',monospace;letter-spacing:1px}
+.theme-toggle{position:absolute;top:20px;right:0;padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:var(--panel);color:var(--text);cursor:pointer;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;transition:all .2s;box-shadow:0 1px 4px var(--shadow)}
+.theme-toggle:hover{border-color:var(--accent);color:var(--accent)}
+
+/* Section units */
+.section-unit{background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:14px;box-shadow:0 1px 4px var(--shadow)}
+.section-head{padding:10px 18px;background:var(--panel2);border-bottom:1px solid var(--border);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.section-head.accent{color:var(--accent)}
+.section-head.orange{color:var(--accent2)}
+.section-head.green{color:var(--green)}
+.section-head.gold{color:var(--gold)}
+.section-head.purple{color:var(--purple)}
+.section-body{padding:16px 18px}
+.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.dot-b{background:var(--accent)}
+.dot-o{background:var(--accent2)}
+.dot-g{background:var(--green)}
+.dot-gold{background:var(--gold)}
+.dot-p{background:var(--purple)}
+
+/* Explain text */
+.explain-text{font-size:13px;line-height:2;color:var(--text);margin-bottom:14px}
+.explain-text p{margin-bottom:6px}
+.hl{color:var(--accent);font-weight:700}
+.hl2{color:var(--accent2);font-weight:700}
+.hl3{color:var(--gold);font-weight:700}
+.hlg{color:var(--green);font-weight:700}
+.hlp{color:var(--purple);font-weight:700}
+
+/* App icon grid */
+.app-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.app-card{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:14px 12px;text-align:center;transition:border-color .2s,transform .15s}
+.app-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.app-icon{font-size:32px;margin-bottom:8px;display:block}
+.app-title{font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1px;color:var(--accent);text-transform:uppercase;margin-bottom:4px}
+.app-desc{font-size:11px;color:var(--text-dim);line-height:1.7}
+@media(max-width:500px){.app-grid{grid-template-columns:1fr}}
+
+/* Before/After */
+.before-after{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:500px){.before-after{grid-template-columns:1fr}}
+.ba-card{background:var(--panel2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.ba-head{padding:7px 14px;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.ba-head.bad{background:rgba(220,38,38,.1);color:var(--red);border-bottom:1px solid rgba(220,38,38,.2)}
+.ba-head.good{background:rgba(22,163,74,.1);color:var(--green);border-bottom:1px solid rgba(22,163,74,.2)}
+[data-theme="dark"] .ba-head.bad{background:rgba(248,113,113,.08)}
+[data-theme="dark"] .ba-head.good{background:rgba(34,197,94,.08)}
+.ba-body{padding:10px 14px;font-size:12px;line-height:1.8;color:var(--text)}
+
+/* Canvas panels */
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 4px var(--shadow);margin-bottom:10px}
+.panel-header{padding:9px 14px;background:var(--panel2);border-bottom:1px solid var(--border);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;display:flex;align-items:center;gap:8px}
+canvas{display:block;width:100%}
+.legend{display:flex;gap:16px;padding:8px 14px;font-family:'Space Mono',monospace;font-size:10px;border-top:1px solid var(--border);background:var(--panel2);flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:5px}
+.legend-swatch{width:20px;height:3px;border-radius:1px}
+.legend-dash{width:20px;border-top:2px dashed}
+
+/* Parameter panel */
+.zone{border-radius:12px;margin-bottom:14px;overflow:hidden;box-shadow:0 1px 4px var(--shadow)}
+.zone-settings{background:var(--panel);border:1.5px solid rgba(2,132,199,.6)}
+.zone-settings .zone-header{background:rgba(2,132,199,.08);border-bottom:1px solid rgba(2,132,199,.2);padding:8px 18px;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);display:flex;align-items:center;gap:8px}
+[data-theme="dark"] .zone-settings{border-color:rgba(0,212,255,.4)}
+[data-theme="dark"] .zone-settings .zone-header{background:rgba(0,212,255,.08);border-bottom-color:rgba(0,212,255,.2)}
+.param-body{padding:14px 18px;display:flex;flex-direction:column;gap:14px}
+.param-row{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end}
+.input-group{display:flex;flex-direction:column;gap:5px;flex:1;min-width:150px}
+.input-group label{font-size:10px;letter-spacing:2px;font-family:'Space Mono',monospace;text-transform:uppercase;color:var(--accent)}
+.input-group-inline{display:flex;align-items:center;gap:8px}
+input[type="range"]{-webkit-appearance:none;width:100%;height:4px;background:var(--border);border-radius:2px;outline:none;cursor:pointer}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;box-shadow:0 1px 4px var(--shadow)}
+.input-val{font-family:'Space Mono',monospace;font-size:15px;color:var(--gold);min-width:80px;text-align:center;font-weight:700;white-space:nowrap}
+
+/* Stage indicator */
+.stage-row{display:flex;gap:8px;justify-content:center;margin-bottom:12px;flex-wrap:wrap}
+.stage-btn{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;padding:6px 16px;border-radius:20px;border:1px solid var(--border);background:var(--panel2);color:var(--text-dim);cursor:pointer;transition:all .2s}
+.stage-btn.active{border-color:var(--accent);background:rgba(2,132,199,.12);color:var(--accent)}
+[data-theme="dark"] .stage-btn.active{background:rgba(0,212,255,.1)}
+
+/* Lock status badge */
+.lock-badge{display:inline-flex;align-items:center;gap:7px;padding:6px 14px;border-radius:20px;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;border:1px solid}
+.lock-badge.locked{background:rgba(22,163,74,.12);border-color:rgba(22,163,74,.4);color:var(--green)}
+.lock-badge.locking{background:rgba(217,119,6,.12);border-color:rgba(217,119,6,.4);color:var(--gold)}
+.lock-badge.unlocked{background:rgba(220,38,38,.1);border-color:rgba(220,38,38,.3);color:var(--red)}
+.lock-dot{width:8px;height:8px;border-radius:50%;background:currentColor}
+.lock-dot.blink{animation:blink 0.8s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* Result cards */
+.result-section{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:14px;box-shadow:0 1px 4px var(--shadow)}
+.section-label{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.section-label span{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--accent);text-transform:uppercase}
+.result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.result-card{background:var(--panel2);border:2px solid var(--border);border-radius:10px;padding:12px;text-align:center}
+.result-card .label{font-size:9px;letter-spacing:2px;color:var(--text-dim);font-family:'Space Mono',monospace;text-transform:uppercase;margin-bottom:5px}
+.result-card .value{font-family:'Space Mono',monospace;font-size:clamp(13px,1.8vw,16px);font-weight:700;color:var(--accent)}
+.result-card .value.orange{color:var(--accent2)}
+.result-card .value.green{color:var(--green)}
+.result-card .value.gold{color:var(--gold)}
+.result-card .value.purple{color:var(--purple)}
+.result-card .unit{font-size:9px;color:var(--text-dim);margin-top:2px;font-family:'Space Mono',monospace}
+
+/* Gain comparison */
+.gain-split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:500px){.gain-split{grid-template-columns:1fr}}
+
+/* Divider table */
+.div-table{width:100%;border-collapse:collapse;font-family:'Space Mono',monospace;font-size:12px;margin-top:12px}
+.div-table th{background:var(--panel2);border:1px solid var(--border);padding:8px 12px;text-align:center;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim)}
+.div-table td{border:1px solid var(--border);padding:7px 12px;text-align:center;color:var(--text)}
+.div-table tr.active td{background:rgba(2,132,199,.1);color:var(--accent);font-weight:700}
+[data-theme="dark"] .div-table tr.active td{background:rgba(0,212,255,.08)}
+
+/* Anim control */
+.anim-ctrl{display:flex;align-items:center;gap:10px;justify-content:center;margin-top:8px}
+.anim-btn{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;padding:6px 16px;border-radius:20px;border:1px solid var(--border);background:var(--panel2);color:var(--text);cursor:pointer;transition:all .2s}
+.anim-btn:hover{border-color:var(--accent);color:var(--accent)}
+.anim-btn.active{border-color:var(--accent);background:rgba(2,132,199,.12);color:var(--accent)}
+
+/* Formula box */
+.formula-box{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;font-family:'Space Mono',monospace;font-size:12px;color:var(--accent);line-height:1.9;margin-top:10px}
+.result-card{cursor:pointer;transition:border-color .2s,box-shadow .2s}
+.result-card:hover{border-color:var(--accent);box-shadow:0 2px 8px var(--shadow)}
+#metric-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center}
+#metric-modal.open{display:flex}
+.modal-box{background:var(--panel);border:1.5px solid var(--accent);border-radius:14px;padding:24px 28px;max-width:480px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.3);position:relative;max-height:85vh;overflow-y:auto}
+.modal-close{position:absolute;top:12px;right:14px;background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-dim);line-height:1}
+.modal-close:hover{color:var(--text)}
+.modal-name{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px;letter-spacing:1px}
+.modal-value{font-family:'Space Mono',monospace;font-size:28px;font-weight:700;margin-bottom:4px;transition:color .3s}
+.modal-unit{font-family:'Space Mono',monospace;font-size:11px;color:var(--text-dim);margin-bottom:14px}
+.modal-formula{background:var(--panel2);border-radius:8px;padding:8px 12px;font-family:'Space Mono',monospace;font-size:11px;color:var(--text-dim);margin-bottom:10px;border-left:3px solid var(--accent)}
+.modal-calc{background:var(--panel2);border-radius:8px;padding:10px 12px;font-family:'Space Mono',monospace;font-size:11px;line-height:1.8;color:var(--gold);margin-bottom:14px;border-left:3px solid var(--gold);white-space:pre-line}
+.modal-desc{font-size:13px;line-height:1.8;color:var(--text);margin-bottom:14px}
+.modal-ranges{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:6px}
+.modal-range{border-radius:6px;padding:6px 8px;text-align:center;font-size:10px;font-family:'Space Mono',monospace}
+.modal-range-label{color:#fff;font-weight:700;margin-bottom:2px}
+.modal-range-val{color:rgba(255,255,255,.85)}
+.modal-judge{font-size:12px;margin-top:12px;padding:8px 12px;border-radius:8px;text-align:center;font-family:'Space Mono',monospace;font-weight:700}
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- HEADER -->
+<header>
+  <div class="header-tag">RF Tool — Phase-Locked Loop</div>
+  <h1>PLL シミュレーター</h1>
+  <div class="subtitle">Phase Locked Loop — ロック動作をインタラクティブに学ぶ</div>
+  <button class="theme-toggle" onclick="toggleTheme()">◐ テーマ</button>
+</header>
+
+<!-- ① 応用例 -->
+<div class="section-unit">
+  <div class="section-head accent"><div class="dot dot-b"></div>① PLL とは？— 応用例から理解する</div>
+  <div class="section-body">
+    <div class="explain-text">
+      <p>PLL（フェーズロックドループ）は、<span class="hl">入力信号の周波数・位相に同期した出力</span>を生成する回路です。</p>
+      <p><span class="hl2">低速な基準クロックを高速クロックに変換</span>したり、受信信号に位相を合わせる用途など、デジタル・RF 回路の至る所で使われています。</p>
+      <p>下の3つが代表的な応用例です。</p>
+    </div>
+    <div class="app-grid">
+      <div class="app-card">
+        <span class="app-icon">🔲</span>
+        <div class="app-title">FPGA / ASIC</div>
+        <div class="app-desc">外部 25 MHz 水晶から内部 500 MHz クロックを生成。電源投入後 PLL がロックするまでリセット状態を保持。</div>
+      </div>
+      <div class="app-card">
+        <span class="app-icon">📡</span>
+        <div class="app-title">通信 IC / RF</div>
+        <div class="app-desc">受信キャリアに位相同期し、雑音の多い環境でも正確に復調。GPS・LTE・Wi-Fi で必須の技術。</div>
+      </div>
+      <div class="app-card">
+        <span class="app-icon">⏱️</span>
+        <div class="app-title">クロックジェネレーター</div>
+        <div class="app-desc">1つの基準クロックから 100 MHz / 200 MHz / 50 MHz など複数の周波数を同時生成。ボード全体の同期基準に。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ② 目的 -->
+<div class="section-unit">
+  <div class="section-head orange"><div class="dot dot-o"></div>② PLL の目的 — なぜ必要か</div>
+  <div class="section-body">
+    <div class="explain-text">
+      <p>デジタル回路はすべてのフリップフロップが<span class="hl">同一クロックに同期</span>して動く必要があります。ズレが生じると「セットアップ違反」や「メタスタビリティ」が発生します。</p>
+      <p>PLL は基準信号に対して<span class="hlg">位相を一致（ロック）</span>させることで、システム全体の時間基準を正確に揃えます。</p>
+      <p>また入力より高い周波数を出力できるため、<span class="hl2">低速な水晶から高速クロックを合成</span>する用途にも不可欠です。</p>
+    </div>
+    <div class="before-after">
+      <div class="ba-card">
+        <div class="ba-head bad">✗ PLL なし</div>
+        <div class="ba-body">
+          各ブロックのクロックがバラバラ<br>
+          → タイミング違反・データ化け<br>
+          → 誤動作・システムクラッシュ<br>
+          高速クロックが作れない
+        </div>
+      </div>
+      <div class="ba-card">
+        <div class="ba-head good">✓ PLL あり</div>
+        <div class="ba-body">
+          全ブロックが同一位相のクロックで動作<br>
+          → データが正確に受け渡し<br>
+          → 安定した高速動作を実現<br>
+          基準から任意倍率の周波数を生成
+        </div>
+      </div>
+    </div>
+    <canvas id="cvPurpose" height="120" style="border-radius:8px;margin-top:12px"></canvas>
+  </div>
+</div>
+
+<!-- ③ ブロック図 -->
+<div class="section-unit">
+  <div class="section-head gold"><div class="dot dot-gold"></div>③ PLL の構成 — ブロック図</div>
+  <div class="section-body">
+    <div class="explain-text">
+      <p>PLL は <span class="hl">4つの要素</span>で構成されます：<span class="hl3">位相比較器（PD）</span> → <span class="hl3">ループフィルター（LF）</span> → <span class="hl3">VCO</span> → <span class="hl3">分周器（÷N）</span></p>
+      <p><span class="hl2">VCO（電圧制御発振器）</span>：制御電圧が上がると発振周波数が上がる素子。PLL の心臓部です。</p>
+      <p>出力を分周器で <span class="hlg">1/N に分周</span>してフィードバックし、基準信号と位相比較することで周波数を N 倍に保ちます。</p>
+    </div>
+    <canvas id="cvBlock" height="200"></canvas>
+  </div>
+</div>
+
+<!-- ④ 動作原理 -->
+<div class="section-unit">
+  <div class="section-head purple"><div class="dot dot-p"></div>④ 動作原理 — 位相差を検出して周波数を調整</div>
+  <div class="section-body">
+    <div class="explain-text">
+      <p>4 本の信号を同時に観察することで、PLL がどうやって位相を合わせるかが見えます。<span class="hl">① 基準信号</span>・<span class="hl2">② 帰還信号（VCO÷N）</span>の位相差を<span class="hlp">③ 位相比較器（PD）</span>が検出し、<span class="hlg">④ ループフィルター（LF）</span>が平滑化した制御電圧を VCO に送り込みます。</p>
+      <p>PD 出力の振幅は位相差に比例 — <span class="hl2">じわじわと振れ幅が小さくなる</span>のがロックしていく証拠です。</p>
+      <p>制御電圧が定常値に落ち着いたとき、VCO の周波数が目標値に固定され<span class="hlg">「ロック完了」</span>となります。</p>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">
+      <div id="lockAnimBadge" class="lock-badge locking"><div class="lock-dot blink" id="lockAnimDot"></div><span id="lockAnimStatus">ロック中...</span></div>
+      <button id="lockAutoPlayBtn" class="anim-btn active" onclick="toggleLockAutoPlay()" style="font-size:10px;padding:4px 12px">⏸ 一時停止</button>
+      <span id="lockAnimHint" style="font-family:'Space Mono',monospace;font-size:9px;color:var(--text-dim)">← クリック / ドラッグで任意の位置に移動できます</span>
+    </div>
+    <canvas id="cvLockAnim" height="290" style="cursor:ew-resize"></canvas>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--accent)"></div>① 基準信号 Fref</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--accent2)"></div>② 帰還信号 VCO÷N</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--red)"></div>③ PD 出力（位相誤差）</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--gold)"></div>④ 制御電圧 LF→VCO</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--green)"></div>ロック状態</div>
+    </div>
+  </div>
+</div>
+
+<!-- PARAMETER PANEL -->
+<div class="zone zone-settings">
+  <div class="zone-header"><div class="dot dot-b"></div>パラメータ設定</div>
+  <div class="param-body">
+    <div class="param-row">
+      <div class="input-group">
+        <label>参照周波数 F<sub>REF</sub></label>
+        <div class="input-group-inline">
+          <input type="range" id="slFref" min="1" max="100" step="1" value="10">
+          <div class="input-val" id="valFref">10 MHz</div>
+        </div>
+      </div>
+      <div class="input-group">
+        <label>分周比 N</label>
+        <div class="input-group-inline">
+          <input type="range" id="slN" min="1" max="100" step="1" value="10">
+          <div class="input-val" id="valN">×10</div>
+        </div>
+      </div>
+      <div class="input-group">
+        <label>ループゲイン K</label>
+        <div class="input-group-inline">
+          <input type="range" id="slK" min="1" max="10" step="0.5" value="3">
+          <div class="input-val" id="valK">3.0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ⑤ インタラクティブシミュレーション -->
+<div class="section-unit">
+  <div class="section-head accent"><div class="dot dot-b"></div>⑤ インタラクティブシミュレーション</div>
+  <div class="section-body">
+    <div class="explain-text">
+      <p>スライダーを動かすと PLL の動作がリアルタイムで変わります。</p>
+      <p><span class="hl">上段</span>: 基準信号（青）と VCO 帰還信号（橙）— ロック後は位相が一致します。</p>
+      <p><span class="hl2">下段</span>: 位相誤差の時間変化 — 0 に収束するまでの挙動がロック特性を表します。</p>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap">
+      <div id="lockBadge" class="lock-badge locked"><div class="lock-dot"></div>LOCKED</div>
+      <div style="font-family:'Space Mono',monospace;font-size:11px;color:var(--text-dim)">ロック時間: <span id="lockTimeVal" style="color:var(--gold);font-weight:700">—</span></div>
+    </div>
+  </div>
+</div>
+<div class="panel">
+  <div class="panel-header"><div class="dot dot-b"></div>基準信号 vs VCO 出力（分周後）</div>
+  <canvas id="cvSim" height="160"></canvas>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-swatch" style="background:#0284c7"></div>基準信号 (F<sub>ref</sub>)</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#ea580c"></div>VCO 出力÷N（ロック前）</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#16a34a"></div>VCO 出力÷N（ロック後）</div>
+  </div>
+</div>
+<div class="panel">
+  <div class="panel-header"><div class="dot dot-gold"></div>位相誤差の時間変化</div>
+  <canvas id="cvPhase" height="140"></canvas>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-swatch" style="background:#d97706"></div>位相誤差 φe(t) [rad]</div>
+    <div class="legend-item"><div class="legend-dash" style="border-color:#64748b"></div>±2% 収束しきい値</div>
+  </div>
+</div>
+
+<!-- ⑥ ループゲインの影響 -->
+<div class="section-unit">
+  <div class="section-head orange"><div class="dot dot-o"></div>⑥ ループゲインの影響 — 応答速度 vs 安定性</div>
+  <div class="section-body">
+    <div class="explain-text">
+      <p><span class="hl2">ループゲイン大</span>：ロックが速い（応答性良い）が、行き過ぎてオーバーシュート・発振の危険があります。</p>
+      <p><span class="hl">ループゲイン小</span>：ロックが遅い（応答性悪い）が、安定して収束します。</p>
+      <p>設計では用途に応じて<span class="hl3">ダンピング比 ζ ≈ 0.7</span>（臨界減衰に近い）を狙うのが一般的です。</p>
+    </div>
+    <canvas id="cvGain" height="180"></canvas>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-swatch" style="background:#dc2626"></div>ゲイン 大（K=8, 過減衰なし）</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#0284c7"></div>ゲイン 中（K=3, 推奨）</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#16a34a"></div>ゲイン 小（K=1, 安定・低速）</div>
+    </div>
+  </div>
+</div>
+
+<!-- ⑦ 分周比 -->
+<div class="section-unit">
+  <div class="section-head green"><div class="dot dot-g"></div>⑦ 周波数倍率 — 分周比の役割</div>
+  <div class="section-body">
+    <div class="explain-text">
+      <p>「<span class="hl2">分周</span>（遅くする）しているのに、なぜ基準より<span class="hlg">速い周波数</span>が出るの？」— PLL で最も不思議に感じる点です。</p>
+      <p>答えはフィードバックにあります。PLL がロックしているとき<span class="hl">位相比較器の両入力は必ず同じ周波数</span>でなければなりません。帰還側は VCO を N で割った信号なので、等式が成り立つよう VCO が自動調整されます。</p>
+      <p>つまり「分周して基準に合わせる」ことで、結果として <span class="hl3">VCO = N × 基準</span> という関係が強制されます。</p>
+    </div>
+    <div class="formula-box" style="margin-bottom:12px">
+      <div style="margin-bottom:8px;font-size:10px;letter-spacing:1px;color:var(--text-dim)">── ループの等式（なぜ N 倍になるか）──</div>
+      ロック条件：F<sub>ref</sub> = F<sub>vco</sub> ÷ N　（PD 両入力が同周波数）<br>
+      ∴ <strong style="color:var(--gold)">F<sub>vco</sub> = N × F<sub>ref</sub></strong><br><br>
+      <div style="font-size:11px;line-height:1.9;color:var(--text)">
+        <span style="color:var(--red)">もし F<sub>vco</sub> が低下</span> → F<sub>vco</sub>/N &lt; F<sub>ref</sub> → PD が「遅れ」検出<br>
+        → 制御電圧 ↑ → VCO 周波数 ↑ → <span style="color:var(--green)">元の N×F<sub>ref</sub> に戻る</span><br><br>
+        <span style="color:var(--accent)">直接周波数を作っているのではなく、フィードバックが VCO を強制している</span>
+      </div>
+    </div>
+    <canvas id="cvDivider" height="160"></canvas>
+    <table class="div-table" id="divTable">
+      <thead><tr><th>分周比 N</th><th>VCO 周波数</th><th>用途例</th></tr></thead>
+      <tbody id="divTbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ⑧ クロックジェネレーター -->
+<div class="section-unit">
+  <div class="section-head purple"><div class="dot dot-p"></div>⑧ 実例 — クロックジェネレーター</div>
+  <div class="section-body">
+    <div class="explain-text">
+      <p>ボード設計では 1 つの水晶発振器（例: 25 MHz）から複数の PLL を使い<span class="hl">異なる周波数</span>を同時供給します。</p>
+      <p>FPGA コア用 200 MHz、DDR メモリ用 400 MHz、USB 用 480 MHz — それぞれ別の分周比を持つ PLL が担当します。</p>
+      <p>全 PLL が共通の基準に同期しているため、<span class="hlg">クロックドメイン間のデータ転送も安全</span>に行えます。</p>
+    </div>
+    <canvas id="cvClockGen" height="220"></canvas>
+  </div>
+</div>
+
+<!-- RESULT CARDS -->
+<div class="result-section">
+  <div class="section-label"><div class="dot dot-b" style="width:8px;height:8px"></div><span>計算結果</span></div>
+  <div class="result-grid">
+    <div class="result-card" onclick="showMetricDetail('fref')">
+      <div class="label">基準周波数</div>
+      <div class="value" id="rcFref">10.000</div>
+      <div class="unit">MHz</div>
+    </div>
+    <div class="result-card" onclick="showMetricDetail('fvco')">
+      <div class="label">VCO 周波数</div>
+      <div class="value gold" id="rcFvco">100.000</div>
+      <div class="unit">MHz</div>
+    </div>
+    <div class="result-card" onclick="showMetricDetail('N')">
+      <div class="label">分周比 N</div>
+      <div class="value orange" id="rcN">×10</div>
+      <div class="unit">—</div>
+    </div>
+    <div class="result-card" onclick="showMetricDetail('zeta')">
+      <div class="label">ダンピング比 ζ</div>
+      <div class="value purple" id="rcZeta">0.62</div>
+      <div class="unit">推奨: 0.5〜0.8</div>
+    </div>
+    <div class="result-card" onclick="showMetricDetail('omegaN')">
+      <div class="label">固有角周波数 ωn</div>
+      <div class="value" id="rcOmegaN">1.88</div>
+      <div class="unit">Mrad/s</div>
+    </div>
+    <div class="result-card" onclick="showMetricDetail('tlock')">
+      <div class="label">ロック時間（目安）</div>
+      <div class="value green" id="rcTlock">3.97</div>
+      <div class="unit">μs</div>
+    </div>
+    <div class="result-card" onclick="showMetricDetail('stability')">
+      <div class="label">安定性評価</div>
+      <div class="value" id="rcStability">安定</div>
+      <div class="unit" id="rcStabilityUnit">良好</div>
+    </div>
+    <div class="result-card" onclick="showMetricDetail('lock')">
+      <div class="label">ロック状態</div>
+      <div class="value green" id="rcLock">LOCKED</div>
+      <div class="unit">定常状態</div>
+    </div>
+  </div>
+  <div class="formula-box" style="margin-top:12px">
+    VCO 周波数    : F<sub>vco</sub> = F<sub>ref</sub> × N<br>
+    固有角周波数  : ω<sub>n</sub> = K × 2π × 100 kHz<br>
+    ダンピング比  : ζ = 0.3 + (K−1)/9 × 0.9<br>
+    ロック時間目安: T<sub>lock</sub> ≈ 4.6 / (ζ × ω<sub>n</sub>)
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+// ─── STATE ───────────────────────────────────────────────
+const state = { fref: 10, N: 10, K: 3 };
+
+function derive() {
+  const fvco = state.fref * state.N;
+  const K = state.K;
+  const zeta = 0.3 + (K - 1) / 9 * 0.9;
+  const omegaN = K * 2 * Math.PI * 1e5; // rad/s
+  const sigma = zeta * omegaN;
+  const omegaD = omegaN * Math.sqrt(Math.max(0, 1 - zeta * zeta));
+  let Tlock;
+  if (zeta < 1) {
+    Tlock = Math.log(50) / sigma;
+  } else {
+    const alpha = omegaN * Math.sqrt(zeta * zeta - 1);
+    Tlock = Math.log(100) / (sigma - alpha);
+  }
+  return { fvco, zeta, omegaN, sigma, omegaD, Tlock };
+}
+
+// Phase error response (unit step, 2nd-order PLL)
+function phiErr(t, d) {
+  const { sigma, omegaN, zeta, omegaD } = d;
+  if (t <= 0) return 1;
+  if (zeta < 0.9999) {
+    return Math.exp(-sigma * t) * (Math.cos(omegaD * t) + sigma / omegaD * Math.sin(omegaD * t));
+  } else {
+    return Math.exp(-sigma * t) * (1 + sigma * t);
+  }
+}
+
+// ─── THEME ───────────────────────────────────────────────
+function toggleTheme() {
+  const h = document.documentElement;
+  h.setAttribute('data-theme', h.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  drawAll();
+}
+function isDark() { return document.documentElement.getAttribute('data-theme') === 'dark'; }
+function col(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+// ─── CANVAS HELPERS ──────────────────────────────────────
+function initCanvas(cv) {
+  const dpr = window.devicePixelRatio || 1;
+  const w = cv.parentElement.clientWidth || 600;
+  const h = parseInt(cv.getAttribute('height'), 10);
+  cv.style.width = w + 'px';
+  cv.style.height = h + 'px';
+  cv.width = Math.round(w * dpr);
+  cv.height = Math.round(h * dpr);
+  return { dpr, w, h };
+}
+function getCtx(cv) {
+  const dpr = window.devicePixelRatio || 1;
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return ctx;
+}
+
+function drawGrid(ctx, mx, my, pw, ph, nX, nY) {
+  ctx.strokeStyle = isDark() ? 'rgba(0,212,255,0.05)' : 'rgba(100,116,139,0.1)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= nX; i++) {
+    const x = mx + i * pw / nX;
+    ctx.beginPath(); ctx.moveTo(x, my); ctx.lineTo(x, my + ph); ctx.stroke();
+  }
+  for (let j = 0; j <= nY; j++) {
+    const y = my + j * ph / nY;
+    ctx.beginPath(); ctx.moveTo(mx, y); ctx.lineTo(mx + pw, y); ctx.stroke();
+  }
+}
+
+// ─── PURPOSE CANVAS (②) ──────────────────────────────────
+function drawPurpose() {
+  const cv = document.getElementById('cvPurpose');
+  const ctx = getCtx(cv);
+  const w = cv.clientWidth, h = cv.clientHeight;
+  ctx.clearRect(0, 0, w, h);
+
+  const bg = isDark() ? '#111827' : '#f8fafc';
+  const t = col('--text'), dim = col('--text-dim');
+  const acc = col('--accent'), gr = col('--green'), rd = col('--red');
+
+  ctx.fillStyle = bg;
+  ctx.roundRect ? ctx.roundRect(0, 0, w, h, 8) : ctx.rect(0, 0, w, h);
+  ctx.fill();
+
+  // Draw two signal panels: left = no PLL, right = PLL
+  const half = w / 2 - 8;
+  const t0 = Date.now() / 1000;
+
+  // LEFT — no PLL: 3 slightly different frequencies
+  const freqs = [1.0, 1.17, 0.88];
+  const colors = [rd, '#ff6b35', '#ff9999'];
+  ctx.font = '11px Space Mono';
+  ctx.fillStyle = rd;
+  ctx.textAlign = 'center';
+  ctx.fillText('PLL なし — 非同期', half / 2, 16);
+
+  for (let i = 0; i < 3; i++) {
+    const yc = 35 + i * 28;
+    ctx.strokeStyle = colors[i];
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let x = 0; x < half; x++) {
+      const phase = (x / half) * 4 * Math.PI * freqs[i] + t0 * freqs[i];
+      const y = yc + 10 * Math.tanh(8 * Math.sin(phase));
+      x === 0 ? ctx.moveTo(x + 8, y) : ctx.lineTo(x + 8, y);
+    }
+    ctx.stroke();
+  }
+
+  // Divider
+  ctx.strokeStyle = col('--border');
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(w / 2, 10); ctx.lineTo(w / 2, h - 10); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // RIGHT — PLL: 3 same frequency
+  ctx.fillStyle = gr;
+  ctx.fillText('PLL あり — 位相同期', w / 2 + half / 2, 16);
+
+  for (let i = 0; i < 3; i++) {
+    const yc = 35 + i * 28;
+    ctx.strokeStyle = gr;
+    ctx.globalAlpha = 0.6 + i * 0.15;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let x = 0; x < half; x++) {
+      const phase = (x / half) * 4 * Math.PI + t0;
+      const y = yc + 10 * Math.tanh(8 * Math.sin(phase));
+      x === 0 ? ctx.moveTo(w / 2 + x + 8, y) : ctx.lineTo(w / 2 + x + 8, y);
+    }
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // Labels
+  ctx.font = '10px Noto Sans JP';
+  ctx.fillStyle = dim;
+  ctx.textAlign = 'left';
+  ctx.fillText('CLK1', 10, 38); ctx.fillText('CLK2', 10, 66); ctx.fillText('CLK3', 10, 94);
+  ctx.fillText('CLK1', w / 2 + 10, 38); ctx.fillText('CLK2', w / 2 + 10, 66); ctx.fillText('CLK3', w / 2 + 10, 94);
+}
+
+// ─── BLOCK DIAGRAM (③) ───────────────────────────────────
+let blockAnimFrame = 0;
+let blockAnimRAF = null;
+
+function drawBlock(animT) {
+  const cv = document.getElementById('cvBlock');
+  const ctx = getCtx(cv);
+  const w = cv.clientWidth, h = cv.clientHeight;
+  ctx.clearRect(0, 0, w, h);
+
+  const dark = isDark();
+  const bg = dark ? '#111827' : '#f8fafc';
+  const text = col('--text'), dim = col('--text-dim'), border = col('--border');
+  const acc = col('--accent'), or2 = col('--accent2'), gr = col('--green'), gd = col('--gold'), pu = col('--purple');
+
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, w, h);
+
+  // Layout
+  const boxes = [
+    { label: 'Phase\nDetector', sub: '位相比較器', color: acc, x: 0 },
+    { label: 'Loop\nFilter', sub: 'ループフィルター', color: gd, x: 1 },
+    { label: 'VCO', sub: '電圧制御発振器', color: or2, x: 2 },
+  ];
+  const bw = Math.min(110, (w - 80) / 3.5);
+  const bh = 60;
+  const yc = 80;
+  const startX = w * 0.05;
+  const spacing = (w * 0.7 - bw) / 2;
+
+  boxes.forEach((b, i) => {
+    const x = startX + i * spacing;
+    // Box
+    ctx.fillStyle = b.color + (dark ? '1a' : '18');
+    ctx.strokeStyle = b.color;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x, yc - bh / 2, bw, bh, 8);
+    else ctx.rect(x, yc - bh / 2, bw, bh);
+    ctx.fill(); ctx.stroke();
+    // Label
+    ctx.fillStyle = b.color;
+    ctx.font = `bold 11px Space Mono`;
+    ctx.textAlign = 'center';
+    const lines = b.label.split('\n');
+    lines.forEach((l, li) => ctx.fillText(l, x + bw / 2, yc - 8 + li * 14));
+    ctx.fillStyle = dim;
+    ctx.font = '10px Noto Sans JP';
+    ctx.fillText(b.sub, x + bw / 2, yc + 20);
+    b.cx = x + bw / 2; b.cy = yc; b.x0 = x; b.x1 = x + bw;
+  });
+
+  // Arrows between boxes
+  const arrowY = yc;
+  const arrowColor = dark ? 'rgba(100,116,139,0.6)' : 'rgba(100,116,139,0.5)';
+  function drawArrow(x1, x2, y, color) {
+    ctx.strokeStyle = color; ctx.lineWidth = 1.5;
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2 - 7, y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x2, y); ctx.lineTo(x2 - 8, y - 5); ctx.lineTo(x2 - 8, y + 5); ctx.closePath(); ctx.fill();
+  }
+
+  for (let i = 0; i < boxes.length - 1; i++) {
+    drawArrow(boxes[i].x1, boxes[i + 1].x0, arrowY, arrowColor);
+  }
+
+  // VCO output → right
+  const vcoRight = boxes[2].x1;
+  const outX = w * 0.92;
+  drawArrow(vcoRight, outX, arrowY, gr);
+  ctx.fillStyle = gr; ctx.font = 'bold 11px Space Mono'; ctx.textAlign = 'left';
+  ctx.fillText('出力', outX - 28, arrowY - 8);
+  ctx.fillStyle = dim; ctx.font = '10px Noto Sans JP';
+  ctx.fillText('F_vco', outX - 30, arrowY + 18);
+
+  // Input → PD
+  const pdLeft = boxes[0].x0;
+  ctx.strokeStyle = arrowColor; ctx.lineWidth = 1.5;
+  ctx.fillStyle = arrowColor;
+  ctx.beginPath(); ctx.moveTo(w * 0.02, arrowY); ctx.lineTo(pdLeft - 7, arrowY); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pdLeft, arrowY); ctx.lineTo(pdLeft - 8, arrowY - 5); ctx.lineTo(pdLeft - 8, arrowY + 5); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = dim; ctx.font = 'bold 11px Space Mono'; ctx.textAlign = 'center';
+  ctx.fillText('入力', w * 0.02 + 18, arrowY - 8);
+  ctx.fillStyle = dim; ctx.font = '10px Noto Sans JP';
+  ctx.fillText('F_ref', w * 0.02 + 18, arrowY + 18);
+
+  // Feedback path: VCO output → divider → PD
+  const fbY = yc + 60;
+  const divX = startX + 2 * spacing + bw / 2;
+  const divW = 70, divH = 36;
+
+  // Feedback line from output tap
+  ctx.strokeStyle = pu; ctx.lineWidth = 1.5; ctx.setLineDash([5, 3]);
+  ctx.beginPath();
+  ctx.moveTo(outX - 30, arrowY);
+  ctx.lineTo(outX - 30, fbY);
+  ctx.lineTo(divX, fbY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Divider box
+  ctx.fillStyle = pu + (dark ? '1a' : '18');
+  ctx.strokeStyle = pu; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(divX - divW / 2, fbY - divH / 2, divW, divH, 6);
+  else ctx.rect(divX - divW / 2, fbY - divH / 2, divW, divH);
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = pu; ctx.font = 'bold 12px Space Mono'; ctx.textAlign = 'center';
+  ctx.fillText('÷ N', divX, fbY + 4);
+
+  // Divider → PD feedback
+  ctx.strokeStyle = pu; ctx.lineWidth = 1.5;
+  const pdFbX = boxes[0].cx;
+  ctx.beginPath();
+  ctx.moveTo(divX - divW / 2, fbY);
+  ctx.lineTo(pdFbX, fbY);
+  ctx.lineTo(pdFbX, yc + bh / 2);
+  ctx.stroke();
+  ctx.fillStyle = pu;
+  ctx.beginPath(); ctx.moveTo(pdFbX, yc + bh / 2); ctx.lineTo(pdFbX - 5, yc + bh / 2 + 7); ctx.lineTo(pdFbX + 5, yc + bh / 2 + 7); ctx.closePath(); ctx.fill();
+
+  // Labels for feedback path
+  ctx.fillStyle = pu; ctx.font = '10px Noto Sans JP'; ctx.textAlign = 'center';
+  ctx.fillText('分周器（フィードバック）', divX, fbY + divH / 2 + 14);
+
+  // Animated signal dot
+  if (animT !== undefined) {
+    const t = (animT % 1);
+    const pathLen = 4; // segments
+    const dotColor = '#00ff88';
+
+    // Forward path dots
+    const fwdX = [pdLeft, boxes[0].x1, boxes[1].x0, boxes[1].x1, boxes[2].x0, boxes[2].x1, outX - 28];
+    const fwdT = t * (fwdX.length - 1);
+    const seg = Math.floor(fwdT);
+    if (seg < fwdX.length - 1) {
+      const f = fwdT - seg;
+      const dx = fwdX[seg] + (fwdX[seg + 1] - fwdX[seg]) * f;
+      ctx.fillStyle = dotColor;
+      ctx.beginPath(); ctx.arc(dx, arrowY, 4, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+}
+
+// ─── LOCK ANIMATION (④) ──────────────────────────────────
+// ─── LOCK ANIMATION SMOOTH (④) ───────────────────────────
+let lockAnimT = 0;            // normalized 0→1 (playhead position)
+let lockAnimIntervalId = null;
+let lockAnimAutoPlay = true;  // true = auto-advance, false = manual
+let lockAnimDragging = false;
+
+function drawLockAnimSmooth() {
+  const cv = document.getElementById('cvLockAnim');
+  const ctx = getCtx(cv);
+  const w = cv.clientWidth, h = cv.clientHeight;
+  if (w === 0 || h === 0) return;
+  ctx.clearRect(0, 0, w, h);
+
+  const dark = isDark();
+  ctx.fillStyle = dark ? '#0d1117' : '#f8fafc';
+  ctx.fillRect(0, 0, w, h);
+
+  const d = derive();
+  const Tmax = Math.max(d.Tlock * 3.4, 8e-6);
+  const phi0 = 1.5;                    // initial phase offset [rad]
+  const nCycles = 8;
+  const fDisp = nCycles / Tmax;        // Hz display frequency
+
+  const mx = 82, pw = w - mx - 10;
+  const rowH = h / 4;
+  const rowYc = [rowH*0.5, rowH*1.5, rowH*2.5, rowH*3.5];
+  const sineAmp = rowH * 0.29;
+  const errAmp  = rowH * 0.30;
+
+  const acc = col('--accent'), or2 = col('--accent2');
+  const rd = col('--red'), gd = col('--gold'), gr = col('--green'), dim = col('--text-dim');
+
+  function phiE(t) { return phi0 * phiErr(t, d); }   // phase error at time t [rad]
+  const playX = mx + Math.min(Math.max(lockAnimT, 0), 1) * pw;
+
+  // ── Row separators ──
+  for (let i = 1; i < 4; i++) {
+    ctx.strokeStyle = dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(mx, i*rowH); ctx.lineTo(mx+pw, i*rowH); ctx.stroke();
+  }
+  // Zero lines for rows 2 & 3 (error / control voltage)
+  [2, 3].forEach(i => {
+    ctx.strokeStyle = dark ? 'rgba(255,255,255,0.13)' : 'rgba(0,0,0,0.13)';
+    ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(mx, rowYc[i]); ctx.lineTo(mx+pw, rowYc[i]); ctx.stroke();
+    ctx.setLineDash([]);
+  });
+
+  // ── Row labels ──
+  const rowDefs = [
+    { label: '① 基準信号', sub: 'Fref' ,       color: acc },
+    { label: '② 帰還信号', sub: 'VCO ÷ N',    color: or2 },
+    { label: '③ PD 出力',  sub: '位相誤差',    color: rd  },
+    { label: '④ 制御電圧', sub: 'LF → VCO',   color: gd  },
+  ];
+  rowDefs.forEach((r, i) => {
+    ctx.fillStyle = r.color; ctx.font = 'bold 10px Space Mono'; ctx.textAlign = 'right';
+    ctx.fillText(r.label, mx - 4, rowYc[i] - 5);
+    ctx.fillStyle = dim; ctx.font = '9px Space Mono';
+    ctx.fillText(r.sub, mx - 4, rowYc[i] + 9);
+  });
+
+  // ── Signal draw helper ──
+  // ghostFn: full‑width dimmed backdrop; activeFn: drawn up to playhead with colour fn
+  function drawSignal(rowI, colorFn, valFn, amp) {
+    const yc = rowYc[rowI];
+    // ghost
+    ctx.globalAlpha = 0.1;
+    ctx.strokeStyle = rowDefs[rowI].color; ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let px = 0; px <= pw; px++) {
+      const t = (px/pw)*Tmax;
+      px === 0 ? ctx.moveTo(mx+px, yc - valFn(t)*amp) : ctx.lineTo(mx+px, yc - valFn(t)*amp);
+    }
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    // active (coloured segments)
+    let lastC = null; let started = false;
+    ctx.lineWidth = 2;
+    for (let px = 0; px <= pw; px++) {
+      if (mx+px > playX) break;
+      const t = (px/pw)*Tmax;
+      const c = colorFn(t);
+      const y = yc - valFn(t)*amp;
+      if (c !== lastC) {
+        if (started) ctx.stroke();
+        ctx.strokeStyle = c; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(mx+px, y);
+        lastC = c; started = true;
+      } else {
+        if (!started) { ctx.moveTo(mx+px, y); started = true; }
+        else ctx.lineTo(mx+px, y);
+      }
+    }
+    if (started) ctx.stroke();
+  }
+
+  // clk(): tanh-steepened square wave (clean vertical edges, no HF aliasing)
+  function clk(phase) { return Math.tanh(10 * Math.sin(phase)); }
+
+  // ── Signal 1: Reference clock — square wave ──
+  drawSignal(0, () => acc,
+    t => clk(2*Math.PI*fDisp*t), sineAmp);
+
+  // ── Signal 2: VCO÷N clock — phase converges (orange→green at lock) ──
+  drawSignal(1,
+    t => Math.abs(phiE(t)) < 0.08 ? gr : or2,
+    t => clk(2*Math.PI*fDisp*t + phiE(t)), sineAmp);
+
+  // ── Signal 3: PD output = ref − feedback ──
+  // = −2·sin(φe/2)·cos(2πfDisp·t + φe/2)  → amplitude ∝ phase error, decays to 0
+  drawSignal(2,
+    t => { const pe = Math.abs(phiE(t)); return pe>0.5 ? rd : pe>0.1 ? gd : gr; },
+    t => {
+      const pe = phiE(t);
+      const A = 2*Math.PI*fDisp*t;
+      return -2 * Math.sin(pe/2) * Math.cos(A + pe/2);
+    }, errAmp);
+
+  // ── Signal 4: Control voltage — smooth exponential decay ──
+  // proportional to φe(t) — positive offset decaying to steady-state
+  drawSignal(3, () => gd,
+    t => phiE(t), errAmp * 0.82);
+
+  // ── Lock‑time marker ──
+  const lockX = mx + (d.Tlock/Tmax)*pw;
+  ctx.strokeStyle = gr; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+  ctx.beginPath(); ctx.moveTo(lockX, 4); ctx.lineTo(lockX, h-14); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = gr; ctx.font = 'bold 9px Space Mono'; ctx.textAlign = 'center';
+  ctx.fillText('T_LOCK', lockX, h-4);
+
+  // ── Δφ annotation between rows 0 & 1 (visible in early region) ──
+  if (lockAnimT > 0.07) {
+    const aFrac = 0.13, aT = aFrac*Tmax, aX = mx + aFrac*pw + 14;
+    const ry0 = rowYc[0] - Math.tanh(10*Math.sin(2*Math.PI*fDisp*aT))*sineAmp;
+    const ry1 = rowYc[1] - Math.tanh(10*Math.sin(2*Math.PI*fDisp*aT + phiE(aT)))*sineAmp;
+    ctx.strokeStyle = 'rgba(220,38,38,0.55)'; ctx.lineWidth = 1; ctx.setLineDash([2, 2]);
+    ctx.beginPath(); ctx.moveTo(aX, ry0); ctx.lineTo(aX, ry1); ctx.stroke();
+    ctx.setLineDash([]);
+    // arrowheads
+    ctx.fillStyle = rd;
+    [[ry0, 1], [ry1, -1]].forEach(([ry, dir]) => {
+      ctx.beginPath(); ctx.moveTo(aX, ry);
+      ctx.lineTo(aX-3, ry+5*dir); ctx.lineTo(aX+3, ry+5*dir); ctx.closePath(); ctx.fill();
+    });
+    ctx.fillStyle = rd; ctx.font = 'bold 9px Space Mono'; ctx.textAlign = 'left';
+    ctx.fillText('Δφ', aX+4, (ry0+ry1)/2+3);
+  }
+
+  // ── Playhead ──
+  const manualMode = !lockAnimAutoPlay;
+  const phColor = manualMode
+    ? (dark ? 'rgba(251,191,36,0.8)' : 'rgba(180,110,0,0.75)')   // gold when manual
+    : (dark ? 'rgba(255,255,255,0.45)' : 'rgba(30,41,59,0.38)');
+  ctx.strokeStyle = phColor;
+  ctx.lineWidth = manualMode ? 2 : 1.5;
+  ctx.setLineDash(manualMode ? [] : [5, 4]);
+  ctx.beginPath(); ctx.moveTo(playX, 0); ctx.lineTo(playX, h); ctx.stroke();
+  ctx.setLineDash([]);
+  // Drag handle circle at top of playhead
+  if (manualMode) {
+    ctx.fillStyle = col('--gold');
+    ctx.beginPath(); ctx.arc(playX, 10, 5, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = dark ? '#0d1117' : '#fff'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(playX, 10, 5, 0, Math.PI*2); ctx.stroke();
+  }
+
+  // ── Status label beside playhead ──
+  if (lockAnimT > 0.01) {
+    const pt = lockAnimT * Tmax;
+    const peNow = Math.abs(phiE(pt));
+    const right = playX < w * 0.72;
+    let stText, stColor;
+    if (peNow > 0.5)       { stText='アンロック';   stColor=rd; }
+    else if (peNow > 0.08) { stText='ロック中...';  stColor=gd; }
+    else                   { stText='ロック完了 ✓'; stColor=gr; }
+    ctx.fillStyle = stColor; ctx.font = 'bold 10px Noto Sans JP';
+    ctx.textAlign = right ? 'left' : 'right';
+    ctx.fillText(stText, right ? playX+5 : playX-5, 14);
+    // update badge
+    const badge = document.getElementById('lockAnimBadge');
+    const dot   = document.getElementById('lockAnimDot');
+    const span  = document.getElementById('lockAnimStatus');
+    if (badge && span) {
+      badge.className = 'lock-badge ' + (peNow>0.08 ? 'locking' : 'locked');
+      dot.className   = 'lock-dot' + (peNow>0.08 ? ' blink' : '');
+      span.textContent = stText;
+    }
+  }
+
+  // ── Time axis ──
+  ctx.fillStyle = dim; ctx.font = '9px Space Mono';
+  ctx.textAlign = 'left'; ctx.fillText('t = 0', mx, h-2);
+  ctx.textAlign = 'right'; ctx.fillText((Tmax*1e6).toFixed(1)+' μs', mx+pw, h-2);
+}
+
+function updateAutoPlayBtn() {
+  const btn = document.getElementById('lockAutoPlayBtn');
+  if (!btn) return;
+  btn.textContent = lockAnimAutoPlay ? '⏸ 一時停止' : '▶ 自動再生';
+  btn.classList.toggle('active', lockAnimAutoPlay);
+}
+
+function toggleLockAutoPlay() {
+  lockAnimAutoPlay = !lockAnimAutoPlay;
+  if (lockAnimAutoPlay && lockAnimT >= 1) lockAnimT = -0.04; // restart from top if at end
+  updateAutoPlayBtn();
+}
+
+function startLockAnimation() {
+  if (lockAnimIntervalId) return;
+
+  // ── Mouse / touch interaction ──
+  const cv = document.getElementById('cvLockAnim');
+  const LMX = 82; // must match drawLockAnimSmooth's mx value
+
+  function tFromEvent(e) {
+    const rect = cv.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const x = clientX - rect.left;
+    const pw = cv.clientWidth - LMX - 10;
+    return Math.max(0, Math.min(1, (x - LMX) / pw));
+  }
+
+  cv.addEventListener('mousedown', e => {
+    lockAnimDragging = true;
+    lockAnimAutoPlay = false;
+    lockAnimT = tFromEvent(e);
+    updateAutoPlayBtn();
+    drawLockAnimSmooth();
+  });
+  cv.addEventListener('mousemove', e => {
+    if (!lockAnimDragging) return;
+    lockAnimT = tFromEvent(e);
+    drawLockAnimSmooth();
+  });
+  cv.addEventListener('mouseup',    () => { lockAnimDragging = false; });
+  cv.addEventListener('mouseleave', () => { lockAnimDragging = false; });
+
+  cv.addEventListener('touchstart', e => {
+    e.preventDefault();
+    lockAnimDragging = true;
+    lockAnimAutoPlay = false;
+    lockAnimT = tFromEvent(e);
+    updateAutoPlayBtn();
+    drawLockAnimSmooth();
+  }, { passive: false });
+  cv.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if (!lockAnimDragging) return;
+    lockAnimT = tFromEvent(e);
+    drawLockAnimSmooth();
+  }, { passive: false });
+  cv.addEventListener('touchend', () => { lockAnimDragging = false; });
+
+  // ── Interval: only advances when auto-play is on ──
+  lockAnimIntervalId = setInterval(() => {
+    if (lockAnimAutoPlay && !lockAnimDragging) {
+      lockAnimT += 0.005;
+      if (lockAnimT > 1.12) lockAnimT = -0.04;
+    }
+    if (!lockAnimDragging) drawLockAnimSmooth(); // dragging already redraws on mousemove
+  }, 33);
+}
+
+// ─── SIMULATION CANVASES (⑤) ─────────────────────────────
+function drawSim() {
+  const d = derive();
+  const cv = document.getElementById('cvSim');
+  const { w, h } = initCanvas(cv);
+  const ctx = getCtx(cv);
+  ctx.clearRect(0, 0, w, h);
+
+  const dark = isDark();
+  ctx.fillStyle = dark ? '#0d1117' : '#f8fafc';
+  ctx.fillRect(0, 0, w, h);
+
+  const mx = 14, my = 20, pw = w - mx * 2, ph = h - my * 2;
+  drawGrid(ctx, mx, my, pw, ph, 8, 4);
+
+  // Time window: 0 to 2 * Tlock
+  const Tmax = Math.max(d.Tlock * 2.5, 5e-6);
+  const amp = ph * 0.35;
+  const yc = my + ph / 2;
+
+  // The locked phase error at time t
+  function phi(t) { return phiErr(t, d); }
+
+  // Reference signal: sin(2π fref t) — simplified display
+  const fDisplay = 5 / Tmax; // 5 cycles across display
+
+  ctx.strokeStyle = col('--accent'); ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let px = 0; px <= pw; px++) {
+    const t = (px / pw) * Tmax;
+    const y = yc + amp * Math.sin(2 * Math.PI * fDisplay * t);
+    px === 0 ? ctx.moveTo(mx + px, y) : ctx.lineTo(mx + px, y);
+  }
+  ctx.stroke();
+
+  // VCO divided output: same freq, phase converging
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let px = 0; px <= pw; px++) {
+    const t = (px / pw) * Tmax;
+    const pe = phi(t);
+    const locked = Math.abs(pe) < 0.05;
+    ctx.strokeStyle = locked ? col('--green') : col('--accent2');
+    const y = yc + amp * Math.sin(2 * Math.PI * fDisplay * t + pe * 1.5);
+    if (px === 0) { ctx.moveTo(mx + px, y); } else { ctx.lineTo(mx + px, y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(mx + px, y); }
+  }
+  ctx.stroke();
+
+  // Lock time marker
+  const lx = mx + (d.Tlock / Tmax) * pw;
+  ctx.strokeStyle = col('--green'); ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
+  ctx.beginPath(); ctx.moveTo(lx, my); ctx.lineTo(lx, my + ph); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = col('--green'); ctx.font = '10px Space Mono'; ctx.textAlign = 'center';
+  ctx.fillText('LOCK', lx, my + 12);
+
+  // Axis label
+  ctx.fillStyle = col('--text-dim'); ctx.font = '10px Space Mono'; ctx.textAlign = 'right';
+  const TmaxUs = (Tmax * 1e6).toFixed(1);
+  ctx.fillText(TmaxUs + ' μs', mx + pw, h - 4);
+  ctx.textAlign = 'left'; ctx.fillText('0', mx, h - 4);
+}
+
+function drawPhase() {
+  const d = derive();
+  const cv = document.getElementById('cvPhase');
+  const { w, h } = initCanvas(cv);
+  const ctx = getCtx(cv);
+  ctx.clearRect(0, 0, w, h);
+
+  const dark = isDark();
+  ctx.fillStyle = dark ? '#0d1117' : '#f8fafc';
+  ctx.fillRect(0, 0, w, h);
+
+  const mx = 50, my = 14, pw = w - mx - 14, ph = h - my * 2;
+  drawGrid(ctx, mx, my, pw, ph, 8, 4);
+
+  const Tmax = Math.max(d.Tlock * 2.5, 5e-6);
+  const yc = my + ph / 2;
+  const amp = ph * 0.42;
+
+  // Zero line
+  ctx.strokeStyle = col('--text-dim'); ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(mx, yc); ctx.lineTo(mx + pw, yc); ctx.stroke();
+
+  // ±2% threshold lines
+  const thresh = 0.02;
+  ctx.strokeStyle = col('--text-dim'); ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
+  [thresh, -thresh].forEach(v => {
+    const y = yc - v * amp;
+    ctx.beginPath(); ctx.moveTo(mx, y); ctx.lineTo(mx + pw, y); ctx.stroke();
+  });
+  ctx.setLineDash([]);
+
+  // Phase error curve
+  ctx.strokeStyle = col('--gold'); ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let px = 0; px <= pw; px++) {
+    const t = (px / pw) * Tmax;
+    const pe = phiErr(t, d);
+    const y = yc - pe * amp;
+    px === 0 ? ctx.moveTo(mx + px, y) : ctx.lineTo(mx + px, y);
+  }
+  ctx.stroke();
+
+  // Lock marker
+  const lx = mx + (d.Tlock / Tmax) * pw;
+  ctx.strokeStyle = col('--green'); ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
+  ctx.beginPath(); ctx.moveTo(lx, my); ctx.lineTo(lx, my + ph); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Axis labels
+  ctx.fillStyle = col('--text-dim'); ctx.font = '10px Space Mono';
+  ctx.textAlign = 'right';
+  ctx.fillText('+1.0', mx - 3, my + 8);
+  ctx.fillText('  0', mx - 3, yc + 4);
+  ctx.fillText('-1.0', mx - 3, my + ph - 2);
+
+  ctx.textAlign = 'right'; ctx.fillText((Tmax * 1e6).toFixed(1) + ' μs', mx + pw, h - 3);
+  ctx.textAlign = 'left'; ctx.fillText('[rad]', mx, my + 10);
+}
+
+// ─── GAIN COMPARISON (⑥) ─────────────────────────────────
+function drawGain() {
+  const cv = document.getElementById('cvGain');
+  const { w, h } = initCanvas(cv);
+  const ctx = getCtx(cv);
+  ctx.clearRect(0, 0, w, h);
+
+  const dark = isDark();
+  ctx.fillStyle = dark ? '#0d1117' : '#f8fafc';
+  ctx.fillRect(0, 0, w, h);
+
+  const mx = 50, my = 20, pw = w - mx - 20, ph = h - my * 2;
+  drawGrid(ctx, mx, my, pw, ph, 8, 4);
+
+  // Zero baseline
+  ctx.strokeStyle = col('--text-dim'); ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(mx, my + ph / 2); ctx.lineTo(mx + pw, my + ph / 2); ctx.stroke();
+
+  const configs = [
+    { K: 8, color: col('--red') },
+    { K: 3, color: col('--accent') },
+    { K: 1, color: col('--green') },
+  ];
+
+  const Kref = 3;
+  const dRef = (() => {
+    const zeta = 0.3 + (Kref - 1) / 9 * 0.9;
+    const omegaN = Kref * 2 * Math.PI * 1e5;
+    const sigma = zeta * omegaN;
+    const omegaD = omegaN * Math.sqrt(Math.max(0, 1 - zeta * zeta));
+    const Tlock = Math.log(50) / sigma;
+    return { zeta, omegaN, sigma, omegaD, Tlock };
+  })();
+
+  const Tmax = dRef.Tlock * 3;
+  const yc = my + ph / 2;
+  const amp = ph * 0.38;
+
+  configs.forEach(({ K, color }) => {
+    const zeta = 0.3 + (K - 1) / 9 * 0.9;
+    const omegaN = K * 2 * Math.PI * 1e5;
+    const sigma = zeta * omegaN;
+    const omegaD = omegaN * Math.sqrt(Math.max(0, 1 - zeta * zeta));
+    const d2 = { zeta, omegaN, sigma, omegaD };
+
+    ctx.strokeStyle = color; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let px = 0; px <= pw; px++) {
+      const t = (px / pw) * Tmax;
+      const pe = phiErr(t, d2);
+      const y = yc - pe * amp;
+      px === 0 ? ctx.moveTo(mx + px, y) : ctx.lineTo(mx + px, y);
+    }
+    ctx.stroke();
+  });
+
+  // Labels
+  ctx.fillStyle = col('--text-dim'); ctx.font = '10px Space Mono';
+  ctx.textAlign = 'right';
+  ctx.fillText('+1.0', mx - 3, my + 8);
+  ctx.fillText('  0 ', mx - 3, yc + 4);
+  ctx.fillText('-1.0', mx - 3, my + ph - 2);
+  ctx.textAlign = 'right'; ctx.fillText((Tmax * 1e6).toFixed(1) + ' μs', mx + pw, h - 3);
+}
+
+// ─── DIVIDER (⑦) ─────────────────────────────────────────
+function drawDivider() {
+  const cv = document.getElementById('cvDivider');
+  const { w, h } = initCanvas(cv);
+  const ctx = getCtx(cv);
+  ctx.clearRect(0, 0, w, h);
+
+  const dark = isDark();
+  ctx.fillStyle = dark ? '#0d1117' : '#f8fafc';
+  ctx.fillRect(0, 0, w, h);
+
+  const mx = 54, my = 18, pw = w - mx - 14, ph = h - my * 2 - 20;
+  const Ns = [1, 2, 5, 10, 20, 50, 100];
+  const fvcos = Ns.map(n => state.fref * n);
+  const maxF = fvcos[fvcos.length - 1];
+
+  drawGrid(ctx, mx, my, pw, ph, Ns.length - 1, 4);
+
+  // Bars
+  Ns.forEach((n, i) => {
+    const barW = pw / Ns.length * 0.55;
+    const barH = (fvcos[i] / maxF) * ph;
+    const x = mx + (i / (Ns.length - 1)) * pw - barW / 2;
+    const y = my + ph - barH;
+    const isActive = n === state.N;
+    ctx.fillStyle = isActive ? col('--accent') : (dark ? 'rgba(0,212,255,0.2)' : 'rgba(2,132,199,0.2)');
+    ctx.strokeStyle = isActive ? col('--accent') : col('--border');
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x, y, barW, barH, [4, 4, 0, 0]);
+    else ctx.rect(x, y, barW, barH);
+    ctx.fill(); ctx.stroke();
+
+    // Freq label above bar
+    ctx.fillStyle = isActive ? col('--accent') : col('--text-dim');
+    ctx.font = `bold ${isActive ? 10 : 9}px Space Mono`;
+    ctx.textAlign = 'center';
+    const fvco = fvcos[i];
+    const label = fvco >= 1000 ? (fvco / 1000).toFixed(1) + 'G' : fvco + 'M';
+    ctx.fillText(label, x + barW / 2, y - 3);
+
+    // N label below
+    ctx.fillStyle = isActive ? col('--accent') : col('--text-dim');
+    ctx.font = `${isActive ? 'bold ' : ''}9px Space Mono`;
+    ctx.fillText('×' + n, x + barW / 2, my + ph + 14);
+  });
+
+  // Y-axis labels
+  ctx.fillStyle = col('--text-dim'); ctx.font = '9px Space Mono'; ctx.textAlign = 'right';
+  for (let i = 0; i <= 4; i++) {
+    const f = maxF * i / 4;
+    const y = my + ph - (i / 4) * ph;
+    const label = f >= 1000 ? (f / 1000).toFixed(1) + 'G' : f.toFixed(0) + 'M';
+    ctx.fillText(label, mx - 3, y + 4);
+  }
+}
+
+function updateDivTable() {
+  const Ns = [1, 2, 5, 10, 20, 50, 100];
+  const uses = ['基準スルー', '2倍クロック', '5倍クロック', 'CPU/DSP', 'DDR メモリ', 'RF キャリア', 'ミリ波'];
+  const tbody = document.getElementById('divTbody');
+  document.getElementById('frefDisp').textContent = state.fref;
+  tbody.innerHTML = '';
+  Ns.forEach((n, i) => {
+    const fvco = state.fref * n;
+    const tr = document.createElement('tr');
+    if (n === state.N) tr.className = 'active';
+    tr.innerHTML = `<td>×${n}</td><td>${fvco >= 1000 ? (fvco/1000).toFixed(2)+' GHz' : fvco+' MHz'}</td><td>${uses[i]}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// ─── CLOCK GEN (⑧) ───────────────────────────────────────
+function drawClockGen() {
+  const cv = document.getElementById('cvClockGen');
+  const { w, h } = initCanvas(cv);
+  const ctx = getCtx(cv);
+  ctx.clearRect(0, 0, w, h);
+
+  const dark = isDark();
+  ctx.fillStyle = dark ? '#0d1117' : '#f8fafc';
+  ctx.fillRect(0, 0, w, h);
+
+  const acc = col('--accent'), or2 = col('--accent2'), gr = col('--green'), gd = col('--gold'), pu = col('--purple'), rd = col('--red');
+  const dim = col('--text-dim');
+
+  // Crystal input
+  const xtalX = 24, xtalY = h / 2, xtalW = 64, xtalH = 44;
+  ctx.fillStyle = gd + (dark ? '22' : '18');
+  ctx.strokeStyle = gd; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(xtalX, xtalY - xtalH / 2, xtalW, xtalH, 8);
+  else ctx.rect(xtalX, xtalY - xtalH / 2, xtalW, xtalH);
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = gd; ctx.font = 'bold 11px Space Mono'; ctx.textAlign = 'center';
+  ctx.fillText('XTAL', xtalX + xtalW / 2, xtalY - 5);
+  ctx.font = '10px Space Mono';
+  ctx.fillText(state.fref + ' MHz', xtalX + xtalW / 2, xtalY + 10);
+
+  // PLL boxes
+  const plls = [
+    { label: 'PLL', sub: '×' + state.N, freq: state.fref * state.N, color: acc, y: h * 0.22 },
+    { label: 'PLL', sub: '×' + Math.round(state.N * 1.5), freq: Math.round(state.fref * state.N * 1.5), color: pu, y: h * 0.5 },
+    { label: 'PLL', sub: '×' + Math.round(state.N * 0.5), freq: Math.round(state.fref * state.N * 0.5), color: or2, y: h * 0.78 },
+  ];
+
+  const pllX = xtalX + xtalW + 60, pllW = 80, pllH = 40;
+  const outX = pllX + pllW + 40;
+
+  // Bus line from XTAL
+  ctx.strokeStyle = gd; ctx.lineWidth = 2;
+  plls.forEach(p => {
+    ctx.beginPath();
+    ctx.moveTo(xtalX + xtalW, xtalY);
+    ctx.lineTo(xtalX + xtalW + 20, xtalY);
+    ctx.lineTo(xtalX + xtalW + 20, p.y);
+    ctx.lineTo(pllX, p.y);
+    ctx.stroke();
+  });
+
+  plls.forEach(p => {
+    // PLL box
+    ctx.fillStyle = p.color + (dark ? '1a' : '15');
+    ctx.strokeStyle = p.color; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(pllX, p.y - pllH / 2, pllW, pllH, 6);
+    else ctx.rect(pllX, p.y - pllH / 2, pllW, pllH);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = p.color; ctx.font = 'bold 11px Space Mono'; ctx.textAlign = 'center';
+    ctx.fillText(p.label + ' ' + p.sub, pllX + pllW / 2, p.y - 4);
+    ctx.font = '9px Noto Sans JP';
+    ctx.fillText('Fvco', pllX + pllW / 2, p.y + 10);
+
+    // Arrow to output
+    ctx.strokeStyle = p.color; ctx.lineWidth = 1.5; ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.moveTo(pllX + pllW, p.y); ctx.lineTo(outX - 6, p.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(outX, p.y); ctx.lineTo(outX - 8, p.y - 4); ctx.lineTo(outX - 8, p.y + 4); ctx.closePath(); ctx.fill();
+
+    // Output label
+    const fMHz = p.freq;
+    const fLabel = fMHz >= 1000 ? (fMHz / 1000).toFixed(2) + ' GHz' : fMHz + ' MHz';
+    ctx.fillStyle = p.color; ctx.font = 'bold 10px Space Mono'; ctx.textAlign = 'left';
+    ctx.fillText(fLabel, outX + 4, p.y - 4);
+    ctx.fillStyle = dim; ctx.font = '9px Noto Sans JP';
+    const uses = ['FPGA コア', 'DDR / メモリ', 'USB / 低速周辺'];
+    ctx.fillText(uses[plls.indexOf(p)], outX + 4, p.y + 10);
+  });
+}
+
+// ─── RESULT CARDS UPDATE ─────────────────────────────────
+function updateResults() {
+  const d = derive();
+  const { fvco, zeta, omegaN, Tlock } = d;
+
+  document.getElementById('rcFref').textContent = state.fref.toFixed(3);
+  document.getElementById('rcFvco').textContent = fvco >= 1000 ? (fvco / 1000).toFixed(3) + ' GHz' : fvco.toFixed(3) + ' MHz';
+  document.getElementById('rcN').textContent = '×' + state.N;
+  document.getElementById('rcZeta').textContent = zeta.toFixed(3);
+  document.getElementById('rcOmegaN').textContent = (omegaN / 1e6).toFixed(3);
+  document.getElementById('rcTlock').textContent = (Tlock * 1e6).toFixed(2);
+  document.getElementById('lockTimeVal').textContent = (Tlock * 1e6).toFixed(2) + ' μs';
+
+  const stability = zeta < 0.4 ? ['不安定', '振動リスク大'] : zeta < 0.8 ? ['安定', '良好'] : ['過減衰', '応答遅い'];
+  document.getElementById('rcStability').textContent = stability[0];
+  document.getElementById('rcStabilityUnit').textContent = stability[1];
+  document.getElementById('rcStability').className = 'value ' + (zeta < 0.4 ? 'orange' : zeta < 0.8 ? 'green' : 'purple');
+
+  // Lock badge
+  const badge = document.getElementById('lockBadge');
+  badge.className = 'lock-badge locked';
+  badge.innerHTML = '<div class="lock-dot"></div>LOCKED';
+}
+
+function syncUI() {
+  const fref = +document.getElementById('slFref').value;
+  const N = +document.getElementById('slN').value;
+  const K = +document.getElementById('slK').value;
+  state.fref = fref; state.N = N; state.K = K;
+  document.getElementById('valFref').textContent = fref + ' MHz';
+  document.getElementById('valN').textContent = '×' + N;
+  document.getElementById('valK').textContent = K.toFixed(1);
+}
+
+function update() {
+  syncUI();
+  updateResults();
+  lockAnimT = -0.04;   // restart lock animation with new params
+  drawSim();
+  drawPhase();
+  drawDivider();
+  updateDivTable();
+  drawClockGen();
+}
+
+function drawAll() {
+  initCanvas(document.getElementById('cvPurpose'));
+  initCanvas(document.getElementById('cvBlock'));
+  initCanvas(document.getElementById('cvLockAnim'));
+  initCanvas(document.getElementById('cvClockGen'));
+  drawPurpose();
+  drawBlock();
+  drawLockAnimSmooth();
+  drawSim();
+  drawPhase();
+  drawGain();
+  drawDivider();
+  updateDivTable();
+  drawClockGen();
+}
+
+// ─── EVENTS ──────────────────────────────────────────────
+document.getElementById('slFref').addEventListener('input', update);
+document.getElementById('slN').addEventListener('input', update);
+document.getElementById('slK').addEventListener('input', update);
+
+// ─── BLOCK DIAGRAM ANIMATION ─────────────────────────────
+let blockT = 0;
+function animateBlock() {
+  setInterval(() => { blockT += 0.004; drawBlock(blockT); }, 33);
+}
+
+// ─── PURPOSE ANIMATION ───────────────────────────────────
+function animatePurpose() {
+  setInterval(() => { drawPurpose(); }, 33);
+}
+
+// ─── INIT ─────────────────────────────────────────────────
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(drawAll, 80);
+});
+
+let _inited = false;
+function doInit() {
+  if (_inited) return;
+  const cv = document.getElementById('cvBlock');
+  if (!cv || cv.parentElement.clientWidth === 0) return; // layout not ready
+  _inited = true;
+  syncUI();
+  updateResults();
+  drawAll();
+  startLockAnimation();
+  animateBlock();
+  animatePurpose();
+}
+
+// Strategy 1: DOMContentLoaded + small delay for layout
+document.addEventListener('DOMContentLoaded', () => setTimeout(doInit, 30));
+// Strategy 2: window.load fallback
+window.addEventListener('load', () => setTimeout(doInit, 0));
+// Strategy 3: ResizeObserver
+if (window.ResizeObserver) {
+  const ro = new ResizeObserver(() => { ro.disconnect(); setTimeout(doInit, 0); });
+  ro.observe(document.getElementById('cvBlock'));
+}
+// Strategy 4: Safety net — if animation never started by window.load, force-start it
+window.addEventListener('load', () => setTimeout(() => {
+  if (!lockAnimIntervalId) { startLockAnimation(); }
+}, 300));
+</script>
+
+<div id="metric-modal" onclick="if(event.target===this)closeMetricModal()">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeMetricModal()">✕</button>
+    <div class="modal-name" id="modal-name"></div>
+    <div class="modal-value" id="modal-value"></div>
+    <div class="modal-unit" id="modal-unit"></div>
+    <div class="modal-formula" id="modal-formula"></div>
+    <div class="modal-calc" id="modal-calc"></div>
+    <div class="modal-desc" id="modal-desc"></div>
+    <div class="modal-ranges" id="modal-ranges"></div>
+    <div class="modal-judge" id="modal-judge"></div>
+  </div>
+</div>
+
+<script>
+var PLL_METRIC = {
+  fref: {
+    name: '基準周波数 (Fref)',
+    formula: 'Fref = 基準発振器の周波数（ユーザー設定値）',
+    unit: 'MHz',
+    desc: 'PLLの基準となるクロック周波数。水晶発振器やTCXOから供給される。位相比較器でVCO出力の分周信号と比較され、位相差に基づいてVCOを制御する。Frefの精度がPLL全体の周波数精度を決定する。',
+    calcSteps: function(d) { return 'Fref = ' + state.fref.toFixed(3) + ' MHz（設定値）'; }
+  },
+  fvco: {
+    name: 'VCO周波数 (Fvco)',
+    formula: 'Fvco = Fref × N',
+    unit: 'MHz',
+    desc: 'VCO（電圧制御発振器）の出力周波数。PLLがロック状態のとき、VCO出力をN分周した信号がFrefと一致するため、VCO周波数はFref×Nとなる。これがPLLの出力周波数である。',
+    calcSteps: function(d) {
+      return 'Fvco = Fref × N\n     = ' + state.fref.toFixed(3) + ' × ' + state.N + '\n     = ' + d.fvco.toFixed(3) + ' MHz';
+    }
+  },
+  N: {
+    name: '分周比 (N)',
+    formula: 'N = Fvco / Fref（整数）',
+    unit: '',
+    desc: 'フィードバック分周器の分周比。VCO出力周波数をN分の1に下げて位相比較器に戻す。Nが大きいほど高い周波数を合成できるが、ループ帯域幅が狭くなり位相雑音が増加する傾向がある。',
+    calcSteps: function(d) { return 'N = ' + state.N + '（設定値）\nFvco = Fref × N = ' + state.fref.toFixed(3) + ' × ' + state.N + ' = ' + d.fvco.toFixed(3) + ' MHz'; }
+  },
+  zeta: {
+    name: 'ダンピング比 (ζ)',
+    formula: 'ζ = 0.3 + (K−1)/9 × 0.9',
+    unit: '',
+    desc: 'ループの減衰特性を決める無次元パラメータ。ζ<0.5では振動的（アンダーダンプ）、ζ=0.707が臨界減衰（最速応答）、ζ>1は過減衰（安定だが遅い）。RF PLLでは0.5〜0.8が推奨される。',
+    ranges: [{label:'不安定',val:'<0.4',color:'#dc2626'},{label:'最適',val:'0.5-0.8',color:'#10b981'},{label:'過減衰',val:'>1.0',color:'#7c3aed'}],
+    calcSteps: function(d) {
+      return 'ζ = 0.3 + (K−1)/9 × 0.9\n  = 0.3 + (' + state.K.toFixed(1) + '−1)/9 × 0.9\n  = 0.3 + ' + ((state.K-1)/9*0.9).toFixed(3) + '\n  = ' + d.zeta.toFixed(3);
+    }
+  },
+  omegaN: {
+    name: '固有角周波数 (ωn)',
+    formula: 'ωn = K × 2π × 100 kHz  [rad/s]',
+    unit: 'Mrad/s',
+    desc: 'ループの自然振動周波数。ループ帯域幅の目安であり、大きいほど応答が速いがスプリアス抑圧が低下する。ωnはループフィルタの時定数とチャージポンプ電流で決まる。',
+    calcSteps: function(d) {
+      return 'ωn = K × 2π × 100 kHz\n   = ' + state.K.toFixed(1) + ' × 2π × 100×10³\n   = ' + (d.omegaN/1e6).toFixed(3) + ' Mrad/s\n   = ' + (d.omegaN).toFixed(0) + ' rad/s';
+    }
+  },
+  tlock: {
+    name: 'ロック時間 (Tlock)',
+    formula: 'Tlock = ln(50) / σ  （ζ<1 の場合）',
+    unit: 'μs',
+    desc: 'PLLが周波数ステップ後にロック（位相誤差が2%以内）するまでの時間。σ=ζ×ωnが減衰係数で、大きいほどロックが速い。ダンピング比が低すぎると振動してロック時間が延びる。',
+    calcSteps: function(d) {
+      var sigma = d.zeta * d.omegaN;
+      if (d.zeta < 1) {
+        return 'σ = ζ × ωn\n  = ' + d.zeta.toFixed(3) + ' × ' + (d.omegaN/1e6).toFixed(3) + ' Mrad/s\n  = ' + (sigma/1e6).toFixed(3) + ' Mrad/s\n\nTlock = ln(50) / σ\n      = ' + Math.log(50).toFixed(3) + ' / ' + sigma.toFixed(0) + '\n      = ' + (d.Tlock*1e6).toFixed(2) + ' μs';
+      }
+      var alpha = d.omegaN * Math.sqrt(d.zeta*d.zeta - 1);
+      return '過減衰（ζ≥1）:\nα = ωn × √(ζ²−1) = ' + (alpha/1e6).toFixed(3) + ' Mrad/s\nTlock = ln(100) / (σ−α)\n      = ' + (d.Tlock*1e6).toFixed(2) + ' μs';
+    }
+  },
+  stability: {
+    name: '安定性評価',
+    formula: 'ζ < 0.4: 不安定 | 0.4〜0.8: 安定 | > 0.8: 過減衰',
+    unit: '',
+    desc: 'ダンピング比に基づくループの安定性判定。不安定ではリファレンスリーク等のスプリアスが発生しやすく、過減衰では周波数切替に時間がかかる。RF用途では0.5〜0.7の安定領域が理想的。',
+    ranges: [{label:'不安定',val:'ζ<0.4',color:'#dc2626'},{label:'安定(良好)',val:'0.4-0.8',color:'#10b981'},{label:'過減衰',val:'ζ>0.8',color:'#7c3aed'}],
+    calcSteps: function(d) {
+      var label = d.zeta < 0.4 ? '不安定（振動リスク大）' : d.zeta < 0.8 ? '安定（良好）' : '過減衰（応答遅い）';
+      return 'ζ = ' + d.zeta.toFixed(3) + '\n判定: ' + label;
+    }
+  },
+  lock: {
+    name: 'ロック状態',
+    formula: 'PLLフィードバックループの定常状態判定',
+    unit: '',
+    desc: 'シミュレーション上ではループが閉じているためロック状態を維持する。実際のPLLではロック検出器（Lock Detector）が位相差を監視し、一定範囲内に収まるとLOCKED信号を出力する。',
+    calcSteps: function(d) { return 'フィードバックループ閉 → ロック状態\nFvco/N = ' + (d.fvco/state.N).toFixed(3) + ' MHz = Fref ✔'; }
+  }
+};
+
+function showMetricDetail(key) {
+  var info = PLL_METRIC[key]; if (!info) return;
+  var d = derive();
+  document.getElementById('modal-name').textContent = info.name;
+  var valMap = {fref:state.fref.toFixed(3)+' MHz', fvco:d.fvco.toFixed(3)+' MHz', N:'×'+state.N, zeta:d.zeta.toFixed(3), omegaN:(d.omegaN/1e6).toFixed(3)+' Mrad/s', tlock:(d.Tlock*1e6).toFixed(2)+' μs', stability:d.zeta<0.4?'不安定':d.zeta<0.8?'安定':'過減衰', lock:'LOCKED'};
+  document.getElementById('modal-value').textContent = valMap[key] || '';
+  document.getElementById('modal-value').style.color = '';
+  document.getElementById('modal-unit').textContent = info.unit ? '['+info.unit+']' : '';
+  document.getElementById('modal-formula').textContent = info.formula;
+  document.getElementById('modal-calc').textContent = info.calcSteps(d);
+  document.getElementById('modal-desc').textContent = info.desc;
+  var ranges = info.ranges || [];
+  document.getElementById('modal-ranges').innerHTML = ranges.map(function(r){return '<div class="modal-range" style="background:'+r.color+'"><div class="modal-range-label">'+r.label+'</div><div class="modal-range-val">'+r.val+'</div></div>';}).join('');
+  document.getElementById('modal-judge').style.display = 'none';
+  if (key === 'zeta' || key === 'stability') {
+    var jEl = document.getElementById('modal-judge');
+    var jText = d.zeta < 0.4 ? '不安定 — 振動リスクあり' : d.zeta < 0.8 ? '安定 — 推奨範囲内' : '過減衰 — 応答遅延';
+    var jClr = d.zeta < 0.4 ? '220,38,38' : d.zeta < 0.8 ? '16,185,129' : '124,58,237';
+    jEl.textContent = '現在の評価: ' + jText;
+    jEl.style.background = 'rgba('+jClr+',.12)'; jEl.style.color = 'rgb('+jClr+')'; jEl.style.border = '1px solid rgba('+jClr+',.4)';
+    jEl.style.display = '';
+  }
+  document.getElementById('metric-modal').classList.add('open');
+}
+function closeMetricModal() { document.getElementById('metric-modal').classList.remove('open'); }
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeMetricModal(); });
+</script>
+</body>
+</html>
