@@ -1088,11 +1088,11 @@ function exCser(cx,cy,lbl){
 }
 function exPorts(z1,z2){
   return exW(0,40,26,40) +
-    `<rect x="1" y="32" width="24" height="16" rx="3" fill="none" stroke="var(--accent)" stroke-width="1.2"/>` +
+    `<rect x="1" y="32" width="24" height="16" rx="3" fill="var(--panel)" stroke="var(--accent)" stroke-width="1.2"/>` +
     `<text x="13" y="42" text-anchor="middle" font-size="8" fill="var(--accent)" font-family="Space Mono,monospace" font-weight="700">P1</text>` +
     (z1?`<text x="13" y="68" text-anchor="middle" font-size="7.5" fill="var(--text-dim)" font-family="Space Mono,monospace">${z1}</text>`:'') +
     exW(174,40,200,40) +
-    `<rect x="175" y="32" width="24" height="16" rx="3" fill="none" stroke="var(--accent)" stroke-width="1.2"/>` +
+    `<rect x="175" y="32" width="24" height="16" rx="3" fill="var(--panel)" stroke="var(--accent)" stroke-width="1.2"/>` +
     `<text x="187" y="42" text-anchor="middle" font-size="8" fill="var(--accent)" font-family="Space Mono,monospace" font-weight="700">P2</text>` +
     (z2?`<text x="187" y="68" text-anchor="middle" font-size="7.5" fill="var(--text-dim)" font-family="Space Mono,monospace">${z2}</text>`:'');
 }
@@ -1239,6 +1239,9 @@ const EXAMPLES = [
   },
 ];
 
+// ホバー状態 (インデックス → {x, active})
+const exHoverState = {};
+
 // カードを動的生成
 function buildExGrid() {
   const grid = document.getElementById('exGrid');
@@ -1269,6 +1272,25 @@ function buildExGrid() {
       <div class="ex-tags">${tags}</div>
     `;
     grid.appendChild(card);
+    // ── ホバーイベント（描画後にアタッチ）──
+    setTimeout(() => {
+      const cv = document.getElementById('cvEx' + i);
+      if (!cv) return;
+      function onMove(e) {
+        const rect = cv.getBoundingClientRect();
+        const cx = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+        exHoverState[i] = { x: cx, active: true };
+        drawMiniSparam(i);
+      }
+      function onLeave() {
+        exHoverState[i] = { active: false };
+        drawMiniSparam(i);
+      }
+      cv.addEventListener('mousemove', onMove);
+      cv.addEventListener('mouseleave', onLeave);
+      cv.addEventListener('touchmove', e => { e.preventDefault(); onMove(e); }, { passive: false });
+      cv.addEventListener('touchend', onLeave);
+    }, 0);
   });
 }
 
@@ -1345,6 +1367,64 @@ function drawMiniSparam(idx) {
 
   drawTrace(f => ex.compute(f).s21, c.accent2, c.green);
   drawTrace(f => ex.compute(f).s11, c.accent, null);
+
+  // ── ホバーオーバーレイ ──
+  const hs = exHoverState[idx];
+  if (hs && hs.active) {
+    const hx = hs.x;
+    if (hx >= mx && hx <= bx) {
+      const f = ((hx - mx) / pw) * fMax;
+      if (f >= 0.04) {
+        const vals = ex.compute(f);
+        const s21db = Math.max(Math.min(vals.s21, dBmax), dBmin);
+        const s11db = Math.max(Math.min(vals.s11, dBmax), dBmin);
+        const ys21 = dBToY(s21db);
+        const ys11 = dBToY(s11db);
+
+        // グレー縦線
+        ctx.strokeStyle = 'rgba(160,160,160,0.7)'; ctx.lineWidth = 1;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath(); ctx.moveTo(hx, my); ctx.lineTo(hx, by); ctx.stroke();
+        ctx.setLineDash([]);
+
+        // S21 ドット
+        const s21Color = (vals.s21 > 0.05) ? c.green : c.accent2;
+        ctx.fillStyle = s21Color;
+        ctx.beginPath(); ctx.arc(hx, ys21, 3.5, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(hx, ys21, 3.5, 0, Math.PI * 2); ctx.stroke();
+
+        // S11 ドット
+        ctx.fillStyle = c.accent;
+        ctx.beginPath(); ctx.arc(hx, ys11, 3.5, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(hx, ys11, 3.5, 0, Math.PI * 2); ctx.stroke();
+
+        // ツールチップ
+        const s21str = vals.s21 > -100 ? (vals.s21 >= 0 ? '+' : '') + vals.s21.toFixed(1) + ' dB' : '−∞';
+        const s11str = vals.s11 > -100 ? (vals.s11 >= 0 ? '+' : '') + vals.s11.toFixed(1) + ' dB' : '−∞';
+        const fstr   = f.toFixed(2) + ' GHz';
+        const lines  = [`f = ${fstr}`, `S21 = ${s21str}`, `S11 = ${s11str}`];
+        ctx.font = `bold 8.5px 'Space Mono', monospace`;
+        const lineH = 12, pad = 6;
+        const tw = Math.max(...lines.map(l => ctx.measureText(l).width));
+        const tw2 = tw + pad * 2, th2 = lineH * lines.length + pad * 2;
+        let tx = hx + 8, ty = my + 4;
+        if (tx + tw2 > bx) tx = hx - tw2 - 8;
+        if (ty + th2 > by) ty = by - th2 - 4;
+        // 背景
+        ctx.fillStyle = 'rgba(0,0,0,0.72)';
+        ctx.beginPath(); ctx.roundRect(tx, ty, tw2, th2, 4); ctx.fill();
+        // テキスト
+        const colors = [c.dim, s21Color, c.accent];
+        lines.forEach((ln, li) => {
+          ctx.fillStyle = colors[li];
+          ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+          ctx.fillText(ln, tx + pad, ty + pad + li * lineH);
+        });
+      }
+    }
+  }
 }
 
 function drawAllExamples() {
