@@ -214,7 +214,7 @@ select{background:var(--panel2);border:1px solid var(--border);color:var(--text)
       </div>
     </div>
     <div class="input-group">
-      <label>負荷抵抗 RL</label>
+      <label>負荷抵抗 RL <span style="font-size:8px;color:var(--text-dim);font-weight:normal;letter-spacing:0">(Rout=50Ω 整合点)</span></label>
       <div class="input-group-inline">
         <input type="range" id="slA_rl" min="10" max="200" step="1" value="50" oninput="onParam('a_rl',this.value)">
         <span class="input-val" id="vA_rl">50 Ω</span>
@@ -660,7 +660,7 @@ function drawWaveGrid(ctx, x, y, w, h, jpLabel) {
 
 /* ═══ Physics Models ═══ */
 function calcA() {
-  const Vdd = 3.3, gain = 1.5 + state.a_vgs;
+  const Vdd = 3.3, Rout = 50, gain = 1.5 + state.a_vgs;
   const VoutPk = Math.min(state.amplitude * gain, 1.0) * Vdd;
   const Iq = state.a_vgs * 0.2; // quiescent current A
   const Pout = VoutPk * VoutPk / (2 * state.a_rl);
@@ -668,7 +668,9 @@ function calcA() {
   const eff = Pdc > 0 ? (Pout / Pdc) * 100 : 0;
   const thd = 1.0 + (1 - state.a_vgs) * 5;
   const condAngle = 180 + state.a_vgs * 180; // degrees
-  return { eff: Math.min(eff, 50), Pout, Pdc, thd, condAngle, Iq, VoutPk, gain };
+  // Impedance matching: how well RL matches Rout=50Ω (maximum power transfer theorem)
+  const mismatch_dB = 10 * Math.log10(4 * Rout * state.a_rl / Math.pow(Rout + state.a_rl, 2));
+  return { eff: Math.min(eff, 50), Pout, Pdc, thd, condAngle, Iq, VoutPk, gain, mismatch_dB };
 }
 
 function calcD() {
@@ -1204,6 +1206,13 @@ function zvsQ(zvs) {
   return zvs ? ['q-ex', '\u2605 ZVS達成'] : ['q-poor', '\u2717 ZVS未達'];
 }
 
+function mismatchQ(db) {
+  if (db >= -0.5) return ['q-ex',  '\u2605 完全整合 0dB'];
+  if (db >= -1.0) return ['q-good','\u2713 良好 >-1dB'];
+  if (db >= -3.0) return ['q-fair','\u25B3 要確認 >-3dB'];
+  return                 ['q-poor','\u2717 不整合 <-3dB'];
+}
+
 function condQ(angle) {
   if (angle >= 350) return ['q-ex',  '\u2605 全周期'];
   if (angle >= 300) return ['q-good','\u2713 広い'];
@@ -1308,6 +1317,32 @@ var METRIC_INFO = {
       var detune = Math.abs(state.e_fswRatio - 1.0);
       return 'fsw/f0 = ' + state.e_fswRatio.toFixed(2) + '\n|fsw/f0 − 1.0| = ' + detune.toFixed(3) + '\n判定: ' + (detune < 0.05 ? '< 0.05 → ZVS達成 ✔' : '≥ 0.05 → ZVS未達 ✘');
     }
+  },
+  mismatch: {
+    name: 'インピーダンス整合損失 (Mismatch Loss)',
+    formula: 'ML = 10·log₁₀( 4·Rout·RL / (Rout+RL)² )  [dB]',
+    unit: 'dB',
+    desc: 'アンプ出力インピーダンスRout=50Ωと負荷抵抗RLの整合度。最大電力伝達定理により RL=Rout=50Ω のとき整合損失0dB（全電力が負荷へ）。RLを50Ωから外れると電力が反射ロスとして失われ、効率が下がります。',
+    ranges: function() { return [
+      {label:'完全整合',val:'0 dB (RL=Rout=50Ω)',color:'rgba(37,99,235,.15)'},
+      {label:'良好',val:'> -1 dB',color:'rgba(16,185,129,.15)'},
+      {label:'要確認',val:'-1 〜 -3 dB',color:'rgba(245,158,11,.15)'},
+      {label:'不整合',val:'< -3 dB',color:'rgba(220,38,38,.15)'}
+    ];},
+    calcSteps: function(cls, r) {
+      var Rout = 50, RL = state.a_rl;
+      var factor = 4 * Rout * RL / Math.pow(Rout + RL, 2);
+      return 'Rout = 50 Ω（アンプ出力インピーダンス）\n' +
+        'RL   = ' + RL + ' Ω\n\n' +
+        '整合係数 = 4×Rout×RL / (Rout+RL)²\n' +
+        '       = 4×50×' + RL + ' / (50+' + RL + ')²\n' +
+        '       = ' + (4*50*RL).toLocaleString() + ' / ' + Math.pow(50+RL,2).toLocaleString() + '\n' +
+        '       = ' + factor.toFixed(4) + '\n\n' +
+        'ML = 10×log₁₀(' + factor.toFixed(4) + ')\n' +
+        '   = ' + r.mismatch_dB.toFixed(2) + ' dB\n\n' +
+        '※ RL=Rout=50Ω → 係数=1.0 → 0dB（最大電力伝達）\n' +
+        '  RL < 50Ω でも RL > 50Ω でも損失が増加します';
+    }
   }
 };
 
@@ -1317,7 +1352,7 @@ function showMetricDetail(key, cls) {
   var info = METRIC_INFO[key]; if (!info) return;
   var r = _lastCalc[cls]; if (!r) return;
   document.getElementById('modal-name').textContent = CLS_NAMES[cls] + ' — ' + info.name;
-  var valMap = {eff:r.eff.toFixed(1)+'%', pout:(r.Pout*1e3).toFixed(1), pdc:(r.Pdc*1e3).toFixed(1), thd:r.thd.toFixed(1)+'%', condAngle:r.condAngle!=null?r.condAngle.toFixed(0)+'°':'', zvs:r.zvs!=null?(r.zvs?'✔ OK':'✘ NG'):''};
+  var valMap = {eff:r.eff.toFixed(1)+'%', pout:(r.Pout*1e3).toFixed(1), pdc:(r.Pdc*1e3).toFixed(1), thd:r.thd.toFixed(1)+'%', condAngle:r.condAngle!=null?r.condAngle.toFixed(0)+'°':'', zvs:r.zvs!=null?(r.zvs?'✔ OK':'✘ NG'):'', mismatch:r.mismatch_dB!=null?r.mismatch_dB.toFixed(1)+' dB':''};
   var v = valMap[key] || '';
   var valEl = document.getElementById('modal-value');
   valEl.textContent = v;
@@ -1331,7 +1366,7 @@ function showMetricDetail(key, cls) {
     return '<div class="modal-range" style="background:'+rg.color+'"><div class="modal-range-label">'+rg.label+'</div><div class="modal-range-val">'+rg.val+'</div></div>';
   }).join('');
   // Judge
-  var qFuncs = {eff:function(){return effQ(r.eff,cls)}, pout:function(){return poutQ(r.Pout*1e3)}, pdc:function(){return pdcQ(r.Pdc*1e3,r.Pout*1e3)}, thd:function(){return thdQ(r.thd)}, condAngle:function(){return condQ(r.condAngle)}, zvs:function(){return zvsQ(r.zvs)}};
+  var qFuncs = {eff:function(){return effQ(r.eff,cls)}, pout:function(){return poutQ(r.Pout*1e3)}, pdc:function(){return pdcQ(r.Pdc*1e3,r.Pout*1e3)}, thd:function(){return thdQ(r.thd)}, condAngle:function(){return condQ(r.condAngle)}, zvs:function(){return zvsQ(r.zvs)}, mismatch:function(){return mismatchQ(r.mismatch_dB)}};
   var qr = qFuncs[key] ? qFuncs[key]() : ['',''];
   var judgeEl = document.getElementById('modal-judge');
   if (qr[1]) {
@@ -1374,6 +1409,7 @@ function updateResults() {
   const dcA = pdcQ(a.Pdc*1e3, a.Pout*1e3), dcD = pdcQ(d.Pdc*1e3, d.Pout*1e3), dcE = pdcQ(e.Pdc*1e3, e.Pout*1e3);
   const cA = condQ(a.condAngle);
   const zE = zvsQ(e.zvs);
+  const mA = mismatchQ(a.mismatch_dB);
 
   document.getElementById('resA').innerHTML = makeResultHTML([
     ['効率', a.eff.toFixed(1) + '%', eA[0], eA[1], '', 'eff', 'A'],
@@ -1381,6 +1417,7 @@ function updateResults() {
     ['Pdc', (a.Pdc*1e3).toFixed(1), dcA[0], dcA[1], 'mW', 'pdc', 'A'],
     ['THD', a.thd.toFixed(1) + '%', tA[0], tA[1], '', 'thd', 'A'],
     ['導通角', a.condAngle.toFixed(0) + '\u00B0', cA[0], cA[1], '', 'condAngle', 'A'],
+    ['整合損失', a.mismatch_dB.toFixed(1) + ' dB', mA[0], mA[1], '', 'mismatch', 'A'],
   ]);
 
   document.getElementById('resD').innerHTML = makeResultHTML([
