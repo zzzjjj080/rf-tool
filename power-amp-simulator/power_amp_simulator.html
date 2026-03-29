@@ -207,7 +207,7 @@ select{background:var(--panel2);border:1px solid var(--border);color:var(--text)
       </div>
     </div>
     <div class="input-group">
-      <label>バイアス点 Vgs</label>
+      <label>バイアス点 Vbe</label>
       <div class="input-group-inline">
         <input type="range" id="slA_vgs" min="0.1" max="1.0" step="0.01" value="0.50" oninput="onParam('a_vgs',this.value)">
         <span class="input-val" id="vA_vgs">0.50</span>
@@ -547,35 +547,67 @@ function drawVDD(ctx, x, y, label) {
 }
 
 function drawNMOS(ctx, x, y, highlight) {
-  // Standard N-ch MOSFET per reference image
-  // Center at (x,y). Drain=up, Source=down, Gate=left
-  var s = 14; // half-height of body
-  var gx = x - 8; // gate plate x
-  var gl = 14; // gate lead
-  var ll = 12; // lead extensions
+  // Enhancement-mode N-MOSFET: dashed channel, stubs, insulated gate
+  // Terminals: Drain=(x+4,y-26), Source=(x+4,y+26), Gate≈(x-22,y)
+  var s = 14, ll = 12;
+  var ch = x + 1;   // channel line x
+  var gp = x - 6;   // gate plate x (gap between gate and channel)
   ctx.save();
   if (highlight) { ctx.shadowColor = highlight; ctx.shadowBlur = 10; ctx.strokeStyle = highlight; }
+  // Gate plate (tall vertical line)
   ctx.beginPath();
-  // Body line (vertical, right side)
-  ctx.moveTo(x, y - s); ctx.lineTo(x, y + s);
-  // Gate plate (vertical line, parallel to body, left side)
-  ctx.moveTo(gx, y - s + 3); ctx.lineTo(gx, y + s - 3);
-  // Gate lead (horizontal left)
-  ctx.moveTo(gx, y); ctx.lineTo(gx - gl, y);
-  // Drain connection: horizontal from body top to center, then up
-  ctx.moveTo(x, y - s); ctx.lineTo(x + 4, y - s); ctx.lineTo(x + 4, y - s - ll);
-  // Source connection: horizontal from body bot to center, then down
-  ctx.moveTo(x, y + s); ctx.lineTo(x + 4, y + s); ctx.lineTo(x + 4, y + s + ll);
-  ctx.stroke();
-  // Arrow on source (pointing right into body = N-ch)
+  ctx.moveTo(gp, y - s + 1); ctx.lineTo(gp, y + s - 1); ctx.stroke();
+  // Gate lead to external
   ctx.beginPath();
-  ctx.moveTo(x - 2, y + s - 5);
-  ctx.lineTo(x + 3, y + s);
-  ctx.lineTo(x - 2, y + s + 5);
-  ctx.stroke();
-  ctx.shadowBlur = 0;
+  ctx.moveTo(gp, y); ctx.lineTo(x - 22, y); ctx.stroke();
+  // Channel: dashed = enhancement mode (not conducting at Vgs=0)
+  ctx.save(); ctx.setLineDash([3, 3]);
+  ctx.beginPath(); ctx.moveTo(ch, y - s); ctx.lineTo(ch, y + s); ctx.stroke();
+  ctx.setLineDash([]); ctx.restore();
+  // Drain stub: channel → terminal, then lead up
+  ctx.beginPath();
+  ctx.moveTo(ch, y - s); ctx.lineTo(x + 4, y - s); ctx.lineTo(x + 4, y - s - ll); ctx.stroke();
+  // Source stub: channel → terminal, then lead down
+  ctx.beginPath();
+  ctx.moveTo(ch, y + s); ctx.lineTo(x + 4, y + s); ctx.lineTo(x + 4, y + s + ll); ctx.stroke();
+  // Arrow on source stub pointing left (N-ch: current flows into channel)
+  var ax = ch + 5, ay = y + s;
+  ctx.save(); ctx.fillStyle = highlight || C('text');
+  ctx.beginPath();
+  ctx.moveTo(ax - 5, ay - 3); ctx.lineTo(ax, ay); ctx.lineTo(ax - 5, ay + 3);
+  ctx.closePath(); ctx.fill(); ctx.restore();
+  ctx.shadowBlur = 0; ctx.restore();
+  return { dx: x+4, dy: y-s-ll, sx: x+4, sy: y+s+ll, gx: x-22, gy: y, cx: x+4 };
+}
+
+function drawNPN(ctx, x, y, highlight) {
+  // NPN BJT: Collector=(x+13,y-28), Emitter=(x+13,y+28), Base=(x-18,y)
+  var bx = x;
+  ctx.save();
+  if (highlight) { ctx.shadowColor = highlight; ctx.shadowBlur = 10; ctx.strokeStyle = highlight; }
+  // Base bar (slightly thicker)
+  ctx.save(); ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(bx, y - 14); ctx.lineTo(bx, y + 14); ctx.stroke();
   ctx.restore();
-  return { dx: x+4, dy: y-s-ll, sx: x+4, sy: y+s+ll, gx: gx-gl, gy: y, cx: x+4 };
+  // Base lead
+  ctx.beginPath(); ctx.moveTo(bx, y); ctx.lineTo(bx - 18, y); ctx.stroke();
+  // Collector diagonal + lead
+  ctx.beginPath();
+  ctx.moveTo(bx, y - 9); ctx.lineTo(bx + 13, y - 18); ctx.lineTo(bx + 13, y - 28); ctx.stroke();
+  // Emitter diagonal + lead
+  ctx.beginPath();
+  ctx.moveTo(bx, y + 9); ctx.lineTo(bx + 13, y + 18); ctx.lineTo(bx + 13, y + 28); ctx.stroke();
+  // Arrow on emitter pointing outward (direction of emitter diagonal)
+  var len = Math.sqrt(13*13 + 9*9);
+  var ux = 13/len, uy = 9/len, px = -uy, py = ux, aSize = 5;
+  ctx.save(); ctx.fillStyle = highlight || C('text');
+  ctx.beginPath();
+  ctx.moveTo(bx + 13, y + 18);
+  ctx.lineTo(bx + 13 - ux*aSize - px*aSize*0.6, y + 18 - uy*aSize - py*aSize*0.6);
+  ctx.lineTo(bx + 13 - ux*aSize + px*aSize*0.6, y + 18 - uy*aSize + py*aSize*0.6);
+  ctx.closePath(); ctx.fill(); ctx.restore();
+  ctx.shadowBlur = 0; ctx.restore();
+  return { dx: bx+13, dy: y-28, sx: bx+13, sy: y+28, gx: bx-18, gy: y, cx: bx+13 };
 }
 
 function drawMOSLabel(ctx, fet, dLabel, sLabel, gLabel, highlight) {
@@ -733,14 +765,14 @@ function drawClassA() {
   drawInductor(ctx, cx, top + 10, cx, fetY - 34, '', 'left');
   label(ctx, cx - 22, (top + 10 + fetY - 34) / 2, 'RFC', C('text-dim'), 'right');
 
-  // ── NMOS ──
+  // ── NPN BJT ──
   var fetHL = HL(['a_vgs','amplitude']);
-  var fet = drawNMOS(ctx, cx - 4, fetY, fetHL);
+  var fet = drawNPN(ctx, cx - 13, fetY, fetHL);
   rst(ctx);
   wire(ctx, [cx, fetY - 34, fet.dx, fet.dy]);
 
-  // Gate label — well below gate lead to avoid overlap with MOSFET
-  label(ctx, 8, fet.sy + 6, 'Vgs=' + state.a_vgs.toFixed(2), fetHL || C('gold'), 'left');
+  // Base label — below emitter to avoid overlap
+  label(ctx, 8, fet.sy + 6, 'Vbe=' + state.a_vgs.toFixed(2), fetHL || C('gold'), 'left');
 
   // ── Drain → RL ──
   wire(ctx, [fet.dx, fet.dy, rlX, fet.dy]);
@@ -765,8 +797,8 @@ function drawClassA() {
   const Inorm = Math.min(res.Iq + res.Pout / 3.3, 0.3) / 0.3;
   drawCurrentArrow(ctx, cx + 10, top + 16, cx + 10, fetY - 40, Inorm, C('green'));
 
-  // Id label — bottom left margin, below GND
-  label(ctx, 8, bot + 18, 'Id (ドレイン電流) = ' + (res.Iq * 1e3).toFixed(0) + 'mA', C('green'), 'left');
+  // Ic label — bottom left margin, below GND
+  label(ctx, 8, bot + 18, 'Ic (コレクタ電流) = ' + (res.Iq * 1e3).toFixed(0) + 'mA', C('green'), 'left');
 
   // Divider line
   ctx.save();
@@ -822,7 +854,7 @@ function drawClassA() {
   // Japanese labels on graphs (with background to avoid overlap)
   labelBg(ctx, wx + 4, wy1 + 14, '入力信号 (Vin) 振幅=' + state.amplitude.toFixed(2) + 'V', C('accent'), 'left');
   labelBg(ctx, wx + 4, wy1 + 30, '出力信号 (Vout) ゲイン=' + res.gain.toFixed(2) + '倍', C('accent2'), 'left');
-  labelBg(ctx, wx + 4, wy2 + 13, 'ドレイン電流 (Id) = ' + (res.Iq * 1e3).toFixed(0) + 'mA', C('green'), 'left');
+  labelBg(ctx, wx + 4, wy2 + 13, 'コレクタ電流 (Ic) = ' + (res.Iq * 1e3).toFixed(0) + 'mA', C('green'), 'left');
 }
 
 /* ═══ Draw Class D ═══ */
@@ -1252,7 +1284,7 @@ var METRIC_INFO = {
       if (cls === 'A') {
         var Vdd = 3.3, gain = (1.5 + state.a_vgs).toFixed(2);
         var vpk = Math.min(state.amplitude * parseFloat(gain), 1.0) * Vdd;
-        return 'ゲイン = 1.5 + Vgs = 1.5 + ' + state.a_vgs.toFixed(2) + ' = ' + gain +
+        return 'ゲイン = 1.5 + Vbe = 1.5 + ' + state.a_vgs.toFixed(2) + ' = ' + gain +
           '\nVpk = min(Ain×Gain, 1.0) × Vdd\n    = min(' + state.amplitude.toFixed(2) + '×' + gain + ', 1.0) × 3.3\n    = ' + vpk.toFixed(3) + ' V' +
           '\nPout = Vpk² / (2·RL)\n     = ' + vpk.toFixed(3) + '² / (2·' + state.a_rl + ')\n     = ' + (r.Pout*1e3).toFixed(1) + ' mW';
       }
@@ -1273,7 +1305,7 @@ var METRIC_INFO = {
     calcSteps: function(cls, r) {
       if (cls === 'A') {
         var Iq = (state.a_vgs * 0.2);
-        return 'Iq = Vgs × 0.2 = ' + state.a_vgs.toFixed(2) + ' × 0.2 = ' + (Iq*1e3).toFixed(0) + ' mA' +
+        return 'Iq = Vbe × 0.2 = ' + state.a_vgs.toFixed(2) + ' × 0.2 = ' + (Iq*1e3).toFixed(0) + ' mA' +
           '\nPdc = Vdd × (Iq + Pout/Vdd)\n    = 3.3 × (' + (Iq*1e3).toFixed(0) + 'mA + ' + (r.Pout*1e3).toFixed(1) + 'mW/3.3V)\n    = ' + (r.Pdc*1e3).toFixed(1) + ' mW';
       }
       return 'Pdc = Pout / (η/100)\n    = ' + (r.Pout*1e3).toFixed(1) + ' / ' + (r.eff/100).toFixed(3) + '\n    = ' + (r.Pdc*1e3).toFixed(1) + ' mW';
@@ -1288,21 +1320,21 @@ var METRIC_INFO = {
       {label:'良好',val:'<3%',color:'#10b981'},{label:'許容',val:'3-8%',color:'#f59e0b'},{label:'要改善',val:'>8%',color:'#dc2626'}
     ];},
     calcSteps: function(cls, r) {
-      if (cls === 'A') return 'THD ≈ 1.0 + (1−Vgs)×5\n    = 1.0 + (1−' + state.a_vgs.toFixed(2) + ')×5\n    = ' + r.thd.toFixed(1) + '%';
+      if (cls === 'A') return 'THD ≈ 1.0 + (1−Vbe)×5\n    = 1.0 + (1−' + state.a_vgs.toFixed(2) + ')×5\n    = ' + r.thd.toFixed(1) + '%';
       if (cls === 'D') return 'THD ≈ 1.5 + |D−0.5|×40 + (1−LCcutoff)×2\n    = 1.5 + |' + state.d_duty.toFixed(2) + '−0.5|×40 + (1−' + state.d_lcCutoff.toFixed(2) + ')×2\n    = ' + r.thd.toFixed(1) + '%';
       return 'THD ≈ 2 + |fsw/f0−1|×25 + 10/Q\n    = 2 + |' + state.e_fswRatio.toFixed(2) + '−1|×25 + 10/' + state.e_Q.toFixed(1) + '\n    = ' + r.thd.toFixed(1) + '%';
     }
   },
   condAngle: {
     name: '導通角 (Conduction Angle)',
-    formula: 'θ = 180° + Vgs × 180°',
+    formula: 'θ = 180° + Vbe × 180°',
     unit: '°',
     desc: '1周期中にトランジスタが導通している角度。A級は360°（常時導通）が理想だが、バイアスが低いとB級（180°）に近づく。導通角が広いほど歪みは少ないが、効率は下がる。',
     ranges: function() { return [
       {label:'A級(360°)',val:'≥330°',color:'#2563eb'},{label:'AB級',val:'270-330°',color:'#10b981'},{label:'B級寄り',val:'<270°',color:'#f59e0b'}
     ];},
     calcSteps: function(cls, r) {
-      return 'θ = 180° + Vgs × 180°\n  = 180° + ' + state.a_vgs.toFixed(2) + ' × 180°\n  = ' + r.condAngle.toFixed(0) + '°';
+      return 'θ = 180° + Vbe × 180°\n  = 180° + ' + state.a_vgs.toFixed(2) + ' × 180°\n  = ' + r.condAngle.toFixed(0) + '°';
     }
   },
   zvs: {
