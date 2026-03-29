@@ -261,6 +261,15 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
       <p>PD 出力の振幅は位相差に比例 — <span class="hl2">じわじわと振れ幅が小さくなる</span>のがロックしていく証拠です。</p>
       <p>制御電圧が定常値に落ち着いたとき、VCO の周波数が目標値に固定され<span class="hlg">「ロック完了」</span>となります。</p>
     </div>
+    <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;padding:8px 0 14px;border-bottom:1px solid var(--border);margin-bottom:12px">
+      <div class="input-group" style="min-width:220px;flex:1">
+        <label>ループゲイン K <span style="font-size:9px;color:var(--text-dim)">— 収束速度・ダンピングに影響</span></label>
+        <div class="input-group-inline">
+          <input type="range" id="slK" min="1" max="10" step="0.5" value="3">
+          <div class="input-val" id="valK">3.0</div>
+        </div>
+      </div>
+    </div>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">
       <div id="lockAnimBadge" class="lock-badge locking"><div class="lock-dot blink" id="lockAnimDot"></div><span id="lockAnimStatus">ロック中...</span></div>
       <button id="lockAutoPlayBtn" class="anim-btn active" onclick="toggleLockAutoPlay()" style="font-size:10px;padding:4px 12px">⏸ 一時停止</button>
@@ -277,35 +286,6 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
   </div>
 </div>
 
-<!-- PARAMETER PANEL -->
-<div class="zone zone-settings">
-  <div class="zone-header"><div class="dot dot-b"></div>パラメータ設定</div>
-  <div class="param-body">
-    <div class="param-row">
-      <div class="input-group">
-        <label>参照周波数 F<sub>REF</sub></label>
-        <div class="input-group-inline">
-          <input type="range" id="slFref" min="1" max="100" step="1" value="10">
-          <div class="input-val" id="valFref">10 MHz</div>
-        </div>
-      </div>
-      <div class="input-group">
-        <label>分周比 N</label>
-        <div class="input-group-inline">
-          <input type="range" id="slN" min="1" max="100" step="1" value="10">
-          <div class="input-val" id="valN">×10</div>
-        </div>
-      </div>
-      <div class="input-group">
-        <label>ループゲイン K</label>
-        <div class="input-group-inline">
-          <input type="range" id="slK" min="1" max="10" step="0.5" value="3">
-          <div class="input-val" id="valK">3.0</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- ⑤ インタラクティブシミュレーション -->
 <div class="section-unit">
@@ -375,6 +355,22 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
         <span style="color:var(--red)">もし F<sub>vco</sub> が低下</span> → F<sub>vco</sub>/N &lt; F<sub>ref</sub> → PD が「遅れ」検出<br>
         → 制御電圧 ↑ → VCO 周波数 ↑ → <span style="color:var(--green)">元の N×F<sub>ref</sub> に戻る</span><br><br>
         <span style="color:var(--accent)">直接周波数を作っているのではなく、フィードバックが VCO を強制している</span>
+      </div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;padding:8px 0 14px;border-top:1px solid var(--border);margin-top:4px;margin-bottom:12px">
+      <div class="input-group" style="min-width:160px;flex:1">
+        <label>参照周波数 F<sub>REF</sub></label>
+        <div class="input-group-inline">
+          <input type="range" id="slFref" min="1" max="100" step="1" value="10">
+          <div class="input-val" id="valFref">10 MHz</div>
+        </div>
+      </div>
+      <div class="input-group" style="min-width:160px;flex:1">
+        <label>分周比 N <span style="font-size:9px;color:var(--text-dim)">— F<sub>vco</sub> = N × F<sub>ref</sub></span></label>
+        <div class="input-group-inline">
+          <input type="range" id="slN" min="1" max="100" step="1" value="10">
+          <div class="input-val" id="valN">×10</div>
+        </div>
       </div>
     </div>
     <canvas id="cvDivider" height="160"></canvas>
