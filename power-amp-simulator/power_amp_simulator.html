@@ -547,37 +547,43 @@ function drawVDD(ctx, x, y, label) {
 }
 
 function drawNMOS(ctx, x, y, highlight) {
-  // Enhancement-mode N-MOSFET: dashed channel, stubs, insulated gate
-  // Terminals: Drain=(x+4,y-26), Source=(x+4,y+26), Gate≈(x-22,y)
-  var s = 14, ll = 12;
-  var ch = x + 1;   // channel line x
-  var gp = x - 6;   // gate plate x (gap between gate and channel)
+  // Standard N-ch enhancement MOSFET (IEEE-style)
+  // Body at x, stubs to right. Drain=(x+10,y-30), Source=(x+10,y+30), Gate=(x-26,y)
+  var s = 16;   // half-height of stub region
+  var ll = 14;  // vertical lead length (drain/source)
+  var stb = 10; // horizontal stub length
+  var gapW = 4; // gate insulator gap
+  var gp = x - gapW; // gate plate x
+  var gl = 22;  // gate lead length from gate plate
   ctx.save();
   if (highlight) { ctx.shadowColor = highlight; ctx.shadowBlur = 10; ctx.strokeStyle = highlight; }
-  // Gate plate (tall vertical line)
+  // Gate plate (insulated, separate from channel)
   ctx.beginPath();
-  ctx.moveTo(gp, y - s + 1); ctx.lineTo(gp, y + s - 1); ctx.stroke();
-  // Gate lead to external
+  ctx.moveTo(gp, y - s); ctx.lineTo(gp, y + s); ctx.stroke();
+  // Gate lead
   ctx.beginPath();
-  ctx.moveTo(gp, y); ctx.lineTo(x - 22, y); ctx.stroke();
-  // Channel: dashed = enhancement mode (not conducting at Vgs=0)
-  ctx.save(); ctx.setLineDash([3, 3]);
-  ctx.beginPath(); ctx.moveTo(ch, y - s); ctx.lineTo(ch, y + s); ctx.stroke();
+  ctx.moveTo(gp, y); ctx.lineTo(gp - gl, y); ctx.stroke();
+  // Channel body (dashed = enhancement mode, no channel at Vgs=0)
+  ctx.save(); ctx.setLineDash([2, 2]);
+  ctx.beginPath(); ctx.moveTo(x, y - s); ctx.lineTo(x, y + s); ctx.stroke();
   ctx.setLineDash([]); ctx.restore();
-  // Drain stub: channel → terminal, then lead up
+  // Drain stub → vertical lead up
   ctx.beginPath();
-  ctx.moveTo(ch, y - s); ctx.lineTo(x + 4, y - s); ctx.lineTo(x + 4, y - s - ll); ctx.stroke();
-  // Source stub: channel → terminal, then lead down
+  ctx.moveTo(x, y - s);
+  ctx.lineTo(x + stb, y - s);
+  ctx.lineTo(x + stb, y - s - ll); ctx.stroke();
+  // Source stub → vertical lead down
   ctx.beginPath();
-  ctx.moveTo(ch, y + s); ctx.lineTo(x + 4, y + s); ctx.lineTo(x + 4, y + s + ll); ctx.stroke();
-  // Arrow on source stub pointing left (N-ch: current flows into channel)
-  var ax = ch + 5, ay = y + s;
+  ctx.moveTo(x, y + s);
+  ctx.lineTo(x + stb, y + s);
+  ctx.lineTo(x + stb, y + s + ll); ctx.stroke();
+  // N-channel arrow: points from source stub toward body (rightward)
   ctx.save(); ctx.fillStyle = highlight || C('text');
   ctx.beginPath();
-  ctx.moveTo(ax - 5, ay - 3); ctx.lineTo(ax, ay); ctx.lineTo(ax - 5, ay + 3);
+  ctx.moveTo(x + 1, y + s - 4); ctx.lineTo(x + 6, y + s); ctx.lineTo(x + 1, y + s + 4);
   ctx.closePath(); ctx.fill(); ctx.restore();
   ctx.shadowBlur = 0; ctx.restore();
-  return { dx: x+4, dy: y-s-ll, sx: x+4, sy: y+s+ll, gx: x-22, gy: y, cx: x+4 };
+  return { dx: x+stb, dy: y-s-ll, sx: x+stb, sy: y+s+ll, gx: gp-gl, gy: y, cx: x+stb };
 }
 
 function drawNPN(ctx, x, y, highlight) {
@@ -804,11 +810,12 @@ function drawClassA() {
   rst(ctx);
   wire(ctx, [cx, fetY - 34, fet.dx, fet.dy]);
 
-  // Input mini sine — left of base lead
+  // Input mini sine — label above, sine at gate y
   var ainHL = HL(['amplitude']);
-  var sw = Math.min(28, fet.gx - 6);
-  drawMiniSine(ctx, fet.gx - sw, fet.gy, sw, 8, state.amplitude, ainHL);
-  labelBg(ctx, fet.gx - sw + 1, fet.gy - 11, 'Vin', ainHL || C('accent'), 'left');
+  var sw = Math.min(28, Math.max(fet.gx - 6, 10));
+  var sinX = fet.gx - sw;
+  labelBg(ctx, sinX, fet.gy - 12, 'Vin ▶', ainHL || C('accent'), 'left');
+  drawMiniSine(ctx, sinX, fet.gy, sw, 8, state.amplitude, ainHL);
 
   // Base label — below emitter to avoid overlap
   label(ctx, 8, fet.sy + 6, 'Vbe=' + state.a_vgs.toFixed(2), fetHL || C('gold'), 'left');
@@ -918,18 +925,18 @@ function drawClassD() {
   var fetHi = drawNMOS(ctx, cx - 4, top + 60, hlD);
   rst(ctx);
   wire(ctx, [cx, top + 10, fetHi.dx, fetHi.dy]);
-  // Hi label above pulse, pulse at gate y
-  label(ctx, 5, fetHi.gy - 14, 'Hi側', hlD || C('gold'), 'left');
-  var pwH = Math.min(22, fetHi.gx - 7);
-  drawMiniPulse(ctx, fetHi.gx - pwH, fetHi.gy, pwH, 6, state.d_duty, hlD);
-  labelBg(ctx, fetHi.gx - pwH, fetHi.gy + 9, 'PWM', hlD || C('accent2'), 'left');
+  // Hi label + pulse: label above, pulse at gate y, no overlap
+  var pwH = Math.min(20, Math.max(fetHi.gx - 8, 10));
+  var pwX = fetHi.gx - pwH;
+  labelBg(ctx, pwX, fetHi.gy - 12, 'Hi-PWM ▶', hlD || C('gold'), 'left');
+  drawMiniPulse(ctx, pwX, fetHi.gy, pwH, 5, state.d_duty, hlD);
 
   // ── Lo-side FET ──
   var fetLo = drawNMOS(ctx, cx - 4, bot - 80, hlD);
   rst(ctx);
-  // Lo label above pulse
-  label(ctx, 5, fetLo.gy - 14, 'Lo側', hlD || C('gold'), 'left');
-  drawMiniPulse(ctx, fetLo.gx - pwH, fetLo.gy, pwH, 6, state.d_duty, hlD);
+  // Lo label + pulse above
+  labelBg(ctx, pwX, fetLo.gy - 12, 'Lo-PWM ▶', hlD || C('gold'), 'left');
+  drawMiniPulse(ctx, pwX, fetLo.gy, pwH, 5, state.d_duty, hlD);
 
   // Hi source → Lo drain
   wire(ctx, [fetHi.sx, fetHi.sy, fetLo.dx, fetLo.dy]);
@@ -1085,11 +1092,12 @@ function drawClassE() {
   rst(ctx);
   wire(ctx, [cx, fetY - 38, fetE.dx, fetE.dy]);
   label(ctx, 5, fetE.gy - 14, 'SW', fetHLE || C('gold'), 'left');
-  // Input mini sine (RF drive) at gate
+  // Input mini sine (RF drive) at gate — label above, sine below label
   var ainHLE = HL(['amplitude']);
-  var seW = Math.min(24, fetE.gx - 6);
-  drawMiniSine(ctx, fetE.gx - seW, fetE.gy, seW, 7, state.amplitude, ainHLE);
-  labelBg(ctx, fetE.gx - seW + 1, fetE.gy + 10, 'RF in', ainHLE || C('accent'), 'left');
+  var seW = Math.min(22, Math.max(fetE.gx - 8, 10));
+  var seX = fetE.gx - seW;
+  labelBg(ctx, seX, fetE.gy - 12, 'RF in ▶', ainHLE || C('accent'), 'left');
+  drawMiniSine(ctx, seX, fetE.gy, seW, 6, state.amplitude, ainHLE);
 
   const drainY = fetE.dy;
 
