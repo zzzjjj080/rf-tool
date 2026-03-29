@@ -251,10 +251,10 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
     <div class="formula-box" style="margin-bottom:12px">
       <div style="margin-bottom:8px;font-size:10px;letter-spacing:1px;color:var(--text-dim)">── 調整メカニズム（1ループの因果連鎖）──</div>
       <div style="font-size:11px;line-height:2.0;color:var(--text)">
-        <span style="color:var(--accent)">① PD</span>：Fref と VCO÷N の<strong>位相差を電圧として出力</strong>（差が大きいほど大きな電圧）<br>
-        <span style="color:var(--accent)">② LF</span>：PD 出力の高周波ノイズを除去し、<strong>滑らかな直流制御電圧</strong>に変換<br>
-        <span style="color:var(--accent)">③ VCO</span>：制御電圧に比例して<strong>発振周波数を上下</strong>（高電圧→高周波）<br>
-        <span style="color:var(--accent)">④ ÷N</span>：VCO 出力を N で割って PD へ帰還 → ループ完結<br>
+        <span style="color:var(--accent)">① 位相比較器（PD）</span>：Fref と VCO÷N の<strong>位相差を電圧として出力</strong>（差が大きいほど大きな電圧）<br>
+        <span style="color:var(--gold)">② ループフィルター（LF）</span>：PD 出力の高周波ノイズを除去し、<strong>滑らかな直流制御電圧</strong>に変換<br>
+        <span style="color:var(--accent2)">③ 電圧制御発振器（VCO）</span>：制御電圧に比例して<strong>発振周波数を上下</strong>（高電圧→高周波）<br>
+        <span style="color:var(--purple)">④ 分周器（÷N）</span>：VCO 出力を N で割って PD へ帰還 → ループ完結<br>
         <span style="color:var(--text-dim);font-size:10px">位相差 → 電圧 → 周波数変化 → 位相差縮小 … を繰り返してロックへ収束</span>
       </div>
     </div>
@@ -637,8 +637,8 @@ function drawBlock(animT) {
   const bw = Math.min(110, (w - 80) / 3.5);
   const bh = 60;
   const yc = 80;
-  const startX = w * 0.05;
-  const spacing = (w * 0.7 - bw) / 2;
+  const startX = w * 0.08;
+  const spacing = (w * 0.58 - bw) / 2;
 
   boxes.forEach((b, i) => {
     const x = startX + i * spacing;
@@ -701,30 +701,34 @@ function drawBlock(animT) {
   const divX = startX + 2 * spacing + bw / 2;
   const divW = 70, divH = 36;
 
-  // Feedback line from output tap
-  ctx.strokeStyle = pu; ctx.lineWidth = 1.5; ctx.setLineDash([5, 3]);
-  ctx.beginPath();
-  ctx.moveTo(outX - 30, arrowY);
-  ctx.lineTo(outX - 30, fbY);
-  ctx.lineTo(divX, fbY);
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  // Divider box
+  // Divider box (draw before feedback lines so arrows connect properly)
+  const divRightX = divX + divW / 2;
+  const divLeftX  = divX - divW / 2;
   ctx.fillStyle = pu + (dark ? '1a' : '18');
   ctx.strokeStyle = pu; ctx.lineWidth = 1.5;
   ctx.beginPath();
-  if (ctx.roundRect) ctx.roundRect(divX - divW / 2, fbY - divH / 2, divW, divH, 6);
-  else ctx.rect(divX - divW / 2, fbY - divH / 2, divW, divH);
+  if (ctx.roundRect) ctx.roundRect(divLeftX, fbY - divH / 2, divW, divH, 6);
+  else ctx.rect(divLeftX, fbY - divH / 2, divW, divH);
   ctx.fill(); ctx.stroke();
   ctx.fillStyle = pu; ctx.font = 'bold 12px Space Mono'; ctx.textAlign = 'center';
   ctx.fillText('÷ N', divX, fbY + 4);
 
-  // Divider → PD feedback
+  // Feedback line: output tap → down → right edge of ÷N box
+  ctx.strokeStyle = pu; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(outX - 30, arrowY);
+  ctx.lineTo(outX - 30, fbY);
+  ctx.lineTo(divRightX, fbY);
+  ctx.stroke();
+  // arrowhead into right side of ÷N
+  ctx.fillStyle = pu;
+  ctx.beginPath(); ctx.moveTo(divRightX, fbY); ctx.lineTo(divRightX + 8, fbY - 5); ctx.lineTo(divRightX + 8, fbY + 5); ctx.closePath(); ctx.fill();
+
+  // Divider left → PD feedback
   ctx.strokeStyle = pu; ctx.lineWidth = 1.5;
   const pdFbX = boxes[0].cx;
   ctx.beginPath();
-  ctx.moveTo(divX - divW / 2, fbY);
+  ctx.moveTo(divLeftX, fbY);
   ctx.lineTo(pdFbX, fbY);
   ctx.lineTo(pdFbX, yc + bh / 2);
   ctx.stroke();
