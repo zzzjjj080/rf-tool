@@ -262,8 +262,8 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
       <p>制御電圧が定常値に落ち着いたとき、VCO の周波数が目標値に固定され<span class="hlg">「ロック完了」</span>となります。</p>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;padding:8px 0 14px;border-bottom:1px solid var(--border);margin-bottom:12px">
-      <div class="input-group" style="min-width:220px;flex:1">
-        <label>ループゲイン K <span style="font-size:9px;color:var(--text-dim)">— 収束速度・ダンピングに影響</span></label>
+      <div class="input-group" style="max-width:180px;flex:none">
+        <label>ループゲイン K <span style="font-size:9px;color:var(--text-dim)">— 収束速度・ダンピング</span></label>
         <div class="input-group-inline">
           <input type="range" id="slK" min="1" max="10" step="0.5" value="3">
           <div class="input-val" id="valK">3.0</div>
@@ -289,34 +289,32 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
 
 <!-- ⑤ インタラクティブシミュレーション -->
 <div class="section-unit">
-  <div class="section-head accent"><div class="dot dot-b"></div>⑤ インタラクティブシミュレーション</div>
+  <div class="section-head accent"><div class="dot dot-b"></div>⑤ インタラクティブシミュレーション — 全時間軸で見るロック過程</div>
   <div class="section-body">
     <div class="explain-text">
-      <p>スライダーを動かすと PLL の動作がリアルタイムで変わります。</p>
-      <p><span class="hl">上段</span>: 基準信号（青）と VCO 帰還信号（橙）— ロック後は位相が一致します。</p>
-      <p><span class="hl2">下段</span>: 位相誤差の時間変化 — 0 に収束するまでの挙動がロック特性を表します。</p>
+      <p>④ は「ある瞬間を追う」アニメーション。⑤ は<span class="hl">時間全体を一画面に展開</span>した静止グラフです。</p>
+      <p><span class="hl">上段</span>: 基準信号（青）と VCO 帰還信号 — 位相がじわじわ揃っていく様子が一目で見えます。</p>
+      <p><span class="hl2">下段</span>: 位相誤差 φe(t) — 0 に収束するまでの応答波形。K を変えると収束速度と振動が変わります。</p>
     </div>
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap">
+    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;padding:8px 0 12px;border-bottom:1px solid var(--border);margin-bottom:12px">
+      <div class="input-group" style="max-width:180px;flex:none">
+        <label>ループゲイン K</label>
+        <div class="input-group-inline">
+          <input type="range" id="slK2" min="1" max="10" step="0.5" value="3">
+          <div class="input-val" id="valK2">3.0</div>
+        </div>
+      </div>
       <div id="lockBadge" class="lock-badge locked"><div class="lock-dot"></div>LOCKED</div>
       <div style="font-family:'Space Mono',monospace;font-size:11px;color:var(--text-dim)">ロック時間: <span id="lockTimeVal" style="color:var(--gold);font-weight:700">—</span></div>
     </div>
-  </div>
-</div>
-<div class="panel">
-  <div class="panel-header"><div class="dot dot-b"></div>基準信号 vs VCO 出力（分周後）</div>
-  <canvas id="cvSim" height="160"></canvas>
-  <div class="legend">
-    <div class="legend-item"><div class="legend-swatch" style="background:#0284c7"></div>基準信号 (F<sub>ref</sub>)</div>
-    <div class="legend-item"><div class="legend-swatch" style="background:#ea580c"></div>VCO 出力÷N（ロック前）</div>
-    <div class="legend-item"><div class="legend-swatch" style="background:#16a34a"></div>VCO 出力÷N（ロック後）</div>
-  </div>
-</div>
-<div class="panel">
-  <div class="panel-header"><div class="dot dot-gold"></div>位相誤差の時間変化</div>
-  <canvas id="cvPhase" height="140"></canvas>
-  <div class="legend">
-    <div class="legend-item"><div class="legend-swatch" style="background:#d97706"></div>位相誤差 φe(t) [rad]</div>
-    <div class="legend-item"><div class="legend-dash" style="border-color:#64748b"></div>±2% 収束しきい値</div>
+    <canvas id="cvSim" height="260"></canvas>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-swatch" style="background:#0284c7"></div>基準信号 (F<sub>ref</sub>)</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#ea580c"></div>VCO÷N（ロック前）</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#16a34a"></div>VCO÷N（ロック後）</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#d97706"></div>位相誤差 φe(t)</div>
+      <div class="legend-item"><div class="legend-dash" style="border-color:#64748b"></div>±2% しきい値</div>
+    </div>
   </div>
 </div>
 
@@ -495,7 +493,7 @@ function col(name) {
 // ─── CANVAS HELPERS ──────────────────────────────────────
 const CANVAS_H = {
   cvPurpose: 120, cvBlock: 200, cvLockAnim: 290,
-  cvSim: 160, cvPhase: 140, cvGain: 180,
+  cvSim: 260, cvGain: 180,
   cvDivider: 160, cvClockGen: 220,
 };
 function initCanvas(cv) {
@@ -1014,7 +1012,7 @@ function startLockAnimation() {
   }, 33);
 }
 
-// ─── SIMULATION CANVASES (⑤) ─────────────────────────────
+// ─── SIMULATION CANVAS (⑤) — signals + phase error merged ─
 function drawSim() {
   const d = derive();
   const cv = document.getElementById('cvSim');
@@ -1026,114 +1024,102 @@ function drawSim() {
   ctx.fillStyle = dark ? '#0d1117' : '#f8fafc';
   ctx.fillRect(0, 0, w, h);
 
-  const mx = 14, my = 20, pw = w - mx * 2, ph = h - my * 2;
-  drawGrid(ctx, mx, my, pw, ph, 8, 4);
-
-  // Time window: 0 to 2 * Tlock
   const Tmax = Math.max(d.Tlock * 2.5, 5e-6);
-  const amp = ph * 0.35;
-  const yc = my + ph / 2;
+  const splitY = Math.round(h * 0.55);
+  const divH = 1;
+  const mx = 50;
 
-  // The locked phase error at time t
-  function phi(t) { return phiErr(t, d); }
+  // ── top: ref vs VCO signals ──────────────────────────────
+  const tmy = 14, tpw = w - mx - 14, tph = splitY - tmy - 8;
+  drawGrid(ctx, mx, tmy, tpw, tph, 8, 3);
 
-  // Reference signal: sin(2π fref t) — simplified display
-  const fDisplay = 5 / Tmax; // 5 cycles across display
+  const amp = tph * 0.38;
+  const tyc = tmy + tph / 2;
+  const fDisplay = 5 / Tmax;
 
+  // ref signal
   ctx.strokeStyle = col('--accent'); ctx.lineWidth = 2;
   ctx.beginPath();
-  for (let px = 0; px <= pw; px++) {
-    const t = (px / pw) * Tmax;
-    const y = yc + amp * Math.sin(2 * Math.PI * fDisplay * t);
+  for (let px = 0; px <= tpw; px++) {
+    const t = (px / tpw) * Tmax;
+    const y = tyc + amp * Math.sin(2 * Math.PI * fDisplay * t);
     px === 0 ? ctx.moveTo(mx + px, y) : ctx.lineTo(mx + px, y);
   }
   ctx.stroke();
 
-  // VCO divided output: same freq, phase converging
+  // VCO÷N converging
   ctx.lineWidth = 2;
   ctx.beginPath();
-  for (let px = 0; px <= pw; px++) {
-    const t = (px / pw) * Tmax;
-    const pe = phi(t);
+  for (let px = 0; px <= tpw; px++) {
+    const t = (px / tpw) * Tmax;
+    const pe = phiErr(t, d);
     const locked = Math.abs(pe) < 0.05;
     ctx.strokeStyle = locked ? col('--green') : col('--accent2');
-    const y = yc + amp * Math.sin(2 * Math.PI * fDisplay * t + pe * 1.5);
+    const y = tyc + amp * Math.sin(2 * Math.PI * fDisplay * t + pe * 1.5);
     if (px === 0) { ctx.moveTo(mx + px, y); } else { ctx.lineTo(mx + px, y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(mx + px, y); }
   }
   ctx.stroke();
 
-  // Lock time marker
-  const lx = mx + (d.Tlock / Tmax) * pw;
+  // lock marker (top)
+  const lx = mx + (d.Tlock / Tmax) * tpw;
   ctx.strokeStyle = col('--green'); ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
-  ctx.beginPath(); ctx.moveTo(lx, my); ctx.lineTo(lx, my + ph); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(lx, tmy); ctx.lineTo(lx, tmy + tph); ctx.stroke();
   ctx.setLineDash([]);
   ctx.fillStyle = col('--green'); ctx.font = '10px Space Mono'; ctx.textAlign = 'center';
-  ctx.fillText('LOCK', lx, my + 12);
+  ctx.fillText('LOCK', lx, tmy + 11);
 
-  // Axis label
-  ctx.fillStyle = col('--text-dim'); ctx.font = '10px Space Mono'; ctx.textAlign = 'right';
-  const TmaxUs = (Tmax * 1e6).toFixed(1);
-  ctx.fillText(TmaxUs + ' μs', mx + pw, h - 4);
-  ctx.textAlign = 'left'; ctx.fillText('0', mx, h - 4);
-}
+  // top y-label
+  ctx.fillStyle = col('--text-dim'); ctx.font = '9px Space Mono'; ctx.textAlign = 'right';
+  ctx.fillText('信号', mx - 3, tmy + 8);
 
-function drawPhase() {
-  const d = derive();
-  const cv = document.getElementById('cvPhase');
-  const { w, h } = initCanvas(cv);
-  const ctx = getCtx(cv);
-  ctx.clearRect(0, 0, w, h);
+  // ── divider ───────────────────────────────────────────────
+  ctx.fillStyle = col('--border');
+  ctx.fillRect(0, splitY, w, divH);
 
-  const dark = isDark();
-  ctx.fillStyle = dark ? '#0d1117' : '#f8fafc';
-  ctx.fillRect(0, 0, w, h);
+  // ── bottom: phase error ───────────────────────────────────
+  const bmy = splitY + 10, bph = h - bmy - 10;
+  drawGrid(ctx, mx, bmy, tpw, bph, 8, 3);
 
-  const mx = 50, my = 14, pw = w - mx - 14, ph = h - my * 2;
-  drawGrid(ctx, mx, my, pw, ph, 8, 4);
+  const byc = bmy + bph / 2;
+  const bamp = bph * 0.42;
 
-  const Tmax = Math.max(d.Tlock * 2.5, 5e-6);
-  const yc = my + ph / 2;
-  const amp = ph * 0.42;
-
-  // Zero line
+  // zero + threshold lines
   ctx.strokeStyle = col('--text-dim'); ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(mx, yc); ctx.lineTo(mx + pw, yc); ctx.stroke();
-
-  // ±2% threshold lines
-  const thresh = 0.02;
-  ctx.strokeStyle = col('--text-dim'); ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
-  [thresh, -thresh].forEach(v => {
-    const y = yc - v * amp;
-    ctx.beginPath(); ctx.moveTo(mx, y); ctx.lineTo(mx + pw, y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(mx, byc); ctx.lineTo(mx + tpw, byc); ctx.stroke();
+  ctx.setLineDash([4, 3]);
+  [0.02, -0.02].forEach(v => {
+    const y = byc - v * bamp;
+    ctx.beginPath(); ctx.moveTo(mx, y); ctx.lineTo(mx + tpw, y); ctx.stroke();
   });
   ctx.setLineDash([]);
 
-  // Phase error curve
+  // phase error curve
   ctx.strokeStyle = col('--gold'); ctx.lineWidth = 2;
   ctx.beginPath();
-  for (let px = 0; px <= pw; px++) {
-    const t = (px / pw) * Tmax;
-    const pe = phiErr(t, d);
-    const y = yc - pe * amp;
+  for (let px = 0; px <= tpw; px++) {
+    const t = (px / tpw) * Tmax;
+    const y = byc - phiErr(t, d) * bamp;
     px === 0 ? ctx.moveTo(mx + px, y) : ctx.lineTo(mx + px, y);
   }
   ctx.stroke();
 
-  // Lock marker
-  const lx = mx + (d.Tlock / Tmax) * pw;
+  // lock marker (bottom)
+  const blx = mx + (d.Tlock / Tmax) * tpw;
   ctx.strokeStyle = col('--green'); ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
-  ctx.beginPath(); ctx.moveTo(lx, my); ctx.lineTo(lx, my + ph); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(blx, bmy); ctx.lineTo(blx, bmy + bph); ctx.stroke();
   ctx.setLineDash([]);
 
-  // Axis labels
-  ctx.fillStyle = col('--text-dim'); ctx.font = '10px Space Mono';
-  ctx.textAlign = 'right';
-  ctx.fillText('+1.0', mx - 3, my + 8);
-  ctx.fillText('  0', mx - 3, yc + 4);
-  ctx.fillText('-1.0', mx - 3, my + ph - 2);
+  // bottom y-axis labels
+  ctx.fillStyle = col('--text-dim'); ctx.font = '9px Space Mono'; ctx.textAlign = 'right';
+  ctx.fillText('+1', mx - 3, bmy + 8);
+  ctx.fillText(' 0', mx - 3, byc + 4);
+  ctx.fillText('-1', mx - 3, bmy + bph - 2);
+  ctx.fillText('[rad]', mx - 3, bmy + bph / 2 + 4);
 
-  ctx.textAlign = 'right'; ctx.fillText((Tmax * 1e6).toFixed(1) + ' μs', mx + pw, h - 3);
-  ctx.textAlign = 'left'; ctx.fillText('[rad]', mx, my + 10);
+  // shared time axis
+  ctx.fillStyle = col('--text-dim'); ctx.font = '9px Space Mono'; ctx.textAlign = 'right';
+  ctx.fillText((Tmax * 1e6).toFixed(1) + ' μs', mx + tpw, h - 2);
+  ctx.textAlign = 'left'; ctx.fillText('0', mx, h - 2);
 }
 
 // ─── GAIN COMPARISON (⑥) ─────────────────────────────────
@@ -1382,6 +1368,8 @@ function syncUI() {
   document.getElementById('valFref').textContent = fref + ' MHz';
   document.getElementById('valN').textContent = '×' + N;
   document.getElementById('valK').textContent = K.toFixed(1);
+  document.getElementById('slK2').value = K;
+  document.getElementById('valK2').textContent = K.toFixed(1);
 }
 
 function update() {
@@ -1389,7 +1377,6 @@ function update() {
   updateResults();
   lockAnimT = -0.04;   // restart lock animation with new params
   drawSim();
-  drawPhase();
   drawDivider();
   updateDivTable();
   drawClockGen();
@@ -1404,7 +1391,6 @@ function drawAll() {
   drawBlock();
   drawLockAnimSmooth();
   drawSim();
-  drawPhase();
   drawGain();
   drawDivider();
   updateDivTable();
@@ -1414,7 +1400,14 @@ function drawAll() {
 // ─── EVENTS ──────────────────────────────────────────────
 document.getElementById('slFref').addEventListener('input', update);
 document.getElementById('slN').addEventListener('input', update);
-document.getElementById('slK').addEventListener('input', update);
+document.getElementById('slK').addEventListener('input', e => {
+  document.getElementById('slK2').value = e.target.value;
+  update();
+});
+document.getElementById('slK2').addEventListener('input', e => {
+  document.getElementById('slK').value = e.target.value;
+  update();
+});
 
 // ─── BLOCK DIAGRAM ANIMATION ─────────────────────────────
 let blockT = 0;
