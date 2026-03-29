@@ -1091,12 +1091,13 @@ function drawClassE() {
   var fetE = drawNMOS(ctx, cx - 4, fetY, fetHLE);
   rst(ctx);
   wire(ctx, [cx, fetY - 38, fetE.dx, fetE.dy]);
-  label(ctx, 5, fetE.gy - 14, 'SW', fetHLE || C('gold'), 'left');
-  // Input mini sine (RF drive) at gate — label above, sine below label
+  // SW label well above gate
+  label(ctx, 5, fetE.gy - 26, 'SW', fetHLE || C('gold'), 'left');
+  // Input mini sine (RF drive): sine at gate y, "RF in" label above it
   var ainHLE = HL(['amplitude']);
-  var seW = Math.min(22, Math.max(fetE.gx - 8, 10));
+  var seW = Math.min(20, Math.max(fetE.gx - 8, 10));
   var seX = fetE.gx - seW;
-  labelBg(ctx, seX, fetE.gy - 12, 'RF in ▶', ainHLE || C('accent'), 'left');
+  labelBg(ctx, seX, fetE.gy - 13, 'RF in', ainHLE || C('accent'), 'left');
   drawMiniSine(ctx, seX, fetE.gy, seW, 6, state.amplitude, ainHLE);
 
   const drainY = fetE.dy;
