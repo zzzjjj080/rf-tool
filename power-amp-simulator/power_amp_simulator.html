@@ -356,7 +356,7 @@ let activeParam = null;
 let activeTimer = 0;
 document.addEventListener('pointerup', function() {
   clearTimeout(activeTimer);
-  activeTimer = setTimeout(function() { activeParam = null; drawAll(); }, 1200);
+  activeTimer = setTimeout(function() { activeParam = null; drawAll(); }, 150);
 });
 
 /* ═══ Controls ═══ */
@@ -610,6 +610,39 @@ function drawNPN(ctx, x, y, highlight) {
   return { dx: bx+13, dy: y-28, sx: bx+13, sy: y+28, gx: bx-18, gy: y, cx: bx+13 };
 }
 
+function drawMiniSine(ctx, x, y, w, h, amp, hl) {
+  // Small sine wave: 2 cycles, amplitude ±h*amp, from (x,y) to (x+w,y)
+  ctx.save();
+  ctx.strokeStyle = hl || C('accent'); ctx.lineWidth = 1.2;
+  if (hl) { ctx.shadowColor = hl; ctx.shadowBlur = 8; }
+  var a = Math.max(0.15, amp);
+  ctx.beginPath();
+  for (var i = 0; i <= w; i++) {
+    var sy = y + Math.sin(i / w * Math.PI * 4) * h * a;
+    i === 0 ? ctx.moveTo(x + i, sy) : ctx.lineTo(x + i, sy);
+  }
+  ctx.stroke(); ctx.restore();
+}
+
+function drawMiniPulse(ctx, x, y, w, h, duty, hl) {
+  // Small 2-cycle PWM pulse, from (x,y±h) to (x+w,y)
+  ctx.save();
+  ctx.strokeStyle = hl || C('accent2'); ctx.lineWidth = 1.2;
+  if (hl) { ctx.shadowColor = hl; ctx.shadowBlur = 8; }
+  var d = Math.max(0.15, Math.min(0.85, duty));
+  var half = w / 2;
+  ctx.beginPath();
+  ctx.moveTo(x, y + h);
+  for (var p = 0; p < 2; p++) {
+    var ox = x + p * half;
+    var pw = half * d;
+    ctx.lineTo(ox, y + h); ctx.lineTo(ox, y - h);
+    ctx.lineTo(ox + pw, y - h); ctx.lineTo(ox + pw, y + h);
+  }
+  ctx.lineTo(x + w, y + h);
+  ctx.stroke(); ctx.restore();
+}
+
 function drawMOSLabel(ctx, fet, dLabel, sLabel, gLabel, highlight) {
   ctx.save();
   ctx.font = '8px "Space Mono",monospace';
@@ -759,7 +792,7 @@ function drawClassA() {
   // ── VDD ──
   drawVDD(ctx, cx, top, '');
   wire(ctx, [cx, top, cx, top + 10]);
-  label(ctx, cx, top - 12, 'VDD (電源 3.3V)', C('accent'), 'center');
+  label(ctx, cx, top - 12, 'VDD (電源 3.3V)', C('purple'), 'center');
 
   // ── RFC ──
   drawInductor(ctx, cx, top + 10, cx, fetY - 34, '', 'left');
@@ -770,6 +803,12 @@ function drawClassA() {
   var fet = drawNPN(ctx, cx - 13, fetY, fetHL);
   rst(ctx);
   wire(ctx, [cx, fetY - 34, fet.dx, fet.dy]);
+
+  // Input mini sine — left of base lead
+  var ainHL = HL(['amplitude']);
+  var sw = Math.min(28, fet.gx - 6);
+  drawMiniSine(ctx, fet.gx - sw, fet.gy, sw, 8, state.amplitude, ainHL);
+  labelBg(ctx, fet.gx - sw + 1, fet.gy - 11, 'Vin', ainHL || C('accent'), 'left');
 
   // Base label — below emitter to avoid overlap
   label(ctx, 8, fet.sy + 6, 'Vbe=' + state.a_vgs.toFixed(2), fetHL || C('gold'), 'left');
@@ -872,21 +911,25 @@ function drawClassD() {
   // ── VDD ──
   drawVDD(ctx, cx, top, '');
   wire(ctx, [cx, top, cx, top + 10]);
-  label(ctx, cx, top - 12, 'VDD (電源)', C('accent2'), 'center');
+  label(ctx, cx, top - 12, 'VDD (電源)', C('purple'), 'center');
 
   // ── Hi-side FET ──
   var hlD = HL(['d_duty','amplitude']);
   var fetHi = drawNMOS(ctx, cx - 4, top + 60, hlD);
   rst(ctx);
   wire(ctx, [cx, top + 10, fetHi.dx, fetHi.dy]);
-  // Hi label — far left
-  label(ctx, 6, fetHi.gy + 4, 'Hi側', hlD || C('gold'), 'left');
+  // Hi label above pulse, pulse at gate y
+  label(ctx, 5, fetHi.gy - 14, 'Hi側', hlD || C('gold'), 'left');
+  var pwH = Math.min(22, fetHi.gx - 7);
+  drawMiniPulse(ctx, fetHi.gx - pwH, fetHi.gy, pwH, 6, state.d_duty, hlD);
+  labelBg(ctx, fetHi.gx - pwH, fetHi.gy + 9, 'PWM', hlD || C('accent2'), 'left');
 
   // ── Lo-side FET ──
   var fetLo = drawNMOS(ctx, cx - 4, bot - 80, hlD);
   rst(ctx);
-  // Lo label — far left
-  label(ctx, 6, fetLo.gy + 4, 'Lo側', hlD || C('gold'), 'left');
+  // Lo label above pulse
+  label(ctx, 5, fetLo.gy - 14, 'Lo側', hlD || C('gold'), 'left');
+  drawMiniPulse(ctx, fetLo.gx - pwH, fetLo.gy, pwH, 6, state.d_duty, hlD);
 
   // Hi source → Lo drain
   wire(ctx, [fetHi.sx, fetHi.sy, fetLo.dx, fetLo.dy]);
@@ -1030,7 +1073,7 @@ function drawClassE() {
   // ── VDD ──
   drawVDD(ctx, cx, top, '');
   wire(ctx, [cx, top, cx, top + 10]);
-  label(ctx, cx, top - 12, 'VDD (電源)', C('green'), 'center');
+  label(ctx, cx, top - 12, 'VDD (電源)', C('purple'), 'center');
 
   // ── RFC ──
   drawInductor(ctx, cx, top + 10, cx, fetY - 38, '', 'left');
@@ -1041,7 +1084,12 @@ function drawClassE() {
   var fetE = drawNMOS(ctx, cx - 4, fetY, fetHLE);
   rst(ctx);
   wire(ctx, [cx, fetY - 38, fetE.dx, fetE.dy]);
-  label(ctx, 6, fetE.gy + 4, 'SW', fetHLE || C('gold'), 'left');
+  label(ctx, 5, fetE.gy - 14, 'SW', fetHLE || C('gold'), 'left');
+  // Input mini sine (RF drive) at gate
+  var ainHLE = HL(['amplitude']);
+  var seW = Math.min(24, fetE.gx - 6);
+  drawMiniSine(ctx, fetE.gx - seW, fetE.gy, seW, 7, state.amplitude, ainHLE);
+  labelBg(ctx, fetE.gx - seW + 1, fetE.gy + 10, 'RF in', ainHLE || C('accent'), 'left');
 
   const drainY = fetE.dy;
 
