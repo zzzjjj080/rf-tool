@@ -480,7 +480,9 @@ function getColors() {
 function initCanvas(cv) {
   const dpr = window.devicePixelRatio || 1;
   const w = cv.parentElement.clientWidth || 600;
-  const h = parseInt(cv.getAttribute('height'), 10);
+  // Cache original CSS height on first call — cv.height gets overwritten by DPR scaling
+  if (!cv.dataset.origH) cv.dataset.origH = cv.getAttribute('height') || '200';
+  const h = parseInt(cv.dataset.origH, 10);
   cv.style.width  = w + 'px';
   cv.style.height = h + 'px';
   cv.width  = Math.round(w * dpr);
@@ -489,7 +491,7 @@ function initCanvas(cv) {
 }
 function getCtx(cv, dpr) {
   const ctx = cv.getContext('2d');
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);  // setTransform: resets without accumulation
   return ctx;
 }
 function drawGrid(ctx, mx, my, pw, ph, nx, ny, C) {
