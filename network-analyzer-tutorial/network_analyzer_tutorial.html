@@ -1262,7 +1262,7 @@ function buildExGrid() {
       </div>
       <div class="ex-card-row">
         <div class="ex-graph">
-          <canvas class="ex-canvas" id="cvEx${i}" height="130"></canvas>
+          <canvas class="ex-canvas" id="cvEx${i}" height="220"></canvas>
         </div>
         <div class="ex-right-col">
           <div class="ex-svg-wrap">${svgHTML}</div>
@@ -1317,8 +1317,8 @@ function drawMiniSparam(idx) {
     ctx.strokeStyle = db === 0 ? c.border : c.border;
     ctx.lineWidth = db === 0 ? 0.8 : 0.4;
     ctx.beginPath(); ctx.moveTo(mx, y); ctx.lineTo(bx, y); ctx.stroke();
-    if (db % 20 === 0 || db === 0 || db === 10) {
-      ctx.fillStyle = c.dim; ctx.font = `8px 'Space Mono', monospace`;
+    if (db % 10 === 0) {
+      ctx.fillStyle = c.dim; ctx.font = `10px 'Space Mono', monospace`;
       ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
       ctx.fillText(db === 0 ? '0' : db.toString(), mx - 2, y);
     }
@@ -1328,7 +1328,7 @@ function drawMiniSparam(idx) {
     const x = fToX(f);
     ctx.strokeStyle = c.border; ctx.lineWidth = 0.4;
     ctx.beginPath(); ctx.moveTo(x, my); ctx.lineTo(x, by); ctx.stroke();
-    ctx.fillStyle = c.dim; ctx.font = `8px 'Space Mono', monospace`;
+    ctx.fillStyle = c.dim; ctx.font = `10px 'Space Mono', monospace`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'top';
     ctx.fillText(f, x, by + 3);
   });
@@ -1342,7 +1342,7 @@ function drawMiniSparam(idx) {
   ctx.strokeRect(mx, my, pw, ph);
 
   // freq label
-  ctx.fillStyle = c.dim; ctx.font = `8px 'Space Mono', monospace`;
+  ctx.fillStyle = c.dim; ctx.font = `10px 'Space Mono', monospace`;
   ctx.textAlign = 'right'; ctx.textBaseline = 'top';
   ctx.fillText('GHz', bx, by + 3);
 
@@ -1405,8 +1405,8 @@ function drawMiniSparam(idx) {
         const s11str = vals.s11 > -100 ? (vals.s11 >= 0 ? '+' : '') + vals.s11.toFixed(1) + ' dB' : '−∞';
         const fstr   = f.toFixed(2) + ' GHz';
         const lines  = [`f = ${fstr}`, `S21 = ${s21str}`, `S11 = ${s11str}`];
-        ctx.font = `bold 8.5px 'Space Mono', monospace`;
-        const lineH = 12, pad = 6;
+        ctx.font = `bold 12px 'Space Mono', monospace`;
+        const lineH = 17, pad = 8;
         const tw = Math.max(...lines.map(l => ctx.measureText(l).width));
         const tw2 = tw + pad * 2, th2 = lineH * lines.length + pad * 2;
         let tx = hx + 8, ty = my + 4;
