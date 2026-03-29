@@ -346,21 +346,20 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
 
 <!-- ⑦ 分周比 -->
 <div class="section-unit">
-  <div class="section-head green"><div class="dot dot-g"></div>⑦ 周波数倍率 — 分周比の役割</div>
+  <div class="section-head green"><div class="dot dot-g"></div>⑦ N を変えれば周波数が変わる — PLL の応用価値</div>
   <div class="section-body">
     <div class="explain-text">
-      <p>「<span class="hl2">分周</span>（遅くする）しているのに、なぜ基準より<span class="hlg">速い周波数</span>が出るの？」— PLL で最も不思議に感じる点です。</p>
-      <p>答えはフィードバックにあります。PLL がロックしているとき<span class="hl">位相比較器の両入力は必ず同じ周波数</span>でなければなりません。帰還側は VCO を N で割った信号なので、等式が成り立つよう VCO が自動調整されます。</p>
-      <p>つまり「分周して基準に合わせる」ことで、結果として <span class="hl3">VCO = N × 基準</span> という関係が強制されます。</p>
+      <p>PLL の最大の強みは <span class="hl3">整数 N を変えるだけで、水晶発振器の何倍もの周波数を精確に生成できる</span>ことです。</p>
+      <p>水晶発振器は安定だが周波数を変えられません。PLL は N を切り替えることで <span class="hlg">1つの基準から多彩な周波数を柔軟に作り分けられます</span>。</p>
     </div>
     <div class="formula-box" style="margin-bottom:12px">
-      <div style="margin-bottom:8px;font-size:10px;letter-spacing:1px;color:var(--text-dim)">── ループの等式（なぜ N 倍になるか）──</div>
-      ロック条件：F<sub>ref</sub> = F<sub>vco</sub> ÷ N　（PD 両入力が同周波数）<br>
-      ∴ <strong style="color:var(--gold)">F<sub>vco</sub> = N × F<sub>ref</sub></strong><br><br>
-      <div style="font-size:11px;line-height:1.9;color:var(--text)">
-        <span style="color:var(--red)">もし F<sub>vco</sub> が低下</span> → F<sub>vco</sub>/N &lt; F<sub>ref</sub> → PD が「遅れ」検出<br>
-        → 制御電圧 ↑ → VCO 周波数 ↑ → <span style="color:var(--green)">元の N×F<sub>ref</sub> に戻る</span><br><br>
-        <span style="color:var(--accent)">直接周波数を作っているのではなく、フィードバックが VCO を強制している</span>
+      <strong style="color:var(--gold);font-size:14px">F<sub>vco</sub> = N × F<sub>ref</sub></strong>
+      <span style="color:var(--text-dim);font-size:11px;margin-left:12px">— N を整数で指定するだけ</span><br>
+      <div style="font-size:11px;line-height:1.9;color:var(--text);margin-top:8px">
+        <span style="color:var(--text-dim)">例：F<sub>ref</sub> = 10 MHz のとき</span><br>
+        N = 10 → <span style="color:var(--accent)">100 MHz</span>（FPGA コアクロック）<br>
+        N = 48 → <span style="color:var(--accent2)">480 MHz</span>（USB 3.0 クロック）<br>
+        N = 100 → <span style="color:var(--green)">1 GHz</span>（RF キャリア）
       </div>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;padding:8px 0 14px;border-top:1px solid var(--border);margin-top:4px;margin-bottom:12px">
