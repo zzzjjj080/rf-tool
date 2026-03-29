@@ -231,9 +231,9 @@ footer a:hover{text-decoration:underline}
     </div>
   </section>
 
-  <!-- ⑥ インタラクティブシミュレーション -->
+  <!-- ⑥ インタラクティブシミュレーション（パラメータ + ボード線図 + 計算結果） -->
   <div class="zone zone-settings">
-    <div class="zone-header">⑥ インタラクティブ シミュレーション — パラメータ設定</div>
+    <div class="zone-header">⑥ インタラクティブ シミュレーション — パラメータ設定 / ボード線図 / 計算結果</div>
     <div class="param-sections">
       <div class="param-section">
         <div class="param-row">
@@ -284,49 +284,47 @@ footer a:hover{text-decoration:underline}
         </div>
       </div>
     </div>
-  </div>
-
-  <!-- Bode plot (magnitude + phase) -->
-  <div class="panel">
-    <div class="panel-header"><div class="dot"></div>ボード線図（振幅 dB + 位相）— リアルタイム更新</div>
-    <canvas id="cvBode" height="320"></canvas>
-    <div class="legend">
-      <div class="legend-item"><div class="legend-swatch" id="bodeLegendColor" style="background:#0284c7"></div><span id="bodeLegendLabel">LPF 振幅</span></div>
-      <div class="legend-item"><div class="legend-swatch" style="background:#ea580c"></div><span>位相</span></div>
-      <div class="legend-item"><div class="legend-dash" style="border-color:#d97706"></div><span>−3 dB / Fc</span></div>
+    <!-- Bode plot (magnitude + phase) -->
+    <div style="border-top:1px solid var(--border)">
+      <div class="panel-header"><div class="dot"></div>ボード線図（振幅 dB + 位相）— リアルタイム更新</div>
+      <canvas id="cvBode" height="320"></canvas>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-swatch" id="bodeLegendColor" style="background:#0284c7"></div><span id="bodeLegendLabel">LPF 振幅</span></div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#ea580c"></div><span>位相</span></div>
+        <div class="legend-item"><div class="legend-dash" style="border-color:#d97706"></div><span>−3 dB / Fc</span></div>
+      </div>
     </div>
-  </div>
-
-  <!-- Result cards -->
-  <div class="result-section">
-    <div class="section-label"><div class="dot"></div><span>計算結果</span></div>
-    <div class="result-grid">
-      <div class="result-card">
-        <div class="label">フィルタータイプ</div>
-        <div class="value orange" id="rcType">LPF</div>
-      </div>
-      <div class="result-card">
-        <div class="label">カットオフ周波数</div>
-        <div class="value" id="rcFc">1000</div>
-        <div class="unit">Hz</div>
-      </div>
-      <div class="result-card">
-        <div class="label">フィルター次数</div>
-        <div class="value gold" id="rcOrder">2</div>
-        <div class="unit">次</div>
-      </div>
-      <div class="result-card">
-        <div class="label">遮断特性</div>
-        <div class="value green" id="rcRolloff">−40 dB/decade</div>
-      </div>
-      <div class="result-card">
-        <div class="label">−3 dB 帯域幅</div>
-        <div class="value" id="rcBW">1000</div>
-        <div class="unit">Hz</div>
-      </div>
-      <div class="result-card">
-        <div class="label">Q 値</div>
-        <div class="value purple" id="rcQ">—</div>
+    <!-- Result cards -->
+    <div style="border-top:1px solid var(--border);padding:14px 18px 16px">
+      <div class="section-label"><div class="dot"></div><span>計算結果</span></div>
+      <div class="result-grid">
+        <div class="result-card">
+          <div class="label">フィルタータイプ</div>
+          <div class="value orange" id="rcType">LPF</div>
+        </div>
+        <div class="result-card">
+          <div class="label">カットオフ周波数</div>
+          <div class="value" id="rcFc">1000</div>
+          <div class="unit">Hz</div>
+        </div>
+        <div class="result-card">
+          <div class="label">フィルター次数</div>
+          <div class="value gold" id="rcOrder">2</div>
+          <div class="unit">次</div>
+        </div>
+        <div class="result-card">
+          <div class="label">遮断特性</div>
+          <div class="value green" id="rcRolloff">−40 dB/decade</div>
+        </div>
+        <div class="result-card">
+          <div class="label">−3 dB 帯域幅</div>
+          <div class="value" id="rcBW">1000</div>
+          <div class="unit">Hz</div>
+        </div>
+        <div class="result-card">
+          <div class="label">Q 値</div>
+          <div class="value purple" id="rcQ">—</div>
+        </div>
       </div>
     </div>
   </div>
