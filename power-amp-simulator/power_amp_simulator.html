@@ -63,11 +63,13 @@ canvas{display:block;width:100%}
 .input-group label{font-size:10px;letter-spacing:2px;font-family:'Space Mono',monospace;text-transform:uppercase;color:var(--accent)}
 .input-group.orange label{color:var(--accent2)}
 .input-group.green label{color:var(--green)}
+.input-group.gold label{color:var(--gold)}
 .input-group-inline{display:flex;align-items:center;gap:8px}
 input[type="range"]{-webkit-appearance:none;width:100%;height:4px;background:var(--border);border-radius:2px;outline:none;cursor:pointer}
 input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;box-shadow:0 1px 4px var(--shadow)}
 .input-group.orange input[type="range"]::-webkit-slider-thumb{background:var(--accent2)}
 .input-group.green input[type="range"]::-webkit-slider-thumb{background:var(--green)}
+.input-group.gold input[type="range"]::-webkit-slider-thumb{background:var(--gold)}
 .input-val{font-family:'Space Mono',monospace;font-size:14px;color:var(--gold);min-width:65px;text-align:center;font-weight:700;white-space:nowrap}
 select{background:var(--panel2);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:12px;padding:6px 10px;border-radius:6px;cursor:pointer;outline:none}
 /* Result mini-cards row */
@@ -196,7 +198,7 @@ select{background:var(--panel2);border:1px solid var(--border);color:var(--text)
   <div class="legend">
     <div class="legend-item"><div class="legend-swatch" style="background:var(--accent)"></div>Vin 入力</div>
     <div class="legend-item"><div class="legend-swatch" style="background:var(--accent2)"></div>Vout 出力</div>
-    <div class="legend-item"><div class="legend-swatch" style="background:var(--green)"></div>Id ドレイン電流</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--green)"></div>Ic コレクタ電流</div>
   </div>
   <div class="param-zone">
     <div class="input-group">
@@ -243,7 +245,7 @@ select{background:var(--panel2);border:1px solid var(--border);color:var(--text)
     <div class="legend-item"><div class="legend-swatch" style="background:var(--green)"></div>フィルタ後出力</div>
   </div>
   <div class="param-zone">
-    <div class="input-group orange">
+    <div class="input-group">
       <label>入力振幅</label>
       <div class="input-group-inline">
         <input type="range" id="slD_ain" min="0.1" max="1.0" step="0.01" value="0.8" oninput="onParam('amplitude',this.value)">
@@ -257,7 +259,7 @@ select{background:var(--panel2);border:1px solid var(--border);color:var(--text)
         <span class="input-val" id="vD_duty">0.50</span>
       </div>
     </div>
-    <div class="input-group orange">
+    <div class="input-group green">
       <label>LCカットオフ</label>
       <div class="input-group-inline">
         <input type="range" id="slD_lc" min="0.1" max="1.0" step="0.01" value="0.50" oninput="onParam('d_lcCutoff',this.value)">
@@ -282,26 +284,26 @@ select{background:var(--panel2);border:1px solid var(--border);color:var(--text)
   <div class="panel-header"><div class="dot dot-green"></div>E級 — 回路図 & ドレイン / 出力波形</div>
   <canvas id="cvE" height="380"></canvas>
   <div class="legend">
-    <div class="legend-item"><div class="legend-swatch" style="background:var(--green)"></div>Vds ドレイン電圧</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--gold)"></div>Vds ドレイン電圧</div>
     <div class="legend-item"><div class="legend-swatch" style="background:var(--accent)"></div>Vout 出力</div>
     <div class="legend-item"><div class="legend-dash" style="border-color:var(--gold)"></div>SW ON/OFF</div>
   </div>
   <div class="param-zone">
-    <div class="input-group green">
+    <div class="input-group">
       <label>入力振幅</label>
       <div class="input-group-inline">
         <input type="range" id="slE_ain" min="0.1" max="1.0" step="0.01" value="0.8" oninput="onParam('amplitude',this.value)">
         <span class="input-val" id="vE_ain">0.80</span>
       </div>
     </div>
-    <div class="input-group green">
+    <div class="input-group gold">
       <label>fsw / f0 比</label>
       <div class="input-group-inline">
         <input type="range" id="slE_fsw" min="0.5" max="2.0" step="0.01" value="1.00" oninput="onParam('e_fswRatio',this.value)">
         <span class="input-val" id="vE_fsw">1.00</span>
       </div>
     </div>
-    <div class="input-group green">
+    <div class="input-group orange">
       <label>Q 値</label>
       <div class="input-group-inline">
         <input type="range" id="slE_q" min="1" max="20" step="0.5" value="5" oninput="onParam('e_Q',this.value)">
@@ -928,14 +930,14 @@ function drawClassD() {
   // Hi label + pulse: label above, pulse at gate y, no overlap
   var pwH = Math.min(20, Math.max(fetHi.gx - 8, 10));
   var pwX = fetHi.gx - pwH;
-  labelBg(ctx, pwX, fetHi.gy - 12, 'Hi-PWM ▶', hlD || C('gold'), 'left');
+  labelBg(ctx, pwX, fetHi.gy - 12, 'Hi-PWM ▶', hlD || C('accent2'), 'left');
   drawMiniPulse(ctx, pwX, fetHi.gy, pwH, 5, state.d_duty, hlD);
 
   // ── Lo-side FET ──
   var fetLo = drawNMOS(ctx, cx - 4, bot - 80, hlD);
   rst(ctx);
   // Lo label + pulse above
-  labelBg(ctx, pwX, fetLo.gy - 12, 'Lo-PWM ▶', hlD || C('gold'), 'left');
+  labelBg(ctx, pwX, fetLo.gy - 12, 'Lo-PWM ▶', hlD || C('accent2'), 'left');
   drawMiniPulse(ctx, pwX, fetLo.gy, pwH, 5, state.d_duty, hlD);
 
   // Hi source → Lo drain
@@ -977,8 +979,11 @@ function drawClassD() {
   label(ctx, rlX + 18, swY + 35, 'RL (負荷)', C('text-dim'), 'left');
 
   // ── Labels in clear areas ──
-  label(ctx, lcStart, swY - 36, 'SW (スイッチノード)', C('accent2'), 'left');
-  label(ctx, rlX + 18, swY - 10, 'Vout (出力)', C('green'), 'left');
+  // SW node dot + label — points to the actual junction between Hi/Lo source
+  ctx.save(); ctx.fillStyle = C('accent2');
+  ctx.beginPath(); ctx.arc(fetHi.cx, swY, 3, 0, Math.PI*2); ctx.fill(); ctx.restore();
+  label(ctx, fetHi.cx + 8, swY - 4, '← SWノード(ここがHi/Lo接続点)', C('accent2'), 'left');
+  label(ctx, rlX + 18, swY - 10, 'Vout (出力)', C('accent'), 'left');
   var dutyHL = HL('d_duty');
   label(ctx, 6, bot + 20, 'デューティ比 D=' + state.d_duty.toFixed(2), dutyHL || C('gold'), 'left');
 
@@ -1173,7 +1178,7 @@ function drawClassE() {
 
   // Row 1: Vds drain voltage
   drawWaveGrid(ctx, wx, wy1, ww, rowH, 'ドレイン');
-  ctx.strokeStyle = C('green');
+  ctx.strokeStyle = C('gold');
   ctx.lineWidth = 2;
   ctx.beginPath();
   for (let i = 0; i <= N; i++) {
@@ -1247,7 +1252,7 @@ function drawClassE() {
   ctx.stroke();
 
   // Labels (with background, below switch indicator dashed line)
-  labelBg(ctx, wx + 4, wy1 + 24, 'ドレイン電圧 (Vds) — スイッチOFF時に上昇', C('green'), 'left');
+  labelBg(ctx, wx + 4, wy1 + 24, 'ドレイン電圧 (Vds) — スイッチOFF時に上昇', C('gold'), 'left');
   labelBg(ctx, wx + 4, wy2 + 13, '出力電圧 (Vout) — 共振後の正弦波', C('accent'), 'left');
   labelBg(ctx, wx + ww - 4, wy1 + 24, 'fsw/f0=' + state.e_fswRatio.toFixed(2), C('gold'), 'right');
   labelBg(ctx, wx + ww - 4, wy2 + 13, 'Q=' + state.e_Q.toFixed(1), C('gold'), 'right');
