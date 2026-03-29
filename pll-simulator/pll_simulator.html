@@ -244,16 +244,14 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
   <div class="section-head gold"><div class="dot dot-gold"></div>③ PLL の構成 — ブロック図</div>
   <div class="section-body">
     <div class="explain-text">
-      <p>PLL は <span class="hl">4つの要素</span>で構成されます：<span class="hl">位相比較器（PD）</span> → <span style="color:var(--gold);font-weight:600">ループフィルター（LF）</span> → <span class="hl2">VCO</span> → <span class="hlp">分周器（÷N）</span></p>
-      <p><span class="hl2">VCO（電圧制御発振器）</span>：制御電圧が上がると発振周波数が上がる素子。PLL の心臓部です。</p>
-      <p>出力を<span class="hlp">分周器</span>で <span class="hlp">1/N に分周</span>してフィードバックし、<span class="hl">位相比較器</span>で基準信号と比較することで周波数を N 倍に保ちます。</p>
+      <p>PLL は <span class="hl">位相比較器（PD）</span> → <span style="color:var(--gold);font-weight:600">ループフィルター（LF）</span> → <span class="hl2">電圧制御発振器（VCO）</span> → <span class="hlp">分周器（÷N）</span> の <span class="hl">4つの要素</span>で構成されるフィードバックループです。</p>
     </div>
     <div class="formula-box" style="margin-bottom:12px">
       <div style="margin-bottom:8px;font-size:10px;letter-spacing:1px;color:var(--text-dim)">── 調整メカニズム（1ループの因果連鎖）──</div>
       <div style="font-size:11px;line-height:2.0;color:var(--text)">
         <span style="color:var(--accent)">① 位相比較器（PD）</span>：Fref と VCO÷N の<strong>位相差を電圧として出力</strong>（差が大きいほど大きな電圧）<br>
         <span style="color:var(--gold)">② ループフィルター（LF）</span>：PD 出力の高周波ノイズを除去し、<strong>滑らかな直流制御電圧</strong>に変換<br>
-        <span style="color:var(--accent2)">③ 電圧制御発振器（VCO）</span>：制御電圧に比例して<strong>発振周波数を上下</strong>（高電圧→高周波）<br>
+        <span style="color:var(--accent2)">③ 電圧制御発振器（VCO）</span>：制御電圧に比例して<strong>発振周波数を上下</strong> — PLL の心臓部（高電圧→高周波）<br>
         <span style="color:var(--purple)">④ 分周器（÷N）</span>：VCO 出力を N で割って PD へ帰還 → ループ完結<br>
         <span style="color:var(--text-dim);font-size:10px">位相差 → 電圧 → 周波数変化 → 位相差縮小 … を繰り返してロックへ収束</span>
       </div>
