@@ -497,10 +497,15 @@ function col(name) {
 }
 
 // ─── CANVAS HELPERS ──────────────────────────────────────
+const CANVAS_H = {
+  cvPurpose: 120, cvBlock: 200, cvLockAnim: 290,
+  cvSim: 160, cvPhase: 140, cvGain: 180,
+  cvDivider: 160, cvClockGen: 220,
+};
 function initCanvas(cv) {
   const dpr = window.devicePixelRatio || 1;
   const w = cv.parentElement.clientWidth || 600;
-  const h = parseInt(cv.getAttribute('height'), 10);
+  const h = CANVAS_H[cv.id] || 200;
   cv.style.width = w + 'px';
   cv.style.height = h + 'px';
   cv.width = Math.round(w * dpr);
