@@ -215,6 +215,20 @@ input[type="range"]::-webkit-slider-thumb {
 .ex-view-btn:hover { border-color: var(--accent); color: var(--accent); }
 .ex-view-btn.active { border-color: var(--accent); background: var(--accent); color: #fff; }
 .ex-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+/* ── Section ⑦ 変換解説 ── */
+.conv-intro { font-size: 11px; color: var(--text-dim); line-height: 1.7; margin-bottom: 14px; }
+.conv-steps { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+.conv-step { flex: 1 1 180px; background: var(--panel2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; }
+.conv-step-num { font-family: 'Space Mono', monospace; font-size: 10px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+.conv-step-title { font-size: 11px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.conv-formula { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--accent2); background: var(--panel); border-radius: 6px; padding: 5px 8px; margin-bottom: 5px; white-space: pre; line-height: 1.6; }
+.conv-step-note { font-size: 10px; color: var(--text-dim); line-height: 1.5; }
+.conv-dual { display: flex; gap: 12px; align-items: flex-start; }
+.conv-pane { flex: 1; min-width: 0; }
+.conv-pane-label { font-family: 'Space Mono', monospace; font-size: 10px; font-weight: 700; color: var(--text-dim); margin: 6px 0 4px; text-align: center; }
+.conv-canvas { display: block; width: 100%; }
+.conv-example-note { font-size: 10.5px; color: var(--text-dim); line-height: 1.6; margin-top: 12px; background: var(--panel2); border-left: 3px solid var(--accent); padding: 8px 12px; border-radius: 0 6px 6px 0; }
+@media (max-width: 580px) { .conv-dual { flex-direction: column; } }
 .ex-tag { font-family: 'Space Mono', monospace; font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--border); color: var(--text-dim); }
 .ex-tag.ts11  { border-color: var(--accent);  color: var(--accent);  }
 .ex-tag.ts21  { border-color: var(--accent2); color: var(--accent2); }
@@ -842,6 +856,78 @@ input[type="range"]::-webkit-slider-thumb {
   </div>
 </div>
 
+<!-- ══ ⑦ S パラメータ ↔ スミスチャート変換 ══ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">⑦</span>S パラメータ ↔ スミスチャート変換
+  </div>
+  <div class="section-body">
+    <p class="conv-intro">
+      同じ測定データは「S パラメータ（dB スケール）」と「スミスチャート（複素平面）」の 2 通りで表現できます。
+      ここでは <strong>並列 C 470 pF</strong> を例に、数式と対話グラフで変換の仕組みを解説します。<br>
+      グラフにマウスを当てると、同じ周波数の点が左右同時にハイライトされます。
+    </p>
+
+    <!-- 変換ステップ 3 枚 -->
+    <div class="conv-steps">
+      <div class="conv-step">
+        <div class="conv-step-num">STEP 1</div>
+        <div class="conv-step-title">S11[dB] → |Γ| （反射係数の大きさ）</div>
+        <div class="conv-formula">|Γ| = 10 ^ (S11 / 20)</div>
+        <div class="conv-step-note">
+          S11 = −6 dB なら |Γ| = 0.50。<br>
+          S11 = −20 dB なら |Γ| = 0.10。<br>
+          S11 = −∞ dB → |Γ| = 0（完全整合）。
+        </div>
+      </div>
+      <div class="conv-step">
+        <div class="conv-step-num">STEP 2</div>
+        <div class="conv-step-title">Γ を複素数で計算（位相を含む）</div>
+        <div class="conv-formula">x = ωCZ₀  （無次元）
+Γ = −jx / (2 + jx)
+  = −x² / (4+x²)
+  − j·2x / (4+x²)</div>
+        <div class="conv-step-note">
+          470 pF @ 20 MHz:<br>
+          x = 2π×20M×470p×50 ≈ 2.95<br>
+          Γ ≈ −0.69 − j0.48
+        </div>
+      </div>
+      <div class="conv-step">
+        <div class="conv-step-num">STEP 3</div>
+        <div class="conv-step-title">Γ → Z （インピーダンス変換）</div>
+        <div class="conv-formula">Z = Z₀ × (1 + Γ) / (1 − Γ)
+  = R + jX  [Ω]</div>
+        <div class="conv-step-note">
+          スミスチャートはこの変換を<br>
+          グラフィカルに表現したもの。<br>
+          中心 = Z₀ = 50 Ω（完全整合）。<br>
+          外周 = |Γ| = 1（完全反射）。
+        </div>
+      </div>
+    </div>
+
+    <!-- 対話グラフ 2 枚横並び -->
+    <div class="conv-dual">
+      <div class="conv-pane">
+        <canvas class="conv-canvas" id="cvConvSparam" height="220"></canvas>
+        <div class="conv-pane-label">S パラメータ表示（0–30 MHz）</div>
+      </div>
+      <div class="conv-pane">
+        <canvas class="conv-canvas" id="cvConvSmith" height="220"></canvas>
+        <div class="conv-pane-label">スミスチャート表示（S11 軌跡）</div>
+      </div>
+    </div>
+
+    <div class="conv-example-note">
+      <strong>読み方のコツ：</strong>
+      低周波（10 MHz 以下）では容量リアクタンスが大きく S21 ≈ 0 dB、スミスチャートは中心付近。
+      周波数が上がると ωC が増え、シャント容量が RF をバイパスし始める（S21 が下降）。
+      スミスチャートでは Γ が容量性（下半円）方向へ移動し、インピーダンスが純リアクティブ（外周付近）に近づく。
+    </div>
+  </div>
+</div>
+
 </div><!-- /container -->
 
 <script>
@@ -959,6 +1045,7 @@ function initAll() {
     const cv = document.getElementById(id); if (cv) initFixed(cv, 80, 56);
   });
   document.querySelectorAll('.ex-canvas').forEach(cv => initCanvas(cv));
+  ['cvConvSparam','cvConvSmith'].forEach(id => { const cv = document.getElementById(id); if(cv) initCanvas(cv); });
 }
 
 // ══════════════════════════════════════════
@@ -1525,6 +1612,308 @@ function drawMiniSparam(idx) {
 
 function drawAllExamples() {
   EXAMPLES.forEach((_, i) => exViewMode === 'smith' ? drawMiniSmith(i) : drawMiniSparam(i));
+}
+
+// ══════════════════════════════════════════
+// ⑦ 変換解説 — 並列C 470pF 共有ホバー
+// ══════════════════════════════════════════
+let convHoverF = null; // MHz, null = no hover
+
+function convShuntC(f) {
+  // f in MHz
+  const x = 2 * Math.PI * f * 1e6 * 470e-12 * 50;
+  const d = 4 + x * x;
+  const s21sq = 4 / d;
+  const s11sq = x * x / d;
+  const gre = -s11sq, gim = -2 * x / d;
+  return {
+    s11: 10 * Math.log10(Math.max(s11sq, 1e-12)),
+    s21: 10 * Math.log10(Math.max(s21sq, 1e-12)),
+    re: gre, im: gim,
+    x,
+  };
+}
+
+function drawConvSparam() {
+  const cv = document.getElementById('cvConvSparam');
+  if (!cv) return;
+  const { ctx, w, h } = getCtx(cv);
+  const c = C();
+
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = c.bg; ctx.fillRect(0, 0, w, h);
+
+  const mx = 36, my = 10, bx = w - 8, by = h - 22;
+  const pw = bx - mx, ph = by - my;
+  const fMax = 30, dBmin = -55, dBmax = 20;
+  const fToX  = f  => mx + (f / fMax) * pw;
+  const dBToY = db => by - ((db - dBmin) / (dBmax - dBmin)) * ph;
+
+  // Grid H
+  [-50,-40,-30,-20,-10,0,10,20].forEach(db => {
+    if (db < dBmin || db > dBmax) return;
+    const y = dBToY(db);
+    ctx.strokeStyle = c.border; ctx.lineWidth = db === 0 ? 0.8 : 0.4;
+    ctx.beginPath(); ctx.moveTo(mx, y); ctx.lineTo(bx, y); ctx.stroke();
+    if (db % 10 === 0) {
+      ctx.fillStyle = c.dim; ctx.font = `10px 'Space Mono',monospace`;
+      ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      ctx.fillText(db === 0 ? '0' : db.toString(), mx - 2, y);
+    }
+  });
+  // Grid V
+  [5,10,15,20,25,30].forEach(f => {
+    const x = fToX(f);
+    ctx.strokeStyle = c.border; ctx.lineWidth = 0.4;
+    ctx.beginPath(); ctx.moveTo(x, my); ctx.lineTo(x, by); ctx.stroke();
+    ctx.fillStyle = c.dim; ctx.font = `10px 'Space Mono',monospace`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.fillText(f, x, by + 3);
+  });
+  // 0 dB dash
+  ctx.strokeStyle = c.dim; ctx.lineWidth = 0.7; ctx.setLineDash([3, 4]);
+  ctx.beginPath(); ctx.moveTo(mx, dBToY(0)); ctx.lineTo(bx, dBToY(0)); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.strokeStyle = c.text; ctx.lineWidth = 0.8; ctx.strokeRect(mx, my, pw, ph);
+
+  // axis label
+  ctx.fillStyle = c.dim; ctx.font = `10px 'Space Mono',monospace`;
+  ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+  ctx.fillText('MHz', bx, by + 3);
+
+  // Draw S21 and S11 traces
+  function drawTr(getDb, col) {
+    let prev = null;
+    for (let px = 0; px <= pw; px++) {
+      const f = 0.5 + (px / pw) * (fMax - 0.5);
+      const db = Math.max(Math.min(getDb(f), dBmax), dBmin);
+      const x = mx + px, y = dBToY(db);
+      ctx.strokeStyle = col; ctx.lineWidth = 2;
+      if (prev) { ctx.beginPath(); ctx.moveTo(prev.x, prev.y); ctx.lineTo(x, y); ctx.stroke(); }
+      prev = { x, y };
+    }
+  }
+  drawTr(f => convShuntC(f).s21, c.accent2);
+  drawTr(f => convShuntC(f).s11, c.accent);
+
+  // Legend
+  ctx.font = `bold 9px 'Space Mono',monospace`;
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  ctx.fillStyle = c.accent; ctx.fillText('S11', mx + 4, my + 3);
+  ctx.fillStyle = c.accent2; ctx.fillText('S21', mx + 34, my + 3);
+
+  // Hover
+  if (convHoverF !== null) {
+    const hx = fToX(convHoverF);
+    const vals = convShuntC(convHoverF);
+    const ys21 = dBToY(Math.max(Math.min(vals.s21, dBmax), dBmin));
+    const ys11 = dBToY(Math.max(Math.min(vals.s11, dBmax), dBmin));
+
+    ctx.strokeStyle = 'rgba(160,160,160,0.7)'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(hx, my); ctx.lineTo(hx, by); ctx.stroke();
+    ctx.setLineDash([]);
+
+    [[hx, ys21, c.accent2], [hx, ys11, c.accent]].forEach(([px, py, col]) => {
+      ctx.fillStyle = col; ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI*2); ctx.stroke();
+    });
+
+    // Tooltip
+    const s21str = vals.s21.toFixed(1) + ' dB';
+    const s11str = vals.s11.toFixed(1) + ' dB';
+    const xval   = vals.x.toFixed(2);
+    const lines = [`f = ${convHoverF.toFixed(1)} MHz`, `S21 = ${s21str}`, `S11 = ${s11str}`, `x=ωCZ₀ = ${xval}`];
+    ctx.font = `bold 10px 'Space Mono',monospace`;
+    const lineH = 15, pad = 7;
+    const tw = Math.max(...lines.map(l => ctx.measureText(l).width));
+    const tw2 = tw + pad*2, th2 = lineH*lines.length + pad*2;
+    let tx = hx + 8, ty = my + 4;
+    if (tx + tw2 > bx) tx = hx - tw2 - 8;
+    ctx.fillStyle = 'rgba(0,0,0,0.78)';
+    ctx.beginPath(); ctx.roundRect(tx, ty, tw2, th2, 4); ctx.fill();
+    ['#aaa', c.accent2, c.accent, c.gold].forEach((col, li) => {
+      ctx.fillStyle = col; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lines[li], tx + pad, ty + pad + li * lineH);
+    });
+  }
+}
+
+function drawConvSmith() {
+  const cv = document.getElementById('cvConvSmith');
+  if (!cv) return;
+  const { ctx, w, h } = getCtx(cv);
+  const c = C();
+
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = c.bg; ctx.fillRect(0, 0, w, h);
+
+  const margin = 22;
+  const size = Math.min(w, h) - margin * 2;
+  const R = size / 2;
+  const scx = w / 2, scy = h / 2 + 2;
+  const toC = (re, im) => ({ x: scx + R * re, y: scy - R * im });
+
+  // Outer circle
+  ctx.strokeStyle = c.text; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.arc(scx, scy, R, 0, 2 * Math.PI); ctx.stroke();
+
+  ctx.save();
+  ctx.beginPath(); ctx.arc(scx, scy, R, 0, 2 * Math.PI); ctx.clip();
+
+  // Real axis
+  ctx.strokeStyle = c.border; ctx.lineWidth = 0.6;
+  ctx.beginPath(); ctx.moveTo(scx - R, scy); ctx.lineTo(scx + R, scy); ctx.stroke();
+
+  // Constant-R circles
+  [0.2, 0.5, 1, 2, 5].forEach(r => {
+    const cc = toC(r/(r+1), 0);
+    ctx.strokeStyle = c.border; ctx.lineWidth = r === 1 ? 0.8 : 0.4;
+    ctx.beginPath(); ctx.arc(cc.x, cc.y, R/(r+1), 0, 2*Math.PI); ctx.stroke();
+  });
+  // Constant-X arcs
+  [0.2, 0.5, 1, 2, 5].forEach(x => {
+    [-1,1].forEach(s => {
+      const xv = s*x;
+      const cc = toC(1, 1/xv);
+      ctx.strokeStyle = c.border; ctx.lineWidth = Math.abs(xv) === 1 ? 0.8 : 0.4;
+      ctx.beginPath(); ctx.arc(cc.x, cc.y, R/Math.abs(xv), 0, 2*Math.PI); ctx.stroke();
+    });
+  });
+  ctx.restore();
+
+  // Labels on real axis
+  ctx.fillStyle = c.dim; ctx.font = `8px 'Space Mono',monospace`; ctx.textBaseline = 'top';
+  [[0, -1], [0.5, -1/3], [1, 0], [2, 1/3]].forEach(([r, rp]) => {
+    const pt = toC(rp, 0);
+    ctx.textAlign = rp < 0 ? 'right' : 'center';
+    ctx.fillText(r.toString(), pt.x + (rp < 0 ? -2 : 0), scy + 3);
+  });
+  ctx.textAlign = 'left'; ctx.fillText('∞', toC(1,0).x + 2, scy + 3);
+
+  // Trace — shunt C 470pF
+  const pts = [];
+  const steps = 400;
+  for (let i = 0; i <= steps; i++) {
+    const f = 0.5 + (30 - 0.5) * i / steps;
+    const v = convShuntC(f);
+    const p = toC(v.re, v.im);
+    pts.push({ f, x: p.x, y: p.y, re: v.re, im: v.im });
+  }
+  ctx.strokeStyle = c.accent; ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  pts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+  ctx.stroke();
+
+  // Freq ticks at 10, 20, 30 MHz
+  [10, 20, 30].forEach(ftick => {
+    const v = convShuntC(ftick);
+    const p = toC(v.re, v.im);
+    ctx.fillStyle = c.bg; ctx.beginPath(); ctx.arc(p.x, p.y, 3.5, 0, 2*Math.PI); ctx.fill();
+    ctx.strokeStyle = c.text; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(p.x, p.y, 3.5, 0, 2*Math.PI); ctx.stroke();
+    ctx.fillStyle = c.dim; ctx.font = `8px 'Space Mono',monospace`;
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText(ftick + 'M', p.x + 5, p.y);
+  });
+
+  // Legend
+  ctx.fillStyle = c.accent; ctx.font = `bold 9px 'Space Mono',monospace`;
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  ctx.fillText('S11 (Γ)', 4, 4);
+
+  // Hover
+  if (convHoverF !== null) {
+    const v = convShuntC(convHoverF);
+    const p = toC(v.re, v.im);
+
+    // Crosshair lines to axes
+    ctx.strokeStyle = 'rgba(160,160,160,0.5)'; ctx.lineWidth = 1; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(scx - R, p.y); ctx.lineTo(scx + R, p.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(p.x, scy - R); ctx.lineTo(p.x, scy + R); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Dot
+    ctx.fillStyle = c.accent;
+    ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, 2*Math.PI); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, 2*Math.PI); ctx.stroke();
+
+    // Compute Z
+    const dz = (1-v.re)*(1-v.re) + v.im*v.im;
+    const zRe = 50*(1 - v.re*v.re - v.im*v.im) / dz;
+    const zIm = 50*2*v.im / dz;
+    const mag = Math.sqrt(v.re*v.re + v.im*v.im);
+    const s11db = 20*Math.log10(Math.max(mag, 1e-6));
+    const zsign = zIm >= 0 ? '+' : '−';
+    const lines = [
+      `f = ${convHoverF.toFixed(1)} MHz`,
+      `Γ = ${v.re.toFixed(2)}${v.im>=0?'+':''}${v.im.toFixed(2)}j`,
+      `S11= ${s11db.toFixed(1)} dB`,
+      `Z = ${zRe.toFixed(0)}${zsign}${Math.abs(zIm).toFixed(0)}j Ω`,
+    ];
+    ctx.font = `bold 10px 'Space Mono',monospace`;
+    const lineH = 15, pad = 7;
+    const tw = Math.max(...lines.map(l => ctx.measureText(l).width));
+    const tw2 = tw+pad*2, th2 = lineH*lines.length+pad*2;
+    let tx = p.x + 8, ty = p.y - th2/2;
+    if (tx + tw2 > w) tx = p.x - tw2 - 8;
+    if (ty < 2) ty = 2;
+    if (ty + th2 > h - 2) ty = h - th2 - 2;
+    ctx.fillStyle = 'rgba(0,0,0,0.78)';
+    ctx.beginPath(); ctx.roundRect(tx, ty, tw2, th2, 4); ctx.fill();
+    ['#aaa', c.accent, c.accent, c.accent2].forEach((col, li) => {
+      ctx.fillStyle = col; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(lines[li], tx + pad, ty + pad + li * lineH);
+    });
+  }
+}
+
+function initConvListeners() {
+  function attach(id, getF) {
+    const cv = document.getElementById(id);
+    if (!cv) return;
+    cv.addEventListener('mousemove', e => {
+      convHoverF = getF(cv, e);
+      drawConvSparam(); drawConvSmith();
+    });
+    cv.addEventListener('mouseleave', () => {
+      convHoverF = null;
+      drawConvSparam(); drawConvSmith();
+    });
+    cv.addEventListener('touchmove', e => {
+      e.preventDefault();
+      convHoverF = getF(cv, e.touches[0]);
+      drawConvSparam(); drawConvSmith();
+    }, { passive: false });
+    cv.addEventListener('touchend', () => {
+      convHoverF = null;
+      drawConvSparam(); drawConvSmith();
+    });
+  }
+  // S-param: horizontal position → f in MHz
+  attach('cvConvSparam', (cv, e) => {
+    const rect = cv.getBoundingClientRect();
+    const mx = 36, bx = cv.clientWidth - 8;
+    const px = e.clientX - rect.left;
+    const f = 0.5 + (px - mx) / (bx - mx) * (30 - 0.5);
+    return Math.max(0.5, Math.min(30, f));
+  });
+  // Smith: nearest point on trace
+  attach('cvConvSmith', (cv, e) => {
+    const rect = cv.getBoundingClientRect();
+    const margin = 22, size = Math.min(cv.clientWidth, cv.clientHeight) - margin*2, R = size/2;
+    const scx = cv.clientWidth/2, scy = cv.clientHeight/2 + 2;
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    let bestF = 10, bestD = Infinity;
+    for (let i = 0; i <= 400; i++) {
+      const f = 0.5 + 29.5 * i / 400;
+      const v = convShuntC(f);
+      const px = scx + R*v.re, py = scy - R*v.im;
+      const d = Math.hypot(px - mx, py - my);
+      if (d < bestD) { bestD = d; bestF = f; }
+    }
+    return bestF;
+  });
 }
 
 function drawMiniSmith(idx) {
@@ -2685,6 +3074,7 @@ function drawAll() {
   drawStdIcon('cvLoad',  'load');
   drawStdIcon('cvThru',  'thru');
   drawAllExamples();
+  drawConvSparam(); drawConvSmith();
 }
 
 // ══════════════════════════════════════════
@@ -2693,8 +3083,8 @@ function drawAll() {
 buildExGrid();
 updateValues();
 initSmithDrag();
-// 実践例の初期描画（ResizeObserver より先に確実に1回描画）
-setTimeout(() => { initAll(); drawAllExamples(); }, 0);
+// 実践例 + 変換解説の初期描画
+setTimeout(() => { initAll(); drawAllExamples(); drawConvSparam(); drawConvSmith(); initConvListeners(); }, 0);
 
 // Start animation immediately; seed lastT on first frame to avoid large dt
 requestAnimationFrame(ts => { lastT = ts; requestAnimationFrame(animate); });
