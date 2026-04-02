@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>マッチングネットワーク スミスチャート | RF計算ツール</title>
+<style>
+/* ===== CSS Variables (matches main index.html) ===== */
+:root {
+  --primary: #1a6fa8;
+  --primary-dark: #145a8a;
+  --accent: #e67e22;
+  --bg: #f0f4f8;
+  --card: #ffffff;
+  --border: #c8d6e5;
+  --text: #2d3748;
+  --muted: #718096;
+  --success: #27ae60;
+  --radius: 8px;
+}
+body.dark {
+  --primary: #60a5fa;
+  --primary-dark: #3b82f6;
+  --accent: #fb923c;
+  --bg: #0f172a;
+  --card: #1e293b;
+  --border: #334155;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+
+/* ===== Header ===== */
+header {
+  background: var(--primary);
+  color: #fff;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  flex-wrap: wrap;
+}
+.header-title { flex: 1; min-width: 0; }
+.header-title h1 { font-size: 17px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.header-title .subtitle { font-size: 10px; opacity: 0.75; margin-top: 1px; font-family: monospace; }
+.back-link {
+  font-size: 12px; color: rgba(255,255,255,0.9);
+  text-decoration: none;
+  border: 1px solid rgba(255,255,255,0.4);
+  padding: 5px 10px; border-radius: 4px; white-space: nowrap; flex-shrink: 0;
+}
+.back-link:hover { background: rgba(255,255,255,0.15); }
+#dark-toggle {
+  flex-shrink: 0;
+  padding: 6px 14px; border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.3);
+  background: transparent; color: #fff;
+  cursor: pointer; font-size: 12px; font-weight: 600;
+}
+body.dark header { background: #1e3a5f; }
+
+/* ===== Layout ===== */
+.container { max-width: 1100px; margin: 0 auto; padding: 16px; }
+.main-layout {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.chart-panel { flex: 0 0 auto; width: 460px; max-width: 100%; }
+.controls-panel { flex: 1; min-width: 280px; }
+
+/* ===== Smith Chart SVG container ===== */
+.smith-wrap {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px;
+}
+#smith-svg { width: 100%; height: auto; display: block; border-radius: 6px; }
+body.dark #smith-svg { filter: brightness(0.82) contrast(1.08); }
+
+/* ===== Result grid ===== */
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+.result-item {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  text-align: center;
+}
+.result-item .rlabel { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+.result-item .rvalue { font-size: 15px; font-weight: 700; color: var(--primary); font-family: monospace; }
+.result-item .runit  { font-size: 10px; color: var(--muted); margin-top: 1px; }
+.result-item.hi { border-color: var(--accent); }
+.result-item.hi .rvalue { color: var(--accent); }
+body.dark .result-item { background: #0b1220; }
+body.dark .result-item.hi { background: #1c1008; }
+
+/* ===== Cards ===== */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+.card h3 {
+  font-size: 12px; font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 6px;
+}
+.card-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+
+/* ===== Controls ===== */
+.ctrl-row { margin-bottom: 8px; }
+.ctrl-row:last-child { margin-bottom: 0; }
+.ctrl-label {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 3px;
+}
+.ctrl-label .clname { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+.ctrl-val {
+  font-size: 12px; font-weight: 700; color: var(--primary); font-family: monospace;
+  background: var(--bg); padding: 1px 6px; border-radius: 4px; border: 1px solid var(--border);
+}
+input[type="range"] { width: 100%; height: 4px; accent-color: var(--primary); cursor: pointer; display: block; }
+input[type="range"]:disabled { opacity: 0.35; cursor: default; }
+.sub-info { font-size: 10px; color: var(--muted); margin-top: 2px; font-family: monospace; }
+.freq-display { font-size: 14px; font-weight: 700; color: var(--accent); font-family: monospace; margin-top: 3px; }
+
+.radio-group { display: flex; gap: 14px; flex-wrap: wrap; }
+.radio-group label { display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.radio-group input[type="radio"] { accent-color: var(--primary); width: 14px; height: 14px; }
+
+.check-row { display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; margin-top: 6px; }
+.check-row input[type="checkbox"] { accent-color: var(--primary); width: 14px; height: 14px; flex-shrink: 0; }
+
+/* Trace checkboxes */
+.trace-checks { display: flex; flex-wrap: wrap; gap: 7px; }
+.trace-check {
+  display: flex; align-items: center; gap: 5px; font-size: 12px; cursor: pointer;
+  padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg);
+  user-select: none;
+}
+.trace-check input { width: 13px; height: 13px; flex-shrink: 0; accent-color: var(--primary); }
+.tdot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+/* ===== Circuit diagram ===== */
+.circuit-info {
+  background: #ebf8ff; border-left: 4px solid var(--primary);
+  padding: 8px 12px; border-radius: 4px; font-size: 11px;
+  color: var(--primary-dark); margin-bottom: 10px;
+  font-family: monospace; line-height: 1.6;
+}
+body.dark .circuit-info { background: #162035; border-color: var(--primary); color: #93c5fd; }
+
+/* ===== Responsive ===== */
+@media (max-width: 560px) {
+  .chart-panel { width: 100%; }
+  .controls-panel { min-width: 100%; }
+  .result-grid { grid-template-columns: repeat(2, 1fr); }
+  header h1 { font-size: 14px; }
+  .header-title .subtitle { display: none; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="back-link" href="../index.html">← RF計算ツール</a>
+  <div class="header-title">
+    <h1>マッチングネットワーク スミスチャート</h1>
+    <div class="subtitle">[PA] ─ 同軸(50Ω) ─ C2(直列) ─┬─ C1(並列) ─┬─ ダミーロード(50Ω)</div>
+  </div>
+  <button id="dark-toggle" onclick="toggleDark()">🌙 ダーク</button>
+</header>
+
+<div class="container">
+  <div class="main-layout">
+
+    <!-- ===== Smith Chart Panel ===== -->
+    <div class="chart-panel">
+      <div class="smith-wrap">
+        <svg id="smith-svg" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <clipPath id="smith-clip">
+              <circle cx="250" cy="250" r="215"/>
+            </clipPath>
+          </defs>
+
+          <!-- Background -->
+          <rect id="svg-bg" width="500" height="500" fill="white" rx="6"/>
+
+          <!-- Grid lines: clipped to unit circle -->
+          <g clip-path="url(#smith-clip)">
+            <!-- Resistance circles: r = 0.5, 1, 2, 5 -->
+            <circle cx="321.67" cy="250" r="143.33" fill="none" stroke="#ccc" stroke-width="0.7"/>
+            <circle cx="357.5"  cy="250" r="107.5"  fill="none" stroke="#888" stroke-width="1.2"/>
+            <circle cx="393.33" cy="250" r="71.67"  fill="none" stroke="#ccc" stroke-width="0.7"/>
+            <circle cx="429.17" cy="250" r="35.83"  fill="none" stroke="#ddd" stroke-width="0.6"/>
+            <!-- Reactance arcs (full circles, clipped): x = ±0.5, ±1, ±2, ±5 -->
+            <circle cx="465" cy="-180"  r="430"   fill="none" stroke="#ddd" stroke-width="0.7"/>
+            <circle cx="465" cy="680"   r="430"   fill="none" stroke="#ddd" stroke-width="0.7"/>
+            <circle cx="465" cy="35"    r="215"   fill="none" stroke="#ddd" stroke-width="0.7"/>
+            <circle cx="465" cy="465"   r="215"   fill="none" stroke="#ddd" stroke-width="0.7"/>
+            <circle cx="465" cy="142.5" r="107.5" fill="none" stroke="#ddd" stroke-width="0.7"/>
+            <circle cx="465" cy="357.5" r="107.5" fill="none" stroke="#ddd" stroke-width="0.7"/>
+            <circle cx="465" cy="207"   r="43"    fill="none" stroke="#ddd" stroke-width="0.6"/>
+            <circle cx="465" cy="293"   r="43"    fill="none" stroke="#ddd" stroke-width="0.6"/>
+            <!-- Real axis -->
+            <line x1="35" y1="250" x2="465" y2="250" stroke="#bbb" stroke-width="0.8"/>
+          </g>
+
+          <!-- Unit circle -->
+          <circle cx="250" cy="250" r="215" fill="none" stroke="#555" stroke-width="1.5"/>
+          <!-- Center dot -->
+          <circle cx="250" cy="250" r="2.5" fill="#aaa"/>
+
+          <!-- Resistance labels (on real axis) -->
+          <text x="35"    y="244" text-anchor="middle" fill="#888" font-size="9" font-family="sans-serif">0</text>
+          <text x="178.3" y="244" text-anchor="middle" fill="#888" font-size="9" font-family="sans-serif">0.5</text>
+          <text x="250"   y="244" text-anchor="middle" fill="#888" font-size="9" font-family="sans-serif">1</text>
+          <text x="321.7" y="244" text-anchor="middle" fill="#888" font-size="9" font-family="sans-serif">2</text>
+          <text x="393.3" y="244" text-anchor="middle" fill="#888" font-size="9" font-family="sans-serif">5</text>
+
+          <!-- Reactance labels near unit circle rim -->
+          <text x="256"  y="30"  text-anchor="start" fill="#aaa" font-size="8" font-family="sans-serif">+j1</text>
+          <text x="256"  y="477" text-anchor="start" fill="#aaa" font-size="8" font-family="sans-serif">−j1</text>
+          <text x="105"  y="72"  text-anchor="end"   fill="#aaa" font-size="8" font-family="sans-serif">+j0.5</text>
+          <text x="105"  y="435" text-anchor="end"   fill="#aaa" font-size="8" font-family="sans-serif">−j0.5</text>
+          <text x="390"  y="72"  text-anchor="start" fill="#aaa" font-size="8" font-family="sans-serif">+j2</text>
+          <text x="390"  y="435" text-anchor="start" fill="#aaa" font-size="8" font-family="sans-serif">−j2</text>
+          <text x="454"  y="166" text-anchor="start" fill="#aaa" font-size="8" font-family="sans-serif">+j5</text>
+          <text x="454"  y="338" text-anchor="start" fill="#aaa" font-size="8" font-family="sans-serif">−j5</text>
+
+          <!-- Chart title -->
+          <text x="250" y="14" text-anchor="middle" fill="#1a6fa8" font-size="11" font-weight="bold" font-family="sans-serif">Smith Chart  (Z₀ = 50Ω)</text>
+
+          <!-- ===== Dynamic elements ===== -->
+          <!-- Cable sweep trace (drawn first = bottom layer) -->
+          <path id="trace-cable" fill="none" stroke="rgba(140,140,160,0.45)" stroke-width="1.4" stroke-dasharray="5,3"/>
+          <!-- C1 sweep trace -->
+          <path id="trace-c1" fill="none" stroke="rgba(0,155,210,0.55)" stroke-width="1.8"/>
+          <!-- C2 sweep trace -->
+          <path id="trace-c2" fill="none" stroke="rgba(215,95,15,0.55)" stroke-width="1.8"/>
+
+          <!-- Highlight markers on traces (drawn above traces) -->
+          <circle id="c1-marker" cx="-200" cy="-200" r="5.5" fill="rgba(0,155,210,0.9)" stroke="white" stroke-width="1.5"/>
+          <circle id="c2-marker" cx="-200" cy="-200" r="5.5" fill="rgba(215,95,15,0.9)"  stroke="white" stroke-width="1.5"/>
+
+          <!-- Crosshair lines -->
+          <line id="ch-v" x1="0" y1="0" x2="0" y2="0" stroke="rgba(230,126,34,0.3)" stroke-width="0.8" stroke-dasharray="4,3"/>
+          <line id="ch-h" x1="0" y1="0" x2="0" y2="0" stroke="rgba(230,126,34,0.3)" stroke-width="0.8" stroke-dasharray="4,3"/>
+
+          <!-- Current operating point (top layer) -->
+          <circle id="op-point" cx="250" cy="250" r="8" fill="#e67e22" stroke="white" stroke-width="2"/>
+
+          <!-- Z label near operating point -->
+          <text id="op-label" x="260" y="238" fill="#2d3748" font-size="10" font-weight="bold" font-family="monospace"></text>
+        </svg>
+      </div>
+
+      <!-- Numeric results -->
+      <div class="result-grid">
+        <div class="result-item hi">
+          <div class="rlabel">Z_PA</div>
+          <div class="rvalue" id="res-z">—</div>
+          <div class="runit">Ω</div>
+        </div>
+        <div class="result-item">
+          <div class="rlabel">|Γ|</div>
+          <div class="rvalue" id="res-gmag">—</div>
+        </div>
+        <div class="result-item">
+          <div class="rlabel">∠Γ</div>
+          <div class="rvalue" id="res-gang">—</div>
+          <div class="runit">°</div>
+        </div>
+        <div class="result-item">
+          <div class="rlabel">VSWR</div>
+          <div class="rvalue" id="res-vswr">—</div>
+        </div>
+        <div class="result-item">
+          <div class="rlabel">反射損失</div>
+          <div class="rvalue" id="res-rl">—</div>
+          <div class="runit">dB</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Controls Panel ===== -->
+    <div class="controls-panel">
+
+      <!-- Circuit topology hint -->
+      <div class="circuit-info">
+[PA] ─ 同軸(50Ω, 長さL) ─ C2(直列) ─┬─ ダミーロード(50Ω)
+                                      └─ C1(並列) ─ GND
+      </div>
+
+      <!-- Frequency -->
+      <div class="card">
+        <h3>周波数設定</h3>
+        <div class="ctrl-row">
+          <div class="radio-group">
+            <label><input type="radio" name="fcenter" value="27.12" checked onchange="update()"> 27.12 MHz</label>
+            <label><input type="radio" name="fcenter" value="13.56" onchange="update()"> 13.56 MHz</label>
+          </div>
+        </div>
+        <div class="ctrl-row" style="margin-top:8px;">
+          <div class="ctrl-label">
+            <span class="clname">オフセット</span>
+            <span class="ctrl-val" id="disp-offset">+0.0%</span>
+          </div>
+          <input type="range" id="sl-offset" min="-100" max="100" step="1" value="0" oninput="update()">
+          <div class="freq-display" id="disp-freq">27.12 MHz</div>
+        </div>
+      </div>
+
+      <!-- Cable -->
+      <div class="card">
+        <h3>同軸ケーブル</h3>
+        <div class="ctrl-row">
+          <div class="ctrl-label">
+            <span class="clname">ケーブル長</span>
+            <span class="ctrl-val" id="disp-cable">0.00λ</span>
+          </div>
+          <input type="range" id="sl-cable" min="0" max="200" step="1" value="0" oninput="update()">
+          <div class="sub-info" id="disp-cable-sub">0.000 m  /  0.0°</div>
+        </div>
+        <div class="ctrl-row">
+          <div class="ctrl-label">
+            <span class="clname">速度係数 VF</span>
+            <span class="ctrl-val" id="disp-vf">0.66</span>
+          </div>
+          <input type="range" id="sl-vf" min="50" max="95" step="1" value="66" oninput="update()">
+        </div>
+      </div>
+
+      <!-- C1 -->
+      <div class="card">
+        <h3><span class="card-dot" style="background:#009bd2"></span> C1（並列コンデンサ）</h3>
+        <div class="ctrl-row">
+          <div class="ctrl-label">
+            <span class="clname">C1</span>
+            <span class="ctrl-val" id="disp-c1">100 pF</span>
+          </div>
+          <input type="range" id="sl-c1" min="0" max="300" step="1" value="200" oninput="update()">
+        </div>
+        <label class="check-row">
+          <input type="checkbox" id="ck-c1-open" onchange="update()">
+          C1 = 0（オープン：コンデンサなし）
+        </label>
+      </div>
+
+      <!-- C2 -->
+      <div class="card">
+        <h3><span class="card-dot" style="background:#d75f0f"></span> C2（直列コンデンサ）</h3>
+        <div class="ctrl-row">
+          <div class="ctrl-label">
+            <span class="clname">C2</span>
+            <span class="ctrl-val" id="disp-c2">100 pF</span>
+          </div>
+          <input type="range" id="sl-c2" min="0" max="300" step="1" value="200" oninput="update()">
+        </div>
+        <label class="check-row">
+          <input type="checkbox" id="ck-c2-short" onchange="update()">
+          C2 = ∞（ショート：C2なし・ゼロΩ）
+        </label>
+      </div>
+
+      <!-- Trace visibility -->
+      <div class="card">
+        <h3>軌跡表示</h3>
+        <div class="trace-checks">
+          <label class="trace-check">
+            <input type="checkbox" id="tr-c1" checked onchange="update()">
+            <span class="tdot" style="background:#009bd2"></span>
+            C1スイープ
+          </label>
+          <label class="trace-check">
+            <input type="checkbox" id="tr-c2" checked onchange="update()">
+            <span class="tdot" style="background:#d75f0f"></span>
+            C2スイープ
+          </label>
+          <label class="trace-check">
+            <input type="checkbox" id="tr-cable" checked onchange="update()">
+            <span class="tdot" style="background:#888"></span>
+            ケーブル長スイープ
+          </label>
+        </div>
+      </div>
+
+    </div><!-- /controls-panel -->
+  </div><!-- /main-layout -->
+</div><!-- /container -->
+
+<script>
+// ============================================================
+// Complex number library
+// ============================================================
+const C = {
+  add: (a, b) => ({ re: a.re + b.re, im: a.im + b.im }),
+  sub: (a, b) => ({ re: a.re - b.re, im: a.im - b.im }),
+  mul: (a, b) => ({ re: a.re*b.re - a.im*b.im, im: a.re*b.im + a.im*b.re }),
+  div: (a, b) => {
+    const d = b.re*b.re + b.im*b.im;
+    if (d < 1e-30) return { re: 1e9, im: 0 };
+    return { re: (a.re*b.re + a.im*b.im) / d, im: (a.im*b.re - a.re*b.im) / d };
+  },
+  abs: (a) => Math.sqrt(a.re*a.re + a.im*a.im),
+  arg: (a) => Math.atan2(a.im, a.re),
+  r:   (x) => ({ re: x, im: 0 }),
+};
+
+const Z0 = 50;
+
+// ============================================================
+// Impedance calculation
+// ============================================================
+function computeZPA(freqHz, c1pF, c1open, c2pF, c2short, cableLam) {
+  const w = 2 * Math.PI * freqHz;
+
+  // Step 1: Z_load || C1
+  const Zload = { re: 50, im: 0 };
+  let Z1;
+  if (c1open) {
+    Z1 = Zload;
+  } else {
+    const ZC1 = { re: 0, im: -1 / (w * c1pF * 1e-12) };
+    Z1 = C.div(C.mul(Zload, ZC1), C.add(Zload, ZC1));
+  }
+
+  // Step 2: + C2 (series)
+  let Zmatch;
+  if (c2short) {
+    Zmatch = Z1; // C2 = ∞ → Xc2 = 0 → short
+  } else {
+    const ZC2 = { re: 0, im: -1 / (w * c2pF * 1e-12) };
+    Zmatch = C.add(Z1, ZC2);
+  }
+
+  // Step 3: Transmission line transform
+  // Z_PA = Z0 * (Zmatch + j*Z0*tan(βl)) / (Z0 + j*Zmatch*tan(βl))
+  const betaL = 2 * Math.PI * cableLam;
+  const tanBL = Math.tan(betaL);
+
+  let ZPA;
+  if (Math.abs(tanBL) > 1e7) {
+    // βl ≈ π/2 + nπ  →  Z_PA ≈ Z0² / Zmatch
+    ZPA = C.div(C.r(Z0 * Z0), Zmatch);
+  } else {
+    const jZ0t = { re: 0, im: Z0 * tanBL };
+    const jZmt = { re: -Zmatch.im * tanBL, im: Zmatch.re * tanBL };
+    const num = C.mul(C.r(Z0), C.add(Zmatch, jZ0t));
+    const den = C.add(C.r(Z0), jZmt);
+    ZPA = C.div(num, den);
+  }
+
+  return ZPA;
+}
+
+function zToGamma(zRe, zIm) {
+  const nRe = zRe - Z0, nIm = zIm;
+  const dRe = zRe + Z0, dIm = zIm;
+  const d = dRe*dRe + dIm*dIm;
+  if (d < 1e-20) return { re: 1, im: 0 };
+  return {
+    re: (nRe*dRe + nIm*dIm) / d,
+    im: (nIm*dRe - nRe*dIm) / d
+  };
+}
+
+// ============================================================
+// SVG coordinate conversion
+// ============================================================
+const CX = 250, CY = 250, R = 215;
+
+function gToSVG(gr, gi) {
+  // Clamp to just outside unit circle to avoid huge coordinates
+  const mag = Math.sqrt(gr*gr + gi*gi);
+  if (mag > 1.5) { gr = gr/mag*1.5; gi = gi/mag*1.5; }
+  return [CX + gr * R, CY - gi * R];
+}
+
+// ============================================================
+// Slider helpers
+// ============================================================
+function slToCapPF(val) { return Math.pow(10, val / 100); } // 0-300 → 1-1000 pF
+
+function fmtCap(pF) {
+  if (pF < 9.995)  return pF.toFixed(2) + ' pF';
+  if (pF < 99.95)  return pF.toFixed(1) + ' pF';
+  return pF.toFixed(0) + ' pF';
+}
+
+function fmtZ(re, im) {
+  const sign = im >= 0 ? '+j' : '−j';
+  return re.toFixed(1) + ' ' + sign + Math.abs(im).toFixed(1);
+}
+
+function pointsToPath(pts) {
+  if (!pts.length) return '';
+  let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+  for (let i = 1; i < pts.length; i++) d += ` L${pts[i][0].toFixed(1)},${pts[i][1].toFixed(1)}`;
+  return d;
+}
+
+// ============================================================
+// SVG element helpers
+// ============================================================
+function svgEl(id) { return document.getElementById(id); }
+
+function setAttr(el, attrs) {
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+}
+
+// ============================================================
+// Main update
+// ============================================================
+function update() {
+  // --- Read controls ---
+  const fCenter = parseFloat(document.querySelector('input[name="fcenter"]:checked').value);
+  const offsetPct = parseInt(svgEl('sl-offset').value) / 10;   // -10.0 to +10.0 %
+  const freqMHz = fCenter * (1 + offsetPct / 100);
+  const freqHz  = freqMHz * 1e6;
+
+  const cableSlider = parseInt(svgEl('sl-cable').value);
+  const cableLam = cableSlider / 100;               // 0.00 – 2.00 λ
+  const vf = parseInt(svgEl('sl-vf').value) / 100;  // 0.50 – 0.95
+
+  const c1Slider = parseInt(svgEl('sl-c1').value);
+  const c1pF   = slToCapPF(c1Slider);
+  const c1open = svgEl('ck-c1-open').checked;
+
+  const c2Slider = parseInt(svgEl('sl-c2').value);
+  const c2pF    = slToCapPF(c2Slider);
+  const c2short = svgEl('ck-c2-short').checked;
+
+  const showC1    = svgEl('tr-c1').checked;
+  const showC2    = svgEl('tr-c2').checked;
+  const showCable = svgEl('tr-cable').checked;
+
+  // --- Update labels ---
+  svgEl('disp-offset').textContent = (offsetPct >= 0 ? '+' : '') + offsetPct.toFixed(1) + '%';
+  svgEl('disp-freq').textContent   = freqMHz.toFixed(4) + ' MHz';
+  svgEl('disp-cable').textContent  = cableLam.toFixed(2) + 'λ';
+  svgEl('disp-vf').textContent     = vf.toFixed(2);
+
+  const lambdaM = (3e8 * vf) / freqHz;
+  const cableM  = cableLam * lambdaM;
+  const cableDeg = cableLam * 360;
+  svgEl('disp-cable-sub').textContent = cableM.toFixed(3) + ' m  /  ' + cableDeg.toFixed(1) + '°';
+
+  svgEl('disp-c1').textContent = c1open  ? 'オープン' : fmtCap(c1pF);
+  svgEl('disp-c2').textContent = c2short ? 'ショート' : fmtCap(c2pF);
+
+  svgEl('sl-c1').disabled = c1open;
+  svgEl('sl-c2').disabled = c2short;
+
+  // --- Current operating point ---
+  const ZPA   = computeZPA(freqHz, c1pF, c1open, c2pF, c2short, cableLam);
+  const Gamma = zToGamma(ZPA.re, ZPA.im);
+  const gMag  = Math.sqrt(Gamma.re*Gamma.re + Gamma.im*Gamma.im);
+  const gAng  = Math.atan2(Gamma.im, Gamma.re) * 180 / Math.PI;
+  const vswr  = gMag < 0.9999 ? (1 + gMag) / (1 - gMag) : Infinity;
+  const rl    = gMag > 1e-9   ? -20 * Math.log10(gMag) : Infinity;
+
+  svgEl('res-z').textContent    = fmtZ(ZPA.re, ZPA.im);
+  svgEl('res-gmag').textContent = gMag.toFixed(4);
+  svgEl('res-gang').textContent = gAng.toFixed(1);
+  svgEl('res-vswr').textContent = isFinite(vswr) ? vswr.toFixed(2) : '∞';
+  svgEl('res-rl').textContent   = isFinite(rl)   ? rl.toFixed(1)   : '∞';
+
+  // --- Update SVG operating point ---
+  const [px, py] = gToSVG(Gamma.re, Gamma.im);
+
+  setAttr(svgEl('op-point'), { cx: px.toFixed(1), cy: py.toFixed(1) });
+  setAttr(svgEl('ch-v'), { x1: px.toFixed(1), y1: CY - R, x2: px.toFixed(1), y2: CY + R });
+  setAttr(svgEl('ch-h'), { x1: CX - R, y1: py.toFixed(1), x2: CX + R, y2: py.toFixed(1) });
+
+  const lbl = svgEl('op-label');
+  lbl.textContent = fmtZ(ZPA.re, ZPA.im) + ' Ω';
+  const lx = px > CX ? px - 10 : px + 10;
+  const ly = py > CY ? py - 9  : py + 14;
+  setAttr(lbl, {
+    x: lx.toFixed(1),
+    y: ly.toFixed(1),
+    'text-anchor': px > CX ? 'end' : 'start'
+  });
+
+  // ============================================================
+  // Trajectories
+  // ============================================================
+  const N = 160; // sweep resolution
+
+  // --- C1 sweep ---
+  const tc1 = svgEl('trace-c1');
+  const m1  = svgEl('c1-marker');
+  if (showC1) {
+    tc1.removeAttribute('display');
+    const pts = [];
+    for (let i = 0; i <= N; i++) {
+      const s = (i / N) * 300;
+      const z = computeZPA(freqHz, slToCapPF(s), false, c2pF, c2short, cableLam);
+      const g = zToGamma(z.re, z.im);
+      pts.push(gToSVG(g.re, g.im));
+    }
+    tc1.setAttribute('d', pointsToPath(pts));
+    // Marker at current C1 value
+    if (!c1open) {
+      setAttr(m1, { cx: px.toFixed(1), cy: py.toFixed(1), display: '' });
+    } else {
+      setAttr(m1, { cx: '-200', cy: '-200' });
+    }
+  } else {
+    tc1.setAttribute('display', 'none');
+    setAttr(m1, { cx: '-200', cy: '-200' });
+  }
+
+  // --- C2 sweep ---
+  const tc2 = svgEl('trace-c2');
+  const m2  = svgEl('c2-marker');
+  if (showC2) {
+    tc2.removeAttribute('display');
+    const pts = [];
+    for (let i = 0; i <= N; i++) {
+      const s = (i / N) * 300;
+      const z = computeZPA(freqHz, c1pF, c1open, slToCapPF(s), false, cableLam);
+      const g = zToGamma(z.re, z.im);
+      pts.push(gToSVG(g.re, g.im));
+    }
+    tc2.setAttribute('d', pointsToPath(pts));
+    if (!c2short) {
+      setAttr(m2, { cx: px.toFixed(1), cy: py.toFixed(1), display: '' });
+    } else {
+      setAttr(m2, { cx: '-200', cy: '-200' });
+    }
+  } else {
+    tc2.setAttribute('display', 'none');
+    setAttr(m2, { cx: '-200', cy: '-200' });
+  }
+
+  // --- Cable sweep ---
+  const tcb = svgEl('trace-cable');
+  if (showCable) {
+    tcb.removeAttribute('display');
+    const pts = [];
+    for (let i = 0; i <= 200; i++) {
+      const lam = i / 100; // 0 to 2λ
+      const z = computeZPA(freqHz, c1pF, c1open, c2pF, c2short, lam);
+      const g = zToGamma(z.re, z.im);
+      pts.push(gToSVG(g.re, g.im));
+    }
+    tcb.setAttribute('d', pointsToPath(pts));
+  } else {
+    tcb.setAttribute('display', 'none');
+  }
+}
+
+// ============================================================
+// Dark mode
+// ============================================================
+let isDark = false;
+function toggleDark() {
+  isDark = !isDark;
+  document.body.classList.toggle('dark', isDark);
+  document.getElementById('dark-toggle').textContent = isDark ? '☀️ ライト' : '🌙 ダーク';
+  // Update SVG background (filter handles the rest)
+  svgEl('svg-bg').setAttribute('fill', isDark ? '#1e2535' : 'white');
+  // Update op-label text color for readability
+  svgEl('op-label').setAttribute('fill', isDark ? '#f0d080' : '#2d3748');
+  // Update chart title color
+  document.querySelector('#smith-svg text:first-of-type').setAttribute('fill', isDark ? '#60a5fa' : '#1a6fa8');
+}
+
+// ============================================================
+// Init
+// ============================================================
+update();
+</script>
+</body>
+</html>
