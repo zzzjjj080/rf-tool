@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>マッチングネットワーク スミスチャート | RF計算ツール</title>
 <style>
-/* ===== CSS Variables (matches main index.html) ===== */
+/* ===== CSS Variables ===== */
 :root {
   --primary: #1a6fa8;
   --primary-dark: #145a8a;
@@ -33,69 +33,39 @@ body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--
 
 /* ===== Header ===== */
 header {
-  background: var(--primary);
-  color: #fff;
-  padding: 12px 20px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-  flex-wrap: wrap;
+  background: var(--primary); color: #fff;
+  padding: 12px 20px; display: flex; align-items: center; gap: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15); flex-wrap: wrap;
 }
 .header-title { flex: 1; min-width: 0; }
 .header-title h1 { font-size: 17px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .header-title .subtitle { font-size: 10px; opacity: 0.75; margin-top: 1px; font-family: monospace; }
 .back-link {
-  font-size: 12px; color: rgba(255,255,255,0.9);
-  text-decoration: none;
-  border: 1px solid rgba(255,255,255,0.4);
-  padding: 5px 10px; border-radius: 4px; white-space: nowrap; flex-shrink: 0;
+  font-size: 12px; color: rgba(255,255,255,0.9); text-decoration: none;
+  border: 1px solid rgba(255,255,255,0.4); padding: 5px 10px; border-radius: 4px; white-space: nowrap; flex-shrink: 0;
 }
 .back-link:hover { background: rgba(255,255,255,0.15); }
 #dark-toggle {
-  flex-shrink: 0;
-  padding: 6px 14px; border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.3);
-  background: transparent; color: #fff;
-  cursor: pointer; font-size: 12px; font-weight: 600;
+  flex-shrink: 0; padding: 6px 14px; border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.3); background: transparent;
+  color: #fff; cursor: pointer; font-size: 12px; font-weight: 600;
 }
 body.dark header { background: #1e3a5f; }
 
 /* ===== Layout ===== */
 .container { max-width: 1100px; margin: 0 auto; padding: 16px; }
-.main-layout {
-  display: flex;
-  gap: 16px;
-  align-items: flex-start;
-  flex-wrap: wrap;
-}
+.main-layout { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
 .chart-panel { flex: 0 0 auto; width: 460px; max-width: 100%; }
 .controls-panel { flex: 1; min-width: 280px; }
 
-/* ===== Smith Chart SVG container ===== */
-.smith-wrap {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 10px;
-}
+/* ===== Smith Chart ===== */
+.smith-wrap { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px; }
 #smith-svg { width: 100%; height: auto; display: block; border-radius: 6px; }
 body.dark #smith-svg { filter: brightness(0.82) contrast(1.08); }
 
 /* ===== Result grid ===== */
-.result-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 8px;
-  margin-top: 10px;
-}
-.result-item {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 8px 10px;
-  text-align: center;
-}
+.result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-top: 10px; }
+.result-item { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; text-align: center; }
 .result-item .rlabel { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
 .result-item .rvalue { font-size: 15px; font-weight: 700; color: var(--primary); font-family: monospace; }
 .result-item .runit  { font-size: 10px; color: var(--muted); margin-top: 1px; }
@@ -105,19 +75,10 @@ body.dark .result-item { background: #0b1220; }
 body.dark .result-item.hi { background: #1c1008; }
 
 /* ===== Cards ===== */
-.card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px 16px;
-  margin-bottom: 10px;
-}
+.card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; }
 .card h3 {
-  font-size: 12px; font-weight: 700;
-  color: var(--primary);
-  margin-bottom: 10px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--border);
+  font-size: 12px; font-weight: 700; color: var(--primary);
+  margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border);
   display: flex; align-items: center; gap: 6px;
 }
 .card-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
@@ -125,33 +86,48 @@ body.dark .result-item.hi { background: #1c1008; }
 /* ===== Controls ===== */
 .ctrl-row { margin-bottom: 8px; }
 .ctrl-row:last-child { margin-bottom: 0; }
-.ctrl-label {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 3px;
-}
+.ctrl-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
 .ctrl-label .clname { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
-.ctrl-val {
-  font-size: 12px; font-weight: 700; color: var(--primary); font-family: monospace;
-  background: var(--bg); padding: 1px 6px; border-radius: 4px; border: 1px solid var(--border);
-}
+.ctrl-val { font-size: 12px; font-weight: 700; color: var(--primary); font-family: monospace; background: var(--bg); padding: 1px 6px; border-radius: 4px; border: 1px solid var(--border); }
 input[type="range"] { width: 100%; height: 4px; accent-color: var(--primary); cursor: pointer; display: block; }
 input[type="range"]:disabled { opacity: 0.35; cursor: default; }
-.sub-info { font-size: 10px; color: var(--muted); margin-top: 2px; font-family: monospace; }
-.freq-display { font-size: 14px; font-weight: 700; color: var(--accent); font-family: monospace; margin-top: 3px; }
+.sub-info { font-size: 10px; color: var(--muted); font-family: monospace; }
 
+/* ===== Number inputs ===== */
+.num-input {
+  padding: 3px 7px; border: 1px solid var(--border); border-radius: 4px;
+  font-size: 12px; font-family: monospace; font-weight: 700;
+  color: var(--primary); background: var(--bg);
+}
+.num-input:focus { outline: none; border-color: var(--primary); background: var(--card); }
+body.dark .num-input { background: #0b1220; }
+
+/* ===== Inline input rows ===== */
+.input-row { display: flex; align-items: center; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+.input-row .unit { font-size: 11px; color: var(--muted); }
+.minmax-row { display: flex; align-items: center; gap: 5px; margin-bottom: 8px; }
+.minmax-row .clname { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+
+/* ===== Reset button ===== */
+.reset-btn {
+  padding: 4px 10px; border-radius: 4px; border: 1px solid var(--border);
+  background: var(--bg); color: var(--primary); font-size: 11px; font-weight: 700;
+  cursor: pointer; transition: all 0.15s;
+}
+.reset-btn:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+/* ===== Radio / checkbox ===== */
 .radio-group { display: flex; gap: 14px; flex-wrap: wrap; }
 .radio-group label { display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; cursor: pointer; }
 .radio-group input[type="radio"] { accent-color: var(--primary); width: 14px; height: 14px; }
-
 .check-row { display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; margin-top: 6px; }
 .check-row input[type="checkbox"] { accent-color: var(--primary); width: 14px; height: 14px; flex-shrink: 0; }
 
-/* Trace checkboxes */
+/* ===== Trace checkboxes ===== */
 .trace-checks { display: flex; flex-wrap: wrap; gap: 7px; }
 .trace-check {
   display: flex; align-items: center; gap: 5px; font-size: 12px; cursor: pointer;
-  padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg);
-  user-select: none;
+  padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg); user-select: none;
 }
 .trace-check input { width: 13px; height: 13px; flex-shrink: 0; accent-color: var(--primary); }
 .tdot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
@@ -159,11 +135,13 @@ input[type="range"]:disabled { opacity: 0.35; cursor: default; }
 /* ===== Circuit diagram ===== */
 .circuit-info {
   background: #ebf8ff; border-left: 4px solid var(--primary);
-  padding: 8px 12px; border-radius: 4px; font-size: 11px;
-  color: var(--primary-dark); margin-bottom: 10px;
-  font-family: monospace; line-height: 1.6;
+  padding: 8px 12px; border-radius: 4px; font-size: 11px; color: var(--primary-dark);
+  margin-bottom: 10px; font-family: monospace; line-height: 1.6;
 }
 body.dark .circuit-info { background: #162035; border-color: var(--primary); color: #93c5fd; }
+
+/* ===== Freq display ===== */
+.freq-display { font-size: 14px; font-weight: 700; color: var(--accent); font-family: monospace; margin-top: 3px; }
 
 /* ===== Responsive ===== */
 @media (max-width: 560px) {
@@ -172,6 +150,7 @@ body.dark .circuit-info { background: #162035; border-color: var(--primary); col
   .result-grid { grid-template-columns: repeat(2, 1fr); }
   header h1 { font-size: 14px; }
   .header-title .subtitle { display: none; }
+  .num-input { min-height: 38px; font-size: 15px; }
 }
 </style>
 </head>
@@ -227,7 +206,7 @@ body.dark .circuit-info { background: #162035; border-color: var(--primary); col
           <!-- Center dot -->
           <circle cx="250" cy="250" r="2.5" fill="#aaa"/>
 
-          <!-- Resistance labels (on real axis) -->
+          <!-- Resistance labels -->
           <text x="35"    y="244" text-anchor="middle" fill="#888" font-size="9" font-family="sans-serif">0</text>
           <text x="178.3" y="244" text-anchor="middle" fill="#888" font-size="9" font-family="sans-serif">0.5</text>
           <text x="250"   y="244" text-anchor="middle" fill="#888" font-size="9" font-family="sans-serif">1</text>
@@ -248,25 +227,31 @@ body.dark .circuit-info { background: #162035; border-color: var(--primary); col
           <text x="250" y="14" text-anchor="middle" fill="#1a6fa8" font-size="11" font-weight="bold" font-family="sans-serif">Smith Chart  (Z₀ = 50Ω)</text>
 
           <!-- ===== Dynamic elements ===== -->
-          <!-- Cable sweep trace (drawn first = bottom layer) -->
+
+          <!-- Reachable area hull (bottom layer, clipped) -->
+          <path id="area-hull" clip-path="url(#smith-clip)"
+                fill="rgba(60,180,100,0.13)" stroke="rgba(60,180,100,0.5)"
+                stroke-width="1" stroke-dasharray="4,2"/>
+
+          <!-- Cable sweep trace -->
           <path id="trace-cable" fill="none" stroke="rgba(140,140,160,0.45)" stroke-width="1.4" stroke-dasharray="5,3"/>
           <!-- C1 sweep trace -->
           <path id="trace-c1" fill="none" stroke="rgba(0,155,210,0.55)" stroke-width="1.8"/>
           <!-- C2 sweep trace -->
           <path id="trace-c2" fill="none" stroke="rgba(215,95,15,0.55)" stroke-width="1.8"/>
 
-          <!-- Highlight markers on traces (drawn above traces) -->
+          <!-- Highlight markers on traces -->
           <circle id="c1-marker" cx="-200" cy="-200" r="5.5" fill="rgba(0,155,210,0.9)" stroke="white" stroke-width="1.5"/>
           <circle id="c2-marker" cx="-200" cy="-200" r="5.5" fill="rgba(215,95,15,0.9)"  stroke="white" stroke-width="1.5"/>
 
-          <!-- Crosshair lines -->
+          <!-- Crosshair -->
           <line id="ch-v" x1="0" y1="0" x2="0" y2="0" stroke="rgba(230,126,34,0.3)" stroke-width="0.8" stroke-dasharray="4,3"/>
           <line id="ch-h" x1="0" y1="0" x2="0" y2="0" stroke="rgba(230,126,34,0.3)" stroke-width="0.8" stroke-dasharray="4,3"/>
 
           <!-- Current operating point (top layer) -->
           <circle id="op-point" cx="250" cy="250" r="8" fill="#e67e22" stroke="white" stroke-width="2"/>
 
-          <!-- Z label near operating point -->
+          <!-- Z label -->
           <text id="op-label" x="260" y="238" fill="#2d3748" font-size="10" font-weight="bold" font-family="monospace"></text>
         </svg>
       </div>
@@ -308,35 +293,48 @@ body.dark .circuit-info { background: #162035; border-color: var(--primary); col
                                       └─ C1(並列) ─ GND
       </div>
 
-      <!-- Frequency -->
+      <!-- ===== Frequency ===== -->
       <div class="card">
         <h3>周波数設定</h3>
         <div class="ctrl-row">
-          <div class="radio-group">
-            <label><input type="radio" name="fcenter" value="27.12" checked onchange="update()"> 27.12 MHz</label>
-            <label><input type="radio" name="fcenter" value="13.56" onchange="update()"> 13.56 MHz</label>
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <div class="radio-group">
+              <label><input type="radio" name="fcenter" value="27.12" checked onchange="onFcenterChange()"> 27.12 MHz</label>
+              <label><input type="radio" name="fcenter" value="12.88" onchange="onFcenterChange()"> 12.88 MHz</label>
+            </div>
+            <button class="reset-btn" onclick="resetFreq()">リセット</button>
           </div>
         </div>
         <div class="ctrl-row" style="margin-top:8px;">
           <div class="ctrl-label">
             <span class="clname">オフセット</span>
-            <span class="ctrl-val" id="disp-offset">+0.0%</span>
+            <span class="ctrl-val" id="disp-offset">+0%</span>
           </div>
-          <input type="range" id="sl-offset" min="-100" max="100" step="1" value="0" oninput="update()">
-          <div class="freq-display" id="disp-freq">27.12 MHz</div>
+          <!-- step=1 → offset in 1% steps; range -10 to +10 % -->
+          <input type="range" id="sl-offset" min="-10" max="10" step="1" value="0" oninput="onOffsetSlider()">
+          <div class="input-row" style="margin-top:5px;">
+            <input type="number" id="in-freq" class="num-input" style="width:88px;" step="0.01" oninput="onFreqInput()">
+            <span class="unit">MHz</span>
+            <span class="freq-display" id="disp-freq" style="font-size:12px;"></span>
+          </div>
         </div>
       </div>
 
-      <!-- Cable -->
+      <!-- ===== Cable ===== -->
       <div class="card">
         <h3>同軸ケーブル</h3>
         <div class="ctrl-row">
           <div class="ctrl-label">
             <span class="clname">ケーブル長</span>
-            <span class="ctrl-val" id="disp-cable">0.00λ</span>
+            <span class="ctrl-val" id="disp-cable">0/8λ</span>
           </div>
-          <input type="range" id="sl-cable" min="0" max="200" step="1" value="0" oninput="update()">
-          <div class="sub-info" id="disp-cable-sub">0.000 m  /  0.0°</div>
+          <!-- step=1 → λ/8 per step; max=8 → max=1λ -->
+          <input type="range" id="sl-cable" min="0" max="8" step="1" value="0" oninput="onCableSlider()">
+          <div class="input-row" style="margin-top:5px;">
+            <input type="number" id="in-cable-m" class="num-input" style="width:88px;" step="0.001" min="0" oninput="onCableMeterInput()">
+            <span class="unit">m</span>
+            <span class="sub-info" id="disp-cable-deg">/  0.0°</span>
+          </div>
         </div>
         <div class="ctrl-row">
           <div class="ctrl-label">
@@ -347,15 +345,22 @@ body.dark .circuit-info { background: #162035; border-color: var(--primary); col
         </div>
       </div>
 
-      <!-- C1 -->
+      <!-- ===== C1 ===== -->
       <div class="card">
         <h3><span class="card-dot" style="background:#009bd2"></span> C1（並列コンデンサ）</h3>
+        <div class="minmax-row">
+          <span class="clname">範囲</span>
+          <input type="number" id="in-c1min" class="num-input" value="10"  min="1" max="9999" step="1" style="width:58px;" oninput="update()">
+          <span class="unit">〜</span>
+          <input type="number" id="in-c1max" class="num-input" value="470" min="1" max="9999" step="1" style="width:58px;" oninput="update()">
+          <span class="unit">pF</span>
+        </div>
         <div class="ctrl-row">
           <div class="ctrl-label">
             <span class="clname">C1</span>
-            <span class="ctrl-val" id="disp-c1">100 pF</span>
+            <span class="ctrl-val" id="disp-c1">—</span>
           </div>
-          <input type="range" id="sl-c1" min="0" max="300" step="1" value="200" oninput="update()">
+          <input type="range" id="sl-c1" min="0" max="100" step="1" value="60" oninput="update()">
         </div>
         <label class="check-row">
           <input type="checkbox" id="ck-c1-open" onchange="update()">
@@ -363,15 +368,22 @@ body.dark .circuit-info { background: #162035; border-color: var(--primary); col
         </label>
       </div>
 
-      <!-- C2 -->
+      <!-- ===== C2 ===== -->
       <div class="card">
         <h3><span class="card-dot" style="background:#d75f0f"></span> C2（直列コンデンサ）</h3>
+        <div class="minmax-row">
+          <span class="clname">範囲</span>
+          <input type="number" id="in-c2min" class="num-input" value="10"  min="1" max="9999" step="1" style="width:58px;" oninput="update()">
+          <span class="unit">〜</span>
+          <input type="number" id="in-c2max" class="num-input" value="470" min="1" max="9999" step="1" style="width:58px;" oninput="update()">
+          <span class="unit">pF</span>
+        </div>
         <div class="ctrl-row">
           <div class="ctrl-label">
             <span class="clname">C2</span>
-            <span class="ctrl-val" id="disp-c2">100 pF</span>
+            <span class="ctrl-val" id="disp-c2">—</span>
           </div>
-          <input type="range" id="sl-c2" min="0" max="300" step="1" value="200" oninput="update()">
+          <input type="range" id="sl-c2" min="0" max="100" step="1" value="60" oninput="update()">
         </div>
         <label class="check-row">
           <input type="checkbox" id="ck-c2-short" onchange="update()">
@@ -379,10 +391,15 @@ body.dark .circuit-info { background: #162035; border-color: var(--primary); col
         </label>
       </div>
 
-      <!-- Trace visibility -->
+      <!-- ===== Trace visibility ===== -->
       <div class="card">
-        <h3>軌跡表示</h3>
+        <h3>軌跡・エリア表示</h3>
         <div class="trace-checks">
+          <label class="trace-check">
+            <input type="checkbox" id="tr-area" checked onchange="update()">
+            <span class="tdot" style="background:#3cb464; opacity:0.75"></span>
+            到達可能エリア
+          </label>
           <label class="trace-check">
             <input type="checkbox" id="tr-c1" checked onchange="update()">
             <span class="tdot" style="background:#009bd2"></span>
@@ -418,9 +435,7 @@ const C = {
     if (d < 1e-30) return { re: 1e9, im: 0 };
     return { re: (a.re*b.re + a.im*b.im) / d, im: (a.im*b.re - a.re*b.im) / d };
   },
-  abs: (a) => Math.sqrt(a.re*a.re + a.im*a.im),
-  arg: (a) => Math.atan2(a.im, a.re),
-  r:   (x) => ({ re: x, im: 0 }),
+  r: (x) => ({ re: x, im: 0 }),
 };
 
 const Z0 = 50;
@@ -444,30 +459,22 @@ function computeZPA(freqHz, c1pF, c1open, c2pF, c2short, cableLam) {
   // Step 2: + C2 (series)
   let Zmatch;
   if (c2short) {
-    Zmatch = Z1; // C2 = ∞ → Xc2 = 0 → short
+    Zmatch = Z1;
   } else {
     const ZC2 = { re: 0, im: -1 / (w * c2pF * 1e-12) };
     Zmatch = C.add(Z1, ZC2);
   }
 
-  // Step 3: Transmission line transform
-  // Z_PA = Z0 * (Zmatch + j*Z0*tan(βl)) / (Z0 + j*Zmatch*tan(βl))
+  // Step 3: Transmission line  Z_PA = Z0*(Zmatch+j*Z0*tan(βl))/(Z0+j*Zmatch*tan(βl))
   const betaL = 2 * Math.PI * cableLam;
   const tanBL = Math.tan(betaL);
 
-  let ZPA;
   if (Math.abs(tanBL) > 1e7) {
-    // βl ≈ π/2 + nπ  →  Z_PA ≈ Z0² / Zmatch
-    ZPA = C.div(C.r(Z0 * Z0), Zmatch);
-  } else {
-    const jZ0t = { re: 0, im: Z0 * tanBL };
-    const jZmt = { re: -Zmatch.im * tanBL, im: Zmatch.re * tanBL };
-    const num = C.mul(C.r(Z0), C.add(Zmatch, jZ0t));
-    const den = C.add(C.r(Z0), jZmt);
-    ZPA = C.div(num, den);
+    return C.div(C.r(Z0 * Z0), Zmatch);
   }
-
-  return ZPA;
+  const jZ0t = { re: 0, im: Z0 * tanBL };
+  const jZmt = { re: -Zmatch.im * tanBL, im: Zmatch.re * tanBL };
+  return C.div(C.mul(C.r(Z0), C.add(Zmatch, jZ0t)), C.add(C.r(Z0), jZmt));
 }
 
 function zToGamma(zRe, zIm) {
@@ -475,33 +482,44 @@ function zToGamma(zRe, zIm) {
   const dRe = zRe + Z0, dIm = zIm;
   const d = dRe*dRe + dIm*dIm;
   if (d < 1e-20) return { re: 1, im: 0 };
-  return {
-    re: (nRe*dRe + nIm*dIm) / d,
-    im: (nIm*dRe - nRe*dIm) / d
-  };
+  return { re: (nRe*dRe + nIm*dIm) / d, im: (nIm*dRe - nRe*dIm) / d };
 }
 
 // ============================================================
-// SVG coordinate conversion
+// SVG helpers
 // ============================================================
 const CX = 250, CY = 250, R = 215;
 
 function gToSVG(gr, gi) {
-  // Clamp to just outside unit circle to avoid huge coordinates
   const mag = Math.sqrt(gr*gr + gi*gi);
   if (mag > 1.5) { gr = gr/mag*1.5; gi = gi/mag*1.5; }
   return [CX + gr * R, CY - gi * R];
 }
 
+function pointsToPath(pts, closed) {
+  if (!pts.length) return '';
+  let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+  for (let i = 1; i < pts.length; i++) d += ` L${pts[i][0].toFixed(1)},${pts[i][1].toFixed(1)}`;
+  if (closed) d += ' Z';
+  return d;
+}
+
+function svgEl(id) { return document.getElementById(id); }
+function setAttr(el, attrs) { for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v); }
+
 // ============================================================
-// Slider helpers
+// Capacitor slider helpers (log scale over [cMin, cMax])
 // ============================================================
-function slToCapPF(val) { return Math.pow(10, val / 100); } // 0-300 → 1-1000 pF
+function slToCap(val, cMin, cMax) {
+  if (cMin >= cMax) return cMin;
+  return cMin * Math.pow(cMax / cMin, val / 100);
+}
 
 function fmtCap(pF) {
-  if (pF < 9.995)  return pF.toFixed(2) + ' pF';
-  if (pF < 99.95)  return pF.toFixed(1) + ' pF';
-  return pF.toFixed(0) + ' pF';
+  if (pF < 9.995)   return pF.toFixed(2) + ' pF';
+  if (pF < 99.95)   return pF.toFixed(1) + ' pF';
+  if (pF < 999.5)   return pF.toFixed(0) + ' pF';
+  return (pF / 1000).toFixed(3) + ' nF';
 }
 
 function fmtZ(re, im) {
@@ -509,58 +527,160 @@ function fmtZ(re, im) {
   return re.toFixed(1) + ' ' + sign + Math.abs(im).toFixed(1);
 }
 
-function pointsToPath(pts) {
-  if (!pts.length) return '';
-  let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
-  for (let i = 1; i < pts.length; i++) d += ` L${pts[i][0].toFixed(1)},${pts[i][1].toFixed(1)}`;
-  return d;
+// ============================================================
+// Convex hull (Andrew's monotone chain)
+// ============================================================
+function convexHull(pts) {
+  if (pts.length < 3) return pts.slice();
+  const sorted = pts.slice().sort((a, b) => a[0] !== b[0] ? a[0] - b[0] : a[1] - b[1]);
+  const n = sorted.length;
+  function cross(O, A, B) {
+    return (A[0]-O[0])*(B[1]-O[1]) - (A[1]-O[1])*(B[0]-O[0]);
+  }
+  const lower = [], upper = [];
+  for (const p of sorted) {
+    while (lower.length >= 2 && cross(lower[lower.length-2], lower[lower.length-1], p) <= 0) lower.pop();
+    lower.push(p);
+  }
+  for (let i = n-1; i >= 0; i--) {
+    const p = sorted[i];
+    while (upper.length >= 2 && cross(upper[upper.length-2], upper[upper.length-1], p) <= 0) upper.pop();
+    upper.push(p);
+  }
+  upper.pop(); lower.pop();
+  return lower.concat(upper);
 }
 
 // ============================================================
-// SVG element helpers
+// Frequency / cable state helpers
 // ============================================================
-function svgEl(id) { return document.getElementById(id); }
+function getFcenter() {
+  return parseFloat(document.querySelector('input[name="fcenter"]:checked').value);
+}
+function getOffsetPct() {
+  return parseInt(svgEl('sl-offset').value); // -10 to +10
+}
+function getFreqHz() {
+  const fc = getFcenter(), off = getOffsetPct();
+  return fc * (1 + off / 100) * 1e6;
+}
+function getVf() {
+  return parseInt(svgEl('sl-vf').value) / 100;
+}
+function getLambdaM(freqHz, vf) {
+  return (3e8 * vf) / freqHz;
+}
+function getCableLam() {
+  return parseInt(svgEl('sl-cable').value) / 8; // 0 to 1λ
+}
 
-function setAttr(el, attrs) {
-  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+// ============================================================
+// Event handlers for bidirectional sync
+// ============================================================
+
+// --- Frequency ---
+function onFcenterChange() {
+  const fc = getFcenter();
+  svgEl('sl-offset').value = 0;
+  svgEl('in-freq').value = fc.toFixed(4);
+  update();
+}
+
+function resetFreq() {
+  const fc = getFcenter();
+  svgEl('sl-offset').value = 0;
+  svgEl('in-freq').value = fc.toFixed(4);
+  update();
+}
+
+function onOffsetSlider() {
+  const fc = getFcenter(), off = getOffsetPct();
+  svgEl('in-freq').value = (fc * (1 + off / 100)).toFixed(4);
+  update();
+}
+
+function onFreqInput() {
+  const fc = getFcenter();
+  const freqMHz = parseFloat(svgEl('in-freq').value);
+  if (isNaN(freqMHz) || freqMHz <= 0) return;
+  const offset = Math.round((freqMHz / fc - 1) * 100);
+  svgEl('sl-offset').value = Math.max(-10, Math.min(10, offset));
+  update();
+}
+
+// --- Cable ---
+function onCableSlider() {
+  const freqHz = getFreqHz(), vf = getVf();
+  const lambdaM = getLambdaM(freqHz, vf);
+  const cableLam = getCableLam();
+  svgEl('in-cable-m').value = (cableLam * lambdaM).toFixed(4);
+  update();
+}
+
+function onCableMeterInput() {
+  const cableM = parseFloat(svgEl('in-cable-m').value);
+  if (isNaN(cableM) || cableM < 0) return;
+  const freqHz = getFreqHz(), vf = getVf();
+  const lambdaM = getLambdaM(freqHz, vf);
+  // Snap to nearest λ/8, clamp to [0, 8]
+  const steps = Math.max(0, Math.min(8, Math.round((cableM / lambdaM) * 8)));
+  svgEl('sl-cable').value = steps;
+  update();
 }
 
 // ============================================================
 // Main update
 // ============================================================
 function update() {
-  // --- Read controls ---
-  const fCenter = parseFloat(document.querySelector('input[name="fcenter"]:checked').value);
-  const offsetPct = parseInt(svgEl('sl-offset').value) / 10;   // -10.0 to +10.0 %
-  const freqMHz = fCenter * (1 + offsetPct / 100);
-  const freqHz  = freqMHz * 1e6;
+  // --- Read all controls ---
+  const fc       = getFcenter();
+  const offsetPct = getOffsetPct();
+  const freqMHz  = fc * (1 + offsetPct / 100);
+  const freqHz   = freqMHz * 1e6;
 
-  const cableSlider = parseInt(svgEl('sl-cable').value);
-  const cableLam = cableSlider / 100;               // 0.00 – 2.00 λ
-  const vf = parseInt(svgEl('sl-vf').value) / 100;  // 0.50 – 0.95
+  const cableSteps = parseInt(svgEl('sl-cable').value);
+  const cableLam   = cableSteps / 8;
+  const vf         = getVf();
 
-  const c1Slider = parseInt(svgEl('sl-c1').value);
-  const c1pF   = slToCapPF(c1Slider);
+  const c1Min  = Math.max(1, parseFloat(svgEl('in-c1min').value) || 10);
+  const c1Max  = Math.max(c1Min + 1, parseFloat(svgEl('in-c1max').value) || 470);
+  const c2Min  = Math.max(1, parseFloat(svgEl('in-c2min').value) || 10);
+  const c2Max  = Math.max(c2Min + 1, parseFloat(svgEl('in-c2max').value) || 470);
+
+  const c1Val  = parseInt(svgEl('sl-c1').value);
+  const c1pF   = slToCap(c1Val, c1Min, c1Max);
   const c1open = svgEl('ck-c1-open').checked;
 
-  const c2Slider = parseInt(svgEl('sl-c2').value);
-  const c2pF    = slToCapPF(c2Slider);
+  const c2Val  = parseInt(svgEl('sl-c2').value);
+  const c2pF   = slToCap(c2Val, c2Min, c2Max);
   const c2short = svgEl('ck-c2-short').checked;
 
+  const showArea  = svgEl('tr-area').checked;
   const showC1    = svgEl('tr-c1').checked;
   const showC2    = svgEl('tr-c2').checked;
   const showCable = svgEl('tr-cable').checked;
 
   // --- Update labels ---
-  svgEl('disp-offset').textContent = (offsetPct >= 0 ? '+' : '') + offsetPct.toFixed(1) + '%';
+  svgEl('disp-offset').textContent = (offsetPct >= 0 ? '+' : '') + offsetPct + '%';
   svgEl('disp-freq').textContent   = freqMHz.toFixed(4) + ' MHz';
-  svgEl('disp-cable').textContent  = cableLam.toFixed(2) + 'λ';
+
+  const sliderStepLabel = ['0', '1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8', '1'];
+  svgEl('disp-cable').textContent  = sliderStepLabel[cableSteps] + 'λ';
   svgEl('disp-vf').textContent     = vf.toFixed(2);
 
-  const lambdaM = (3e8 * vf) / freqHz;
-  const cableM  = cableLam * lambdaM;
+  const lambdaM  = getLambdaM(freqHz, vf);
+  const cableM   = cableLam * lambdaM;
   const cableDeg = cableLam * 360;
-  svgEl('disp-cable-sub').textContent = cableM.toFixed(3) + ' m  /  ' + cableDeg.toFixed(1) + '°';
+  svgEl('disp-cable-deg').textContent = '/  ' + cableDeg.toFixed(1) + '°';
+
+  // Sync meter input if not focused
+  if (document.activeElement !== svgEl('in-cable-m')) {
+    svgEl('in-cable-m').value = cableM.toFixed(4);
+  }
+  // Sync freq input if not focused
+  if (document.activeElement !== svgEl('in-freq')) {
+    svgEl('in-freq').value = freqMHz.toFixed(4);
+  }
 
   svgEl('disp-c1').textContent = c1open  ? 'オープン' : fmtCap(c1pF);
   svgEl('disp-c2').textContent = c2short ? 'ショート' : fmtCap(c2pF);
@@ -582,9 +702,7 @@ function update() {
   svgEl('res-vswr').textContent = isFinite(vswr) ? vswr.toFixed(2) : '∞';
   svgEl('res-rl').textContent   = isFinite(rl)   ? rl.toFixed(1)   : '∞';
 
-  // --- Update SVG operating point ---
   const [px, py] = gToSVG(Gamma.re, Gamma.im);
-
   setAttr(svgEl('op-point'), { cx: px.toFixed(1), cy: py.toFixed(1) });
   setAttr(svgEl('ch-v'), { x1: px.toFixed(1), y1: CY - R, x2: px.toFixed(1), y2: CY + R });
   setAttr(svgEl('ch-h'), { x1: CX - R, y1: py.toFixed(1), x2: CX + R, y2: py.toFixed(1) });
@@ -593,76 +711,86 @@ function update() {
   lbl.textContent = fmtZ(ZPA.re, ZPA.im) + ' Ω';
   const lx = px > CX ? px - 10 : px + 10;
   const ly = py > CY ? py - 9  : py + 14;
-  setAttr(lbl, {
-    x: lx.toFixed(1),
-    y: ly.toFixed(1),
-    'text-anchor': px > CX ? 'end' : 'start'
-  });
+  setAttr(lbl, { x: lx.toFixed(1), y: ly.toFixed(1), 'text-anchor': px > CX ? 'end' : 'start' });
+
+  // ============================================================
+  // Reachable area (convex hull of C1×C2 grid)
+  // ============================================================
+  const areaEl = svgEl('area-hull');
+  if (showArea) {
+    areaEl.removeAttribute('display');
+    const NA = 20; // grid resolution per axis
+    const areaPts = [];
+    for (let i = 0; i <= NA; i++) {
+      const c1v = slToCap(i / NA * 100, c1Min, c1Max);
+      for (let j = 0; j <= NA; j++) {
+        const c2v = slToCap(j / NA * 100, c2Min, c2Max);
+        const z = computeZPA(freqHz, c1v, false, c2v, false, cableLam);
+        const g = zToGamma(z.re, z.im);
+        areaPts.push(gToSVG(g.re, g.im));
+      }
+    }
+    const hull = convexHull(areaPts);
+    areaEl.setAttribute('d', pointsToPath(hull, true));
+  } else {
+    areaEl.setAttribute('display', 'none');
+  }
 
   // ============================================================
   // Trajectories
   // ============================================================
-  const N = 160; // sweep resolution
+  const N = 120;
 
-  // --- C1 sweep ---
-  const tc1 = svgEl('trace-c1');
-  const m1  = svgEl('c1-marker');
+  // --- C1 sweep (over [c1Min, c1Max]) ---
+  const tc1 = svgEl('trace-c1'), m1 = svgEl('c1-marker');
   if (showC1) {
     tc1.removeAttribute('display');
     const pts = [];
     for (let i = 0; i <= N; i++) {
-      const s = (i / N) * 300;
-      const z = computeZPA(freqHz, slToCapPF(s), false, c2pF, c2short, cableLam);
+      const c1v = slToCap(i / N * 100, c1Min, c1Max);
+      const z = computeZPA(freqHz, c1v, false, c2pF, c2short, cableLam);
       const g = zToGamma(z.re, z.im);
       pts.push(gToSVG(g.re, g.im));
     }
-    tc1.setAttribute('d', pointsToPath(pts));
-    // Marker at current C1 value
-    if (!c1open) {
-      setAttr(m1, { cx: px.toFixed(1), cy: py.toFixed(1), display: '' });
-    } else {
-      setAttr(m1, { cx: '-200', cy: '-200' });
-    }
+    tc1.setAttribute('d', pointsToPath(pts, false));
+    if (!c1open) setAttr(m1, { cx: px.toFixed(1), cy: py.toFixed(1), display: '' });
+    else         setAttr(m1, { cx: '-200', cy: '-200' });
   } else {
     tc1.setAttribute('display', 'none');
     setAttr(m1, { cx: '-200', cy: '-200' });
   }
 
-  // --- C2 sweep ---
-  const tc2 = svgEl('trace-c2');
-  const m2  = svgEl('c2-marker');
+  // --- C2 sweep (over [c2Min, c2Max]) ---
+  const tc2 = svgEl('trace-c2'), m2 = svgEl('c2-marker');
   if (showC2) {
     tc2.removeAttribute('display');
     const pts = [];
     for (let i = 0; i <= N; i++) {
-      const s = (i / N) * 300;
-      const z = computeZPA(freqHz, c1pF, c1open, slToCapPF(s), false, cableLam);
+      const c2v = slToCap(i / N * 100, c2Min, c2Max);
+      const z = computeZPA(freqHz, c1pF, c1open, c2v, false, cableLam);
       const g = zToGamma(z.re, z.im);
       pts.push(gToSVG(g.re, g.im));
     }
-    tc2.setAttribute('d', pointsToPath(pts));
-    if (!c2short) {
-      setAttr(m2, { cx: px.toFixed(1), cy: py.toFixed(1), display: '' });
-    } else {
-      setAttr(m2, { cx: '-200', cy: '-200' });
-    }
+    tc2.setAttribute('d', pointsToPath(pts, false));
+    if (!c2short) setAttr(m2, { cx: px.toFixed(1), cy: py.toFixed(1), display: '' });
+    else          setAttr(m2, { cx: '-200', cy: '-200' });
   } else {
     tc2.setAttribute('display', 'none');
     setAttr(m2, { cx: '-200', cy: '-200' });
   }
 
-  // --- Cable sweep ---
+  // --- Cable sweep (0 to 1λ, matching new slider max) ---
   const tcb = svgEl('trace-cable');
   if (showCable) {
     tcb.removeAttribute('display');
     const pts = [];
-    for (let i = 0; i <= 200; i++) {
-      const lam = i / 100; // 0 to 2λ
+    for (let i = 0; i <= 100; i++) {
+      const lam = i / 100; // 0 to 1λ
       const z = computeZPA(freqHz, c1pF, c1open, c2pF, c2short, lam);
       const g = zToGamma(z.re, z.im);
       pts.push(gToSVG(g.re, g.im));
     }
-    tcb.setAttribute('d', pointsToPath(pts));
+    tcb.setAttribute('d', pointsToPath(pts, false));
   } else {
     tcb.setAttribute('display', 'none');
   }
@@ -675,18 +803,17 @@ let isDark = false;
 function toggleDark() {
   isDark = !isDark;
   document.body.classList.toggle('dark', isDark);
-  document.getElementById('dark-toggle').textContent = isDark ? '☀️ ライト' : '🌙 ダーク';
-  // Update SVG background (filter handles the rest)
+  svgEl('dark-toggle').textContent = isDark ? '☀️ ライト' : '🌙 ダーク';
   svgEl('svg-bg').setAttribute('fill', isDark ? '#1e2535' : 'white');
-  // Update op-label text color for readability
   svgEl('op-label').setAttribute('fill', isDark ? '#f0d080' : '#2d3748');
-  // Update chart title color
   document.querySelector('#smith-svg text:first-of-type').setAttribute('fill', isDark ? '#60a5fa' : '#1a6fa8');
 }
 
 // ============================================================
 // Init
 // ============================================================
+svgEl('in-freq').value    = '27.1200';
+svgEl('in-cable-m').value = '0.0000';
 update();
 </script>
 </body>
