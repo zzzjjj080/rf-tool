@@ -60,6 +60,18 @@ body.dark header { background: #1e3a5f; }
 #smith-svg { width: 100%; height: auto; display: block; border-radius: 6px; }
 body.dark #smith-svg { filter: brightness(0.82) contrast(1.08); }
 
+/* Trace toggle bar below chart */
+.trace-bar {
+  display: flex; flex-wrap: wrap; gap: 5px; padding: 6px 0 2px;
+}
+.trace-check {
+  display: flex; align-items: center; gap: 4px; font-size: 11px; cursor: pointer;
+  padding: 3px 7px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg); user-select: none;
+}
+.trace-check input { width: 12px; height: 12px; flex-shrink: 0; accent-color: var(--primary); }
+.tdot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+/* Circuit SVG */
 .circuit-wrap { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 10px; margin-top: 8px; }
 #circuit-svg { width: 100%; height: auto; display: block; }
 
@@ -83,9 +95,14 @@ body.dark .result-item.hi { background: #1c1008; }
 
 .ctrl-row { margin-bottom: 8px; }
 .ctrl-row:last-child { margin-bottom: 0; }
-.ctrl-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
+.ctrl-label { display: flex; align-items: center; margin-bottom: 3px; }
 .ctrl-label .clname { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
-.ctrl-val { font-size: 12px; font-weight: 700; color: var(--primary); font-family: monospace; background: var(--bg); padding: 1px 6px; border-radius: 4px; border: 1px solid var(--border); }
+
+/* Slider + value inline */
+.slider-row { display: flex; align-items: center; gap: 8px; }
+.slider-row input[type="range"] { flex-shrink: 0; }
+.ctrl-val { font-size: 12px; font-weight: 700; color: var(--primary); font-family: monospace; background: var(--bg); padding: 1px 6px; border-radius: 4px; border: 1px solid var(--border); white-space: nowrap; }
+
 input[type="range"] { width: 50%; height: 4px; accent-color: var(--primary); cursor: pointer; display: block; }
 input[type="range"]:disabled { opacity: 0.35; cursor: default; }
 .sub-info { font-size: 10px; color: var(--muted); font-family: monospace; }
@@ -132,17 +149,9 @@ body.dark .cap-spin-val { background: #0b1220; }
 .check-row { display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; margin-top: 6px; }
 .check-row input[type="checkbox"] { accent-color: var(--primary); width: 14px; height: 14px; flex-shrink: 0; }
 
-.trace-checks { display: flex; flex-wrap: wrap; gap: 7px; }
-.trace-check {
-  display: flex; align-items: center; gap: 5px; font-size: 12px; cursor: pointer;
-  padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg); user-select: none;
-}
-.trace-check input { width: 13px; height: 13px; flex-shrink: 0; accent-color: var(--primary); }
-.tdot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-
 .freq-display { font-size: 14px; font-weight: 700; color: var(--accent); font-family: monospace; margin-top: 3px; }
 
-#area-hull { cursor: pointer; }
+#area-hull { cursor: pointer; transition: fill 0.12s, stroke 0.12s; }
 
 @media (max-width: 560px) {
   .chart-panel { width: 100%; }
@@ -224,6 +233,26 @@ body.dark .cap-spin-val { background: #0b1220; }
           <circle id="op-point" cx="250" cy="250" r="8" fill="#e67e22" stroke="white" stroke-width="2"/>
           <text id="op-label" x="260" y="238" fill="#2d3748" font-size="10" font-weight="bold" font-family="monospace"></text>
         </svg>
+
+        <!-- Trace toggles: compact bar under chart -->
+        <div class="trace-bar">
+          <label class="trace-check">
+            <input type="checkbox" id="tr-area" checked onchange="update()">
+            <span class="tdot" style="background:#3cb464;opacity:0.75"></span>エリア
+          </label>
+          <label class="trace-check">
+            <input type="checkbox" id="tr-c1" checked onchange="update()">
+            <span class="tdot" style="background:#009bd2"></span>C1
+          </label>
+          <label class="trace-check">
+            <input type="checkbox" id="tr-c2" checked onchange="update()">
+            <span class="tdot" style="background:#d75f0f"></span>C2
+          </label>
+          <label class="trace-check">
+            <input type="checkbox" id="tr-cable" checked onchange="update()">
+            <span class="tdot" style="background:#888"></span>同軸
+          </label>
+        </div>
       </div>
 
       <!-- Numeric results -->
@@ -286,11 +315,13 @@ body.dark .cap-spin-val { background: #0b1220; }
         <div class="ctrl-row" style="margin-top:8px;">
           <div class="ctrl-label">
             <span class="clname">オフセット</span>
+          </div>
+          <div class="slider-row">
+            <input type="range" id="sl-offset" min="-10" max="10" step="1" value="0" oninput="onOffsetSlider()">
             <span class="ctrl-val" id="disp-offset">+0%</span>
           </div>
-          <input type="range" id="sl-offset" min="-10" max="10" step="1" value="0" oninput="onOffsetSlider()">
           <div class="input-row" style="margin-top:5px;">
-            <input type="number" id="in-freq" class="num-input" style="width:88px;" step="0.01" oninput="onFreqInput()">
+            <input type="number" id="in-freq" class="num-input" style="width:80px;" step="0.01" oninput="onFreqInput()">
             <span class="unit">MHz</span>
             <span class="freq-display" id="disp-freq" style="font-size:12px;"></span>
           </div>
@@ -303,11 +334,14 @@ body.dark .cap-spin-val { background: #0b1220; }
         <div class="ctrl-row">
           <div class="ctrl-label">
             <span class="clname">ケーブル長</span>
-            <span class="ctrl-val" id="disp-cable">0/8λ</span>
           </div>
-          <input type="range" id="sl-cable" min="0" max="8" step="1" value="0" oninput="onCableSlider()">
+          <div class="slider-row">
+            <!-- step=1 → 1/16λ per step; max=16 → 1λ -->
+            <input type="range" id="sl-cable" min="0" max="16" step="1" value="0" oninput="onCableSlider()">
+            <span class="ctrl-val" id="disp-cable">0/16λ</span>
+          </div>
           <div class="input-row" style="margin-top:5px;">
-            <input type="number" id="in-cable-m" class="num-input" style="width:88px;" step="0.001" min="0" oninput="onCableMeterInput()">
+            <input type="number" id="in-cable-m" class="num-input" style="width:80px;" step="0.001" min="0" oninput="onCableMeterInput()">
             <span class="unit">m</span>
             <span class="sub-info" id="disp-cable-deg">/  0.0°</span>
           </div>
@@ -315,9 +349,11 @@ body.dark .cap-spin-val { background: #0b1220; }
         <div class="ctrl-row">
           <div class="ctrl-label">
             <span class="clname">速度係数 VF</span>
+          </div>
+          <div class="slider-row">
+            <input type="range" id="sl-vf" min="50" max="95" step="1" value="66" oninput="update()">
             <span class="ctrl-val" id="disp-vf">0.66</span>
           </div>
-          <input type="range" id="sl-vf" min="50" max="95" step="1" value="66" oninput="update()">
         </div>
       </div>
 
@@ -346,9 +382,11 @@ body.dark .cap-spin-val { background: #0b1220; }
         <div class="ctrl-row">
           <div class="ctrl-label">
             <span class="clname">C1</span>
+          </div>
+          <div class="slider-row">
+            <input type="range" id="sl-c1" min="0" max="100" step="1" value="60" oninput="update()">
             <span class="ctrl-val" id="disp-c1">—</span>
           </div>
-          <input type="range" id="sl-c1" min="0" max="100" step="1" value="60" oninput="update()">
         </div>
         <label class="check-row">
           <input type="checkbox" id="ck-c1-open" onchange="update()">
@@ -381,41 +419,16 @@ body.dark .cap-spin-val { background: #0b1220; }
         <div class="ctrl-row">
           <div class="ctrl-label">
             <span class="clname">C2</span>
+          </div>
+          <div class="slider-row">
+            <input type="range" id="sl-c2" min="0" max="100" step="1" value="60" oninput="update()">
             <span class="ctrl-val" id="disp-c2">—</span>
           </div>
-          <input type="range" id="sl-c2" min="0" max="100" step="1" value="60" oninput="update()">
         </div>
         <label class="check-row">
           <input type="checkbox" id="ck-c2-short" onchange="update()">
           C2 = ∞（ショート：C2なし・ゼロΩ）
         </label>
-      </div>
-
-      <!-- ===== Trace visibility ===== -->
-      <div class="card">
-        <h3>軌跡・エリア表示</h3>
-        <div class="trace-checks">
-          <label class="trace-check">
-            <input type="checkbox" id="tr-area" checked onchange="update()">
-            <span class="tdot" style="background:#3cb464; opacity:0.75"></span>
-            到達可能エリア
-          </label>
-          <label class="trace-check">
-            <input type="checkbox" id="tr-c1" checked onchange="update()">
-            <span class="tdot" style="background:#009bd2"></span>
-            C1スイープ
-          </label>
-          <label class="trace-check">
-            <input type="checkbox" id="tr-c2" checked onchange="update()">
-            <span class="tdot" style="background:#d75f0f"></span>
-            C2スイープ
-          </label>
-          <label class="trace-check">
-            <input type="checkbox" id="tr-cable" checked onchange="update()">
-            <span class="tdot" style="background:#888"></span>
-            ケーブル長スイープ
-          </label>
-        </div>
       </div>
 
     </div><!-- /controls-panel -->
@@ -441,7 +454,7 @@ const C = {
 const Z0 = 50;
 
 // ============================================================
-// Cap range state  (discrete steps: 10, 100, 200, …, 1000)
+// Cap range state (discrete steps: 10, 100, 200, …, 1000)
 // ============================================================
 const CAP_STEPS = [10, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000];
 const capState = { c1min: 10, c1max: 470, c2min: 10, c2max: 470 };
@@ -457,7 +470,6 @@ function stepCap(key, dir) {
     next = rev.find(s => s < cur);
     if (next === undefined) next = CAP_STEPS[0];
   }
-  // prevent min >= max
   if (key === 'c1min' && next >= capState.c1max) return;
   if (key === 'c1max' && next <= capState.c1min) return;
   if (key === 'c2min' && next >= capState.c2max) return;
@@ -476,7 +488,6 @@ function computeZPA(freqHz, c1pF, c1open, c2pF, c2short, cableLam, topo) {
   let Zmatch;
 
   if (topo === 'B') {
-    // B: series C2 + Load first, then parallel C1
     let Zinner;
     if (c2short) {
       Zinner = Zload;
@@ -491,7 +502,6 @@ function computeZPA(freqHz, c1pF, c1open, c2pF, c2short, cableLam, topo) {
       Zmatch = C.div(C.mul(Zinner, ZC1), C.add(Zinner, ZC1));
     }
   } else {
-    // A: parallel C1 + Load first, then series C2
     let Z1;
     if (c1open) {
       Z1 = Zload;
@@ -507,12 +517,9 @@ function computeZPA(freqHz, c1pF, c1open, c2pF, c2short, cableLam, topo) {
     }
   }
 
-  // Transmission line
   const betaL = 2 * Math.PI * cableLam;
   const tanBL = Math.tan(betaL);
-  if (Math.abs(tanBL) > 1e7) {
-    return C.div(C.r(Z0 * Z0), Zmatch);
-  }
+  if (Math.abs(tanBL) > 1e7) return C.div(C.r(Z0 * Z0), Zmatch);
   const jZ0t = { re: 0, im: Z0 * tanBL };
   const jZmt = { re: -Zmatch.im * tanBL, im: Zmatch.re * tanBL };
   return C.div(C.mul(C.r(Z0), C.add(Zmatch, jZ0t)), C.add(C.r(Z0), jZmt));
@@ -549,20 +556,18 @@ function svgEl(id) { return document.getElementById(id); }
 function setAttr(el, attrs) { for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v); }
 
 // ============================================================
-// Capacitor slider helpers (log scale)
+// Capacitor slider helpers
 // ============================================================
 function slToCap(val, cMin, cMax) {
   if (cMin >= cMax) return cMin;
   return cMin * Math.pow(cMax / cMin, val / 100);
 }
-
 function fmtCap(pF) {
-  if (pF < 9.995)   return pF.toFixed(2) + ' pF';
-  if (pF < 99.95)   return pF.toFixed(1) + ' pF';
-  if (pF < 999.5)   return pF.toFixed(0) + ' pF';
+  if (pF < 9.995)  return pF.toFixed(2) + ' pF';
+  if (pF < 99.95)  return pF.toFixed(1) + ' pF';
+  if (pF < 999.5)  return pF.toFixed(0) + ' pF';
   return (pF / 1000).toFixed(3) + ' nF';
 }
-
 function fmtZ(re, im) {
   const sign = im >= 0 ? '+j' : '−j';
   return re.toFixed(1) + ' ' + sign + Math.abs(im).toFixed(1);
@@ -593,54 +598,34 @@ function convexHull(pts) {
 }
 
 // ============================================================
-// Topology / frequency / cable helpers
+// State helpers
 // ============================================================
-function getTopology() {
-  return document.querySelector('input[name="topology"]:checked').value;
-}
-function getFcenter() {
-  return parseFloat(document.querySelector('input[name="fcenter"]:checked').value);
-}
-function getOffsetPct() {
-  return parseInt(svgEl('sl-offset').value);
-}
-function getFreqHz() {
-  const fc = getFcenter(), off = getOffsetPct();
-  return fc * (1 + off / 100) * 1e6;
-}
-function getVf() {
-  return parseInt(svgEl('sl-vf').value) / 100;
-}
-function getLambdaM(freqHz, vf) {
-  return (3e8 * vf) / freqHz;
-}
-function getCableLam() {
-  return parseInt(svgEl('sl-cable').value) / 8;
-}
+function getTopology() { return document.querySelector('input[name="topology"]:checked').value; }
+function getFcenter()  { return parseFloat(document.querySelector('input[name="fcenter"]:checked').value); }
+function getOffsetPct(){ return parseInt(svgEl('sl-offset').value); }
+function getFreqHz()   { return getFcenter() * (1 + getOffsetPct() / 100) * 1e6; }
+function getVf()       { return parseInt(svgEl('sl-vf').value) / 100; }
+function getLambdaM(f, vf) { return (3e8 * vf) / f; }
+function getCableLam() { return parseInt(svgEl('sl-cable').value) / 16; }
 
 // ============================================================
 // Event handlers
 // ============================================================
 function onFcenterChange() {
-  const fc = getFcenter();
   svgEl('sl-offset').value = 0;
-  svgEl('in-freq').value = fc.toFixed(4);
+  svgEl('in-freq').value = getFcenter().toFixed(3);
   update();
 }
-
 function resetFreq() {
-  const fc = getFcenter();
   svgEl('sl-offset').value = 0;
-  svgEl('in-freq').value = fc.toFixed(4);
+  svgEl('in-freq').value = getFcenter().toFixed(3);
   update();
 }
-
 function onOffsetSlider() {
   const fc = getFcenter(), off = getOffsetPct();
-  svgEl('in-freq').value = (fc * (1 + off / 100)).toFixed(4);
+  svgEl('in-freq').value = (fc * (1 + off / 100)).toFixed(3);
   update();
 }
-
 function onFreqInput() {
   const fc = getFcenter();
   const freqMHz = parseFloat(svgEl('in-freq').value);
@@ -649,27 +634,22 @@ function onFreqInput() {
   svgEl('sl-offset').value = Math.max(-10, Math.min(10, offset));
   update();
 }
-
 function onCableSlider() {
   const freqHz = getFreqHz(), vf = getVf();
-  const lambdaM = getLambdaM(freqHz, vf);
-  const cableLam = getCableLam();
-  svgEl('in-cable-m').value = (cableLam * lambdaM).toFixed(4);
+  svgEl('in-cable-m').value = (getCableLam() * getLambdaM(freqHz, vf)).toFixed(3);
   update();
 }
-
 function onCableMeterInput() {
   const cableM = parseFloat(svgEl('in-cable-m').value);
   if (isNaN(cableM) || cableM < 0) return;
-  const freqHz = getFreqHz(), vf = getVf();
-  const lambdaM = getLambdaM(freqHz, vf);
-  const steps = Math.max(0, Math.min(8, Math.round((cableM / lambdaM) * 8)));
+  const lambdaM = getLambdaM(getFreqHz(), getVf());
+  const steps = Math.max(0, Math.min(16, Math.round((cableM / lambdaM) * 16)));
   svgEl('sl-cable').value = steps;
   update();
 }
 
 // ============================================================
-// Circuit diagram (NA tutorial style, viewBox 200×82)
+// Circuit diagram
 // ============================================================
 function drawCircuit(topo) {
   const el = svgEl('circuit-svg');
@@ -678,81 +658,119 @@ function drawCircuit(topo) {
   const ff = "'Space Mono',monospace";
   const fs = 8;
 
-  // shared helpers as template strings
-  const wire = (x1,y1,x2,y2) =>
-    `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${t}" stroke-width="2"/>`;
-  const serCap = (cx, cy) => `
-    <line x1="${cx-2}" y1="${cy-9}" x2="${cx-2}" y2="${cy+9}" stroke="${t}" stroke-width="2.5"/>
-    <line x1="${cx+2}" y1="${cy-9}" x2="${cx+2}" y2="${cy+9}" stroke="${t}" stroke-width="2.5"/>`;
-  const shCap = (jx, yt, yb) => `
-    <line x1="${jx-8}" y1="${yt}" x2="${jx+8}" y2="${yt}" stroke="${t}" stroke-width="2.2"/>
-    <line x1="${jx-8}" y1="${yb}" x2="${jx+8}" y2="${yb}" stroke="${t}" stroke-width="2.2"/>`;
-  const gnd = (x, y) => `
-    <line x1="${x-8}"  y1="${y}"   x2="${x+8}"  y2="${y}"   stroke="${t}" stroke-width="2"/>
-    <line x1="${x-5}"  y1="${y+4}" x2="${x+5}"  y2="${y+4}" stroke="${t}" stroke-width="1.5"/>
-    <line x1="${x-2}"  y1="${y+8}" x2="${x+2}"  y2="${y+8}" stroke="${t}" stroke-width="1.5"/>`;
-  const port = (cx, cy) =>
-    `<circle cx="${cx}" cy="${cy}" r="6" fill="none" stroke="${t}" stroke-width="2"/>`;
-  const dot = (cx, cy) =>
-    `<circle cx="${cx}" cy="${cy}" r="2.5" fill="${t}"/>`;
-  const txt = (x, y, anchor, text) =>
-    `<text x="${x}" y="${y}" text-anchor="${anchor}" font-size="${fs}" fill="${ac}" font-family="${ff}">${text}</text>`;
-  const loadBox = (x1, y1, w, h, label) =>
-    `<rect x="${x1}" y="${y1}" width="${w}" height="${h}" fill="none" stroke="${t}" stroke-width="2"/>
-     <text x="${x1+w/2}" y="${y1+h/2+3}" text-anchor="middle" font-size="${fs}" fill="${t}" font-family="${ff}">${label}</text>`;
-  const coaxBox = (x1, y1, w, h) =>
-    `<rect x="${x1}" y="${y1}" width="${w}" height="${h}" fill="none" stroke="${t}" stroke-width="2"/>`;
+  const wire   = (x1,y1,x2,y2) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${t}" stroke-width="2"/>`;
+  const serCap = (cx,cy) => `<line x1="${cx-2}" y1="${cy-9}" x2="${cx-2}" y2="${cy+9}" stroke="${t}" stroke-width="2.5"/><line x1="${cx+2}" y1="${cy-9}" x2="${cx+2}" y2="${cy+9}" stroke="${t}" stroke-width="2.5"/>`;
+  const shCap  = (jx,yt,yb) => `<line x1="${jx-8}" y1="${yt}" x2="${jx+8}" y2="${yt}" stroke="${t}" stroke-width="2.2"/><line x1="${jx-8}" y1="${yb}" x2="${jx+8}" y2="${yb}" stroke="${t}" stroke-width="2.2"/>`;
+  const gnd    = (x,y) => `<line x1="${x-8}" y1="${y}" x2="${x+8}" y2="${y}" stroke="${t}" stroke-width="2"/><line x1="${x-5}" y1="${y+4}" x2="${x+5}" y2="${y+4}" stroke="${t}" stroke-width="1.5"/><line x1="${x-2}" y1="${y+8}" x2="${x+2}" y2="${y+8}" stroke="${t}" stroke-width="1.5"/>`;
+  const port   = (cx,cy) => `<circle cx="${cx}" cy="${cy}" r="6" fill="none" stroke="${t}" stroke-width="2"/>`;
+  const dot    = (cx,cy) => `<circle cx="${cx}" cy="${cy}" r="2.5" fill="${t}"/>`;
+  const txt    = (x,y,anchor,text) => `<text x="${x}" y="${y}" text-anchor="${anchor}" font-size="${fs}" fill="${ac}" font-family="${ff}">${text}</text>`;
+  const box    = (x1,y1,w,h,label) => `<rect x="${x1}" y="${y1}" width="${w}" height="${h}" fill="none" stroke="${t}" stroke-width="2"/><text x="${x1+w/2}" y="${y1+h/2+3}" text-anchor="middle" font-size="${fs}" fill="${t}" font-family="${ff}">${label}</text>`;
 
   let s = '';
+  const cy = 40;
 
   if (topo === 'A') {
-    // A: PA(10) — wire — Coax(26-58) — wire — C2(64) — wire — junc(82) — wire — Load(100-140)
-    //                                                          junc(82) → C1 shunt → GND
-    const jx = 82, cy = 40;
-    s += port(10, cy);
-    s += txt(10, 26, 'middle', 'PA');
+    const jx = 82;
+    s += port(10, cy) + txt(10, 26, 'middle', 'PA');
     s += wire(16, cy, 26, cy);
-    s += coaxBox(26, 34, 32, 12);
-    s += txt(42, 30, 'middle', '同軸 L');
-    s += wire(58, cy, 64, cy);
-    s += serCap(66, cy);
-    s += txt(66, 27, 'middle', 'C₂');
-    s += wire(68, cy, jx, cy);
-    s += dot(jx, cy);
-    s += wire(jx, cy, 100, cy);
-    s += loadBox(100, 33, 42, 14, '50Ω');
-    // C1 shunt
-    s += wire(jx, cy, jx, 50);
-    s += shCap(jx, 52, 57);
-    s += wire(jx, 57, jx, 65);
-    s += gnd(jx, 65);
+    s += `<rect x="26" y="34" width="32" height="12" fill="none" stroke="${t}" stroke-width="2"/>` + txt(42, 30, 'middle', '同軸 L');
+    s += wire(58, cy, 64, cy) + serCap(66, cy) + txt(66, 27, 'middle', 'C₂') + wire(68, cy, jx, cy);
+    s += dot(jx, cy) + wire(jx, cy, 100, cy);
+    s += box(100, 33, 42, 14, '50Ω');
+    s += wire(jx, cy, jx, 50) + shCap(jx, 52, 57) + wire(jx, 57, jx, 65) + gnd(jx, 65);
     s += txt(92, 64, 'start', 'C₁');
   } else {
-    // B: PA(10) — wire — Coax(26-58) — wire — junc(70) — wire — C2(78) — wire — Load(96-138)
-    //                                          junc(70) → C1 shunt → GND
-    const jx = 70, cy = 40;
-    s += port(10, cy);
-    s += txt(10, 26, 'middle', 'PA');
+    const jx = 70;
+    s += port(10, cy) + txt(10, 26, 'middle', 'PA');
     s += wire(16, cy, 26, cy);
-    s += coaxBox(26, 34, 32, 12);
-    s += txt(42, 30, 'middle', '同軸 L');
-    s += wire(58, cy, jx, cy);
-    s += dot(jx, cy);
-    s += wire(jx, cy, 78, cy);
-    s += serCap(80, cy);
-    s += txt(80, 27, 'middle', 'C₂');
-    s += wire(82, cy, 96, cy);
-    s += loadBox(96, 33, 42, 14, '50Ω');
-    // C1 shunt
-    s += wire(jx, cy, jx, 50);
-    s += shCap(jx, 52, 57);
-    s += wire(jx, 57, jx, 65);
-    s += gnd(jx, 65);
+    s += `<rect x="26" y="34" width="32" height="12" fill="none" stroke="${t}" stroke-width="2"/>` + txt(42, 30, 'middle', '同軸 L');
+    s += wire(58, cy, jx, cy) + dot(jx, cy);
+    s += wire(jx, cy, 78, cy) + serCap(80, cy) + txt(80, 27, 'middle', 'C₂') + wire(82, cy, 96, cy);
+    s += box(96, 33, 42, 14, '50Ω');
+    s += wire(jx, cy, jx, 50) + shCap(jx, 52, 57) + wire(jx, 57, jx, 65) + gnd(jx, 65);
     s += txt(80, 64, 'start', 'C₁');
   }
 
   el.innerHTML = s;
 }
+
+// ============================================================
+// Inverse solve: find nearest (C1, C2) for a Gamma point
+// ============================================================
+function inverseFromGamma(gr, gi) {
+  const freqHz   = getFreqHz();
+  const cableLam = getCableLam();
+  const topo     = getTopology();
+  const c1Min = capState.c1min, c1Max = capState.c1max;
+  const c2Min = capState.c2min, c2Max = capState.c2max;
+
+  const N = 40;
+  let bestDist = Infinity, bestI = 50, bestJ = 50;
+  for (let i = 0; i <= N; i++) {
+    const c1v = slToCap(i / N * 100, c1Min, c1Max);
+    for (let j = 0; j <= N; j++) {
+      const c2v = slToCap(j / N * 100, c2Min, c2Max);
+      const z = computeZPA(freqHz, c1v, false, c2v, false, cableLam, topo);
+      const g = zToGamma(z.re, z.im);
+      const dist = (g.re - gr)*(g.re - gr) + (g.im - gi)*(g.im - gi);
+      if (dist < bestDist) { bestDist = dist; bestI = i; bestJ = j; }
+    }
+  }
+  svgEl('sl-c1').value = Math.round(bestI / N * 100);
+  svgEl('sl-c2').value = Math.round(bestJ / N * 100);
+  svgEl('ck-c1-open').checked  = false;
+  svgEl('ck-c2-short').checked = false;
+  update();
+}
+
+function gammaFromEvent(e) {
+  const smithSvg = svgEl('smith-svg');
+  const rect = smithSvg.getBoundingClientRect();
+  const sx = (e.clientX - rect.left) / rect.width  * 500;
+  const sy = (e.clientY - rect.top)  / rect.height * 500;
+  return [(sx - CX) / R, -(sy - CY) / R];
+}
+
+// ============================================================
+// Hull interaction: hover color + click + drag
+// ============================================================
+const hull = svgEl('area-hull');
+let isDragging = false;
+
+hull.addEventListener('mouseenter', () => {
+  if (svgEl('tr-area').checked) {
+    hull.setAttribute('fill',   'rgba(60,180,100,0.28)');
+    hull.setAttribute('stroke', 'rgba(60,180,100,0.85)');
+  }
+});
+hull.addEventListener('mouseleave', () => {
+  hull.setAttribute('fill',   'rgba(60,180,100,0.13)');
+  hull.setAttribute('stroke', 'rgba(60,180,100,0.5)');
+});
+
+hull.addEventListener('mousedown', (e) => {
+  if (!svgEl('tr-area').checked) return;
+  isDragging = true;
+  const [gr, gi] = gammaFromEvent(e);
+  inverseFromGamma(gr, gi);
+  e.preventDefault();
+});
+
+svgEl('smith-svg').addEventListener('mousemove', (e) => {
+  if (!isDragging) return;
+  const [gr, gi] = gammaFromEvent(e);
+  inverseFromGamma(gr, gi);
+});
+
+document.addEventListener('mouseup', () => { isDragging = false; });
+
+hull.addEventListener('click', (e) => {
+  if (!svgEl('tr-area').checked) return;
+  const [gr, gi] = gammaFromEvent(e);
+  inverseFromGamma(gr, gi);
+  e.stopPropagation();
+});
 
 // ============================================================
 // Main update
@@ -765,13 +783,11 @@ function update() {
   const freqHz    = freqMHz * 1e6;
 
   const cableSteps = parseInt(svgEl('sl-cable').value);
-  const cableLam   = cableSteps / 8;
+  const cableLam   = cableSteps / 16;
   const vf         = getVf();
 
-  const c1Min  = capState.c1min;
-  const c1Max  = capState.c1max;
-  const c2Min  = capState.c2min;
-  const c2Max  = capState.c2max;
+  const c1Min  = capState.c1min, c1Max = capState.c1max;
+  const c2Min  = capState.c2min, c2Max = capState.c2max;
 
   const c1Val   = parseInt(svgEl('sl-c1').value);
   const c1pF    = slToCap(c1Val, c1Min, c1Max);
@@ -786,12 +802,10 @@ function update() {
   const showC2    = svgEl('tr-c2').checked;
   const showCable = svgEl('tr-cable').checked;
 
-  // --- Labels ---
+  // Labels
   svgEl('disp-offset').textContent = (offsetPct >= 0 ? '+' : '') + offsetPct + '%';
-  svgEl('disp-freq').textContent   = freqMHz.toFixed(4) + ' MHz';
-
-  const cableLabels = ['0/8','1/8','2/8','3/8','4/8','5/8','6/8','7/8','8/8'];
-  svgEl('disp-cable').textContent  = cableLabels[cableSteps] + 'λ';
+  svgEl('disp-freq').textContent   = freqMHz.toFixed(3) + ' MHz';
+  svgEl('disp-cable').textContent  = cableSteps + '/16λ';
   svgEl('disp-vf').textContent     = vf.toFixed(2);
 
   const lambdaM  = getLambdaM(freqHz, vf);
@@ -799,27 +813,23 @@ function update() {
   const cableDeg = cableLam * 360;
   svgEl('disp-cable-deg').textContent = '/  ' + cableDeg.toFixed(1) + '°';
 
-  if (document.activeElement !== svgEl('in-cable-m')) {
-    svgEl('in-cable-m').value = cableM.toFixed(4);
-  }
-  if (document.activeElement !== svgEl('in-freq')) {
-    svgEl('in-freq').value = freqMHz.toFixed(4);
-  }
+  if (document.activeElement !== svgEl('in-cable-m'))
+    svgEl('in-cable-m').value = cableM.toFixed(3);
+  if (document.activeElement !== svgEl('in-freq'))
+    svgEl('in-freq').value = freqMHz.toFixed(3);
 
   svgEl('disp-c1').textContent = c1open  ? 'オープン' : fmtCap(c1pF);
   svgEl('disp-c2').textContent = c2short ? 'ショート' : fmtCap(c2pF);
   svgEl('sl-c1').disabled = c1open;
   svgEl('sl-c2').disabled = c2short;
 
-  // Header subtitle
   svgEl('header-subtitle').textContent = topo === 'A'
     ? '[PA] ─ 同軸(50Ω) ─ C2(直列) ─┬─ C1(並列) ─┬─ ダミーロード(50Ω)'
     : '[PA] ─ 同軸(50Ω) ─┬─ C1(並列) ─┬─ C2(直列) ─ ダミーロード(50Ω)';
 
-  // Circuit diagram
   drawCircuit(topo);
 
-  // --- Operating point ---
+  // Operating point
   const ZPA   = computeZPA(freqHz, c1pF, c1open, c2pF, c2short, cableLam, topo);
   const Gamma = zToGamma(ZPA.re, ZPA.im);
   const gMag  = Math.sqrt(Gamma.re*Gamma.re + Gamma.im*Gamma.im);
@@ -844,7 +854,7 @@ function update() {
   const ly = py > CY ? py - 9  : py + 14;
   setAttr(lbl, { x: lx.toFixed(1), y: ly.toFixed(1), 'text-anchor': px > CX ? 'end' : 'start' });
 
-  // --- Reachable area ---
+  // Reachable area
   const areaEl = svgEl('area-hull');
   if (showArea) {
     areaEl.removeAttribute('display');
@@ -859,13 +869,12 @@ function update() {
         areaPts.push(gToSVG(g.re, g.im));
       }
     }
-    const hull = convexHull(areaPts);
-    areaEl.setAttribute('d', pointsToPath(hull, true));
+    areaEl.setAttribute('d', pointsToPath(convexHull(areaPts), true));
   } else {
     areaEl.setAttribute('display', 'none');
   }
 
-  // --- Trajectories ---
+  // Trajectories
   const N = 120;
 
   const tc1 = svgEl('trace-c1'), m1 = svgEl('c1-marker');
@@ -875,8 +884,7 @@ function update() {
     for (let i = 0; i <= N; i++) {
       const c1v = slToCap(i / N * 100, c1Min, c1Max);
       const z = computeZPA(freqHz, c1v, false, c2pF, c2short, cableLam, topo);
-      const g = zToGamma(z.re, z.im);
-      pts.push(gToSVG(g.re, g.im));
+      pts.push(gToSVG(...Object.values(zToGamma(z.re, z.im))));
     }
     tc1.setAttribute('d', pointsToPath(pts, false));
     if (!c1open) setAttr(m1, { cx: px.toFixed(1), cy: py.toFixed(1), display: '' });
@@ -893,8 +901,7 @@ function update() {
     for (let i = 0; i <= N; i++) {
       const c2v = slToCap(i / N * 100, c2Min, c2Max);
       const z = computeZPA(freqHz, c1pF, c1open, c2v, false, cableLam, topo);
-      const g = zToGamma(z.re, z.im);
-      pts.push(gToSVG(g.re, g.im));
+      pts.push(gToSVG(...Object.values(zToGamma(z.re, z.im))));
     }
     tc2.setAttribute('d', pointsToPath(pts, false));
     if (!c2short) setAttr(m2, { cx: px.toFixed(1), cy: py.toFixed(1), display: '' });
@@ -909,56 +916,14 @@ function update() {
     tcb.removeAttribute('display');
     const pts = [];
     for (let i = 0; i <= 100; i++) {
-      const lam = i / 100;
-      const z = computeZPA(freqHz, c1pF, c1open, c2pF, c2short, lam, topo);
-      const g = zToGamma(z.re, z.im);
-      pts.push(gToSVG(g.re, g.im));
+      const z = computeZPA(freqHz, c1pF, c1open, c2pF, c2short, i / 100, topo);
+      pts.push(gToSVG(...Object.values(zToGamma(z.re, z.im))));
     }
     tcb.setAttribute('d', pointsToPath(pts, false));
   } else {
     tcb.setAttribute('display', 'none');
   }
 }
-
-// ============================================================
-// Hull click → inverse solve for nearest (C1, C2)
-// ============================================================
-svgEl('area-hull').addEventListener('click', function(e) {
-  if (!svgEl('tr-area').checked) return;
-
-  const smithSvg = svgEl('smith-svg');
-  const rect = smithSvg.getBoundingClientRect();
-  const sx = (e.clientX - rect.left) / rect.width  * 500;
-  const sy = (e.clientY - rect.top)  / rect.height * 500;
-  const gr = (sx - CX) / R;
-  const gi = -(sy - CY) / R;
-
-  const freqHz   = getFreqHz();
-  const cableLam = getCableLam();
-  const topo     = getTopology();
-  const c1Min = capState.c1min, c1Max = capState.c1max;
-  const c2Min = capState.c2min, c2Max = capState.c2max;
-
-  const N = 40;
-  let bestDist = Infinity, bestI = 50, bestJ = 50;
-  for (let i = 0; i <= N; i++) {
-    const c1v = slToCap(i / N * 100, c1Min, c1Max);
-    for (let j = 0; j <= N; j++) {
-      const c2v = slToCap(j / N * 100, c2Min, c2Max);
-      const z = computeZPA(freqHz, c1v, false, c2v, false, cableLam, topo);
-      const g = zToGamma(z.re, z.im);
-      const dist = (g.re - gr)*(g.re - gr) + (g.im - gi)*(g.im - gi);
-      if (dist < bestDist) { bestDist = dist; bestI = i; bestJ = j; }
-    }
-  }
-
-  svgEl('sl-c1').value = Math.round(bestI / N * 100);
-  svgEl('sl-c2').value = Math.round(bestJ / N * 100);
-  svgEl('ck-c1-open').checked  = false;
-  svgEl('ck-c2-short').checked = false;
-  update();
-  e.stopPropagation();
-});
 
 // ============================================================
 // Dark mode
@@ -976,8 +941,8 @@ function toggleDark() {
 // ============================================================
 // Init
 // ============================================================
-svgEl('in-freq').value    = '27.1200';
-svgEl('in-cable-m').value = '0.0000';
+svgEl('in-freq').value    = '27.120';
+svgEl('in-cable-m').value = '0.000';
 update();
 </script>
 </body>
