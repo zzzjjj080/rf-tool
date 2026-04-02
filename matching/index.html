@@ -482,7 +482,7 @@ function stepCap(key, dir) {
 // ============================================================
 // Impedance calculation
 // ============================================================
-function computeZPA(freqHz, c1pF, c1open, c2pF, c2short, cableLam, topo) {
+function computeZPA(freqHz, c1pF, c1open, c2pF, c2short, cableLam, topo, fCenterHz) {
   const w = 2 * Math.PI * freqHz;
   const Zload = { re: 50, im: 0 };
   let Zmatch;
@@ -517,7 +517,7 @@ function computeZPA(freqHz, c1pF, c1open, c2pF, c2short, cableLam, topo) {
     }
   }
 
-  const betaL = 2 * Math.PI * cableLam;
+  const betaL = 2 * Math.PI * cableLam * (freqHz / fCenterHz);
   const tanBL = Math.tan(betaL);
   if (Math.abs(tanBL) > 1e7) return C.div(C.r(Z0 * Z0), Zmatch);
   const jZ0t = { re: 0, im: Z0 * tanBL };
@@ -635,14 +635,14 @@ function onFreqInput() {
   update();
 }
 function onCableSlider() {
-  const freqHz = getFreqHz(), vf = getVf();
-  svgEl('in-cable-m').value = (getCableLam() * getLambdaM(freqHz, vf)).toFixed(3);
+  const fCenterHz = getFcenter() * 1e6, vf = getVf();
+  svgEl('in-cable-m').value = (getCableLam() * getLambdaM(fCenterHz, vf)).toFixed(3);
   update();
 }
 function onCableMeterInput() {
   const cableM = parseFloat(svgEl('in-cable-m').value);
   if (isNaN(cableM) || cableM < 0) return;
-  const lambdaM = getLambdaM(getFreqHz(), getVf());
+  const lambdaM = getLambdaM(getFcenter() * 1e6, getVf());
   const steps = Math.max(0, Math.min(16, Math.round((cableM / lambdaM) * 16)));
   svgEl('sl-cable').value = steps;
   update();
@@ -699,9 +699,10 @@ function drawCircuit(topo) {
 // Inverse solve: find nearest (C1, C2) for a Gamma point
 // ============================================================
 function inverseFromGamma(gr, gi) {
-  const freqHz   = getFreqHz();
-  const cableLam = getCableLam();
-  const topo     = getTopology();
+  const freqHz    = getFreqHz();
+  const fCenterHz = getFcenter() * 1e6;
+  const cableLam  = getCableLam();
+  const topo      = getTopology();
   const c1Min = capState.c1min, c1Max = capState.c1max;
   const c2Min = capState.c2min, c2Max = capState.c2max;
 
@@ -711,7 +712,7 @@ function inverseFromGamma(gr, gi) {
     const c1v = slToCap(i / N * 100, c1Min, c1Max);
     for (let j = 0; j <= N; j++) {
       const c2v = slToCap(j / N * 100, c2Min, c2Max);
-      const z = computeZPA(freqHz, c1v, false, c2v, false, cableLam, topo);
+      const z = computeZPA(freqHz, c1v, false, c2v, false, cableLam, topo, fCenterHz);
       const g = zToGamma(z.re, z.im);
       const dist = (g.re - gr)*(g.re - gr) + (g.im - gi)*(g.im - gi);
       if (dist < bestDist) { bestDist = dist; bestI = i; bestJ = j; }
@@ -778,6 +779,7 @@ hull.addEventListener('click', (e) => {
 function update() {
   const topo      = getTopology();
   const fc        = getFcenter();
+  const fCenterHz = fc * 1e6;
   const offsetPct = getOffsetPct();
   const freqMHz   = fc * (1 + offsetPct / 100);
   const freqHz    = freqMHz * 1e6;
@@ -805,12 +807,12 @@ function update() {
   // Labels
   svgEl('disp-offset').textContent = (offsetPct >= 0 ? '+' : '') + offsetPct + '%';
   svgEl('disp-freq').textContent   = freqMHz.toFixed(3) + ' MHz';
-  svgEl('disp-cable').textContent  = cableSteps + '/16λ';
+  svgEl('disp-cable').textContent  = cableSteps + '/16λ  (λ@' + fc.toFixed(2) + 'MHz)';
   svgEl('disp-vf').textContent     = vf.toFixed(2);
 
-  const lambdaM  = getLambdaM(freqHz, vf);
+  const lambdaM  = getLambdaM(fCenterHz, vf);
   const cableM   = cableLam * lambdaM;
-  const cableDeg = cableLam * 360;
+  const cableDeg = cableLam * (freqHz / fCenterHz) * 360;
   svgEl('disp-cable-deg').textContent = '/  ' + cableDeg.toFixed(1) + '°';
 
   if (document.activeElement !== svgEl('in-cable-m'))
@@ -830,7 +832,7 @@ function update() {
   drawCircuit(topo);
 
   // Operating point
-  const ZPA   = computeZPA(freqHz, c1pF, c1open, c2pF, c2short, cableLam, topo);
+  const ZPA   = computeZPA(freqHz, c1pF, c1open, c2pF, c2short, cableLam, topo, fCenterHz);
   const Gamma = zToGamma(ZPA.re, ZPA.im);
   const gMag  = Math.sqrt(Gamma.re*Gamma.re + Gamma.im*Gamma.im);
   const gAng  = Math.atan2(Gamma.im, Gamma.re) * 180 / Math.PI;
@@ -864,7 +866,7 @@ function update() {
       const c1v = slToCap(i / NA * 100, c1Min, c1Max);
       for (let j = 0; j <= NA; j++) {
         const c2v = slToCap(j / NA * 100, c2Min, c2Max);
-        const z = computeZPA(freqHz, c1v, false, c2v, false, cableLam, topo);
+        const z = computeZPA(freqHz, c1v, false, c2v, false, cableLam, topo, fCenterHz);
         const g = zToGamma(z.re, z.im);
         areaPts.push(gToSVG(g.re, g.im));
       }
@@ -883,7 +885,7 @@ function update() {
     const pts = [];
     for (let i = 0; i <= N; i++) {
       const c1v = slToCap(i / N * 100, c1Min, c1Max);
-      const z = computeZPA(freqHz, c1v, false, c2pF, c2short, cableLam, topo);
+      const z = computeZPA(freqHz, c1v, false, c2pF, c2short, cableLam, topo, fCenterHz);
       pts.push(gToSVG(...Object.values(zToGamma(z.re, z.im))));
     }
     tc1.setAttribute('d', pointsToPath(pts, false));
@@ -900,7 +902,7 @@ function update() {
     const pts = [];
     for (let i = 0; i <= N; i++) {
       const c2v = slToCap(i / N * 100, c2Min, c2Max);
-      const z = computeZPA(freqHz, c1pF, c1open, c2v, false, cableLam, topo);
+      const z = computeZPA(freqHz, c1pF, c1open, c2v, false, cableLam, topo, fCenterHz);
       pts.push(gToSVG(...Object.values(zToGamma(z.re, z.im))));
     }
     tc2.setAttribute('d', pointsToPath(pts, false));
@@ -916,7 +918,7 @@ function update() {
     tcb.removeAttribute('display');
     const pts = [];
     for (let i = 0; i <= 100; i++) {
-      const z = computeZPA(freqHz, c1pF, c1open, c2pF, c2short, i / 100, topo);
+      const z = computeZPA(freqHz, c1pF, c1open, c2pF, c2short, i / 100, topo, fCenterHz);
       pts.push(gToSVG(...Object.values(zToGamma(z.re, z.im))));
     }
     tcb.setAttribute('d', pointsToPath(pts, false));
