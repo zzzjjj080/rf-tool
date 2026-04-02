@@ -257,7 +257,7 @@ body.dark .cap-spin-val { background: #0b1220; }
 
       <!-- Circuit diagram -->
       <div class="circuit-wrap">
-        <svg id="circuit-svg" viewBox="0 0 260 120" xmlns="http://www.w3.org/2000/svg"></svg>
+        <svg id="circuit-svg" viewBox="0 0 340 76" xmlns="http://www.w3.org/2000/svg"></svg>
       </div>
 
       <!-- Numeric results -->
@@ -337,7 +337,7 @@ body.dark .cap-spin-val { background: #0b1220; }
           </div>
           <div class="slider-row">
             <!-- step=1 → 1/16λ per step; max=16 → 1λ -->
-            <input type="range" id="sl-cable" min="0" max="16" step="1" value="0" oninput="onCableSlider()">
+            <input type="range" id="sl-cable" min="0" max="16" step="1" value="2" oninput="onCableSlider()">
             <span class="ctrl-val" id="disp-cable">0/16λ</span>
           </div>
           <div class="input-row" style="margin-top:5px;">
@@ -649,7 +649,8 @@ function onCableMeterInput() {
 }
 
 // ============================================================
-// Circuit diagram (viewBox 260×120, centerline y=52)
+// Circuit diagram (viewBox 340×76, cy=32)
+// Load box at far right (x=266-330). C1 label to RIGHT of GND.
 // ============================================================
 function drawCircuit(topo, freqMHz, cableM, vf, c1pF, c1open, c2pF, c2short) {
   const el = svgEl('circuit-svg');
@@ -661,15 +662,12 @@ function drawCircuit(topo, freqMHz, cableM, vf, c1pF, c1open, c2pF, c2short) {
   const serCap = (cx,cy) => `<line x1="${cx-2}" y1="${cy-9}" x2="${cx-2}" y2="${cy+9}" stroke="${t}" stroke-width="2.5"/><line x1="${cx+2}" y1="${cy-9}" x2="${cx+2}" y2="${cy+9}" stroke="${t}" stroke-width="2.5"/>`;
   const shCap  = (jx,yt,yb) => `<line x1="${jx-8}" y1="${yt}" x2="${jx+8}" y2="${yt}" stroke="${t}" stroke-width="2.2"/><line x1="${jx-8}" y1="${yb}" x2="${jx+8}" y2="${yb}" stroke="${t}" stroke-width="2.2"/>`;
   const gnd    = (x,y) => `<line x1="${x-8}" y1="${y}" x2="${x+8}" y2="${y}" stroke="${t}" stroke-width="2"/><line x1="${x-5}" y1="${y+4}" x2="${x+5}" y2="${y+4}" stroke="${t}" stroke-width="1.5"/><line x1="${x-2}" y1="${y+8}" x2="${x+2}" y2="${y+8}" stroke="${t}" stroke-width="1.5"/>`;
-  const port   = (cx,cy,r) => `<circle cx="${cx}" cy="${cy}" r="${r||7}" fill="none" stroke="${t}" stroke-width="2"/>`;
+  const port   = (cx,cy) => `<circle cx="${cx}" cy="${cy}" r="6" fill="none" stroke="${t}" stroke-width="2"/>`;
   const dot    = (cx,cy) => `<circle cx="${cx}" cy="${cy}" r="2.5" fill="${t}"/>`;
-  // accent-colored label (component name)
   const lbl    = (x,y,anc,str,fs) => `<text x="${x}" y="${y}" text-anchor="${anc}" font-size="${fs||8}" fill="${ac}" font-family="${ff}">${str}</text>`;
-  // text-colored small value annotation
   const valtxt = (x,y,anc,str) => `<text x="${x}" y="${y}" text-anchor="${anc}" font-size="7" fill="${t}" font-family="${ff}" opacity="0.85">${str}</text>`;
   const box    = (x1,y1,w,h,label) => `<rect x="${x1}" y="${y1}" width="${w}" height="${h}" fill="none" stroke="${t}" stroke-width="2"/><text x="${x1+w/2}" y="${y1+h/2+3}" text-anchor="middle" font-size="8" fill="${t}" font-family="${ff}">${label}</text>`;
 
-  // Value strings
   const freqStr = freqMHz.toFixed(2) + 'MHz';
   const cableStr = cableM.toFixed(2) + 'm';
   const vfStr   = 'VF=' + vf.toFixed(2);
@@ -677,99 +675,56 @@ function drawCircuit(topo, freqMHz, cableM, vf, c1pF, c1open, c2pF, c2short) {
   const c2Str   = c2short ? 'short' : fmtCap(c2pF).replace(' ', '');
 
   let s = '';
-  const cy = 52; // centerline
+  const cy = 32;
+
+  // C1 shunt: hangs down from (jx,cy), label+value to RIGHT of GND
+  const drawC1shunt = (jx) => {
+    s += wire(jx, cy, jx, cy+14);
+    s += shCap(jx, cy+16, cy+22);
+    s += wire(jx, cy+22, jx, cy+30);
+    s += gnd(jx, cy+30);
+    s += lbl(jx+12, cy+28, 'start', 'C₁', 8);   // baseline cy+28, bbox top cy+20
+    s += valtxt(jx+12, cy+37, 'start', c1Str);   // baseline cy+37, below gnd bars (cy+38)
+  };
+
+  // PA port (x=20, freqStr at x=20 anchor=middle → bbox.x = 20-14 = 6 ✓)
+  s += port(20, cy);
+  s += lbl(20, 18, 'middle', 'PA');
+  s += valtxt(20, 46, 'middle', freqStr);         // below port (port bottom=38, text top=39)
+
+  // Wire PA→Coax
+  s += wire(26, cy, 34, cy);
+
+  // Coax box x=34–90 (w=56, h=14, cy±7)
+  s += `<rect x="34" y="${cy-7}" width="56" height="14" fill="none" stroke="${t}" stroke-width="2"/>`;
+  s += valtxt(62, cy-1, 'middle', '同軸');        // upper inside box
+  s += valtxt(62, cy+6, 'middle', cableStr);      // lower inside box
+  s += valtxt(62, cy-11, 'middle', vfStr);        // above box (box top=25, text baseline=21)
 
   if (topo === 'A') {
-    // x layout: PA(13) — wire(20-26) — Coax(26-74) — wire(74-80) — C2(82) — wire(84-96) — junction(96) — wire(96-110) — Load(110-162)
-    //                                                                                         junction(96) ↓ C1-shunt ↓ GND(90) ↓ label
-    const jx = 96;
-
-    // PA
-    s += port(13, cy);
-    s += lbl(13, 36, 'middle', 'PA');
-    s += valtxt(13, 72, 'middle', freqStr);
-
-    // Wire → Coax
-    s += wire(20, cy, 26, cy);
-
-    // Coax box (26-74, height=20, center=cy)
-    s += `<rect x="26" y="${cy-10}" width="48" height="20" fill="none" stroke="${t}" stroke-width="2"/>`;
-    s += valtxt(50, cy - 2, 'middle', '同軸');
-    s += valtxt(50, cy + 7, 'middle', cableStr);
-    // VF above box, clear of box top
-    s += valtxt(50, cy - 14, 'middle', vfStr);
-
-    // Wire Coax→C2
-    s += wire(74, cy, 80, cy);
-
-    // C2 series cap at cx=82
-    s += serCap(82, cy);
-    s += lbl(82, 36, 'middle', 'C₂');
-    s += valtxt(82, 27, 'middle', c2Str);
-
-    // Wire C2→junction
-    s += wire(84, cy, jx, cy);
+    // coax→C2(cx=100)→junction(x=120)→[long wire]→Load(x=266-330)
+    const jx = 120;
+    s += wire(90, cy, 98, cy);
+    s += serCap(100, cy);
+    s += lbl(100, cy-14, 'middle', 'C₂');        // baseline=18, plates top=23 → gap 5
+    s += valtxt(100, cy-22, 'middle', c2Str);    // baseline=10, bbox bottom=10
+    s += wire(102, cy, jx, cy);
     s += dot(jx, cy);
-
-    // Wire junction→Load
-    s += wire(jx, cy, 110, cy);
-
-    // Load box
-    s += box(110, cy - 10, 52, 20, '50Ω');
-
-    // C1 shunt
-    s += wire(jx, cy, jx, cy + 18);
-    s += shCap(jx, cy + 20, cy + 26);
-    s += wire(jx, cy + 26, jx, cy + 36);
-    s += gnd(jx, cy + 36);
-    // C1 label + value below GND (GND bottom bar at cy+36+8=cy+44)
-    s += lbl(jx, cy + 56, 'middle', 'C₁', 8);
-    s += valtxt(jx, cy + 65, 'middle', c1Str);
-
+    s += wire(jx, cy, 266, cy);
+    s += box(266, cy-7, 64, 14, '50Ω');
+    drawC1shunt(jx);
   } else {
-    // B: PA — Coax — junction(83) — C2(89) — Load
-    //                  junction ↓ C1 ↓ GND
-    const jx = 83;
-
-    // PA
-    s += port(13, cy);
-    s += lbl(13, 36, 'middle', 'PA');
-    s += valtxt(13, 72, 'middle', freqStr);
-
-    // Wire → Coax
-    s += wire(20, cy, 26, cy);
-
-    // Coax box
-    s += `<rect x="26" y="${cy-10}" width="48" height="20" fill="none" stroke="${t}" stroke-width="2"/>`;
-    s += valtxt(50, cy - 2, 'middle', '同軸');
-    s += valtxt(50, cy + 7, 'middle', cableStr);
-    s += valtxt(50, cy - 14, 'middle', vfStr);
-
-    // Wire Coax→junction
-    s += wire(74, cy, jx, cy);
+    // coax→junction(x=104)→C2(cx=118)→[long wire]→Load(x=266-330)
+    const jx = 104;
+    s += wire(90, cy, jx, cy);
     s += dot(jx, cy);
-
-    // Wire junction→C2
-    s += wire(jx, cy, 87, cy);
-
-    // C2 series cap at cx=89
-    s += serCap(89, cy);
-    s += lbl(89, 36, 'middle', 'C₂');
-    s += valtxt(89, 27, 'middle', c2Str);
-
-    // Wire C2→Load
-    s += wire(91, cy, 103, cy);
-
-    // Load box
-    s += box(103, cy - 10, 52, 20, '50Ω');
-
-    // C1 shunt
-    s += wire(jx, cy, jx, cy + 18);
-    s += shCap(jx, cy + 20, cy + 26);
-    s += wire(jx, cy + 26, jx, cy + 36);
-    s += gnd(jx, cy + 36);
-    s += lbl(jx, cy + 56, 'middle', 'C₁', 8);
-    s += valtxt(jx, cy + 65, 'middle', c1Str);
+    s += wire(jx, cy, 116, cy);
+    s += serCap(118, cy);
+    s += lbl(118, cy-14, 'middle', 'C₂');
+    s += valtxt(118, cy-22, 'middle', c2Str);
+    s += wire(120, cy, 266, cy);
+    s += box(266, cy-7, 64, 14, '50Ω');
+    drawC1shunt(jx);
   }
 
   el.innerHTML = s;
