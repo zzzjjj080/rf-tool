@@ -255,6 +255,11 @@ body.dark .cap-spin-val { background: #0b1220; }
         </div>
       </div>
 
+      <!-- Circuit diagram -->
+      <div class="circuit-wrap">
+        <svg id="circuit-svg" viewBox="0 0 260 120" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+
       <!-- Numeric results -->
       <div class="result-grid">
         <div class="result-item hi">
@@ -280,11 +285,6 @@ body.dark .cap-spin-val { background: #0b1220; }
           <div class="rvalue" id="res-rl">—</div>
           <div class="runit">dB</div>
         </div>
-      </div>
-
-      <!-- Circuit diagram -->
-      <div class="circuit-wrap">
-        <svg id="circuit-svg" viewBox="0 0 200 82" xmlns="http://www.w3.org/2000/svg"></svg>
       </div>
     </div>
 
@@ -649,47 +649,127 @@ function onCableMeterInput() {
 }
 
 // ============================================================
-// Circuit diagram
+// Circuit diagram (viewBox 260×120, centerline y=52)
 // ============================================================
-function drawCircuit(topo) {
+function drawCircuit(topo, freqMHz, cableM, vf, c1pF, c1open, c2pF, c2short) {
   const el = svgEl('circuit-svg');
   const t  = 'var(--text)';
   const ac = 'var(--accent2)';
   const ff = "'Space Mono',monospace";
-  const fs = 8;
 
   const wire   = (x1,y1,x2,y2) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${t}" stroke-width="2"/>`;
   const serCap = (cx,cy) => `<line x1="${cx-2}" y1="${cy-9}" x2="${cx-2}" y2="${cy+9}" stroke="${t}" stroke-width="2.5"/><line x1="${cx+2}" y1="${cy-9}" x2="${cx+2}" y2="${cy+9}" stroke="${t}" stroke-width="2.5"/>`;
   const shCap  = (jx,yt,yb) => `<line x1="${jx-8}" y1="${yt}" x2="${jx+8}" y2="${yt}" stroke="${t}" stroke-width="2.2"/><line x1="${jx-8}" y1="${yb}" x2="${jx+8}" y2="${yb}" stroke="${t}" stroke-width="2.2"/>`;
   const gnd    = (x,y) => `<line x1="${x-8}" y1="${y}" x2="${x+8}" y2="${y}" stroke="${t}" stroke-width="2"/><line x1="${x-5}" y1="${y+4}" x2="${x+5}" y2="${y+4}" stroke="${t}" stroke-width="1.5"/><line x1="${x-2}" y1="${y+8}" x2="${x+2}" y2="${y+8}" stroke="${t}" stroke-width="1.5"/>`;
-  const port   = (cx,cy) => `<circle cx="${cx}" cy="${cy}" r="6" fill="none" stroke="${t}" stroke-width="2"/>`;
+  const port   = (cx,cy,r) => `<circle cx="${cx}" cy="${cy}" r="${r||7}" fill="none" stroke="${t}" stroke-width="2"/>`;
   const dot    = (cx,cy) => `<circle cx="${cx}" cy="${cy}" r="2.5" fill="${t}"/>`;
-  const txt    = (x,y,anchor,text) => `<text x="${x}" y="${y}" text-anchor="${anchor}" font-size="${fs}" fill="${ac}" font-family="${ff}">${text}</text>`;
-  const box    = (x1,y1,w,h,label) => `<rect x="${x1}" y="${y1}" width="${w}" height="${h}" fill="none" stroke="${t}" stroke-width="2"/><text x="${x1+w/2}" y="${y1+h/2+3}" text-anchor="middle" font-size="${fs}" fill="${t}" font-family="${ff}">${label}</text>`;
+  // accent-colored label (component name)
+  const lbl    = (x,y,anc,str,fs) => `<text x="${x}" y="${y}" text-anchor="${anc}" font-size="${fs||8}" fill="${ac}" font-family="${ff}">${str}</text>`;
+  // text-colored small value annotation
+  const valtxt = (x,y,anc,str) => `<text x="${x}" y="${y}" text-anchor="${anc}" font-size="7" fill="${t}" font-family="${ff}" opacity="0.85">${str}</text>`;
+  const box    = (x1,y1,w,h,label) => `<rect x="${x1}" y="${y1}" width="${w}" height="${h}" fill="none" stroke="${t}" stroke-width="2"/><text x="${x1+w/2}" y="${y1+h/2+3}" text-anchor="middle" font-size="8" fill="${t}" font-family="${ff}">${label}</text>`;
+
+  // Value strings
+  const freqStr = freqMHz.toFixed(2) + 'MHz';
+  const cableStr = cableM.toFixed(2) + 'm';
+  const vfStr   = 'VF=' + vf.toFixed(2);
+  const c1Str   = c1open  ? 'open'  : fmtCap(c1pF).replace(' ', '');
+  const c2Str   = c2short ? 'short' : fmtCap(c2pF).replace(' ', '');
 
   let s = '';
-  const cy = 40;
+  const cy = 52; // centerline
 
   if (topo === 'A') {
-    const jx = 82;
-    s += port(10, cy) + txt(10, 26, 'middle', 'PA');
-    s += wire(16, cy, 26, cy);
-    s += `<rect x="26" y="34" width="32" height="12" fill="none" stroke="${t}" stroke-width="2"/>` + txt(42, 30, 'middle', '同軸 L');
-    s += wire(58, cy, 64, cy) + serCap(66, cy) + txt(66, 27, 'middle', 'C₂') + wire(68, cy, jx, cy);
-    s += dot(jx, cy) + wire(jx, cy, 100, cy);
-    s += box(100, 33, 42, 14, '50Ω');
-    s += wire(jx, cy, jx, 50) + shCap(jx, 52, 57) + wire(jx, 57, jx, 65) + gnd(jx, 65);
-    s += txt(92, 64, 'start', 'C₁');
+    // x layout: PA(13) — wire(20-26) — Coax(26-74) — wire(74-80) — C2(82) — wire(84-96) — junction(96) — wire(96-110) — Load(110-162)
+    //                                                                                         junction(96) ↓ C1-shunt ↓ GND(90) ↓ label
+    const jx = 96;
+
+    // PA
+    s += port(13, cy);
+    s += lbl(13, 36, 'middle', 'PA');
+    s += valtxt(13, 72, 'middle', freqStr);
+
+    // Wire → Coax
+    s += wire(20, cy, 26, cy);
+
+    // Coax box (26-74, height=20, center=cy)
+    s += `<rect x="26" y="${cy-10}" width="48" height="20" fill="none" stroke="${t}" stroke-width="2"/>`;
+    s += valtxt(50, cy - 2, 'middle', '同軸');
+    s += valtxt(50, cy + 7, 'middle', cableStr);
+    // VF above box, clear of box top
+    s += valtxt(50, cy - 14, 'middle', vfStr);
+
+    // Wire Coax→C2
+    s += wire(74, cy, 80, cy);
+
+    // C2 series cap at cx=82
+    s += serCap(82, cy);
+    s += lbl(82, 36, 'middle', 'C₂');
+    s += valtxt(82, 27, 'middle', c2Str);
+
+    // Wire C2→junction
+    s += wire(84, cy, jx, cy);
+    s += dot(jx, cy);
+
+    // Wire junction→Load
+    s += wire(jx, cy, 110, cy);
+
+    // Load box
+    s += box(110, cy - 10, 52, 20, '50Ω');
+
+    // C1 shunt
+    s += wire(jx, cy, jx, cy + 18);
+    s += shCap(jx, cy + 20, cy + 26);
+    s += wire(jx, cy + 26, jx, cy + 36);
+    s += gnd(jx, cy + 36);
+    // C1 label + value below GND (GND bottom bar at cy+36+8=cy+44)
+    s += lbl(jx, cy + 56, 'middle', 'C₁', 8);
+    s += valtxt(jx, cy + 65, 'middle', c1Str);
+
   } else {
-    const jx = 70;
-    s += port(10, cy) + txt(10, 26, 'middle', 'PA');
-    s += wire(16, cy, 26, cy);
-    s += `<rect x="26" y="34" width="32" height="12" fill="none" stroke="${t}" stroke-width="2"/>` + txt(42, 30, 'middle', '同軸 L');
-    s += wire(58, cy, jx, cy) + dot(jx, cy);
-    s += wire(jx, cy, 78, cy) + serCap(80, cy) + txt(80, 27, 'middle', 'C₂') + wire(82, cy, 96, cy);
-    s += box(96, 33, 42, 14, '50Ω');
-    s += wire(jx, cy, jx, 50) + shCap(jx, 52, 57) + wire(jx, 57, jx, 65) + gnd(jx, 65);
-    s += txt(80, 64, 'start', 'C₁');
+    // B: PA — Coax — junction(83) — C2(89) — Load
+    //                  junction ↓ C1 ↓ GND
+    const jx = 83;
+
+    // PA
+    s += port(13, cy);
+    s += lbl(13, 36, 'middle', 'PA');
+    s += valtxt(13, 72, 'middle', freqStr);
+
+    // Wire → Coax
+    s += wire(20, cy, 26, cy);
+
+    // Coax box
+    s += `<rect x="26" y="${cy-10}" width="48" height="20" fill="none" stroke="${t}" stroke-width="2"/>`;
+    s += valtxt(50, cy - 2, 'middle', '同軸');
+    s += valtxt(50, cy + 7, 'middle', cableStr);
+    s += valtxt(50, cy - 14, 'middle', vfStr);
+
+    // Wire Coax→junction
+    s += wire(74, cy, jx, cy);
+    s += dot(jx, cy);
+
+    // Wire junction→C2
+    s += wire(jx, cy, 87, cy);
+
+    // C2 series cap at cx=89
+    s += serCap(89, cy);
+    s += lbl(89, 36, 'middle', 'C₂');
+    s += valtxt(89, 27, 'middle', c2Str);
+
+    // Wire C2→Load
+    s += wire(91, cy, 103, cy);
+
+    // Load box
+    s += box(103, cy - 10, 52, 20, '50Ω');
+
+    // C1 shunt
+    s += wire(jx, cy, jx, cy + 18);
+    s += shCap(jx, cy + 20, cy + 26);
+    s += wire(jx, cy + 26, jx, cy + 36);
+    s += gnd(jx, cy + 36);
+    s += lbl(jx, cy + 56, 'middle', 'C₁', 8);
+    s += valtxt(jx, cy + 65, 'middle', c1Str);
   }
 
   el.innerHTML = s;
@@ -829,7 +909,7 @@ function update() {
     ? '[PA] ─ 同軸(50Ω) ─ C2(直列) ─┬─ C1(並列) ─┬─ ダミーロード(50Ω)'
     : '[PA] ─ 同軸(50Ω) ─┬─ C1(並列) ─┬─ C2(直列) ─ ダミーロード(50Ω)';
 
-  drawCircuit(topo);
+  drawCircuit(topo, freqMHz, cableM, vf, c1pF, c1open, c2pF, c2short);
 
   // Operating point
   const ZPA   = computeZPA(freqHz, c1pF, c1open, c2pF, c2short, cableLam, topo, fCenterHz);
