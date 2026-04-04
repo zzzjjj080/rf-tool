@@ -392,7 +392,7 @@
           </div>
           <div class="form-group">
             <label>進行波 [<span class="notx">W</span>]<span class="tip"><span class="tip-icon">i</span><span class="tip-box">進行波電力を直接入力するとθ・Zを保持したままV・Iを逆算します</span></span></label>
-            <input type="number" id="m2_pfwd_in" step="100" min="0" oninput="calc_m2_from_pfwd()">
+            <input type="number" id="m2_pfwd_in" step="100" min="1" max="5000" value="3000" oninput="calc_m2_from_pfwd()" onkeydown="m2PfwdKeydown(event)">
           </div>
         </div>
 
@@ -2008,8 +2008,8 @@ function calc_m2() {
   // 結合度 dBΩ = CC_dB − 20·log10(Z0)  (50Ω系: 50−33.98≈16 dBΩ)
   document.getElementById('m2_cc_dbo').value = (cc - 20 * Math.log10(Z0)).toFixed(2);
 
-  // 進行波入力欄を更新（ユーザー操作でなく計算結果として）
-  document.getElementById('m2_pfwd_in').value = pfwd.toFixed(1);
+  // 進行波入力欄を更新（ユーザー操作でなく計算結果として・整数表示）
+  document.getElementById('m2_pfwd_in').value = Math.round(pfwd);
 
   set('m2_pfwd', fmt(pfwd));
   set('m2_pref', fmt(pref));
@@ -2058,6 +2058,22 @@ function calc_m2_from_pfwd() {
   document.getElementById('m2_v').value = (V_act / scale * 2000).toFixed(1);
   document.getElementById('m2_i').value = (I_act / scale * 2000).toFixed(2);
   calc_m2();
+}
+
+// 進行波入力: ↑↓キーで100W刻みスナップ（3233→↑→3300 など）
+function m2PfwdKeydown(e) {
+  if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+  e.preventDefault();
+  const cur = parseFloat(document.getElementById('m2_pfwd_in').value) || 1000;
+  let next;
+  if (e.key === 'ArrowUp') {
+    next = Math.min(5000, Math.ceil((cur + 0.01) / 100) * 100);
+  } else {
+    const f = Math.floor((cur - 0.01) / 100) * 100;
+    next = f <= 0 ? 1 : Math.max(1, f);
+  }
+  document.getElementById('m2_pfwd_in').value = next;
+  calc_m2_from_pfwd();
 }
 
 // ============================================================
@@ -2639,6 +2655,9 @@ calc_m1a();
 calc_m1b();
 calc_m1c();
 calc_m2();
+// 初期進行波を3000Wにキッカリ合わせる
+document.getElementById('m2_pfwd_in').value = 3000;
+calc_m2_from_pfwd();
 calc_m3s();
 calc_m4('w');
 calc_m5();
