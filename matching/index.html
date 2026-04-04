@@ -232,6 +232,7 @@ body.dark .cap-spin-val { background: #0b1220; }
           <line id="ch-h" x1="0" y1="0" x2="0" y2="0" stroke="rgba(230,126,34,0.3)" stroke-width="0.8" stroke-dasharray="4,3"/>
           <circle id="op-point" cx="250" cy="250" r="8" fill="#e67e22" stroke="white" stroke-width="2"/>
           <text id="op-label" x="260" y="238" fill="#2d3748" font-size="10" font-weight="bold" font-family="monospace"></text>
+          <text id="reach-msg" x="458" y="488" text-anchor="end" fill="rgba(180,60,60,0.75)" font-size="9" font-family="sans-serif" display="none">到達できません</text>
         </svg>
 
         <!-- Trace toggles: compact bar under chart -->
@@ -770,11 +771,63 @@ function gammaFromEvent(e) {
   return [(sx - CX) / R, -(sy - CY) / R];
 }
 
+function eventToSVGCoords(e) {
+  const rect = svgEl('smith-svg').getBoundingClientRect();
+  return [(e.clientX - rect.left) / rect.width * 500,
+          (e.clientY - rect.top)  / rect.height * 500];
+}
+
+function isInHull(sx, sy) {
+  if (!svgEl('tr-area').checked) return false;
+  const pt = svgEl('smith-svg').createSVGPoint();
+  pt.x = sx; pt.y = sy;
+  return svgEl('area-hull').isPointInFill(pt);
+}
+
+// ============================================================
+// Inverse solve with cable: find nearest (cable, C1, C2)
+// Iterates cable from k=0 (shortest) upward — prefers shorter cable
+// ============================================================
+function inverseFromGammaFull(gr, gi) {
+  const freqHz    = getFreqHz();
+  const fCenterHz = getFcenter() * 1e6;
+  const topo      = getTopology();
+  const c1Min = capState.c1min, c1Max = capState.c1max;
+  const c2Min = capState.c2min, c2Max = capState.c2max;
+  const NC = 20;
+  let bestDist = Infinity, bestK = 0, bestI = 50, bestJ = 50;
+  for (let k = 0; k <= 16; k++) {
+    const cableLam = k / 16;
+    for (let i = 0; i <= NC; i++) {
+      const c1v = slToCap(i / NC * 100, c1Min, c1Max);
+      for (let j = 0; j <= NC; j++) {
+        const c2v = slToCap(j / NC * 100, c2Min, c2Max);
+        const z = computeZPA(freqHz, c1v, false, c2v, false, cableLam, topo, fCenterHz);
+        const g = zToGamma(z.re, z.im);
+        const dist = (g.re - gr)*(g.re - gr) + (g.im - gi)*(g.im - gi);
+        if (dist < bestDist) { bestDist = dist; bestK = k; bestI = i; bestJ = j; }
+      }
+    }
+    if (bestDist < 1e-5) break;
+  }
+  const msg = svgEl('reach-msg');
+  if (bestDist > 0.04) msg.removeAttribute('display');
+  else                 msg.setAttribute('display', 'none');
+  svgEl('sl-cable').value = bestK;
+  svgEl('sl-c1').value = Math.round(bestI / NC * 100);
+  svgEl('sl-c2').value = Math.round(bestJ / NC * 100);
+  svgEl('ck-c1-open').checked  = false;
+  svgEl('ck-c2-short').checked = false;
+  update();
+}
+
 // ============================================================
 // Hull interaction: hover color + click + drag
+// Inside green: C1+C2 only.  Outside green: cable+C1+C2 (full solver)
 // ============================================================
 const hull = svgEl('area-hull');
 let isDragging = false;
+let dragUseFullSolver = false;
 
 hull.addEventListener('mouseenter', () => {
   if (svgEl('tr-area').checked) {
@@ -787,27 +840,57 @@ hull.addEventListener('mouseleave', () => {
   hull.setAttribute('stroke', 'rgba(60,180,100,0.5)');
 });
 
+// Drag starting inside green: C1+C2 only (until dragged outside)
 hull.addEventListener('mousedown', (e) => {
   if (!svgEl('tr-area').checked) return;
   isDragging = true;
+  dragUseFullSolver = false;
   const [gr, gi] = gammaFromEvent(e);
   inverseFromGamma(gr, gi);
+  svgEl('reach-msg').setAttribute('display', 'none');
+  e.preventDefault();
+});
+
+// Drag starting outside green: full solver from the start
+svgEl('smith-svg').addEventListener('mousedown', (e) => {
+  if (e.target === hull) return;
+  isDragging = true;
+  dragUseFullSolver = true;
+  const [gr, gi] = gammaFromEvent(e);
+  inverseFromGammaFull(gr, gi);
   e.preventDefault();
 });
 
 svgEl('smith-svg').addEventListener('mousemove', (e) => {
   if (!isDragging) return;
   const [gr, gi] = gammaFromEvent(e);
-  inverseFromGamma(gr, gi);
+  const [sx, sy] = eventToSVGCoords(e);
+  if (!dragUseFullSolver && isInHull(sx, sy)) {
+    inverseFromGamma(gr, gi);
+    svgEl('reach-msg').setAttribute('display', 'none');
+  } else {
+    dragUseFullSolver = true;  // once outside, stay in full solver for this drag
+    inverseFromGammaFull(gr, gi);
+  }
 });
 
-document.addEventListener('mouseup', () => { isDragging = false; });
+document.addEventListener('mouseup', () => { isDragging = false; dragUseFullSolver = false; });
 
+// Click inside green: C1+C2 only
 hull.addEventListener('click', (e) => {
   if (!svgEl('tr-area').checked) return;
   const [gr, gi] = gammaFromEvent(e);
   inverseFromGamma(gr, gi);
+  svgEl('reach-msg').setAttribute('display', 'none');
   e.stopPropagation();
+});
+
+// Click outside green: full solver
+svgEl('smith-svg').addEventListener('click', (e) => {
+  if (e.target === hull) return;
+  const [gr, gi] = gammaFromEvent(e);
+  if (Math.sqrt(gr*gr + gi*gi) > 1.02) return;  // outside chart boundary
+  inverseFromGammaFull(gr, gi);
 });
 
 // ============================================================
