@@ -392,7 +392,7 @@
           </div>
           <div class="form-group">
             <label>進行波 [<span class="notx">W</span>]<span class="tip"><span class="tip-icon">i</span><span class="tip-box">進行波電力を直接入力するとθ・Zを保持したままV・Iを逆算します</span></span></label>
-            <input type="number" id="m2_pfwd_in" step="100" min="1" max="5000" value="3000" oninput="calc_m2_from_pfwd()" onkeydown="m2PfwdKeydown(event)">
+            <input type="number" id="m2_pfwd_in" step="100" min="0" max="5000" value="3000" oninput="calc_m2_from_pfwd()" onkeydown="m2PfwdKeydown(event)">
           </div>
         </div>
 
@@ -2047,9 +2047,11 @@ let _m2PfwdSrc = false;
 
 // 進行波入力 → V・I逆算（θ・Z比率を保持）
 function calc_m2_from_pfwd() {
-  const newPfwd = get('m2_pfwd_in');
+  let newPfwd = get('m2_pfwd_in');
+  if (isNaN(newPfwd) || newPfwd < 1) { newPfwd = 1; document.getElementById('m2_pfwd_in').value = 1; }
+  if (newPfwd > 5000) { newPfwd = 5000; document.getElementById('m2_pfwd_in').value = 5000; }
   const V_mV = get('m2_v'), I_mA = get('m2_i'), theta_deg = get('m2_theta'), cc = get('m2_cc');
-  if (isNaN(newPfwd) || newPfwd <= 0 || isNaN(V_mV) || V_mV <= 0 || isNaN(I_mA) || I_mA <= 0) return;
+  if (isNaN(V_mV) || V_mV <= 0 || isNaN(I_mA) || I_mA <= 0) return;
   const scale = Math.pow(10, cc / 20);
   const zmag  = V_mV / I_mA;                   // Z比率は保持 (mV/mA = Ω)
   const th    = theta_deg * Math.PI / 180;
