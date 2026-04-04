@@ -867,14 +867,10 @@ svgEl('smith-svg').addEventListener('mousemove', (e) => {
   const [gr, gi] = gammaFromEvent(e);
   if (dragUseFullSolver) {
     inverseFromGammaFull(gr, gi);
-    return;
-  }
-  // Try C1+C2 only; if target is beyond reachable area, switch to full solver
-  const dist = inverseFromGamma(gr, gi);
-  svgEl('reach-msg').setAttribute('display', 'none');
-  if (dist > 0.04) {
-    dragUseFullSolver = true;
-    inverseFromGammaFull(gr, gi);
+  } else {
+    // Started inside green: always C1+C2 only, never change cable
+    inverseFromGamma(gr, gi);
+    svgEl('reach-msg').setAttribute('display', 'none');
   }
 });
 
