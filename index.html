@@ -380,7 +380,7 @@
           </div>
           <div class="form-group">
             <label>位相差 θ (V−I) [°]</label>
-            <input type="number" id="m2_theta" step="10" value="30" min="-90" max="90" oninput="calc_m2()">
+            <input type="number" id="m2_theta" step="10" value="0" min="-90" max="90" oninput="calc_m2()">
           </div>
           <div class="form-group">
             <label>周波数 [<span class="notx">MHz</span>]</label>
@@ -412,8 +412,18 @@
           </div>
         </div>
 
-        <!-- 2段目: ロードパワー + VSWR (オレンジ) -->
-        <div class="result-grid" style="grid-template-columns:1fr 1fr;margin-top:8px">
+        <!-- 2段目: フォワード・レフ・ロードパワー・VSWR (オレンジ) -->
+        <div class="result-grid" style="grid-template-columns:repeat(4,1fr);margin-top:8px">
+          <div class="result-item highlight">
+            <div class="label">フォワード<span class="tip" style="text-transform:none"><span class="tip-icon">i</span><span class="tip-box">進行波電力。P_fwd = |V + Z₀I|² / (8Z₀)</span></span></div>
+            <div class="value" id="m2_pfwd">—</div>
+            <div class="unit">W</div>
+          </div>
+          <div class="result-item highlight">
+            <div class="label">リフレクト<span class="tip" style="text-transform:none"><span class="tip-icon">i</span><span class="tip-box">反射波電力。P_ref = |V − Z₀I|² / (8Z₀) = P_fwd − P_load</span></span></div>
+            <div class="value" id="m2_pref">—</div>
+            <div class="unit">W</div>
+          </div>
           <div class="result-item highlight">
             <div class="label">ロードパワー</div>
             <div class="value" id="m2_pabs">—</div>
@@ -1947,7 +1957,7 @@ function calc_m2() {
   const I_mA = get('m2_i');      // センサー出力 mA peak-to-peak (Ipp)
   const theta_deg = get('m2_theta');
   const cc = get('m2_cc');       // 結合度 dB（正の値）
-  const ids = ['m2_pabs','m2_papp','m2_pf','m2_zr','m2_zx','m2_zmag','m2_zarg','m2_gmag','m2_garg','m2_vswr','m2_rl'];
+  const ids = ['m2_pfwd','m2_pref','m2_pabs','m2_papp','m2_pf','m2_zr','m2_zx','m2_zmag','m2_zarg','m2_gmag','m2_garg','m2_vswr','m2_rl'];
   if (isNaN(V_mV)||isNaN(I_mA)||isNaN(theta_deg)||isNaN(cc)||V_mV<=0||I_mA<=0) {
     ids.forEach(id=>set(id,'—'));
     setMatchBadge(NaN, 'm2_match_badge');
@@ -1966,6 +1976,14 @@ function calc_m2() {
   const papp = 0.5 * V_act * I_act;
   const pf   = Math.cos(theta);
 
+  // 進行波・反射波電力 P = |V ± Z0·I|² / (8·Z0)
+  const vfwd_re = V_act + Z0 * I_act * Math.cos(theta);
+  const vfwd_im =         Z0 * I_act * Math.sin(theta);
+  const vref_re = V_act - Z0 * I_act * Math.cos(theta);
+  const vref_im =       - Z0 * I_act * Math.sin(theta);
+  const pfwd = (vfwd_re*vfwd_re + vfwd_im*vfwd_im) / (8 * Z0);
+  const pref = (vref_re*vref_re + vref_im*vref_im) / (8 * Z0);
+
   // インピーダンス（結合度はキャンセル: mV/mA = Ω）
   const zmag = V_mV / I_mA;
   const zr   = zmag * Math.cos(theta);
@@ -1980,6 +1998,8 @@ function calc_m2() {
   const vswr = gmag < 1 ? (1+gmag)/(1-gmag) : Infinity;
   const rl   = gmag > 0 ? -20*Math.log10(gmag) : Infinity;
 
+  set('m2_pfwd', fmt(pfwd));
+  set('m2_pref', fmt(pref));
   set('m2_pabs', fmt(pabs));
   set('m2_papp', fmt(papp));
   set('m2_pf',   fmt(pf));
