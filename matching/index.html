@@ -152,6 +152,12 @@ body.dark .cap-spin-val { background: #0b1220; }
 .freq-display { font-size: 14px; font-weight: 700; color: var(--accent); font-family: monospace; margin-top: 3px; }
 
 #area-hull { cursor: pointer; transition: fill 0.12s, stroke 0.12s; }
+.lock-btn {
+  padding: 3px 9px; border-radius: 4px; border: 1px solid var(--border);
+  background: var(--bg); color: var(--muted); font-size: 11px; font-weight: 700;
+  cursor: pointer; transition: all 0.15s; flex-shrink: 0;
+}
+.lock-btn.locked { background: var(--accent); color: #fff; border-color: var(--accent2); }
 
 @media (max-width: 560px) {
   .chart-panel { width: 100%; }
@@ -345,6 +351,7 @@ body.dark .cap-spin-val { background: #0b1220; }
             <input type="number" id="in-cable-m" class="num-input" style="width:80px;" step="0.001" min="0" oninput="onCableMeterInput()">
             <span class="unit">m</span>
             <span class="sub-info" id="disp-cable-deg">/  0.0°</span>
+            <button id="btn-cable-lock" class="lock-btn" onclick="toggleCableLock()">固定</button>
           </div>
         </div>
         <div class="ctrl-row">
@@ -824,8 +831,20 @@ function inverseFromGammaFull(gr, gi) {
 }
 
 // ============================================================
+// Cable lock
+// ============================================================
+let cableLocked = false;
+function toggleCableLock() {
+  cableLocked = !cableLocked;
+  const btn = svgEl('btn-cable-lock');
+  btn.textContent = cableLocked ? '🔒 固定中' : '固定';
+  btn.classList.toggle('locked', cableLocked);
+}
+
+// ============================================================
 // Hull interaction: hover color + click + drag
-// Inside green: C1+C2 only.  Outside green: cable+C1+C2 (full solver)
+// Inside green (or cable locked): C1+C2 only.
+// Outside green (cable unlocked): cable+C1+C2 (full solver)
 // ============================================================
 const hull = svgEl('area-hull');
 let isDragging = false;
@@ -842,14 +861,12 @@ hull.addEventListener('mouseleave', () => {
   hull.setAttribute('stroke', 'rgba(60,180,100,0.5)');
 });
 
-// Unified mousedown: use coordinate-based hull check (isInHull) instead of
-// e.target === hull, because trace lines/markers overlay the hull and steal
-// the click target even when the mouse is visually inside the green area.
+// Unified mousedown: coordinate-based hull check + cable lock support
 svgEl('smith-svg').addEventListener('mousedown', (e) => {
   isDragging = true;
   const [gr, gi] = gammaFromEvent(e);
   const [sx, sy] = eventToSVGCoords(e);
-  if (svgEl('tr-area').checked && isInHull(sx, sy)) {
+  if (cableLocked || (svgEl('tr-area').checked && isInHull(sx, sy))) {
     dragUseFullSolver = false;
     inverseFromGamma(gr, gi);
     svgEl('reach-msg').setAttribute('display', 'none');
@@ -863,12 +880,11 @@ svgEl('smith-svg').addEventListener('mousedown', (e) => {
 svgEl('smith-svg').addEventListener('mousemove', (e) => {
   if (!isDragging) return;
   const [gr, gi] = gammaFromEvent(e);
-  if (dragUseFullSolver) {
-    inverseFromGammaFull(gr, gi);
-  } else {
-    // Started inside green: always C1+C2 only, never change cable
+  if (!dragUseFullSolver || cableLocked) {
     inverseFromGamma(gr, gi);
     svgEl('reach-msg').setAttribute('display', 'none');
+  } else {
+    inverseFromGammaFull(gr, gi);
   }
 });
 
@@ -883,12 +899,17 @@ hull.addEventListener('click', (e) => {
   e.stopPropagation();
 });
 
-// Click outside green: full solver
+// Click outside green: full solver (unless cable locked)
 svgEl('smith-svg').addEventListener('click', (e) => {
   if (e.target === hull) return;
   const [gr, gi] = gammaFromEvent(e);
-  if (Math.sqrt(gr*gr + gi*gi) > 1.02) return;  // outside chart boundary
-  inverseFromGammaFull(gr, gi);
+  if (Math.sqrt(gr*gr + gi*gi) > 1.02) return;
+  if (cableLocked) {
+    inverseFromGamma(gr, gi);
+    svgEl('reach-msg').setAttribute('display', 'none');
+  } else {
+    inverseFromGammaFull(gr, gi);
+  }
 });
 
 // ============================================================
