@@ -530,8 +530,8 @@
             <input type="number" id="m3s_theta" step="10" value="30" min="-90" max="90" oninput="calc_m3s()">
           </div>
           <div class="form-group">
-            <label>周波数 [<span class="notx">MHz</span>]</label>
-            <input type="number" id="m3s_freq" step="1" value="27.12" min="0.01" oninput="calc_m3s()">
+            <label>進行波 [<span class="notx">W</span>]<span class="tip"><span class="tip-icon">i</span><span class="tip-box">進行波電力を直接入力するとθ・Zを保持したままV・Iを逆算します</span></span></label>
+            <input type="number" id="m3s_pfwd_in" step="100" min="0" value="3000" oninput="calc_m3s_from_pfwd()" onkeydown="m3sPfwdKeydown(event)">
           </div>
         </div>
 
@@ -2083,6 +2083,45 @@ function m2PfwdKeydown(e) {
   calc_m2_from_pfwd();
 }
 
+// 進行波入力から calc_m3s が呼ばれている間は pfwd_in を上書きしない
+let _m3sPfwdSrc = false;
+
+// 進行波入力 → V・I逆算（θ・Z比率を保持）
+function calc_m3s_from_pfwd() {
+  let newPfwd = get('m3s_pfwd_in');
+  if (isNaN(newPfwd) || newPfwd < 1) { newPfwd = 1; document.getElementById('m3s_pfwd_in').value = 1; }
+  const V_Vpp = get('m3s_v'), I_App = get('m3s_i'), theta_deg = get('m3s_theta');
+  if (isNaN(V_Vpp) || V_Vpp <= 0 || isNaN(I_App) || I_App <= 0) return;
+  const zmag = (V_Vpp / 2) / (I_App / 2);
+  const th   = theta_deg * Math.PI / 180;
+  const a = zmag + Z0 * Math.cos(th), b = Z0 * Math.sin(th);
+  const denom = a * a + b * b;
+  if (denom <= 0) return;
+  const I_peak = Math.sqrt(newPfwd * 8 * Z0 / denom);
+  const V_peak = zmag * I_peak;
+  document.getElementById('m3s_v').value = (V_peak * 2).toFixed(2);
+  document.getElementById('m3s_i').value = (I_peak * 2).toFixed(3);
+  _m3sPfwdSrc = true;
+  calc_m3s();
+  _m3sPfwdSrc = false;
+}
+
+// 進行波入力: ↑↓キーで100W刻みスナップ
+function m3sPfwdKeydown(e) {
+  if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+  e.preventDefault();
+  const cur = parseFloat(document.getElementById('m3s_pfwd_in').value) || 3000;
+  let next;
+  if (e.key === 'ArrowUp') {
+    next = Math.ceil((cur + 0.01) / 100) * 100;
+  } else {
+    const f = Math.floor((cur - 0.01) / 100) * 100;
+    next = f <= 0 ? 1 : Math.max(1, f);
+  }
+  document.getElementById('m3s_pfwd_in').value = next;
+  calc_m3s_from_pfwd();
+}
+
 // ============================================================
 // MODULE 2: Phasor diagram
 // ============================================================
@@ -2343,6 +2382,12 @@ function calc_m3s() {
   const zmag = V_peak / I_peak;
   const zr   = zmag * Math.cos(theta);
   const zx   = zmag * Math.sin(theta);
+
+  // 進行波電力 P_fwd = |V + Z0·I|² / (8·Z0)
+  const vfwd_re = V_peak + Z0 * I_peak * Math.cos(theta);
+  const vfwd_im =         Z0 * I_peak * Math.sin(theta);
+  const pfwd_calc = (vfwd_re*vfwd_re + vfwd_im*vfwd_im) / (8 * Z0);
+  if (!_m3sPfwdSrc) document.getElementById('m3s_pfwd_in').value = Math.round(pfwd_calc);
 
   const Zc  = {r: zr, i: zx};
   const Z0c = {r: Z0, i: 0};
@@ -2666,6 +2711,9 @@ calc_m2();
 document.getElementById('m2_pfwd_in').value = 3000;
 calc_m2_from_pfwd();
 calc_m3s();
+// 初期進行波を3000Wにキッカリ合わせる
+document.getElementById('m3s_pfwd_in').value = 3000;
+calc_m3s_from_pfwd();
 calc_m4('w');
 calc_m5();
 
@@ -2731,7 +2779,7 @@ chart3zClickHandler('chart3z_200',  200,  200);
 chart3zClickHandler('chart3z_2000', 2000, 2000);
 
 // スミスチャート ドラッグ対応ハンドラ
-function smithClickHandler(canvasEl, calcFn, vId, iId, thetaId, vUnit, ccId) {
+function smithClickHandler(canvasEl, calcFn, vId, iId, thetaId, vUnit, ccId, pfwdDirectId) {
   addDragHandler(canvasEl, function(e) {
     const rect = canvasEl.getBoundingClientRect();
     const scaleX = canvasEl.width  / rect.width;
@@ -2749,8 +2797,19 @@ function smithClickHandler(canvasEl, calcFn, vId, iId, thetaId, vUnit, ccId) {
     const zmag = Math.sqrt(zr*zr + zx*zx);
     const theta_deg = Math.atan2(zx, zr) * 180 / Math.PI;
 
-    if (ccId) {
-      // Fwd固定モード: P_fwdを保持してV,I,θを更新
+    if (pfwdDirectId) {
+      // 直接Pfwd固定モード: pfwd_inを保持してV,I,θをすべて更新（mod3用）
+      const pfwd = Math.max(1, get(pfwdDirectId) || 3000);
+      const th = theta_deg * Math.PI / 180;
+      const denom2 = (zmag + Z0*Math.cos(th))*(zmag + Z0*Math.cos(th)) + (Z0*Math.sin(th))*(Z0*Math.sin(th));
+      if (denom2 > 0) {
+        const I_peak = Math.sqrt(pfwd * 8 * Z0 / denom2);
+        const V_peak = zmag * I_peak;
+        document.getElementById(vId).value = (V_peak * 2).toFixed(2);
+        document.getElementById(iId).value = (I_peak * 2).toFixed(3);
+      }
+    } else if (ccId) {
+      // Fwd固定モード: P_fwdを保持してV,I,θを更新（mod2用）
       const cc = get(ccId);
       const scale = Math.pow(10, cc / 20);
       // 現在のP_fwdを入力値から計算
@@ -2779,7 +2838,7 @@ function smithClickHandler(canvasEl, calcFn, vId, iId, thetaId, vUnit, ccId) {
 }
 
 smithClickHandler(document.getElementById('smith_chart'),  calc_m2,  'm2_v',  'm2_i',  'm2_theta', null, 'm2_cc');
-smithClickHandler(document.getElementById('smith3_chart'), calc_m3s, 'm3s_v', 'm3s_i', 'm3s_theta');
+smithClickHandler(document.getElementById('smith3_chart'), calc_m3s, 'm3s_v', 'm3s_i', 'm3s_theta', null, null, 'm3s_pfwd_in');
 
 // ============================================================
 // MODULE 3: Smith Chart Animation
