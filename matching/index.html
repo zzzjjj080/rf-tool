@@ -893,22 +893,37 @@ function update() {
   const ly = py > CY ? py - 9  : py + 14;
   setAttr(lbl, { x: lx.toFixed(1), y: ly.toFixed(1), 'text-anchor': px > CX ? 'end' : 'start' });
 
-  // Reachable area
+  // Reachable area — trace 4 boundary edges of (C1,C2) parameter rectangle
   const areaEl = svgEl('area-hull');
   if (showArea) {
     areaEl.removeAttribute('display');
-    const NA = 20;
-    const areaPts = [];
-    for (let i = 0; i <= NA; i++) {
-      const c1v = slToCap(i / NA * 100, c1Min, c1Max);
-      for (let j = 0; j <= NA; j++) {
-        const c2v = slToCap(j / NA * 100, c2Min, c2Max);
-        const z = computeZPA(freqHz, c1v, false, c2v, false, cableLam, topo, fCenterHz);
-        const g = zToGamma(z.re, z.im);
-        areaPts.push(gToSVG(g.re, g.im));
-      }
+    const NB = 60;
+    const bpts = [];
+    // Edge 1: C2=min, C1: min→max
+    for (let i = 0; i <= NB; i++) {
+      const c1v = slToCap(i / NB * 100, c1Min, c1Max);
+      const z = computeZPA(freqHz, c1v, false, c2Min, false, cableLam, topo, fCenterHz);
+      const g = zToGamma(z.re, z.im); bpts.push(gToSVG(g.re, g.im));
     }
-    areaEl.setAttribute('d', pointsToPath(convexHull(areaPts), true));
+    // Edge 2: C1=max, C2: min→max
+    for (let i = 0; i <= NB; i++) {
+      const c2v = slToCap(i / NB * 100, c2Min, c2Max);
+      const z = computeZPA(freqHz, c1Max, false, c2v, false, cableLam, topo, fCenterHz);
+      const g = zToGamma(z.re, z.im); bpts.push(gToSVG(g.re, g.im));
+    }
+    // Edge 3: C2=max, C1: max→min
+    for (let i = NB; i >= 0; i--) {
+      const c1v = slToCap(i / NB * 100, c1Min, c1Max);
+      const z = computeZPA(freqHz, c1v, false, c2Max, false, cableLam, topo, fCenterHz);
+      const g = zToGamma(z.re, z.im); bpts.push(gToSVG(g.re, g.im));
+    }
+    // Edge 4: C1=min, C2: max→min
+    for (let i = NB; i >= 0; i--) {
+      const c2v = slToCap(i / NB * 100, c2Min, c2Max);
+      const z = computeZPA(freqHz, c1Min, false, c2v, false, cableLam, topo, fCenterHz);
+      const g = zToGamma(z.re, z.im); bpts.push(gToSVG(g.re, g.im));
+    }
+    areaEl.setAttribute('d', pointsToPath(bpts, true));
   } else {
     areaEl.setAttribute('display', 'none');
   }
