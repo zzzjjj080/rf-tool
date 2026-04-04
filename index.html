@@ -379,16 +379,16 @@
             <input type="number" id="m2_i" step="10" value="69.3" min="0" oninput="calc_m2()">
           </div>
           <div class="form-group">
+            <label>位相差 θ (V−I) [°]</label>
+            <input type="number" id="m2_theta" step="10" value="0" min="-90" max="90" oninput="calc_m2()">
+          </div>
+          <div class="form-group">
             <label>結合度 [<span class="notx">dB</span>]<span class="tip"><span class="tip-icon">i</span><span class="tip-box">方向性結合器が分岐する信号の割合。正の値で入力（例: 50 → −50dB）。範囲: 0〜70、高電力RF系では50〜60が多い</span></span></label>
             <input type="number" id="m2_cc" step="1" value="50" min="1" max="100" oninput="calc_m2()">
           </div>
           <div class="form-group">
-            <label>結合度 [<span class="notx">dBΩ</span>]<span class="tip"><span class="tip-icon">i</span><span class="tip-box">電流センサーのトランスインピーダンス（V出力/I入力）。dBΩ = 20·log₁₀(Z₀) − dB。dBから自動計算</span></span></label>
+            <label>結合度 [<span class="notx">dBΩ</span>]<span class="tip"><span class="tip-icon">i</span><span class="tip-box">電流センサーのトランスインピーダンス Z_t = V出力[V] / I実際[A]。このモデルでは I入力[mApp] を V出力[mVpp] として扱う（負荷抵抗 1Ω 相当）のため Z_t = 1/scale → dBΩ = dB（符号なし表示）。dBから自動計算</span></span></label>
             <input type="number" id="m2_cc_dbo" readonly tabindex="-1" style="background:#f0f4f8;color:#94a3b8;cursor:default">
-          </div>
-          <div class="form-group">
-            <label>位相差 θ (V−I) [°]</label>
-            <input type="number" id="m2_theta" step="10" value="0" min="-90" max="90" oninput="calc_m2()">
           </div>
           <div class="form-group">
             <label>周波数 [<span class="notx">MHz</span>]</label>
@@ -2005,8 +2005,8 @@ function calc_m2() {
   const vswr = gmag < 1 ? (1+gmag)/(1-gmag) : Infinity;
   const rl   = gmag > 0 ? -20*Math.log10(gmag) : Infinity;
 
-  // 結合度 dBΩ 自動計算（電流センサー トランスインピーダンス）
-  document.getElementById('m2_cc_dbo').value = (20 * Math.log10(Z0) - cc).toFixed(2);
+  // 結合度 dBΩ 自動計算: Z_t = 1/scale → dBΩ = -CC_dB, 符号なし表示
+  document.getElementById('m2_cc_dbo').value = cc.toFixed(2);
 
   set('m2_pfwd', fmt(pfwd));
   set('m2_pref', fmt(pref));
