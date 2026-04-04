@@ -2663,7 +2663,7 @@ chart3zClickHandler('chart3z_200',  200,  200);
 chart3zClickHandler('chart3z_2000', 2000, 2000);
 
 // スミスチャート ドラッグ対応ハンドラ
-function smithClickHandler(canvasEl, calcFn, vId, iId, thetaId, vUnit) {
+function smithClickHandler(canvasEl, calcFn, vId, iId, thetaId, vUnit, ccId) {
   addDragHandler(canvasEl, function(e) {
     const rect = canvasEl.getBoundingClientRect();
     const scaleX = canvasEl.width  / rect.width;
@@ -2681,16 +2681,36 @@ function smithClickHandler(canvasEl, calcFn, vId, iId, thetaId, vUnit) {
     const zmag = Math.sqrt(zr*zr + zx*zx);
     const theta_deg = Math.atan2(zx, zr) * 180 / Math.PI;
 
-    const V = get(vId);
-    if (!isNaN(V) && V > 0 && zmag > 0) {
-      document.getElementById(iId).value = (V / zmag).toFixed(2);
+    if (ccId) {
+      // Fwd固定モード: P_fwdを保持してV,I,θを更新
+      const cc = get(ccId);
+      const scale = Math.pow(10, cc / 20);
+      // 現在のP_fwdを入力値から計算
+      const curV = get(vId) / 2 / 1000 * scale;
+      const curI = get(iId) / 2 / 1000 * scale;
+      const curTh = get(thetaId) * Math.PI / 180;
+      const vfr = curV + Z0*curI*Math.cos(curTh), vfi = Z0*curI*Math.sin(curTh);
+      const pfwd = (vfr*vfr + vfi*vfi) / (8*Z0);
+      const th = theta_deg * Math.PI / 180;
+      const denom2 = (zmag + Z0*Math.cos(th))*(zmag + Z0*Math.cos(th)) + (Z0*Math.sin(th))*(Z0*Math.sin(th));
+      if (denom2 > 0) {
+        const I_act = Math.sqrt(pfwd * 8 * Z0 / denom2);
+        const V_act = zmag * I_act;
+        document.getElementById(vId).value = (V_act / scale * 2 * 1000).toFixed(1);
+        document.getElementById(iId).value = (I_act / scale * 2 * 1000).toFixed(2);
+      }
+    } else {
+      const V = get(vId);
+      if (!isNaN(V) && V > 0 && zmag > 0) {
+        document.getElementById(iId).value = (V / zmag).toFixed(2);
+      }
     }
     document.getElementById(thetaId).value = theta_deg.toFixed(1);
     calcFn();
   });
 }
 
-smithClickHandler(document.getElementById('smith_chart'),  calc_m2,  'm2_v',  'm2_i',  'm2_theta');
+smithClickHandler(document.getElementById('smith_chart'),  calc_m2,  'm2_v',  'm2_i',  'm2_theta', null, 'm2_cc');
 smithClickHandler(document.getElementById('smith3_chart'), calc_m3s, 'm3s_v', 'm3s_i', 'm3s_theta');
 
 // ============================================================
