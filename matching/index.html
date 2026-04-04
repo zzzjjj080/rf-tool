@@ -841,24 +841,21 @@ hull.addEventListener('mouseleave', () => {
   hull.setAttribute('stroke', 'rgba(60,180,100,0.5)');
 });
 
-// Drag starting inside green: C1+C2 only (until dragged outside)
-hull.addEventListener('mousedown', (e) => {
-  if (!svgEl('tr-area').checked) return;
-  isDragging = true;
-  dragUseFullSolver = false;
-  const [gr, gi] = gammaFromEvent(e);
-  inverseFromGamma(gr, gi);
-  svgEl('reach-msg').setAttribute('display', 'none');
-  e.preventDefault();
-});
-
-// Drag starting outside green: full solver from the start
+// Unified mousedown: use coordinate-based hull check (isInHull) instead of
+// e.target === hull, because trace lines/markers overlay the hull and steal
+// the click target even when the mouse is visually inside the green area.
 svgEl('smith-svg').addEventListener('mousedown', (e) => {
-  if (e.target === hull) return;
   isDragging = true;
-  dragUseFullSolver = true;
   const [gr, gi] = gammaFromEvent(e);
-  inverseFromGammaFull(gr, gi);
+  const [sx, sy] = eventToSVGCoords(e);
+  if (svgEl('tr-area').checked && isInHull(sx, sy)) {
+    dragUseFullSolver = false;
+    inverseFromGamma(gr, gi);
+    svgEl('reach-msg').setAttribute('display', 'none');
+  } else {
+    dragUseFullSolver = true;
+    inverseFromGammaFull(gr, gi);
+  }
   e.preventDefault();
 });
 
