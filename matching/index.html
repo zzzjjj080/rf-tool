@@ -75,15 +75,14 @@ body.dark #smith-svg { filter: brightness(0.82) contrast(1.08); }
 .circuit-wrap { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 10px; margin-top: 8px; }
 #circuit-svg { width: 100%; height: auto; display: block; }
 
-.result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-top: 10px; }
-.result-item { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; text-align: center; }
-.result-item .rlabel { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
-.result-item .rvalue { font-size: 15px; font-weight: 700; color: var(--primary); font-family: monospace; }
-.result-item .runit  { font-size: 10px; color: var(--muted); margin-top: 1px; }
+.result-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.result-item { display: flex; align-items: baseline; gap: 3px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 3px 7px; }
+.result-item .rlabel { font-size: 9px; color: var(--muted); white-space: nowrap; }
+.result-item .rvalue { font-size: 11px; font-weight: 700; color: var(--primary); font-family: monospace; }
+.result-item .runit  { font-size: 9px; color: var(--muted); }
 .result-item.hi { border-color: var(--accent); }
 .result-item.hi .rvalue { color: var(--accent); }
 body.dark .result-item { background: #0b1220; }
-body.dark .result-item.hi { background: #1c1008; }
 
 .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; }
 .card h3 {
@@ -162,7 +161,7 @@ body.dark .cap-spin-val { background: #0b1220; }
 @media (max-width: 560px) {
   .chart-panel { width: 100%; }
   .controls-panel { min-width: 100%; }
-  .result-grid { grid-template-columns: repeat(2, 1fr); }
+  .result-grid { flex-wrap: wrap; }
   header h1 { font-size: 14px; }
   .header-title .subtitle { display: none; }
   .num-input { min-height: 38px; font-size: 15px; }
