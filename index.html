@@ -387,12 +387,12 @@
             <input type="number" id="m2_cc" step="1" value="50" min="1" max="100" oninput="calc_m2()">
           </div>
           <div class="form-group">
-            <label>結合度 [<span class="notx">dBΩ</span>]<span class="tip"><span class="tip-icon">i</span><span class="tip-box">電流センサーのトランスインピーダンス Z_t = V出力[V] / I実際[A]。このモデルでは I入力[mApp] を V出力[mVpp] として扱う（負荷抵抗 1Ω 相当）のため Z_t = 1/scale → dBΩ = dB（符号なし表示）。dBから自動計算</span></span></label>
+            <label>結合度 [<span class="notx">dBΩ</span>]<span class="tip"><span class="tip-icon">i</span><span class="tip-box">電流センサーのトランスインピーダンス。dBΩ = dB − 20·log₁₀(Z₀)。50Ω系では dB−33.98。dBから自動計算</span></span></label>
             <input type="number" id="m2_cc_dbo" readonly tabindex="-1" style="background:#f0f4f8;color:#94a3b8;cursor:default">
           </div>
           <div class="form-group">
-            <label>周波数 [<span class="notx">MHz</span>]</label>
-            <input type="number" id="m2_freq" step="1" value="27.12" min="0.01" oninput="calc_m2()">
+            <label>進行波 [<span class="notx">W</span>]<span class="tip"><span class="tip-icon">i</span><span class="tip-box">進行波電力を直接入力するとθ・Zを保持したままV・Iを逆算します</span></span></label>
+            <input type="number" id="m2_pfwd_in" step="100" min="0" oninput="calc_m2_from_pfwd()">
           </div>
         </div>
 
@@ -2005,8 +2005,11 @@ function calc_m2() {
   const vswr = gmag < 1 ? (1+gmag)/(1-gmag) : Infinity;
   const rl   = gmag > 0 ? -20*Math.log10(gmag) : Infinity;
 
-  // 結合度 dBΩ 自動計算: Z_t = 1/scale → dBΩ = -CC_dB, 符号なし表示
-  document.getElementById('m2_cc_dbo').value = cc.toFixed(2);
+  // 結合度 dBΩ = CC_dB − 20·log10(Z0)  (50Ω系: 50−33.98≈16 dBΩ)
+  document.getElementById('m2_cc_dbo').value = (cc - 20 * Math.log10(Z0)).toFixed(2);
+
+  // 進行波入力欄を更新（ユーザー操作でなく計算結果として）
+  document.getElementById('m2_pfwd_in').value = pfwd.toFixed(1);
 
   set('m2_pfwd', fmt(pfwd));
   set('m2_pref', fmt(pref));
@@ -2037,6 +2040,24 @@ function calc_m2() {
   drawSmithChart({gr: gam.r, gi: gam.i, zr, zx});
   drawPhasor(theta_deg, zmag, 'chart2_phasor');
   saveLog('VIセンサー2', `|V|=${V_mV}mV, |I|=${I_mA}mA, θ=${theta_deg}°, CC=${cc}dB`, `ロードパワー=${fmt(pabs)}W, Z=${fmt(zr)}+j${fmt(zx)}Ω, |Γ|=${fmt(gmag)}`);
+}
+
+// 進行波入力 → V・I逆算（θ・Z比率を保持）
+function calc_m2_from_pfwd() {
+  const newPfwd = get('m2_pfwd_in');
+  const V_mV = get('m2_v'), I_mA = get('m2_i'), theta_deg = get('m2_theta'), cc = get('m2_cc');
+  if (isNaN(newPfwd) || newPfwd <= 0 || isNaN(V_mV) || V_mV <= 0 || isNaN(I_mA) || I_mA <= 0) return;
+  const scale = Math.pow(10, cc / 20);
+  const zmag  = V_mV / I_mA;                   // Z比率は保持 (mV/mA = Ω)
+  const th    = theta_deg * Math.PI / 180;
+  const a     = zmag + Z0 * Math.cos(th), b = Z0 * Math.sin(th);
+  const denom = a * a + b * b;
+  if (denom <= 0) return;
+  const I_act = Math.sqrt(newPfwd * 8 * Z0 / denom);
+  const V_act = zmag * I_act;
+  document.getElementById('m2_v').value = (V_act / scale * 2000).toFixed(1);
+  document.getElementById('m2_i').value = (I_act / scale * 2000).toFixed(2);
+  calc_m2();
 }
 
 // ============================================================
