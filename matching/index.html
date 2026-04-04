@@ -306,6 +306,112 @@ body.dark .cap-spin-val { background: #0b1220; }
         </div>
       </div>
 
+      <!-- ===== Cable ===== -->
+      <div class="card">
+        <h3>同軸ケーブル</h3>
+        <div class="ctrl-row">
+          <div class="ctrl-label">
+            <span class="clname">ケーブル長</span>
+          </div>
+          <div class="slider-row">
+            <input type="range" id="sl-cable" min="0" max="16" step="1" value="2" oninput="onCableSlider()">
+            <span class="ctrl-val" id="disp-cable">0/16λ</span>
+          </div>
+          <div class="input-row" style="margin-top:5px;">
+            <input type="number" id="in-cable-m" class="num-input" style="width:80px;" step="0.001" min="0" oninput="onCableMeterInput()">
+            <span class="unit">m</span>
+            <span class="sub-info" id="disp-cable-deg">/  0.0°</span>
+            <button id="btn-cable-lock" class="lock-btn" onclick="toggleCableLock()">固定</button>
+          </div>
+        </div>
+        <div class="ctrl-row">
+          <div class="ctrl-label">
+            <span class="clname">速度係数 VF</span>
+          </div>
+          <div class="slider-row">
+            <input type="range" id="sl-vf" min="50" max="95" step="1" value="66" oninput="update()">
+            <span class="ctrl-val" id="disp-vf">0.66</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== C1 + C2 ===== -->
+      <div class="card">
+        <h3>コンデンサ</h3>
+        <!-- C1 -->
+        <div style="margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid var(--border);">
+          <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+            <span class="card-dot" style="background:#009bd2"></span>
+            <span style="font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.4px;">C1（並列）</span>
+          </div>
+          <div class="minmax-row">
+            <span class="clname">範囲</span>
+            <div class="cap-spin">
+              <span class="cap-spin-val" id="in-c1min-val">10</span>
+              <div class="spin-btns">
+                <button class="spin-btn" onclick="stepCap('c1min',+1)">▲</button>
+                <button class="spin-btn" onclick="stepCap('c1min',-1)">▼</button>
+              </div>
+            </div>
+            <span class="unit">〜</span>
+            <div class="cap-spin">
+              <span class="cap-spin-val" id="in-c1max-val">470</span>
+              <div class="spin-btns">
+                <button class="spin-btn" onclick="stepCap('c1max',+1)">▲</button>
+                <button class="spin-btn" onclick="stepCap('c1max',-1)">▼</button>
+              </div>
+            </div>
+            <span class="unit">pF</span>
+          </div>
+          <div class="ctrl-row">
+            <div class="slider-row">
+              <input type="range" id="sl-c1" min="0" max="100" step="1" value="60" oninput="update()">
+              <span class="ctrl-val" id="disp-c1">—</span>
+            </div>
+          </div>
+          <label class="check-row">
+            <input type="checkbox" id="ck-c1-open" onchange="update()">
+            C1 = 0（オープン：コンデンサなし）
+          </label>
+        </div>
+        <!-- C2 -->
+        <div>
+          <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+            <span class="card-dot" style="background:#d75f0f"></span>
+            <span style="font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.4px;">C2（直列）</span>
+          </div>
+          <div class="minmax-row">
+            <span class="clname">範囲</span>
+            <div class="cap-spin">
+              <span class="cap-spin-val" id="in-c2min-val">10</span>
+              <div class="spin-btns">
+                <button class="spin-btn" onclick="stepCap('c2min',+1)">▲</button>
+                <button class="spin-btn" onclick="stepCap('c2min',-1)">▼</button>
+              </div>
+            </div>
+            <span class="unit">〜</span>
+            <div class="cap-spin">
+              <span class="cap-spin-val" id="in-c2max-val">470</span>
+              <div class="spin-btns">
+                <button class="spin-btn" onclick="stepCap('c2max',+1)">▲</button>
+                <button class="spin-btn" onclick="stepCap('c2max',-1)">▼</button>
+              </div>
+            </div>
+            <span class="unit">pF</span>
+          </div>
+          <div class="ctrl-row">
+            <div class="slider-row">
+              <input type="range" id="sl-c2" min="0" max="100" step="1" value="60" oninput="update()">
+              <span class="ctrl-val" id="disp-c2">—</span>
+            </div>
+          </div>
+          <label class="check-row">
+            <input type="checkbox" id="ck-c2-short" onchange="update()">
+            C2 = ∞（ショート：C2なし・ゼロΩ）
+          </label>
+        </div>
+      </div>
+
       <!-- ===== Frequency ===== -->
       <div class="card">
         <h3>周波数設定</h3>
@@ -332,110 +438,6 @@ body.dark .cap-spin-val { background: #0b1220; }
             <span class="freq-display" id="disp-freq" style="font-size:12px;"></span>
           </div>
         </div>
-      </div>
-
-      <!-- ===== Cable ===== -->
-      <div class="card">
-        <h3>同軸ケーブル</h3>
-        <div class="ctrl-row">
-          <div class="ctrl-label">
-            <span class="clname">ケーブル長</span>
-          </div>
-          <div class="slider-row">
-            <!-- step=1 → 1/16λ per step; max=16 → 1λ -->
-            <input type="range" id="sl-cable" min="0" max="16" step="1" value="2" oninput="onCableSlider()">
-            <span class="ctrl-val" id="disp-cable">0/16λ</span>
-          </div>
-          <div class="input-row" style="margin-top:5px;">
-            <input type="number" id="in-cable-m" class="num-input" style="width:80px;" step="0.001" min="0" oninput="onCableMeterInput()">
-            <span class="unit">m</span>
-            <span class="sub-info" id="disp-cable-deg">/  0.0°</span>
-            <button id="btn-cable-lock" class="lock-btn" onclick="toggleCableLock()">固定</button>
-          </div>
-        </div>
-        <div class="ctrl-row">
-          <div class="ctrl-label">
-            <span class="clname">速度係数 VF</span>
-          </div>
-          <div class="slider-row">
-            <input type="range" id="sl-vf" min="50" max="95" step="1" value="66" oninput="update()">
-            <span class="ctrl-val" id="disp-vf">0.66</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- ===== C1 ===== -->
-      <div class="card">
-        <h3><span class="card-dot" style="background:#009bd2"></span> C1（並列コンデンサ）</h3>
-        <div class="minmax-row">
-          <span class="clname">範囲</span>
-          <div class="cap-spin">
-            <span class="cap-spin-val" id="in-c1min-val">10</span>
-            <div class="spin-btns">
-              <button class="spin-btn" onclick="stepCap('c1min',+1)">▲</button>
-              <button class="spin-btn" onclick="stepCap('c1min',-1)">▼</button>
-            </div>
-          </div>
-          <span class="unit">〜</span>
-          <div class="cap-spin">
-            <span class="cap-spin-val" id="in-c1max-val">470</span>
-            <div class="spin-btns">
-              <button class="spin-btn" onclick="stepCap('c1max',+1)">▲</button>
-              <button class="spin-btn" onclick="stepCap('c1max',-1)">▼</button>
-            </div>
-          </div>
-          <span class="unit">pF</span>
-        </div>
-        <div class="ctrl-row">
-          <div class="ctrl-label">
-            <span class="clname">C1</span>
-          </div>
-          <div class="slider-row">
-            <input type="range" id="sl-c1" min="0" max="100" step="1" value="60" oninput="update()">
-            <span class="ctrl-val" id="disp-c1">—</span>
-          </div>
-        </div>
-        <label class="check-row">
-          <input type="checkbox" id="ck-c1-open" onchange="update()">
-          C1 = 0（オープン：コンデンサなし）
-        </label>
-      </div>
-
-      <!-- ===== C2 ===== -->
-      <div class="card">
-        <h3><span class="card-dot" style="background:#d75f0f"></span> C2（直列コンデンサ）</h3>
-        <div class="minmax-row">
-          <span class="clname">範囲</span>
-          <div class="cap-spin">
-            <span class="cap-spin-val" id="in-c2min-val">10</span>
-            <div class="spin-btns">
-              <button class="spin-btn" onclick="stepCap('c2min',+1)">▲</button>
-              <button class="spin-btn" onclick="stepCap('c2min',-1)">▼</button>
-            </div>
-          </div>
-          <span class="unit">〜</span>
-          <div class="cap-spin">
-            <span class="cap-spin-val" id="in-c2max-val">470</span>
-            <div class="spin-btns">
-              <button class="spin-btn" onclick="stepCap('c2max',+1)">▲</button>
-              <button class="spin-btn" onclick="stepCap('c2max',-1)">▼</button>
-            </div>
-          </div>
-          <span class="unit">pF</span>
-        </div>
-        <div class="ctrl-row">
-          <div class="ctrl-label">
-            <span class="clname">C2</span>
-          </div>
-          <div class="slider-row">
-            <input type="range" id="sl-c2" min="0" max="100" step="1" value="60" oninput="update()">
-            <span class="ctrl-val" id="disp-c2">—</span>
-          </div>
-        </div>
-        <label class="check-row">
-          <input type="checkbox" id="ck-c2-short" onchange="update()">
-          C2 = ∞（ショート：C2なし・ゼロΩ）
-        </label>
       </div>
 
     </div><!-- /controls-panel -->
