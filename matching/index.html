@@ -704,29 +704,30 @@ function drawCircuit(topo, freqMHz, cableM, vf, c1pF, c1open, c2pF, c2short) {
 
   if (topo === 'A') {
     // Coax → [long blank wire] → C2(series) → junction(C1∥) → 50Ω
-    // C2 at cx=250, junction at x=278, 50Ω box at x=306
-    const jx = 278;
-    s += wire(128, cy, 247, cy);                    // long middle (blank)
-    s += serCap(250, cy);                           // C2 plates
-    s += lbl(250, cy-15, 'middle', 'C₂', 10);      // above C2
-    s += valtxt(250, cy+15, 'middle', c2Str);       // below C2
-    s += wire(253, cy, jx, cy);                     // C2 → junction
+    // C2 at cx=244, junction at x=284, 50Ω box at x=308
+    // C2 value at cy+20 (clear of C1 upper plate at cy+15) with 15px horizontal gap
+    const jx = 284;
+    s += wire(128, cy, 241, cy);                    // long middle (blank)
+    s += serCap(244, cy);                           // C2 plates
+    s += lbl(244, cy-15, 'middle', 'C₂', 10);      // above C2
+    s += valtxt(244, cy+20, 'middle', c2Str);       // below C2 (cy+20 keeps clear of C1 plate)
+    s += wire(247, cy, jx, cy);                     // C2 → junction
     s += dot(jx, cy);
-    s += wire(jx, cy, 306, cy);                     // junction → 50Ω
-    s += box(306, cy-12, 68, 24, '50Ω');
+    s += wire(jx, cy, 308, cy);                     // junction → 50Ω
+    s += box(308, cy-12, 68, 24, '50Ω');
     drawC1shunt(jx);
   } else {
     // Coax → [long blank wire] → junction(C1∥) → C2(series) → 50Ω
-    // junction at x=240, C2 at cx=270, 50Ω box at x=306
-    const jx = 240;
+    // junction at x=242, C2 at cx=272, 50Ω box at x=308
+    const jx = 242;
     s += wire(128, cy, jx, cy);                     // long middle (blank)
     s += dot(jx, cy);
-    s += wire(jx, cy, 268, cy);                     // junction → C2
-    s += serCap(270, cy);                           // C2 plates
-    s += lbl(270, cy-15, 'middle', 'C₂', 10);      // above C2
-    s += valtxt(270, cy+15, 'middle', c2Str);       // below C2
-    s += wire(273, cy, 306, cy);                    // C2 → 50Ω
-    s += box(306, cy-12, 68, 24, '50Ω');
+    s += wire(jx, cy, 270, cy);                     // junction → C2
+    s += serCap(272, cy);                           // C2 plates
+    s += lbl(272, cy-15, 'middle', 'C₂', 10);      // above C2
+    s += valtxt(272, cy+20, 'middle', c2Str);       // below C2 (cy+20, 5px right of C1 plates)
+    s += wire(275, cy, 308, cy);                    // C2 → 50Ω
+    s += box(308, cy-12, 68, 24, '50Ω');
     drawC1shunt(jx);
   }
 
