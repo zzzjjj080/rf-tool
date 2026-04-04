@@ -2779,7 +2779,7 @@ chart3zClickHandler('chart3z_200',  200,  200);
 chart3zClickHandler('chart3z_2000', 2000, 2000);
 
 // スミスチャート ドラッグ対応ハンドラ
-function smithClickHandler(canvasEl, calcFn, vId, iId, thetaId, vUnit, ccId, pfwdDirectId) {
+function smithClickHandler(canvasEl, calcFn, vId, iId, thetaId, vUnit, ccId, pfwdDirectId, pfwdInputId) {
   addDragHandler(canvasEl, function(e) {
     const rect = canvasEl.getBoundingClientRect();
     const scaleX = canvasEl.width  / rect.width;
@@ -2797,9 +2797,15 @@ function smithClickHandler(canvasEl, calcFn, vId, iId, thetaId, vUnit, ccId, pfw
     const zmag = Math.sqrt(zr*zr + zx*zx);
     const theta_deg = Math.atan2(zx, zr) * 180 / Math.PI;
 
+    // pfwd固定のためドラッグ前の値を保存（calcFn後にリストアしてドリフト防止）
+    const pfwdEl = pfwdDirectId ? document.getElementById(pfwdDirectId)
+                 : pfwdInputId  ? document.getElementById(pfwdInputId)
+                 : null;
+    const savedPfwdVal = pfwdEl ? pfwdEl.value : null;
+
     if (pfwdDirectId) {
       // 直接Pfwd固定モード: pfwd_inを保持してV,I,θをすべて更新（mod3用）
-      const pfwd = Math.max(1, get(pfwdDirectId) || 3000);
+      const pfwd = Math.max(1, parseFloat(savedPfwdVal) || 3000);
       const th = theta_deg * Math.PI / 180;
       const denom2 = (zmag + Z0*Math.cos(th))*(zmag + Z0*Math.cos(th)) + (Z0*Math.sin(th))*(Z0*Math.sin(th));
       if (denom2 > 0) {
@@ -2809,15 +2815,10 @@ function smithClickHandler(canvasEl, calcFn, vId, iId, thetaId, vUnit, ccId, pfw
         document.getElementById(iId).value = (I_peak * 2).toFixed(3);
       }
     } else if (ccId) {
-      // Fwd固定モード: P_fwdを保持してV,I,θを更新（mod2用）
+      // Fwd固定モード: pfwdInputIdから直接読み取ってV,I,θを更新（mod2用）
       const cc = get(ccId);
       const scale = Math.pow(10, cc / 20);
-      // 現在のP_fwdを入力値から計算
-      const curV = get(vId) / 2 / 1000 * scale;
-      const curI = get(iId) / 2 / 1000 * scale;
-      const curTh = get(thetaId) * Math.PI / 180;
-      const vfr = curV + Z0*curI*Math.cos(curTh), vfi = Z0*curI*Math.sin(curTh);
-      const pfwd = (vfr*vfr + vfi*vfi) / (8*Z0);
+      const pfwd = Math.max(1, parseFloat(savedPfwdVal) || 3000);
       const th = theta_deg * Math.PI / 180;
       const denom2 = (zmag + Z0*Math.cos(th))*(zmag + Z0*Math.cos(th)) + (Z0*Math.sin(th))*(Z0*Math.sin(th));
       if (denom2 > 0) {
@@ -2834,10 +2835,12 @@ function smithClickHandler(canvasEl, calcFn, vId, iId, thetaId, vUnit, ccId, pfw
     }
     document.getElementById(thetaId).value = theta_deg.toFixed(1);
     calcFn();
+    // calcFnがMath.roundで書き換えた値を元に戻す（完全固定）
+    if (pfwdEl && savedPfwdVal !== null) pfwdEl.value = savedPfwdVal;
   });
 }
 
-smithClickHandler(document.getElementById('smith_chart'),  calc_m2,  'm2_v',  'm2_i',  'm2_theta', null, 'm2_cc');
+smithClickHandler(document.getElementById('smith_chart'),  calc_m2,  'm2_v',  'm2_i',  'm2_theta', null, 'm2_cc', null, 'm2_pfwd_in');
 smithClickHandler(document.getElementById('smith3_chart'), calc_m3s, 'm3s_v', 'm3s_i', 'm3s_theta', null, null, 'm3s_pfwd_in');
 
 // ============================================================
