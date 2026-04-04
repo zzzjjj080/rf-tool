@@ -651,7 +651,8 @@ function onCableMeterInput() {
 
 // ============================================================
 // Circuit diagram (viewBox 380×82, cy=34)
-// Wider, bigger components, better spacing. Load at far right.
+// Coax left, C1/C2 cluster right (near 50Ω), blank middle wire.
+// Both boxes h=24 (~33% taller than previous h=18).
 // ============================================================
 function drawCircuit(topo, freqMHz, cableM, vf, c1pF, c1open, c2pF, c2short) {
   const el = svgEl('circuit-svg');
@@ -660,7 +661,6 @@ function drawCircuit(topo, freqMHz, cableM, vf, c1pF, c1open, c2pF, c2short) {
   const ff = "'Space Mono',monospace";
 
   const wire   = (x1,y1,x2,y2) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${t}" stroke-width="2"/>`;
-  // Bigger capacitor plates: ±11 height (was ±9), wider gap = 5px
   const serCap = (cx,cy) => `<line x1="${cx-2.5}" y1="${cy-11}" x2="${cx-2.5}" y2="${cy+11}" stroke="${t}" stroke-width="2.5"/><line x1="${cx+2.5}" y1="${cy-11}" x2="${cx+2.5}" y2="${cy+11}" stroke="${t}" stroke-width="2.5"/>`;
   const shCap  = (jx,yt,yb) => `<line x1="${jx-10}" y1="${yt}" x2="${jx+10}" y2="${yt}" stroke="${t}" stroke-width="2.2"/><line x1="${jx-10}" y1="${yb}" x2="${jx+10}" y2="${yb}" stroke="${t}" stroke-width="2.2"/>`;
   const gnd    = (x,y) => `<line x1="${x-9}" y1="${y}" x2="${x+9}" y2="${y}" stroke="${t}" stroke-width="2"/><line x1="${x-5.5}" y1="${y+4}" x2="${x+5.5}" y2="${y+4}" stroke="${t}" stroke-width="1.5"/><line x1="${x-2}" y1="${y+8}" x2="${x+2}" y2="${y+8}" stroke="${t}" stroke-width="1.5"/>`;
@@ -679,54 +679,54 @@ function drawCircuit(topo, freqMHz, cableM, vf, c1pF, c1open, c2pF, c2short) {
   let s = '';
   const cy = 34; // horizontal centerline
 
-  // C1 shunt: hangs down from (jx,cy), label+value to RIGHT of GND stem
+  // C1 shunt: hangs down from (jx,cy), label+value to right of GND
   const drawC1shunt = (jx) => {
-    s += wire(jx, cy, jx, cy+13);       // lead down to plates
-    s += shCap(jx, cy+15, cy+22);      // two plates (gap=7)
-    s += wire(jx, cy+22, jx, cy+30);   // stem below plates
-    s += gnd(jx, cy+30);               // GND bars at cy+30, cy+34, cy+38
-    // label + value to the right, beside GND
-    s += lbl(jx+14, cy+30, 'start', 'C₁', 10);     // baseline=cy+30 = beside top gnd bar
-    s += valtxt(jx+14, cy+41, 'start', c1Str);      // baseline=cy+41 (below lowest gnd bar cy+38+small)
+    s += wire(jx, cy, jx, cy+13);
+    s += shCap(jx, cy+15, cy+22);
+    s += wire(jx, cy+22, jx, cy+30);
+    s += gnd(jx, cy+30);
+    s += lbl(jx+14, cy+30, 'start', 'C₁', 10);
+    s += valtxt(jx+14, cy+41, 'start', c1Str);
   };
 
-  // PA port at x=22
+  // PA port (left edge)
   s += port(22, cy);
-  s += lbl(22, 18, 'middle', 'PA', 10);             // above (port top=cy-7=27, baseline=18 → bbox.y=9)
-  s += valtxt(22, 54, 'middle', freqStr);            // below (port bottom=cy+7=41, baseline=54 → bbox.y=46 ✓)
-
-  // Wire PA→Coax
+  s += lbl(22, 18, 'middle', 'PA', 10);
+  s += valtxt(22, 54, 'middle', freqStr);
   s += wire(29, cy, 48, cy);
 
-  // Coax box: x=48–128 (w=80, h=18, cy±9)
-  s += `<rect x="48" y="${cy-9}" width="80" height="18" fill="none" stroke="${t}" stroke-width="2"/>`;
-  s += valtxt(88, cy-1,  'middle', '同軸');          // upper inside
-  s += valtxt(88, cy+8,  'middle', cableStr);        // lower inside
-  s += valtxt(88, cy-13, 'middle', vfStr);           // above box (box top=cy-9=25, baseline=cy-13=21 → bbox.y=13 ✓)
+  // Coax box: x=48–128, h=24 (+33%), stays left
+  // vfStr above box (cy-16=18), two rows inside (cy-3, cy+9)
+  s += `<rect x="48" y="${cy-12}" width="80" height="24" fill="none" stroke="${t}" stroke-width="2"/>`;
+  s += valtxt(88, cy-3,  'middle', '同軸ケーブル');
+  s += valtxt(88, cy+9,  'middle', cableStr);
+  s += valtxt(88, cy-16, 'middle', vfStr);
 
   if (topo === 'A') {
-    // coax(128) → wire → C2(cx=142) → wire → junction(x=162) → long wire → Load(x=298-370)
-    const jx = 162;
-    s += wire(128, cy, 137, cy);
-    s += serCap(140, cy);
-    s += lbl(140, cy-15, 'middle', 'C₂', 10);       // above plates (plates top=cy-11=23; baseline=cy-15=19 → gap 4)
-    s += valtxt(140, cy+15, 'middle', c2Str);        // below plates (plates bot=cy+11=45; baseline=cy+15=49→bbox.y=41 ✓)
-    s += wire(143, cy, jx, cy);
+    // Coax → [long blank wire] → C2(series) → junction(C1∥) → 50Ω
+    // C2 at cx=250, junction at x=278, 50Ω box at x=306
+    const jx = 278;
+    s += wire(128, cy, 247, cy);                    // long middle (blank)
+    s += serCap(250, cy);                           // C2 plates
+    s += lbl(250, cy-15, 'middle', 'C₂', 10);      // above C2
+    s += valtxt(250, cy+15, 'middle', c2Str);       // below C2
+    s += wire(253, cy, jx, cy);                     // C2 → junction
     s += dot(jx, cy);
-    s += wire(jx, cy, 298, cy);
-    s += box(298, cy-9, 72, 18, '50Ω');
+    s += wire(jx, cy, 306, cy);                     // junction → 50Ω
+    s += box(306, cy-12, 68, 24, '50Ω');
     drawC1shunt(jx);
   } else {
-    // coax(128) → wire → junction(x=148) → wire → C2(cx=162) → wire → Load(x=298-370)
-    const jx = 148;
-    s += wire(128, cy, jx, cy);
+    // Coax → [long blank wire] → junction(C1∥) → C2(series) → 50Ω
+    // junction at x=240, C2 at cx=270, 50Ω box at x=306
+    const jx = 240;
+    s += wire(128, cy, jx, cy);                     // long middle (blank)
     s += dot(jx, cy);
-    s += wire(jx, cy, 157, cy);
-    s += serCap(160, cy);
-    s += lbl(160, cy-15, 'middle', 'C₂', 10);
-    s += valtxt(160, cy+15, 'middle', c2Str);
-    s += wire(163, cy, 298, cy);
-    s += box(298, cy-9, 72, 18, '50Ω');
+    s += wire(jx, cy, 268, cy);                     // junction → C2
+    s += serCap(270, cy);                           // C2 plates
+    s += lbl(270, cy-15, 'middle', 'C₂', 10);      // above C2
+    s += valtxt(270, cy+15, 'middle', c2Str);       // below C2
+    s += wire(273, cy, 306, cy);                    // C2 → 50Ω
+    s += box(306, cy-12, 68, 24, '50Ω');
     drawC1shunt(jx);
   }
 
