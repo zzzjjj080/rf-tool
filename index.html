@@ -379,16 +379,20 @@
             <input type="number" id="m2_i" step="10" value="69.3" min="0" oninput="calc_m2()">
           </div>
           <div class="form-group">
+            <label>結合度 [<span class="notx">dB</span>]<span class="tip"><span class="tip-icon">i</span><span class="tip-box">方向性結合器が分岐する信号の割合。正の値で入力（例: 50 → −50dB）。範囲: 0〜70、高電力RF系では50〜60が多い</span></span></label>
+            <input type="number" id="m2_cc" step="1" value="50" min="1" max="100" oninput="calc_m2()">
+          </div>
+          <div class="form-group">
+            <label>結合度 [<span class="notx">dBΩ</span>]<span class="tip"><span class="tip-icon">i</span><span class="tip-box">電流センサーのトランスインピーダンス（V出力/I入力）。dBΩ = 20·log₁₀(Z₀) − dB。dBから自動計算</span></span></label>
+            <input type="number" id="m2_cc_dbo" readonly tabindex="-1" style="background:#f0f4f8;color:#94a3b8;cursor:default">
+          </div>
+          <div class="form-group">
             <label>位相差 θ (V−I) [°]</label>
             <input type="number" id="m2_theta" step="10" value="0" min="-90" max="90" oninput="calc_m2()">
           </div>
           <div class="form-group">
             <label>周波数 [<span class="notx">MHz</span>]</label>
             <input type="number" id="m2_freq" step="1" value="27.12" min="0.01" oninput="calc_m2()">
-          </div>
-          <div class="form-group">
-            <label>結合度 [<span class="notx">dB</span>]<span class="tip"><span class="tip-icon">i</span><span class="tip-box">方向性結合器が分岐する信号の割合。正の値で入力（例: 50 → −50dB）。範囲: 0〜70、高電力RF系では50〜60が多い</span></span></label>
-            <input type="number" id="m2_cc" step="1" value="50" min="1" max="100" oninput="calc_m2()">
           </div>
         </div>
 
@@ -415,12 +419,12 @@
         <!-- 2段目: フォワード・レフ・ロードパワー・VSWR (オレンジ) -->
         <div class="result-grid" style="grid-template-columns:repeat(4,1fr);margin-top:8px">
           <div class="result-item highlight">
-            <div class="label">フォワード<span class="tip" style="text-transform:none"><span class="tip-icon">i</span><span class="tip-box">進行波電力。P_fwd = |V + Z₀I|² / (8Z₀)</span></span></div>
+            <div class="label">進行波<span class="tip" style="text-transform:none"><span class="tip-icon">i</span><span class="tip-box">進行波電力。P_fwd = |V + Z₀I|² / (8Z₀)</span></span></div>
             <div class="value" id="m2_pfwd">—</div>
             <div class="unit">W</div>
           </div>
-          <div class="result-item highlight">
-            <div class="label">リフレクト<span class="tip" style="text-transform:none"><span class="tip-icon">i</span><span class="tip-box">反射波電力。P_ref = |V − Z₀I|² / (8Z₀) = P_fwd − P_load</span></span></div>
+          <div class="result-item highlight" id="m2_pref_card">
+            <div class="label">反射波<span class="tip" style="text-transform:none"><span class="tip-icon">i</span><span class="tip-box">反射波電力。P_ref = |V − Z₀I|² / (8Z₀) = P_fwd − P_load</span></span></div>
             <div class="value" id="m2_pref">—</div>
             <div class="unit">W</div>
           </div>
@@ -1961,6 +1965,9 @@ function calc_m2() {
   if (isNaN(V_mV)||isNaN(I_mA)||isNaN(theta_deg)||isNaN(cc)||V_mV<=0||I_mA<=0) {
     ids.forEach(id=>set(id,'—'));
     setMatchBadge(NaN, 'm2_match_badge');
+    const _rc = document.getElementById('m2_pref_card');
+    const _rv = document.getElementById('m2_pref');
+    if (_rc && _rv) { _rv.style.color=''; _rc.style.borderColor=''; _rc.style.background=''; }
     drawSmithChart(null);
     return;
   }
@@ -1998,8 +2005,22 @@ function calc_m2() {
   const vswr = gmag < 1 ? (1+gmag)/(1-gmag) : Infinity;
   const rl   = gmag > 0 ? -20*Math.log10(gmag) : Infinity;
 
+  // 結合度 dBΩ 自動計算（電流センサー トランスインピーダンス）
+  document.getElementById('m2_cc_dbo').value = (20 * Math.log10(Z0) - cc).toFixed(2);
+
   set('m2_pfwd', fmt(pfwd));
   set('m2_pref', fmt(pref));
+  // 反射波の色: 0W=青 → 600W以上=赤
+  const pRefCard = document.getElementById('m2_pref_card');
+  const pRefVal  = document.getElementById('m2_pref');
+  if (pRefCard && pRefVal) {
+    const t = Math.min(1, pref / 600);
+    const hue = Math.round(220 * (1 - t)); // 220(青)→0(赤)
+    const col = `hsl(${hue},85%,42%)`;
+    pRefVal.style.color = col;
+    pRefCard.style.borderColor = col;
+    pRefCard.style.background = `hsl(${hue},85%,97%)`;
+  }
   set('m2_pabs', fmt(pabs));
   set('m2_papp', fmt(papp));
   set('m2_pf',   fmt(pf));
