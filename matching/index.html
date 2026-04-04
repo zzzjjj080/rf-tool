@@ -761,6 +761,7 @@ function inverseFromGamma(gr, gi) {
   svgEl('ck-c1-open').checked  = false;
   svgEl('ck-c2-short').checked = false;
   update();
+  return bestDist;
 }
 
 function gammaFromEvent(e) {
@@ -864,12 +865,15 @@ svgEl('smith-svg').addEventListener('mousedown', (e) => {
 svgEl('smith-svg').addEventListener('mousemove', (e) => {
   if (!isDragging) return;
   const [gr, gi] = gammaFromEvent(e);
-  const [sx, sy] = eventToSVGCoords(e);
-  if (!dragUseFullSolver && isInHull(sx, sy)) {
-    inverseFromGamma(gr, gi);
-    svgEl('reach-msg').setAttribute('display', 'none');
-  } else {
-    dragUseFullSolver = true;  // once outside, stay in full solver for this drag
+  if (dragUseFullSolver) {
+    inverseFromGammaFull(gr, gi);
+    return;
+  }
+  // Try C1+C2 only; if target is beyond reachable area, switch to full solver
+  const dist = inverseFromGamma(gr, gi);
+  svgEl('reach-msg').setAttribute('display', 'none');
+  if (dist > 0.04) {
+    dragUseFullSolver = true;
     inverseFromGammaFull(gr, gi);
   }
 });
