@@ -2008,8 +2008,8 @@ function calc_m2() {
   // 結合度 dBΩ = CC_dB − 20·log10(Z0)  (50Ω系: 50−33.98≈16 dBΩ)
   document.getElementById('m2_cc_dbo').value = (cc - 20 * Math.log10(Z0)).toFixed(2);
 
-  // 進行波入力欄を更新（ユーザー操作でなく計算結果として・整数表示）
-  document.getElementById('m2_pfwd_in').value = Math.round(pfwd);
+  // 進行波入力欄を更新（pfwd入力起因のときは上書きしない→端数ズレ防止）
+  if (!_m2PfwdSrc) document.getElementById('m2_pfwd_in').value = Math.round(pfwd);
 
   set('m2_pfwd', fmt(pfwd));
   set('m2_pref', fmt(pref));
@@ -2042,6 +2042,9 @@ function calc_m2() {
   saveLog('VIセンサー2', `|V|=${V_mV}mV, |I|=${I_mA}mA, θ=${theta_deg}°, CC=${cc}dB`, `ロードパワー=${fmt(pabs)}W, Z=${fmt(zr)}+j${fmt(zx)}Ω, |Γ|=${fmt(gmag)}`);
 }
 
+// 進行波入力から calc_m2 が呼ばれている間は pfwd_in を上書きしない
+let _m2PfwdSrc = false;
+
 // 進行波入力 → V・I逆算（θ・Z比率を保持）
 function calc_m2_from_pfwd() {
   const newPfwd = get('m2_pfwd_in');
@@ -2057,7 +2060,9 @@ function calc_m2_from_pfwd() {
   const V_act = zmag * I_act;
   document.getElementById('m2_v').value = (V_act / scale * 2000).toFixed(1);
   document.getElementById('m2_i').value = (I_act / scale * 2000).toFixed(2);
+  _m2PfwdSrc = true;
   calc_m2();
+  _m2PfwdSrc = false;
 }
 
 // 進行波入力: ↑↓キーで100W刻みスナップ（3233→↑→3300 など）
