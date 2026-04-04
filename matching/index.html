@@ -302,8 +302,8 @@ body.dark .cap-spin-val { background: #0b1220; }
       <div class="card">
         <h3>回路トポロジー</h3>
         <div class="radio-group" style="flex-direction:column; gap:8px;">
-          <label><input type="radio" name="topology" value="A" checked onchange="update()"> A: 同軸 → C2(直列) → C1∥ダミー</label>
-          <label><input type="radio" name="topology" value="B" onchange="update()"> B: 同軸 → C1∥(C2＋ダミー)</label>
+          <label><input type="radio" name="topology" value="A" onchange="update()"> A: 同軸ケーブル → 直列C2 → 並列C1 → ダミー</label>
+          <label><input type="radio" name="topology" value="B" checked onchange="update()"> B: 同軸ケーブル → 並列C1 → 直列C2 → ダミー</label>
         </div>
       </div>
 
