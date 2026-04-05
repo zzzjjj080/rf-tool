@@ -753,11 +753,11 @@ function drawCircuit(topo, freqMHz, cableM, vf, c1pF, c1open, c2pF, c2short) {
     const b50  = COAX_R + 80;
     if (c2short) {
       s += wire(COAX_R, cy, jx, cy);
-      s += valtxt(COAX_R + 32, cy+24, 'start', `C₂ = short`, c2Col);
+      s += valtxt(COAX_R + 8, cy+36, 'start', `C₂ = short`, c2Col);
     } else {
       s += wire(COAX_R, cy, c2cx-3, cy);
       s += serCap(c2cx, cy, c2Col);
-      s += valtxt(c2cx+8, cy+24, 'start', `C₂ = ${c2Str}`, c2Col);
+      s += valtxt(c2cx-20, cy+36, 'start', `C₂ = ${c2Str}`, c2Col);
       s += wire(c2cx+3, cy, jx, cy);
     }
     s += dot(jx, cy);
