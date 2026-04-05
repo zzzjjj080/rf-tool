@@ -310,7 +310,7 @@
 <div id="mod2" class="tab-panel">
   <div class="card">
     <h2>VIセンサー</h2>
-    <div class="info-box">Z₀ = 50Ω固定。センサー出力を <span class="notx">mV / mA</span> で入力し、結合度で実負荷電力を換算します。位相差θはVがIより進む場合を正。スミスチャートをクリックするとZを逆算して入力値を更新します。</div>
+    <div class="info-box">Z₀ = 50Ω固定。センサー出力を <span class="notx">mV / mV</span> で入力し、結合度で実負荷電力を換算します。位相差θはVがIより進む場合を正。スミスチャートをクリックするとZを逆算して入力値を更新します。</div>
     <div style="display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start">
       <!-- 左: 入力 + 結果 -->
       <div>
@@ -320,8 +320,8 @@
             <input type="number" id="m2_v" step="100" value="3464" min="0" oninput="calc_m2()">
           </div>
           <div class="form-group">
-            <label>電流振幅 |I| [<span class="notx">mA</span>]（<span class="notx">Ipp</span>）</label>
-            <input type="number" id="m2_i" step="10" value="69.3" min="0" oninput="calc_m2()">
+            <label>I出力電圧 |I| [<span class="notx">mV</span>]（<span class="notx">Ipp</span>）</label>
+            <input type="number" id="m2_i" step="100" value="3464" min="0" oninput="calc_m2()">
           </div>
           <div class="form-group">
             <label>位相差 θ (V−I) [°]</label>
@@ -1108,11 +1108,11 @@ const formulaConfigs = {
     inputIds: ['m2_v', 'm2_i'],
     buildHTML() {
       const V = get('m2_v'), I = get('m2_i');
-      const zmag = V / I;
+      const zmag = V / I * Z0;
       return `<div class="fp-title">計算式 — |Z|</div>
-        <div class="fp-sym">|Z| = |V|<sub>Vpp</sub> / |I|<sub>App</sub></div>
-        <div class="fp-sub">　= ${fv(V,4)} mVpp / ${fv(I,4)} mApp</div>
-        <div class="fp-sub" style="color:#94a3b8;font-size:11px">　※ mV/mA → Ω 単位キャンセル, センサー結合度は打ち消される</div>
+        <div class="fp-sym">|Z| = ( |V|<sub>mVpp</sub> / |I|<sub>mVpp</sub> ) × Z₀</div>
+        <div class="fp-sub">　= ( ${fv(V,4)} mVpp / ${fv(I,4)} mVpp ) × 50 Ω</div>
+        <div class="fp-sub" style="color:#94a3b8;font-size:11px">　※ I出力はZ₀スケーリング済み電圧。結合度は打ち消される</div>
         <div class="fp-result">= ${fv(zmag,4)} Ω</div>`;
     }
   },
@@ -1120,7 +1120,7 @@ const formulaConfigs = {
     inputIds: ['m2_v', 'm2_i', 'm2_theta'],
     buildHTML() {
       const V = get('m2_v'), I = get('m2_i'), th = get('m2_theta');
-      const zmag = V / I, zr = zmag * Math.cos(deg2rad(th));
+      const zmag = V / I * Z0, zr = zmag * Math.cos(deg2rad(th));
       return `<div class="fp-title">計算式 — Z 実部 R</div>
         <div class="fp-sym">|Z| = |V| / |I| = ${fv(zmag,4)} Ω</div>
         <div class="fp-sym" style="margin-top:8px">R = |Z| × cos( 位相差θ )</div>
@@ -1132,7 +1132,7 @@ const formulaConfigs = {
     inputIds: ['m2_v', 'm2_i', 'm2_theta'],
     buildHTML() {
       const V = get('m2_v'), I = get('m2_i'), th = get('m2_theta');
-      const zmag = V / I, zx = zmag * Math.sin(deg2rad(th));
+      const zmag = V / I * Z0, zx = zmag * Math.sin(deg2rad(th));
       return `<div class="fp-title">計算式 — Z 虚部 X</div>
         <div class="fp-sym">|Z| = |V| / |I| = ${fv(zmag,4)} Ω</div>
         <div class="fp-sym" style="margin-top:8px">X = |Z| × sin( 位相差θ )</div>
@@ -1156,12 +1156,12 @@ const formulaConfigs = {
     buildHTML() {
       const V = get('m2_v'), I = get('m2_i'), th = get('m2_theta'), cc = get('m2_cc');
       const scale = Math.pow(10, cc/20);
-      const V_act = V/2/1000 * scale, I_act = I/2/1000 * scale;
+      const V_act = V/2/1000 * scale, I_act = (I/Z0)/2/1000 * scale;
       const pabs = 0.5 * V_act * I_act * Math.cos(deg2rad(th));
       return `<div class="fp-title">計算式 — ロードパワー</div>
         <div class="fp-sym">スケール = 10<sup>結合度/20</sup> = ${fv(scale,4)}</div>
         <div class="fp-sub">　V<sub>実</sub> = ${fv(V,1)} mVpp ÷ 2 ÷ 1000 × ${fv(scale,4)} = ${fv(V_act,6)} V<sub>peak</sub></div>
-        <div class="fp-sub">　I<sub>実</sub> = ${fv(I,1)} mApp ÷ 2 ÷ 1000 × ${fv(scale,4)} = ${fv(I_act,6)} A<sub>peak</sub></div>
+        <div class="fp-sub">　I<sub>実</sub> = ${fv(I,1)} mVpp ÷ Z₀ ÷ 2 ÷ 1000 × ${fv(scale,4)} = ${fv(I_act,6)} A<sub>peak</sub></div>
         <div class="fp-sym" style="margin-top:8px">P = ½ × V<sub>実</sub> × I<sub>実</sub> × cos( θ )</div>
         <div class="fp-sub">　= ½ × ${fv(V_act,6)} × ${fv(I_act,6)} × cos( ${fv(th,1)}° )</div>
         <div class="fp-result">= ${fv(pabs,4)} W</div>`;
@@ -1172,7 +1172,7 @@ const formulaConfigs = {
     buildHTML() {
       const V = get('m2_v'), I = get('m2_i'), cc = get('m2_cc');
       const scale = Math.pow(10, cc/20);
-      const V_act = V/2/1000*scale, I_act = I/2/1000*scale;
+      const V_act = V/2/1000*scale, I_act = (I/Z0)/2/1000*scale;
       const papp = 0.5 * V_act * I_act;
       return `<div class="fp-title">計算式 — 皮相電力</div>
         <div class="fp-sym">S = ½ × V<sub>実peak</sub> × I<sub>実peak</sub></div>
@@ -1196,7 +1196,7 @@ const formulaConfigs = {
     inputIds: ['m2_v', 'm2_i', 'm2_theta'],
     buildHTML() {
       const V = get('m2_v'), I = get('m2_i'), th = get('m2_theta');
-      const zmag = V/I, zr = zmag*Math.cos(deg2rad(th)), zx = zmag*Math.sin(deg2rad(th));
+      const zmag = V/I*Z0, zr = zmag*Math.cos(deg2rad(th)), zx = zmag*Math.sin(deg2rad(th));
       const Zc = {r:zr,i:zx}, Z0c = {r:Z0,i:0};
       const gam = cDiv(cSub(Zc,Z0c), cAdd(Zc,Z0c));
       const gmag = cMag(gam);
@@ -1212,7 +1212,7 @@ const formulaConfigs = {
     inputIds: ['m2_v', 'm2_i', 'm2_theta'],
     buildHTML() {
       const V = get('m2_v'), I = get('m2_i'), th = get('m2_theta');
-      const zmag = V/I, zr = zmag*Math.cos(deg2rad(th)), zx = zmag*Math.sin(deg2rad(th));
+      const zmag = V/I*Z0, zr = zmag*Math.cos(deg2rad(th)), zx = zmag*Math.sin(deg2rad(th));
       const Zc = {r:zr,i:zx}, Z0c = {r:Z0,i:0};
       const gam = cDiv(cSub(Zc,Z0c), cAdd(Zc,Z0c));
       const garg = cArg(gam);
@@ -1227,7 +1227,7 @@ const formulaConfigs = {
     inputIds: ['m2_v', 'm2_i', 'm2_theta'],
     buildHTML() {
       const V = get('m2_v'), I = get('m2_i'), th = get('m2_theta');
-      const zmag = V/I, zr = zmag*Math.cos(deg2rad(th)), zx = zmag*Math.sin(deg2rad(th));
+      const zmag = V/I*Z0, zr = zmag*Math.cos(deg2rad(th)), zx = zmag*Math.sin(deg2rad(th));
       const Zc = {r:zr,i:zx}, Z0c = {r:Z0,i:0};
       const gam = cDiv(cSub(Zc,Z0c), cAdd(Zc,Z0c));
       const gmag = cMag(gam);
@@ -1243,7 +1243,7 @@ const formulaConfigs = {
     inputIds: ['m2_v', 'm2_i', 'm2_theta'],
     buildHTML() {
       const V = get('m2_v'), I = get('m2_i'), th = get('m2_theta');
-      const zmag = V/I, zr = zmag*Math.cos(deg2rad(th)), zx = zmag*Math.sin(deg2rad(th));
+      const zmag = V/I*Z0, zr = zmag*Math.cos(deg2rad(th)), zx = zmag*Math.sin(deg2rad(th));
       const Zc = {r:zr,i:zx}, Z0c = {r:Z0,i:0};
       const gam = cDiv(cSub(Zc,Z0c), cAdd(Zc,Z0c));
       const gmag = cMag(gam);
@@ -1739,11 +1739,11 @@ function drawChart1() {
 // ============================================================
 function calc_m2() {
   const V_mV = get('m2_v');      // センサー出力 mV peak-to-peak (Vpp)
-  const I_mA = get('m2_i');      // センサー出力 mA peak-to-peak (Ipp)
+  const I_mV = get('m2_i');      // センサー出力 mV peak-to-peak (Ipp) ← I出力は電圧
   const theta_deg = get('m2_theta');
   const cc = get('m2_cc');       // 結合度 dB（正の値）
   const ids = ['m2_pfwd','m2_pref','m2_pabs','m2_papp','m2_pf','m2_zr','m2_zx','m2_zmag','m2_zarg','m2_gmag','m2_garg','m2_vswr','m2_rl'];
-  if (isNaN(V_mV)||isNaN(I_mA)||isNaN(theta_deg)||isNaN(cc)||V_mV<=0||I_mA<=0) {
+  if (isNaN(V_mV)||isNaN(I_mV)||isNaN(theta_deg)||isNaN(cc)||V_mV<=0||I_mV<=0) {
     ids.forEach(id=>set(id,'—'));
     setMatchBadge(NaN, 'm2_match_badge');
     const _rc = document.getElementById('m2_pref_card');
@@ -1753,8 +1753,8 @@ function calc_m2() {
     return;
   }
   const theta  = deg2rad(theta_deg);
-  const V_V    = V_mV / 2 / 1000;  // Vpp → peak
-  const I_A    = I_mA / 2 / 1000;  // Ipp → peak
+  const V_V    = V_mV / 2 / 1000;        // Vpp → peak [V]
+  const I_A    = (I_mV / Z0) / 2 / 1000; // Ipp mV → mA → A peak
   const scale  = Math.pow(10, cc / 20);  // 電圧スケール（結合度補正）
   const V_act  = V_V * scale;            // 実際の負荷電圧 peak
   const I_act  = I_A * scale;            // 実際の負荷電流 peak
@@ -1772,8 +1772,8 @@ function calc_m2() {
   const pfwd = (vfwd_re*vfwd_re + vfwd_im*vfwd_im) / (8 * Z0);
   const pref = (vref_re*vref_re + vref_im*vref_im) / (8 * Z0);
 
-  // インピーダンス（結合度はキャンセル: mV/mA = Ω）
-  const zmag = V_mV / I_mA;
+  // インピーダンス（結合度はキャンセル: (mV/mV)×Z₀ = Ω）
+  const zmag = (V_mV / I_mV) * Z0;
   const zr   = zmag * Math.cos(theta);
   const zx   = zmag * Math.sin(theta);
 
@@ -1820,7 +1820,7 @@ function calc_m2() {
 
   drawSmithChart({gr: gam.r, gi: gam.i, zr, zx});
   drawWaveform_m2();
-  saveLog('VIセンサー2', `|V|=${V_mV}mV, |I|=${I_mA}mA, θ=${theta_deg}°, CC=${cc}dB`, `ロードパワー=${fmt(pabs)}W, Z=${fmt(zr)}+j${fmt(zx)}Ω, |Γ|=${fmt(gmag)}`);
+  saveLog('VIセンサー2', `|V|=${V_mV}mV, |I|=${I_mV}mV, θ=${theta_deg}°, CC=${cc}dB`, `ロードパワー=${fmt(pabs)}W, Z=${fmt(zr)}+j${fmt(zx)}Ω, |Γ|=${fmt(gmag)}`);
 }
 
 // 進行波入力から calc_m2 が呼ばれている間は pfwd_in を上書きしない
@@ -1831,10 +1831,10 @@ function calc_m2_from_pfwd() {
   let newPfwd = get('m2_pfwd_in');
   if (isNaN(newPfwd) || newPfwd < 1) { newPfwd = 1; document.getElementById('m2_pfwd_in').value = 1; }
   if (newPfwd > 5000) { newPfwd = 5000; document.getElementById('m2_pfwd_in').value = 5000; }
-  const V_mV = get('m2_v'), I_mA = get('m2_i'), theta_deg = get('m2_theta'), cc = get('m2_cc');
-  if (isNaN(V_mV) || V_mV <= 0 || isNaN(I_mA) || I_mA <= 0) return;
+  const V_mV = get('m2_v'), I_mV = get('m2_i'), theta_deg = get('m2_theta'), cc = get('m2_cc');
+  if (isNaN(V_mV) || V_mV <= 0 || isNaN(I_mV) || I_mV <= 0) return;
   const scale = Math.pow(10, cc / 20);
-  const zmag  = V_mV / I_mA;                   // Z比率は保持 (mV/mA = Ω)
+  const zmag  = (V_mV / I_mV) * Z0;            // Z比率は保持 ((mV/mV)×Z₀ = Ω)
   const th    = theta_deg * Math.PI / 180;
   const a     = zmag + Z0 * Math.cos(th), b = Z0 * Math.sin(th);
   const denom = a * a + b * b;
@@ -1842,7 +1842,7 @@ function calc_m2_from_pfwd() {
   const I_act = Math.sqrt(newPfwd * 8 * Z0 / denom);
   const V_act = zmag * I_act;
   document.getElementById('m2_v').value = (V_act / scale * 2000).toFixed(1);
-  document.getElementById('m2_i').value = (I_act / scale * 2000).toFixed(2);
+  document.getElementById('m2_i').value = (I_act / scale * 2000 * Z0).toFixed(1);
   _m2PfwdSrc = true;
   calc_m2();
   _m2PfwdSrc = false;
@@ -2022,15 +2022,14 @@ function drawWaveform_m2() {
   if (!cv) return;
 
   const V_mV      = get('m2_v')     || 0;   // センサー出力 mV pp
-  const I_mA      = get('m2_i')     || 0;   // センサー出力 mA pp
+  const I_mV      = get('m2_i')     || 0;   // センサー出力 mV pp (I出力は電圧)
   const theta_deg = get('m2_theta') || 0;   // V−I 位相差 [°]
   const freq_MHz  = parseFloat(document.getElementById('m2_freq')?.value) || _m2FreqBase;
 
-  // I出力を電圧に換算: I_mV_equiv = I_mA × Z₀(50Ω)
   // 整合時(Z=50Ω)にV出力とI出力電圧が一致する
   const Z0 = 50;
-  const V_amp  = V_mV / 2;               // peak [mV]
-  const I_amp  = (I_mA / 2) * Z0;        // peak [mV equiv]
+  const V_amp  = V_mV / 2;   // peak [mV]
+  const I_amp  = I_mV / 2;   // peak [mV]
   const maxAmp = Math.max(V_amp, I_amp, 1e-9);
 
   const dpr = window.devicePixelRatio || 1;
@@ -2101,10 +2100,9 @@ function drawWaveform_m2() {
   ctx.fillText(`V: ${V_mV.toFixed(0)} mV pp`, PAD_L + 16, ly + 1);
 
   // I legend
-  const I_mV_equiv = (I_mA * Z0).toFixed(0);
   ctx.fillStyle = '#ff6b35';
   ctx.fillRect(PAD_L + 84, ly - 3, 12, 2);
-  ctx.fillText(`I: ${I_mV_equiv} mV pp`, PAD_L + 100, ly + 1);
+  ctx.fillText(`I: ${I_mV.toFixed(0)} mV pp`, PAD_L + 100, ly + 1);
 
   // Freq label (top right)
   ctx.fillStyle = 'rgba(255,255,255,0.35)';
@@ -2834,7 +2832,7 @@ function smithClickHandler(canvasEl, calcFn, vId, iId, thetaId, vUnit, ccId, pfw
         const I_act = Math.sqrt(pfwd * 8 * Z0 / denom2);
         const V_act = zmag * I_act;
         document.getElementById(vId).value = (V_act / scale * 2 * 1000).toFixed(1);
-        document.getElementById(iId).value = (I_act / scale * 2 * 1000).toFixed(2);
+        document.getElementById(iId).value = (I_act / scale * 2 * 1000 * Z0).toFixed(1);
       }
     } else {
       const V = get(vId);
