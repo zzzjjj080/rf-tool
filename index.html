@@ -637,58 +637,62 @@
 <div id="mod4" class="tab-panel">
   <div class="card">
     <h2>電力単位換算</h2>
-    <div class="info-box">1つの欄に値を入力すると残り2つを自動計算します。</div>
-    <div class="grid">
-      <div>
-        <div class="form-group">
-          <label>電力 [W]</label>
-          <input type="number" id="m4_w" step="100" value="3000" min="0" oninput="calc_m4('w')">
+    <div class="info-box">いずれかのカードに直接値を入力すると残りを自動計算します。<span style="opacity:0.6;font-size:11px;margin-left:6px">🔍 クリックで計算式を表示</span></div>
+
+    <!-- 上段: 入力カード (W / dBm / dBW) -->
+    <div class="result-grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="result-item" style="border:2px solid #2563eb;background:#eff6ff;cursor:default">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="label" style="font-size:12px;font-weight:700;color:#2563eb;letter-spacing:0;text-transform:none">W</div>
+          <span onclick="m4ToggleFormula('w')" title="計算式を表示" style="font-size:10px;opacity:0.4;cursor:pointer;user-select:none" id="m4_fi_w">🔍</span>
         </div>
-        <div class="form-group">
-          <label>電力 [<span class="notx">dBm</span>]</label>
-          <input type="number" id="m4_dbm" step="any" oninput="calc_m4('dbm')">
-        </div>
-        <div class="form-group">
-          <label>電力 [<span class="notx">dBW</span>]</label>
-          <input type="number" id="m4_dbw" step="any" oninput="calc_m4('dbw')">
-        </div>
-        <button class="btn btn-secondary btn-sm" onclick="clearMod4()">クリア</button>
+        <input type="number" id="m4_w" step="any" min="0" value="100" placeholder="—" oninput="calc_m4('w')"
+          style="width:100%;border:none;background:transparent;font-size:22px;font-weight:700;color:#2563eb;text-align:center;outline:none;padding:4px 0;margin:2px 0;box-sizing:border-box">
+        <div class="unit">W</div>
       </div>
-      <div>
-        <div class="result-grid">
-          <div class="result-item highlight">
-            <div class="label">W</div>
-            <div class="value" id="m4_r_w">—</div>
-            <div class="unit">W</div>
-          </div>
-          <div class="result-item highlight">
-            <div class="label"><span class="notx">dBm</span></div>
-            <div class="value" id="m4_r_dbm">—</div>
-            <div class="unit"><span class="notx">dBm</span></div>
-          </div>
-          <div class="result-item highlight">
-            <div class="label"><span class="notx">dBW</span></div>
-            <div class="value" id="m4_r_dbw">—</div>
-            <div class="unit"><span class="notx">dBW</span></div>
-          </div>
-          <div class="result-item">
-            <div class="label"><span class="notx">Vrms</span>（50Ω）</div>
-            <div class="value" id="m4_vrms">—</div>
-            <div class="unit"><span class="notx">Vrms</span></div>
-          </div>
-          <div class="result-item">
-            <div class="label"><span class="notx">Vpp</span>（50Ω）</div>
-            <div class="value" id="m4_vpp">—</div>
-            <div class="unit"><span class="notx">Vpp</span></div>
-          </div>
-          <div class="result-item">
-            <div class="label">電流 <span class="notx">Irms</span>（50Ω）</div>
-            <div class="value" id="m4_irms">—</div>
-            <div class="unit"><span class="notx">Irms</span></div>
-          </div>
+      <div class="result-item" style="border:2px solid #ea580c;background:#fff7ed;cursor:default">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="label" style="font-size:12px;font-weight:700;color:#ea580c;letter-spacing:0;text-transform:none"><span class="notx">dBm</span></div>
+          <span onclick="m4ToggleFormula('dbm')" title="計算式を表示" style="font-size:10px;opacity:0.4;cursor:pointer;user-select:none" id="m4_fi_dbm">🔍</span>
         </div>
+        <input type="number" id="m4_dbm" step="any" placeholder="—" oninput="calc_m4('dbm')"
+          style="width:100%;border:none;background:transparent;font-size:22px;font-weight:700;color:#ea580c;text-align:center;outline:none;padding:4px 0;margin:2px 0;box-sizing:border-box">
+        <div class="unit"><span class="notx">dBm</span></div>
+      </div>
+      <div class="result-item" style="border:2px solid #16a34a;background:#f0fdf4;cursor:default">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="label" style="font-size:12px;font-weight:700;color:#16a34a;letter-spacing:0;text-transform:none"><span class="notx">dBW</span></div>
+          <span onclick="m4ToggleFormula('dbw')" title="計算式を表示" style="font-size:10px;opacity:0.4;cursor:pointer;user-select:none" id="m4_fi_dbw">🔍</span>
+        </div>
+        <input type="number" id="m4_dbw" step="any" placeholder="—" oninput="calc_m4('dbw')"
+          style="width:100%;border:none;background:transparent;font-size:22px;font-weight:700;color:#16a34a;text-align:center;outline:none;padding:4px 0;margin:2px 0;box-sizing:border-box">
+        <div class="unit"><span class="notx">dBW</span></div>
       </div>
     </div>
+
+    <!-- 下段: 計算結果カード (Vrms / Vpp / Irms) -->
+    <div class="result-grid" style="grid-template-columns:repeat(3,1fr);margin-top:8px">
+      <div class="result-item">
+        <div class="label"><span class="notx">Vrms</span>（50Ω）</div>
+        <div class="value" id="m4_vrms">—</div>
+        <div class="unit"><span class="notx">Vrms</span></div>
+      </div>
+      <div class="result-item">
+        <div class="label"><span class="notx">Vpp</span>（50Ω）</div>
+        <div class="value" id="m4_vpp">—</div>
+        <div class="unit"><span class="notx">Vpp</span></div>
+      </div>
+      <div class="result-item">
+        <div class="label">電流 <span class="notx">Irms</span>（50Ω）</div>
+        <div class="value" id="m4_irms">—</div>
+        <div class="unit"><span class="notx">Irms</span></div>
+      </div>
+    </div>
+
+    <!-- 計算過程パネル -->
+    <div id="m4_formula_panel" style="display:none;margin-top:10px;background:#f8fafc;border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:12px;font-family:monospace;line-height:1.9;color:#374151"></div>
+
+    <button class="btn btn-secondary btn-sm" onclick="clearMod4()" style="margin-top:10px">クリア</button>
     <canvas id="chart4" width="900" height="160" style="margin-top:12px;border:1px solid var(--border);border-radius:4px;background:#fff;width:100%;display:block;cursor:crosshair" title="クリックで値を設定"></canvas>
 
     <!-- dB 基礎早見表 -->
@@ -2129,16 +2133,20 @@ function calc_m3s() {
 // MODULE 4: Power Conversion
 // ============================================================
 let m4_updating = false;
+let m4_formula_src = null; // 現在表示中の計算式のsrc
 function calc_m4(src) {
   if (m4_updating) return;
   m4_updating = true;
   let w = NaN;
-  if (src === 'w') w = get('m4_w');
-  else if (src === 'dbm') w = Math.pow(10, (get('m4_dbm') - 30) / 10);
-  else if (src === 'dbw') w = Math.pow(10, get('m4_dbw') / 10);
+  const srcVal = src === 'w' ? get('m4_w') : src === 'dbm' ? get('m4_dbm') : get('m4_dbw');
+  if (src === 'w') w = srcVal;
+  else if (src === 'dbm') w = Math.pow(10, (srcVal - 30) / 10);
+  else if (src === 'dbw') w = Math.pow(10, srcVal / 10);
 
+  const panel = document.getElementById('m4_formula_panel');
   if (isNaN(w) || w <= 0) {
-    ['m4_r_w','m4_r_dbm','m4_r_dbw','m4_vrms','m4_vpp','m4_irms'].forEach(id=>set(id,'—'));
+    ['m4_vrms','m4_vpp','m4_irms'].forEach(id=>set(id,'—'));
+    if (panel) panel.style.display = 'none';
     m4_updating = false; return;
   }
   const dbw = 10*Math.log10(w);
@@ -2146,9 +2154,6 @@ function calc_m4(src) {
   const vrms = Math.sqrt(w * Z0);
   const vpp = vrms * 2 * Math.SQRT2;
   const irms = vrms / Z0;
-  set('m4_r_w', fmt(w, 3));
-  set('m4_r_dbm', fmt(dbm));
-  set('m4_r_dbw', fmt(dbw));
   set('m4_vrms', fmt(vrms));
   set('m4_vpp', fmt(vpp));
   set('m4_irms', fmt(irms));
@@ -2156,13 +2161,95 @@ function calc_m4(src) {
   if (src !== 'w') document.getElementById('m4_w').value = fmt(w, 4);
   if (src !== 'dbm') document.getElementById('m4_dbm').value = fmt(dbm);
   if (src !== 'dbw') document.getElementById('m4_dbw').value = fmt(dbw);
-  saveLog('換算4', `${src}=${get('m4_'+src)}`, `W=${fmt(w,3)}, dBm=${fmt(dbm)}, dBW=${fmt(dbw)}`);
+
+  // 計算過程パネル更新（表示中のときのみ）
+  if (panel && panel.style.display !== 'none') {
+    m4_renderFormula(src, srcVal, w, dbm, dbw, vrms, vpp, irms);
+  }
+
+  saveLog('換算4', `${src}=${srcVal}`, `W=${fmt(w,3)}, dBm=${fmt(dbm)}, dBW=${fmt(dbw)}`);
   m4_updating = false;
   drawChart4();
 }
+function m4_renderFormula(src, srcVal, w, dbm, dbw, vrms, vpp, irms) {
+  const panel = document.getElementById('m4_formula_panel');
+  if (!panel) return;
+  const fv = (v, d) => fmt(v, d || 4);
+  let rows;
+  if (src === 'w') {
+    rows = [
+      `<span style="color:#2563eb;font-weight:700">入力: ${fv(srcVal)} W</span>`,
+      `<span style="color:#888">─────────────────────────────────────</span>`,
+      `<span style="color:#374151">dBW  = 10 × log₁₀(<span style="color:#2563eb">${fv(srcVal)}</span>)</span>`,
+      `<span style="color:#16a34a;font-weight:700">     = ${fv(dbw)} dBW</span>`,
+      `<span style="color:#374151">dBm  = dBW + 30 = ${fv(dbw)} + 30</span>`,
+      `<span style="color:#ea580c;font-weight:700">     = ${fv(dbm)} dBm</span>`,
+      `<span style="color:#374151">Vrms = √(<span style="color:#2563eb">${fv(srcVal)}</span> × 50)</span>`,
+      `<span style="color:#0369a1;font-weight:700">     = ${fv(vrms)} Vrms</span>`,
+      `<span style="color:#374151">Vpp  = Vrms × 2√2 = ${fv(vrms)} × 2.828</span>`,
+      `<span style="color:#7c3aed;font-weight:700">     = ${fv(vpp)} Vpp</span>`,
+      `<span style="color:#374151">Irms = Vrms / 50 = ${fv(vrms)} / 50</span>`,
+      `<span style="color:#0891b2;font-weight:700">     = ${fv(irms)} Irms</span>`,
+    ];
+  } else if (src === 'dbm') {
+    rows = [
+      `<span style="color:#ea580c;font-weight:700">入力: ${fv(srcVal)} dBm</span>`,
+      `<span style="color:#888">─────────────────────────────────────</span>`,
+      `<span style="color:#374151">W    = 10^((<span style="color:#ea580c">${fv(srcVal)}</span> − 30) / 10)</span>`,
+      `<span style="color:#2563eb;font-weight:700">     = ${fv(w)} W</span>`,
+      `<span style="color:#374151">dBW  = dBm − 30 = <span style="color:#ea580c">${fv(srcVal)}</span> − 30</span>`,
+      `<span style="color:#16a34a;font-weight:700">     = ${fv(dbw)} dBW</span>`,
+      `<span style="color:#374151">Vrms = √(${fv(w)} × 50)</span>`,
+      `<span style="color:#0369a1;font-weight:700">     = ${fv(vrms)} Vrms</span>`,
+      `<span style="color:#374151">Vpp  = Vrms × 2√2 = ${fv(vrms)} × 2.828</span>`,
+      `<span style="color:#7c3aed;font-weight:700">     = ${fv(vpp)} Vpp</span>`,
+      `<span style="color:#374151">Irms = Vrms / 50 = ${fv(vrms)} / 50</span>`,
+      `<span style="color:#0891b2;font-weight:700">     = ${fv(irms)} Irms</span>`,
+    ];
+  } else {
+    rows = [
+      `<span style="color:#16a34a;font-weight:700">入力: ${fv(srcVal)} dBW</span>`,
+      `<span style="color:#888">─────────────────────────────────────</span>`,
+      `<span style="color:#374151">W    = 10^(<span style="color:#16a34a">${fv(srcVal)}</span> / 10)</span>`,
+      `<span style="color:#2563eb;font-weight:700">     = ${fv(w)} W</span>`,
+      `<span style="color:#374151">dBm  = dBW + 30 = <span style="color:#16a34a">${fv(srcVal)}</span> + 30</span>`,
+      `<span style="color:#ea580c;font-weight:700">     = ${fv(dbm)} dBm</span>`,
+      `<span style="color:#374151">Vrms = √(${fv(w)} × 50)</span>`,
+      `<span style="color:#0369a1;font-weight:700">     = ${fv(vrms)} Vrms</span>`,
+      `<span style="color:#374151">Vpp  = Vrms × 2√2 = ${fv(vrms)} × 2.828</span>`,
+      `<span style="color:#7c3aed;font-weight:700">     = ${fv(vpp)} Vpp</span>`,
+      `<span style="color:#374151">Irms = Vrms / 50 = ${fv(vrms)} / 50</span>`,
+      `<span style="color:#0891b2;font-weight:700">     = ${fv(irms)} Irms</span>`,
+    ];
+  }
+  panel.innerHTML = rows.join('<br>');
+}
+function m4ToggleFormula(src) {
+  const panel = document.getElementById('m4_formula_panel');
+  if (!panel) return;
+  const w = get('m4_w');
+  if (isNaN(w) || w <= 0) return;
+  if (panel.style.display !== 'none' && m4_formula_src === src) {
+    panel.style.display = 'none';
+    m4_formula_src = null;
+    return;
+  }
+  const dbw = 10*Math.log10(w);
+  const dbm = dbw + 30;
+  const vrms = Math.sqrt(w * Z0);
+  const vpp = vrms * 2 * Math.SQRT2;
+  const irms = vrms / Z0;
+  const srcVal = src === 'w' ? w : src === 'dbm' ? dbm : dbw;
+  m4_renderFormula(src, srcVal, w, dbm, dbw, vrms, vpp, irms);
+  panel.style.display = 'block';
+  m4_formula_src = src;
+}
 function clearMod4() {
-  ['m4_w','m4_dbm','m4_dbw'].forEach(id => document.getElementById(id).value = '');
-  ['m4_r_w','m4_r_dbm','m4_r_dbw','m4_vrms','m4_vpp','m4_irms'].forEach(id=>set(id,'—'));
+  ['m4_w','m4_dbm','m4_dbw'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  ['m4_vrms','m4_vpp','m4_irms'].forEach(id=>set(id,'—'));
+  const panel = document.getElementById('m4_formula_panel');
+  if (panel) panel.style.display = 'none';
+  m4_formula_src = null;
 }
 
 // ============================================================
