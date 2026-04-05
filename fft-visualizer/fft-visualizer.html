@@ -126,7 +126,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
 </style>
 </head>
 <body>
-<h1>FFT Winding Visualizer <button class="btn" id="thbtn" onclick="toggleTheme()" style="font-size:11px;padding:5px 12px;text-transform:none;letter-spacing:0">🌙 ダーク</button></h1>
+<script>var RF_ACTIVE_TAB = 'fft';</script>
+<script src="../nav.js"></script>
+<h1>FFT Winding Visualizer</h1>
 <div class="intro">
   <b>このツールで分かること</b>：
   複数の正弦波が重なった合成信号を FFT（高速フーリエ変換）にかけると、
@@ -548,7 +550,7 @@ function drawP(){
 }
 function toggleTheme(){
   document.body.classList.toggle('dark');
-  document.getElementById('thbtn').textContent=isDark()?'☀ ライト':'🌙 ダーク';
+  const tb=document.getElementById('thbtn'); if(tb) tb.textContent=isDark()?'☀ ライト':'🌙 ダーク';
   drawComp();
   if(sp.length||ph!=='idle')drawW(fw,N);
   drawSp();drawP();

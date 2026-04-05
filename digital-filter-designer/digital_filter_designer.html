@@ -116,13 +116,13 @@ footer a:hover{text-decoration:underline}
 </style>
 </head>
 <body>
+<script>var RF_ACTIVE_TAB = 'filter';</script>
+<script src="../nav.js"></script>
 <div class="container">
   <header>
-    <a href="../index.html" class="back-link">← RF ツールに戻る</a>
     <div class="header-tag">RF-TOOL / DSP</div>
     <h1>デジタルフィルター設計ツール</h1>
     <div class="subtitle">LPF / HPF / BPF — 周波数特性・インパルス応答・リアルタイム可視化</div>
-    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">DARK</button>
   </header>
 
   <!-- ① デジタルフィルターとは -->
@@ -458,7 +458,7 @@ function toggleTheme() {
   const html = document.documentElement;
   const dark = html.getAttribute('data-theme') === 'dark';
   html.setAttribute('data-theme', dark ? 'light' : 'dark');
-  document.getElementById('themeBtn').textContent = dark ? 'DARK' : 'LIGHT';
+  const tb=document.getElementById('themeBtn'); if(tb) tb.textContent = dark ? 'DARK' : 'LIGHT';
   drawAll();
 }
 function getColors() {

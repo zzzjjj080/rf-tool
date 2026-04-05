@@ -171,13 +171,13 @@ body.dark .cap-spin-val { background: #0b1220; }
 </style>
 </head>
 <body>
+<script>var RF_ACTIVE_TAB = 'matching';</script>
+<script src="nav.js"></script>
 
 <header>
-  <a class="back-link" href="../index.html">← RF ツールに戻る</a>
   <div class="header-title">
     <h1>負荷変動シミュレーター</h1>
   </div>
-  <button id="dark-toggle" onclick="toggleDark()">🌙 ダーク</button>
 </header>
 
 <div class="container">
@@ -1147,7 +1147,7 @@ let isDark = false;
 function toggleDark() {
   isDark = !isDark;
   document.body.classList.toggle('dark', isDark);
-  svgEl('dark-toggle').textContent = isDark ? '☀️ ライト' : '🌙 ダーク';
+  const dtb=svgEl('dark-toggle'); if(dtb) dtb.textContent = isDark ? '☀️ ライト' : '🌙 ダーク';
   svgEl('svg-bg').setAttribute('fill', isDark ? '#1e2535' : 'white');
   svgEl('op-label').setAttribute('fill', isDark ? '#f0d080' : '#2d3748');
   document.querySelector('#smith-svg text:first-of-type').setAttribute('fill', isDark ? '#60a5fa' : '#1a6fa8');

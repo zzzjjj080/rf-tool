@@ -164,14 +164,14 @@ select{background:var(--panel2);border:1px solid var(--border);color:var(--text)
 </style>
 </head>
 <body>
+<script>var RF_ACTIVE_TAB = 'pa';</script>
+<script src="../nav.js"></script>
 <div class="container">
 
 <header>
-  <a href="../index.html" class="back-link">← RF ツールに戻る</a>
   <div class="header-tag">RF-TOOL / POWER AMPLIFIER</div>
   <h1>パワーアンプ シミュレーター</h1>
   <div class="subtitle">A級・D級・E級 アンプの動作原理と性能比較</div>
-  <button class="theme-toggle" onclick="toggleTheme()">DARK</button>
 </header>
 
 <!-- ① イントロ -->
@@ -413,7 +413,7 @@ function toggleTheme() {
   const h = document.documentElement;
   const d = h.getAttribute('data-theme') === 'dark';
   h.setAttribute('data-theme', d ? 'light' : 'dark');
-  document.querySelector('.theme-toggle').textContent = d ? 'DARK' : 'LIGHT';
+  const tb=document.querySelector('.theme-toggle'); if(tb) tb.textContent = d ? 'DARK' : 'LIGHT';
   drawAll();
 }
 

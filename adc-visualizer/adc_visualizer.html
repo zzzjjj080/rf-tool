@@ -208,6 +208,8 @@ footer a:hover{text-decoration:underline}
 </style>
 </head>
 <body>
+<script>var RF_ACTIVE_TAB = 'adc';</script>
+<script src="../nav.js"></script>
 <div id="cvTooltip"></div>
 
 <!-- Info Modal -->
@@ -223,11 +225,9 @@ footer a:hover{text-decoration:underline}
 
 <div class="container">
   <header>
-    <a href="../index.html" class="back-link">← RF ツールに戻る</a>
     <div class="header-tag">RF-TOOL / ADC</div>
     <h1>ADC Visualizer</h1>
     <div class="subtitle">アナログ入力 → サンプリング → 量子化 → デジタル出力</div>
-    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">DARK</button>
   </header>
 
   <section class="explain-section">
@@ -1288,7 +1288,7 @@ function toggleTheme(){
   const html=document.documentElement;
   const next=html.getAttribute('data-theme')==='light'?'dark':'light';
   html.setAttribute('data-theme',next);
-  document.getElementById('themeBtn').textContent=next==='dark'?'LIGHT':'DARK';
+  const tb=document.getElementById('themeBtn'); if(tb) tb.textContent=next==='dark'?'LIGHT':'DARK';
   draw();
 }
 

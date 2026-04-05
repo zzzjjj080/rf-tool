@@ -202,6 +202,8 @@ footer a:hover{text-decoration:underline}
 </style>
 </head>
 <body>
+<script>var RF_ACTIVE_TAB = 'pid';</script>
+<script src="../nav.js"></script>
 <div id="cv-tip"></div>
 
 <!-- Metric detail modal -->
@@ -221,11 +223,9 @@ footer a:hover{text-decoration:underline}
 <div class="container">
 
 <header>
-  <a href="../index.html" class="back-link">← RF ツールに戻る</a>
   <div class="header-tag">RF-TOOL / PID CONTROL</div>
   <h1>PID制御ビジュアライザー</h1>
   <div class="subtitle">高電力RF制御系の学習・パラメータ調整支援ツール</div>
-  <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()">🌙 ダーク</button>
 </header>
 
 <section class="explain-section">
@@ -1224,7 +1224,7 @@ function fmtSci(v) {
 function toggleTheme() {
   const dk = document.documentElement.getAttribute('data-theme') === 'dark';
   document.documentElement.setAttribute('data-theme', dk ? 'light' : 'dark');
-  document.getElementById('theme-btn').textContent = dk ? '🌙 ダーク' : '☀️ ライト';
+  const tb=document.getElementById('theme-btn'); if(tb) tb.textContent = dk ? '🌙 ダーク' : '☀️ ライト';
   localStorage.setItem('pid-theme', dk ? 'light' : 'dark');
   schedDraw();
 }
@@ -1243,7 +1243,7 @@ function loadState() {
   } catch(e) {}
   const theme = localStorage.getItem('pid-theme') || 'light';
   document.documentElement.setAttribute('data-theme', theme);
-  document.getElementById('theme-btn').textContent = theme === 'dark' ? '☀️ ライト' : '🌙 ダーク';
+  const tb2=document.getElementById('theme-btn'); if(tb2) tb2.textContent = theme === 'dark' ? '☀️ ライト' : '🌙 ダーク';
 }
 
 // ============================================================
