@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>マッチングネットワーク スミスチャート | RF計算ツール</title>
+<title>負荷変動シミュレーター | RF計算ツール</title>
 <style>
 :root {
   --primary: #1a6fa8;
@@ -173,8 +173,7 @@ body.dark .cap-spin-val { background: #0b1220; }
 <header>
   <a class="back-link" href="../index.html">← RF ツールに戻る</a>
   <div class="header-title">
-    <h1>マッチングネットワーク スミスチャート</h1>
-    <div class="subtitle" id="header-subtitle">[PA] ─ 同軸(50Ω) ─ C2(直列) ─┬─ C1(並列) ─┬─ ダミーロード(50Ω)</div>
+    <h1>負荷変動シミュレーター</h1>
   </div>
   <button id="dark-toggle" onclick="toggleDark()">🌙 ダーク</button>
 </header>
@@ -978,10 +977,6 @@ function update() {
   svgEl('disp-c2').textContent = c2short ? 'ショート' : fmtCap(c2pF);
   svgEl('sl-c1').disabled = c1open;
   svgEl('sl-c2').disabled = c2short;
-
-  svgEl('header-subtitle').textContent = topo === 'A'
-    ? '[PA] ─ 同軸(50Ω) ─ C2(直列) ─┬─ C1(並列) ─┬─ ダミーロード(50Ω)'
-    : '[PA] ─ 同軸(50Ω) ─┬─ C1(並列) ─┬─ C2(直列) ─ ダミーロード(50Ω)';
 
   drawCircuit(topo, freqMHz, cableM, vf, c1pF, c1open, c2pF, c2short);
 
