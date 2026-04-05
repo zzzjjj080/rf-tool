@@ -425,6 +425,22 @@
             <div class="unit">—</div>
           </div>
         </div>
+
+        <!-- 4段目: センサー出力最大値 (Z=0.5〜500Ω走査) -->
+        <div class="section-divider"></div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Z = 0.5〜500Ω を走査したときのセンサー出力ピーク</div>
+        <div class="result-grid" style="grid-template-columns:repeat(2,1fr)">
+          <div class="result-item secondary">
+            <div class="label">V出力 最大値<span class="tip" style="text-transform:none"><span class="tip-icon">?</span><span class="tip-box">【計算手順】Z = 0.5〜500Ω を対数等間隔で走査。各Zに対して：① |Γ| = |(Z−Z₀)/(Z+Z₀)| ② P_load = Pfwd×(1−|Γ|²) ③ V_load_peak = √(2×Z×P_load) ④ V_out_peak = V_load_peak / 10^(CC_V[dB]/20) ⑤ V_out[mVpp] = V_out_peak × 2000。全Zの中でV_out最大となるZとその値を表示。</span></span></div>
+            <div class="value" id="m2_vout_max">—</div>
+            <div class="unit" id="m2_vout_max_unit">mVpp</div>
+          </div>
+          <div class="result-item secondary">
+            <div class="label">I出力 最大値<span class="tip" style="text-transform:none"><span class="tip-icon">?</span><span class="tip-box">【計算手順】Z = 0.5〜500Ω を対数等間隔で走査。各Zに対して：① |Γ| = |(Z−Z₀)/(Z+Z₀)| ② P_load = Pfwd×(1−|Γ|²) ③ V_load_peak = √(2×Z×P_load) ④ I_load_peak = V_load_peak / Z ⑤ I_out_peak = I_load_peak / 10^(CC_I[dBΩ]/20)　※CC_I[dBΩ]=CC[dB]−20·log₁₀(Z₀) ⑥ I_out[mVpp] = I_out_peak × 2000。全Zの中でI_out最大となるZとその値を表示。</span></span></div>
+            <div class="value" id="m2_iout_max">—</div>
+            <div class="unit" id="m2_iout_max_unit">mVpp</div>
+          </div>
+        </div>
       </div>
 
       <!-- 右: スミスチャート + フェーザー図 -->
@@ -1742,9 +1758,11 @@ function calc_m2() {
   const I_mA = get('m2_i');      // センサー出力 mA peak-to-peak (Ipp)
   const theta_deg = get('m2_theta');
   const cc = get('m2_cc');       // 結合度 dB（正の値）
-  const ids = ['m2_pfwd','m2_pref','m2_pabs','m2_papp','m2_pf','m2_zr','m2_zx','m2_zmag','m2_zarg','m2_gmag','m2_garg','m2_vswr','m2_rl'];
+  const ids = ['m2_pfwd','m2_pref','m2_pabs','m2_papp','m2_pf','m2_zr','m2_zx','m2_zmag','m2_zarg','m2_gmag','m2_garg','m2_vswr','m2_rl','m2_vout_max','m2_iout_max'];
   if (isNaN(V_mV)||isNaN(I_mA)||isNaN(theta_deg)||isNaN(cc)||V_mV<=0||I_mA<=0) {
     ids.forEach(id=>set(id,'—'));
+    document.getElementById('m2_vout_max_unit').textContent = 'mVpp';
+    document.getElementById('m2_iout_max_unit').textContent = 'mVpp';
     setMatchBadge(NaN, 'm2_match_badge');
     const _rc = document.getElementById('m2_pref_card');
     const _rv = document.getElementById('m2_pref');
@@ -1817,6 +1835,27 @@ function calc_m2() {
   set('m2_vswr', isFinite(vswr) ? fmt(vswr) : '∞');
   set('m2_rl',   isFinite(rl)   ? fmt(rl)   : '∞');
   setMatchBadge(vswr, 'm2_match_badge');
+
+  // Z走査: 0.5〜500Ωでセンサー出力最大値を求める
+  const cc_dbo = cc - 20 * Math.log10(Z0);
+  const ccVscale = Math.pow(10, cc / 20);
+  const ccIscale = Math.pow(10, cc_dbo / 20);
+  let maxVout = 0, maxVoutZ = 0.5, maxIout = 0, maxIoutZ = 0.5;
+  for (let k = 0; k <= 500; k++) {
+    const Zk = 0.5 * Math.pow(1000, k / 500); // 対数等間隔 0.5→500Ω
+    const gamk = Math.abs((Zk - Z0) / (Zk + Z0));
+    const Pload = pfwd * (1 - gamk * gamk);
+    const Vp = Math.sqrt(2 * Zk * Pload);   // 負荷電圧 peak [V]
+    const Ip = Vp / Zk;                       // 負荷電流 peak [A]
+    const Vout = Vp / ccVscale;               // V出力 peak [V]
+    const Iout = Ip / ccIscale;               // I出力 peak [V] (Ω次元換算)
+    if (Vout > maxVout) { maxVout = Vout; maxVoutZ = Zk; }
+    if (Iout > maxIout) { maxIout = Iout; maxIoutZ = Zk; }
+  }
+  set('m2_vout_max', fmt(maxVout * 2000));
+  set('m2_iout_max', fmt(maxIout * 2000));
+  document.getElementById('m2_vout_max_unit').textContent = `mVpp (Z=${fmt(maxVoutZ)}Ω)`;
+  document.getElementById('m2_iout_max_unit').textContent = `mVpp (Z=${fmt(maxIoutZ)}Ω)`;
 
   drawSmithChart({gr: gam.r, gi: gam.i, zr, zx});
   drawWaveform_m2();
