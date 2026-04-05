@@ -35,26 +35,34 @@
     { id: 'matching', label: '⑭ 負荷変動 ↗',          href: baseUrl + 'matching/index.html', featured: true },
   ];
 
-  /* ── CSS ── */
+  /* ── CSS — index.html の header/.tab-btn と完全一致させる ── */
   const css = `
 #rf-nav {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans JP', sans-serif;
+  /* ページ固有フォントの影響を受けないよう明示的に指定 */
+  font-family: 'Segoe UI', sans-serif !important;
+  font-size: 14px !important;
+  line-height: 1.4;
   position: sticky; top: 0; z-index: 9999;
 }
 #rf-nav-header {
   background: #1a6fa8; color: #fff;
-  padding: 10px 20px; display: flex; align-items: center; gap: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  padding: 14px 24px;                  /* index.html と同値 */
+  display: flex; align-items: center; gap: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  box-sizing: border-box;
 }
 #rf-nav-title {
-  font-size: 18px; font-weight: 700; letter-spacing: 0.5px; flex: 1;
+  font-size: 20px !important;          /* index.html header h1 と同値 */
+  font-weight: 700; letter-spacing: 0.5px; flex: 1;
+  font-family: 'Segoe UI', sans-serif !important;
 }
 #rf-nav-dark {
-  padding: 5px 12px; border-radius: 16px;
+  padding: 6px 14px; border-radius: 16px;
   border: 1px solid rgba(255,255,255,0.35);
   background: rgba(255,255,255,0.1); color: #fff;
-  cursor: pointer; font-size: 11px; font-weight: 600;
-  transition: background 0.2s;
+  cursor: pointer; font-size: 11px !important; font-weight: 600;
+  font-family: 'Segoe UI', sans-serif !important;
+  transition: background 0.2s; white-space: nowrap;
 }
 #rf-nav-dark:hover { background: rgba(255,255,255,0.22); }
 #rf-nav-tabs {
@@ -62,26 +70,30 @@
   background: #145a8a; overflow-x: auto;
 }
 .rftab {
-  padding: 8px 14px; color: rgba(255,255,255,0.75);
+  padding: 8px 16px !important;        /* index.html .tab-btn と同値 */
+  color: rgba(255,255,255,0.75);
   border: none; background: none; cursor: pointer;
-  font-size: 11px; white-space: nowrap;
+  font-size: 11px !important;          /* index.html .tab-btn と同値 */
+  font-family: 'Segoe UI', sans-serif !important;
+  white-space: nowrap;
   border-bottom: 3px solid transparent;
-  transition: color 0.15s, background 0.15s;
+  transition: all 0.2s;
   text-decoration: none; display: inline-block;
+  box-sizing: border-box;
 }
-.rftab:hover { color: #fff; background: rgba(255,255,255,0.08); }
+.rftab:hover { color: #fff !important; background: rgba(255,255,255,0.08); }
 .rftab.rftab-active {
-  color: #fff; border-bottom-color: #e67e22;
+  color: #fff !important; border-bottom-color: #e67e22 !important;
   background: rgba(255,255,255,0.1);
 }
 .rftab.rftab-featured {
-  color: #fcd34d; background: rgba(251,191,36,0.12);
-  border-bottom-color: #f59e0b; font-weight: 700;
+  color: #fcd34d !important; background: rgba(251,191,36,0.12);
+  border-bottom-color: #f59e0b !important; font-weight: 700 !important;
 }
-.rftab.rftab-featured:hover { background: rgba(251,191,36,0.22); color: #fde68a; }
+.rftab.rftab-featured:hover { background: rgba(251,191,36,0.22); color: #fde68a !important; }
 .rftab.rftab-featured.rftab-active {
-  color: #fff; font-weight: 700;
-  background: rgba(255,255,255,0.1); border-bottom-color: #e67e22;
+  color: #fff !important; font-weight: 700 !important;
+  background: rgba(255,255,255,0.1); border-bottom-color: #e67e22 !important;
 }
 `;
 
