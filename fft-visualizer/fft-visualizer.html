@@ -151,8 +151,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
     </div>
     <div class="spd-row">
       <span>速度</span>
-      <input type="range" id="sls" min="1" max="5" value="1" oninput="updS()">
-      <span id="sv">×0.1</span>
+      <input type="range" id="sls" min="1" max="5" value="3" oninput="updS()">
+      <span id="sv">×0.5</span>
     </div>
     <div class="prog-wrap"><div id="pg"></div></div>
     <div class="status" id="st">待機中</div>
@@ -233,7 +233,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
 <script>
 const CLR=['#1D9E75','#D85A30','#7c6fcd'];
 const N=240,T=2,FM=13,STEP=0.04;
-const SVM=[0.1,0.2,0.3,0.4,0.5],SLB=['×0.1','×0.2','×0.3','×0.4','×0.5'];
+const SVM=[0.1,0.25,0.5,0.75,1.0],SLB=['×0.1','×0.25','×0.5','×0.75','×1.0'];
 let SG=[{A:1,f:2,en:true},{A:.6,f:5,en:false},{A:.4,f:8,en:false}];
 let sig=[],sigDisp=[],sigMin=0,sigMax=0,sigMinIdx=0,sp=[],spMax=0.001,spHoverX=null,ph='idle',fw=0,raf=null,compressT=0,compressRaf=null,dropLine=null,dropRaf=null;
 const dpr=()=>window.devicePixelRatio||1;
