@@ -329,7 +329,7 @@
           </div>
           <div class="form-group">
             <label>結合度 [<span class="notx">dB</span>]<span class="tip"><span class="tip-icon">i</span><span class="tip-box">方向性結合器が分岐する信号の割合。正の値で入力（例: 50 → −50dB）。範囲: 0〜70、高電力RF系では50〜60が多い</span></span></label>
-            <input type="number" id="m2_cc" step="1" value="63" min="1" max="100" oninput="calc_m2()">
+            <input type="number" id="m2_cc" step="1" value="63" min="1" max="100" oninput="calc_m2('cc')">
           </div>
           <div class="form-group">
             <label>結合度 [<span class="notx">dBΩ</span>]<span class="tip"><span class="tip-icon">i</span><span class="tip-box">【導出ステップ】① VIセンサーのI出力は電流→電圧変換（トランスインピーダンス）。結合度をΩ次元で表したのが dBΩ。② 変換式: dBΩ = CC[dB] − 20·log₁₀(Z₀)。③ 初期値の計算: CC=63dB, Z₀=50Ω → 20·log₁₀(50)=20×1.699=33.98dB → 63−33.98=29.02 dBΩ。④ 物理的意味: 29.02 dBΩ ≈ 28.3Ω のトランスインピーダンス（10^(29.02/20)）。dBから自動計算</span></span></label>
@@ -337,7 +337,7 @@
           </div>
           <div class="form-group">
             <label>進行波 [<span class="notx">W</span>]<span class="tip"><span class="tip-icon">i</span><span class="tip-box">進行波電力を直接入力するとθ・Zを保持したままV・Iを逆算します</span></span></label>
-            <input type="number" id="m2_pfwd_in" step="100" min="0" max="5000" value="3000" oninput="calc_m2_from_pfwd()" onkeydown="m2PfwdKeydown(event)">
+            <input type="number" id="m2_pfwd_in" step="100" min="0" max="6000" value="3000" oninput="calc_m2_from_pfwd()" onkeydown="m2PfwdKeydown(event)">
           </div>
         </div>
 
@@ -1754,7 +1754,9 @@ function drawChart1() {
 // ============================================================
 // MODULE 2
 // ============================================================
-function calc_m2() {
+function calc_m2(src) {
+  // 結合度変更時はPfwd固定でV/Iを逆算（Pfwdを再計算しない）
+  if (src === 'cc') { calc_m2_from_pfwd(); return; }
   const V_mV = get('m2_v');      // センサー出力 mV peak-to-peak (Vpp)
   const I_mV = get('m2_i');      // センサー出力 mV peak-to-peak (Ipp) ← I出力は電圧
   const theta_deg = get('m2_theta');
@@ -1870,7 +1872,7 @@ let _m2PfwdSrc = false;
 function calc_m2_from_pfwd() {
   let newPfwd = get('m2_pfwd_in');
   if (isNaN(newPfwd) || newPfwd < 1) { newPfwd = 1; document.getElementById('m2_pfwd_in').value = 1; }
-  if (newPfwd > 5000) { newPfwd = 5000; document.getElementById('m2_pfwd_in').value = 5000; }
+  if (newPfwd > 6000) { newPfwd = 6000; document.getElementById('m2_pfwd_in').value = 6000; }
   const V_mV = get('m2_v'), I_mV = get('m2_i'), theta_deg = get('m2_theta'), cc = get('m2_cc');
   if (isNaN(V_mV) || V_mV <= 0 || isNaN(I_mV) || I_mV <= 0) return;
   const scale = Math.pow(10, cc / 20);
@@ -1895,7 +1897,7 @@ function m2PfwdKeydown(e) {
   const cur = parseFloat(document.getElementById('m2_pfwd_in').value) || 1000;
   let next;
   if (e.key === 'ArrowUp') {
-    next = Math.min(5000, Math.ceil((cur + 0.01) / 100) * 100);
+    next = Math.min(6000, Math.ceil((cur + 0.01) / 100) * 100);
   } else {
     const f = Math.floor((cur - 0.01) / 100) * 100;
     next = f <= 0 ? 1 : Math.max(1, f);
