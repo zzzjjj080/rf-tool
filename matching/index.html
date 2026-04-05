@@ -649,7 +649,7 @@ function onFreqInput() {
 function onCableSlider() {
   const fCenterHz = getFcenter() * 1e6, vf = getVf();
   svgEl('in-cable-m').value = (getCableLam() * getLambdaM(fCenterHz, vf)).toFixed(3);
-  update();
+  activeParam = 'cable'; update();
 }
 function onCableMeterInput() {
   const cableM = parseFloat(svgEl('in-cable-m').value);
@@ -657,7 +657,7 @@ function onCableMeterInput() {
   const lambdaM = getLambdaM(getFcenter() * 1e6, getVf());
   const steps = Math.max(0, Math.min(16, Math.round((cableM / lambdaM) * 16)));
   svgEl('sl-cable').value = steps;
-  update();
+  activeParam = 'cable'; update();
 }
 
 // ============================================================
@@ -673,10 +673,12 @@ function drawCircuit(topo, freqMHz, cableM, vf, c1pF, c1open, c2pF, c2short) {
   const gold = 'var(--gold)';
 
   // Highlight colors based on active parameter
-  const c1Hi = activeParam === 'c1' || activeParam === 'drag';
-  const c2Hi = activeParam === 'c2' || activeParam === 'drag';
-  const c1Col = c1Hi ? gold : t;
-  const c2Col = c2Hi ? gold : t;
+  const c1Hi    = activeParam === 'c1' || activeParam === 'drag';
+  const c2Hi    = activeParam === 'c2' || activeParam === 'drag';
+  const cableHi = activeParam === 'cable';
+  const c1Col    = c1Hi    ? gold : t;
+  const c2Col    = c2Hi    ? gold : t;
+  const cableCol = cableHi ? gold : t;
   const c1Lbl = c1Hi ? gold : ac;
   const c2Lbl = c2Hi ? gold : ac;
 
@@ -721,11 +723,12 @@ function drawCircuit(topo, freqMHz, cableM, vf, c1pF, c1open, c2pF, c2short) {
   s += valtxt(22, 54, 'middle', freqStr);
   s += wire(29, cy, 48, cy);
 
-  // Coax box
-  s += `<rect x="48" y="${cy-12}" width="80" height="24" fill="none" stroke="${t}" stroke-width="2"/>`;
-  s += valtxt(88, cy-3,  'middle', '同軸ケーブル');
-  s += valtxt(88, cy+9,  'middle', cableStr);
-  s += valtxt(88, cy-16, 'middle', vfStr);
+  // Coax box (highlighted when cable slider is active)
+  const cableStrokeW = cableHi ? '2.5' : '2';
+  s += `<rect x="48" y="${cy-12}" width="80" height="24" fill="none" stroke="${cableCol}" stroke-width="${cableStrokeW}"/>`;
+  s += valtxt(88, cy-3,  'middle', '同軸ケーブル', cableCol);
+  s += valtxt(88, cy+9,  'middle', cableStr,       cableCol);
+  s += valtxt(88, cy-16, 'middle', vfStr,           cableCol);
 
   if (topo === 'A') {
     const jx = 284;
@@ -793,8 +796,6 @@ function inverseFromGamma(gr, gi) {
   }
   svgEl('sl-c1').value = Math.round(bestI / N * 100);
   svgEl('sl-c2').value = Math.round(bestJ / N * 100);
-  svgEl('ck-c1-open').checked  = false;
-  svgEl('ck-c2-short').checked = false;
   update();
   return bestDist;
 }
@@ -852,8 +853,6 @@ function inverseFromGammaFull(gr, gi) {
   svgEl('sl-cable').value = bestK;
   svgEl('sl-c1').value = Math.round(bestI / NC * 100);
   svgEl('sl-c2').value = Math.round(bestJ / NC * 100);
-  svgEl('ck-c1-open').checked  = false;
-  svgEl('ck-c2-short').checked = false;
   update();
 }
 
