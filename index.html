@@ -2067,6 +2067,11 @@ function drawWaveform_m2() {
   ctx.beginPath(); ctx.moveTo(PAD_L, y0); ctx.lineTo(PAD_L + plotW, y0); ctx.stroke();
 
   // Waveforms
+  // Time window fixed to 2 cycles of 12.88 MHz (≈155.3 ns)
+  const FREQ_REF_MHZ = 12.88;
+  const T_WINDOW_NS  = 2 / (FREQ_REF_MHZ * 1e6) * 1e9;  // ≈155.28 ns
+  const numCycles    = freq_MHz / FREQ_REF_MHZ * 2;      // cycles shown in window
+
   const theta_rad = theta_deg * Math.PI / 180;
   const nPts = 500;
   const drawAmp = plotH / 2 * 0.85;
@@ -2075,7 +2080,7 @@ function drawWaveform_m2() {
     ctx.beginPath();
     for (let i = 0; i <= nPts; i++) {
       const t = i / nPts;
-      const yPx = y0 - drawAmp * relAmp * Math.sin(2 * Math.PI * 2 * t + phase);
+      const yPx = y0 - drawAmp * relAmp * Math.sin(2 * Math.PI * numCycles * t + phase);
       const xPx = PAD_L + t * plotW;
       i === 0 ? ctx.moveTo(xPx, yPx) : ctx.lineTo(xPx, yPx);
     }
@@ -2106,12 +2111,12 @@ function drawWaveform_m2() {
   ctx.textAlign = 'right';
   ctx.fillText(`${freq_MHz.toFixed(3)} MHz`, CW - PAD_R, ly + 1);
 
-  // X axis labels
+  // X axis labels (fixed time window: 2 cycles of 12.88 MHz)
   ctx.fillStyle = 'rgba(255,255,255,0.4)';
   ctx.textAlign = 'center';
   ctx.fillText('0', PAD_L, PAD_T + plotH + 13);
-  ctx.fillText('T', PAD_L + plotW / 2, PAD_T + plotH + 13);
-  ctx.fillText('2T', PAD_L + plotW, PAD_T + plotH + 13);
+  ctx.fillText(`${(T_WINDOW_NS / 2).toFixed(1)} ns`, PAD_L + plotW / 2, PAD_T + plotH + 13);
+  ctx.fillText(`${T_WINDOW_NS.toFixed(1)} ns`, PAD_L + plotW, PAD_T + plotH + 13);
 }
 
 function drawSmithChart(point, canvasId='smith_chart', prefix='sc', trail=[]) {
