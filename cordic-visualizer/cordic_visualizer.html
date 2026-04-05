@@ -412,6 +412,10 @@ canvas { display: block; width: 100%; }
 .btn-large { padding: 11px 22px; font-size: 13px; }
 .btn-small { padding: 6px 12px; font-size: 11px; opacity: 0.8; }
 .btn-small:hover { opacity: 1; }
+.btn-step-main { width: 100%; padding: 13px 0; font-size: 16px; font-weight: 700; letter-spacing: 2px; background: var(--panel2); color: var(--accent2); border: 1.5px solid var(--accent2); border-radius: 8px; font-family: 'Space Mono', monospace; cursor: pointer; transition: all 0.2s; animation: cordic-pulse 2.4s ease-in-out infinite; box-shadow: 0 0 0 0 rgba(234,88,12,0.4); }
+.btn-step-main:hover { background: rgba(234,88,12,0.12); animation: none; box-shadow: none; }
+[data-theme="dark"] .btn-step-main { box-shadow: 0 0 0 0 rgba(255,107,53,0.4); }
+@keyframes cordic-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(234,88,12,0.4); } 60% { box-shadow: 0 0 0 7px rgba(234,88,12,0); } }
 
 /* ── Read-only value badges (Zone 1) ── */
 .ro-row { width:100%; flex-basis:100%; display:flex; gap:10px; flex-wrap:wrap; margin-top:2px; }
@@ -721,17 +725,12 @@ canvas { display: block; width: 100%; }
           <button class="step-btn" data-n="12">12</button>
         </div>
       </div>
-      <div class="ctrl-btns">
-        <button class="btn btn-secondary btn-large" id="stepBtn">STEP →</button>
-        <button class="btn btn-danger    btn-large" id="resetBtn">⟳ RESET</button>
-        <button class="btn btn-primary   btn-small" id="runBtn">▶ RUN</button>
-        <button class="btn btn-secondary btn-small" id="autoBtn">▶ AUTO</button>
-      </div>
-      <div class="speed-row">
-        <label>速度</label>
-        <input type="range" class="speed-slider" id="speedSlider" min="100" max="1500" value="700" step="100">
-        <label id="speedLabel" style="min-width:40px;">700ms</label>
-        <span style="font-family:'Space Mono',monospace;font-size:11px;color:var(--text-dim);" id="progressLabel">Step 0 / 0</span>
+      <div class="ctrl-btns" style="flex-direction:column;gap:6px">
+        <button class="btn btn-step-main" id="stepBtn">STEP →</button>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-danger btn-small" id="resetBtn">⟳ RESET</button>
+          <span style="font-family:'Space Mono',monospace;font-size:11px;color:var(--text-dim);flex:1;text-align:right" id="progressLabel">Step 0 / 0</span>
+        </div>
         <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
       </div>
     </div>
@@ -1139,7 +1138,7 @@ function computeCordicVectoring(deg, amp, n) {
 }
 
 // ─── State ────────────────────────────────────────────────────────────────
-let state = {steps:[],currentStep:0,autoInterval:null,nSteps:8,targetDeg:60,amplitude:1.0,pre:0};
+let state = {steps:[],currentStep:0,nSteps:8,targetDeg:60,amplitude:1.0,pre:0};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 function norm2(v){const l=Math.sqrt(v[0]*v[0]+v[1]*v[1]);return l<1e-9?[1,0]:[v[0]/l,v[1]/l];}
@@ -1747,56 +1746,18 @@ document.querySelectorAll('.step-btn').forEach(btn=>btn.addEventListener('click'
   state.nSteps=parseInt(this.dataset.n);
   resetState();
 }));
-document.getElementById('speedSlider').addEventListener('input',function(){
-  document.getElementById('speedLabel').textContent=this.value+'ms';
-  if(state.autoInterval){stopAuto();startAuto();}
-});
 function resetState(){
-  stopAuto(); state.steps=[]; state.currentStep=0;
-  document.getElementById('autoBtn').textContent='▶ AUTO';
+  state.steps=[]; state.currentStep=0;
   fullUpdate();
 }
 document.getElementById('resetBtn').addEventListener('click',resetState);
-document.getElementById('runBtn').addEventListener('click',()=>{
-  stopAuto();
-  const r=computeCordicVectoring(state.targetDeg,state.amplitude,state.nSteps);
-  state.steps=r.steps; state.pre=r.pre; state.currentStep=state.steps.length;
-  fullUpdate();
-});
 document.getElementById('stepBtn').addEventListener('click',()=>{
-  stopAuto();
   if(!state.steps.length){
     const r=computeCordicVectoring(state.targetDeg,state.amplitude,state.nSteps);
     state.steps=r.steps; state.pre=r.pre; state.currentStep=0;
   }
   state.currentStep=state.currentStep<state.steps.length?state.currentStep+1:state.currentStep;
   fullUpdate();
-});
-function startAuto(){
-  const speed=parseInt(document.getElementById('speedSlider').value);
-  if(!state.steps.length){
-    const r=computeCordicVectoring(state.targetDeg,state.amplitude,state.nSteps);
-    state.steps=r.steps; state.pre=r.pre; state.currentStep=0;
-  }
-  state.autoInterval=setInterval(()=>{
-    if(state.currentStep<state.steps.length){state.currentStep++;fullUpdate();}
-    else{stopAuto();document.getElementById('autoBtn').textContent='▶ AUTO';}
-  },speed);
-}
-function stopAuto(){
-  if(state.autoInterval){clearInterval(state.autoInterval);state.autoInterval=null;}
-}
-document.getElementById('autoBtn').addEventListener('click',function(){
-  if(state.autoInterval){stopAuto();this.textContent='▶ AUTO';}
-  else{
-    this.textContent='⏸ PAUSE';
-    if(state.currentStep>=state.steps.length){
-      state.currentStep=0;
-      const r=computeCordicVectoring(state.targetDeg,state.amplitude,state.nSteps);
-      state.steps=r.steps; state.pre=r.pre;
-    }
-    startAuto();
-  }
 });
 
 // ─── IQ Canvas Interaction ─────────────────────────────────────────────────
@@ -1805,14 +1766,14 @@ function iqSetAngle(deg){
   state.pre=getVectoringPreRotation(state.amplitude*Math.cos(deg*Math.PI/180),state.amplitude*Math.sin(deg*Math.PI/180)).pre;
   const d=document.getElementById('angleDisplay');
   if(d) d.textContent=deg+'°';
-  state.steps=[]; state.currentStep=0; stopAuto();
+  state.steps=[]; state.currentStep=0;
 }
 function iqSetAmplitude(a){
   const v=Math.round(Math.max(0.2,Math.min(2.0,a))*20)/20;
   state.amplitude=v;
   const d=document.getElementById('ampDisplay');
   if(d) d.textContent=v.toFixed(2);
-  state.steps=[]; state.currentStep=0; stopAuto();
+  state.steps=[]; state.currentStep=0;
 }
 
 iqCanvas.addEventListener('mousedown', e=>{
