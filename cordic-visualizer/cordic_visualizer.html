@@ -547,14 +547,15 @@ canvas { display: block; width: 100%; }
 </style>
 </head>
 <body>
+<script>var RF_ACTIVE_TAB = 'cordic';</script>
+<script src="../nav.js"></script>
+
 <div class="container">
 
   <header>
-    <a href="../index.html" class="back-link">← RF ツールに戻る</a>
     <div class="header-tag">Algorithm Visualizer</div>
     <h1>CORDIC</h1>
     <div class="subtitle">IQ信号 → 事前回転チェック → 直角三角形の積み上げ → 振幅・位相</div>
-    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙 Dark</button>
   </header>
 
   <div class="intro-panel">
@@ -1088,7 +1089,8 @@ function isDark() { return document.documentElement.dataset.theme === 'dark'; }
 function toggleTheme() {
   const dark = !isDark();
   document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-  document.getElementById('themeToggle').textContent = dark ? '☀️ Light' : '🌙 Dark';
+  const navBtn = document.getElementById('rf-nav-dark');
+  if (navBtn) navBtn.textContent = dark ? '☀️ ライト' : '🌙 ダーク';
   fullUpdate();
 }
 function T() {

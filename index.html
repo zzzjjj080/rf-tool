@@ -215,7 +215,7 @@
   <button class="tab-btn" onclick="switchTab('mod4')">④ 電力単位換算</button>
   <button class="tab-btn" onclick="switchTab('mod5')">⑤ ケーブル損失補正</button>
   <div class="tab-divider">📊 ビジュアライザー ▶</div>
-  <button class="tab-btn visualizer-btn" onclick="window.location.href='cordic-visualizer/cordic_visualizer.html'">⑥ CORDIC IQ ↗</button>
+  <button class="tab-btn visualizer-btn" onclick="window.location.href='cordic-visualizer/cordic_visualizer.html'">⑥ CORDIC ↗</button>
   <button class="tab-btn visualizer-btn" onclick="window.location.href='adc-visualizer/adc_visualizer.html'">⑦ ADC ↗</button>
   <button class="tab-btn visualizer-btn" onclick="window.location.href='digital-filter-designer/digital_filter_designer.html'">⑧ フィルター ↗</button>
   <button class="tab-btn visualizer-btn" onclick="window.location.href='pid-visualizer/pid-visualizer.html'">⑨ PID制御 ↗</button>
@@ -2561,6 +2561,18 @@ document.getElementById('m3s_pfwd_in').value = 3000;
 calc_m3s_from_pfwd();
 calc_m4('w');
 calc_m5();
+
+// URL パラメータ ?tab=modX でタブ切り替え（nav.js からの遷移対応）
+(function () {
+  const urlTab = new URLSearchParams(window.location.search).get('tab');
+  if (urlTab && document.getElementById(urlTab)) {
+    document.querySelectorAll('.tab-panel').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(urlTab).classList.add('active');
+    const btn = document.querySelector(`[onclick*="switchTab('${urlTab}')"]`);
+    if (btn) btn.classList.add('active');
+  }
+})();
 
 // ドラッグ＆タッチ対応ヘルパー
 function addDragHandler(el, handler) {
