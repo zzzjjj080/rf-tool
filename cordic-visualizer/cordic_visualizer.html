@@ -412,10 +412,15 @@ canvas { display: block; width: 100%; }
 .btn-large { padding: 11px 22px; font-size: 13px; }
 .btn-small { padding: 6px 12px; font-size: 11px; opacity: 0.8; }
 .btn-small:hover { opacity: 1; }
-.btn-step-main { width: 100%; padding: 13px 0; font-size: 16px; font-weight: 700; letter-spacing: 2px; background: var(--panel2); color: var(--accent2); border: 1.5px solid var(--accent2); border-radius: 8px; font-family: 'Space Mono', monospace; cursor: pointer; transition: all 0.2s; animation: cordic-pulse 2.4s ease-in-out infinite; box-shadow: 0 0 0 0 rgba(234,88,12,0.4); }
+.step-controls-wrap { display: flex; gap: 12px; align-items: stretch; width: 100%; }
+.step-controls-right { display: flex; flex-direction: column; gap: 6px; justify-content: center; flex: 1; min-width: 0; }
+.step-nsteps-row { display: flex; align-items: center; gap: 4px; flex-wrap: nowrap; }
+.step-nsteps-label { font-size: 10px; letter-spacing: 1.5px; color: var(--accent2); font-family: 'Space Mono', monospace; text-transform: uppercase; white-space: nowrap; margin-right: 4px; }
+.step-btn-sm { flex: 0 0 auto !important; padding: 4px 10px !important; font-size: 11px !important; min-height: auto !important; min-width: auto !important; }
+.btn-step-main { flex-shrink: 0; width: 140px; padding: 0; height: 80px; font-size: 18px; font-weight: 700; letter-spacing: 2px; background: var(--panel2); color: var(--accent2); border: 2px solid var(--accent2); border-radius: 8px; font-family: 'Space Mono', monospace; cursor: pointer; transition: all 0.2s; animation: cordic-pulse 2.4s ease-in-out infinite; box-shadow: 0 0 0 0 rgba(234,88,12,0.4); }
 .btn-step-main:hover { background: rgba(234,88,12,0.12); animation: none; box-shadow: none; }
 [data-theme="dark"] .btn-step-main { box-shadow: 0 0 0 0 rgba(255,107,53,0.4); }
-@keyframes cordic-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(234,88,12,0.4); } 60% { box-shadow: 0 0 0 7px rgba(234,88,12,0); } }
+@keyframes cordic-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(234,88,12,0.4); } 60% { box-shadow: 0 0 0 8px rgba(234,88,12,0); } }
 
 /* ── Read-only value badges (Zone 1) ── */
 .ro-row { width:100%; flex-basis:100%; display:flex; gap:10px; flex-wrap:wrap; margin-top:2px; }
@@ -716,22 +721,22 @@ canvas { display: block; width: 100%; }
           <span class="g-dim">STEP を押すたびに y が 0 へ近づき、同時に累積回転角から θ が、ベクトル長 |v| から A が求まります。</span>
         </div>
       </div>
-      <div class="steps-group">
-        <label>反復回数</label>
-        <div class="steps-btns">
-          <button class="step-btn" data-n="6">6</button>
-          <button class="step-btn active" data-n="8">8</button>
-          <button class="step-btn" data-n="10">10</button>
-          <button class="step-btn" data-n="12">12</button>
-        </div>
-      </div>
-      <div class="ctrl-btns" style="flex-direction:column;gap:6px">
+      <div class="step-controls-wrap">
         <button class="btn btn-step-main" id="stepBtn">STEP →</button>
-        <div style="display:flex;gap:8px;align-items:center">
-          <button class="btn btn-danger btn-small" id="resetBtn">⟳ RESET</button>
-          <span style="font-family:'Space Mono',monospace;font-size:11px;color:var(--text-dim);flex:1;text-align:right" id="progressLabel">Step 0 / 0</span>
+        <div class="step-controls-right">
+          <div class="step-nsteps-row">
+            <span class="step-nsteps-label">反復回数</span>
+            <button class="step-btn step-btn-sm" data-n="6">6</button>
+            <button class="step-btn step-btn-sm active" data-n="8">8</button>
+            <button class="step-btn step-btn-sm" data-n="10">10</button>
+            <button class="step-btn step-btn-sm" data-n="12">12</button>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn btn-danger btn-small" id="resetBtn">⟳ RESET</button>
+            <span style="font-family:'Space Mono',monospace;font-size:11px;color:var(--text-dim);flex:1;text-align:right" id="progressLabel">Step 0 / 0</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
         </div>
-        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
       </div>
     </div>
 
