@@ -60,7 +60,7 @@
   padding: 6px 14px; border-radius: 16px;
   border: 1px solid rgba(255,255,255,0.35);
   background: rgba(255,255,255,0.1); color: #fff;
-  cursor: pointer; font-size: 11px !important; font-weight: 600;
+  cursor: pointer; font-size: 13px !important; font-weight: 600;
   font-family: 'Noto Sans JP', 'Segoe UI', sans-serif !important;
   transition: background 0.2s; white-space: nowrap;
 }
