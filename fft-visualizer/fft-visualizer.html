@@ -79,8 +79,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
 .btn{padding:8px 14px;font-size:13px;font-family:inherit;font-weight:400;letter-spacing:.04em;color:var(--text);background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:all .15s;white-space:nowrap}
 .btn:hover{border-color:rgba(0,0,0,.18);background:var(--bg)}
 .dark .btn:hover{border-color:rgba(255,255,255,.18)}
-.btn.primary{background:rgba(63,207,171,.12);border-color:rgba(63,207,171,.3);color:var(--teal)}
-.btn.primary:hover{background:rgba(63,207,171,.18)}
+.btn.primary{background:rgba(26,170,136,.18);border-color:rgba(26,170,136,.55);color:var(--teal);box-shadow:0 0 0 0 rgba(26,170,136,.4);animation:pulse-btn 2.4s ease-in-out infinite}
+.btn.primary:hover{background:rgba(26,170,136,.28);box-shadow:none;animation:none}
+.btn.primary.active{animation:none;box-shadow:none}
+@keyframes pulse-btn{0%,100%{box-shadow:0 0 0 0 rgba(26,170,136,.4)}60%{box-shadow:0 0 0 6px rgba(26,170,136,0)}}
 .btn-icon{padding:8px 10px}
 
 /* Speed */
@@ -142,6 +144,21 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
 <!-- Side panel -->
 <div class="side">
   <div class="card">
+    <div class="card-title">コントロール</div>
+    <div class="ctrl-row" style="margin-bottom:8px">
+      <button class="btn primary" id="btn" onclick="tog()" style="flex:1;font-size:15px;padding:10px 0;letter-spacing:.06em;font-weight:600">▶ 開始</button>
+      <button class="btn btn-icon" onclick="rst()" title="リセット">↺</button>
+    </div>
+    <div class="spd-row">
+      <span>速度</span>
+      <input type="range" id="sls" min="1" max="5" value="1" oninput="updS()">
+      <span id="sv">×0.1</span>
+    </div>
+    <div class="prog-wrap"><div id="pg"></div></div>
+    <div class="status" id="st">待機中</div>
+  </div>
+
+  <div class="card">
     <div class="card-title">波形設定</div>
     <div class="wave-row w0">
       <label class="en-label"><input type="checkbox" id="en0" checked onchange="upd()"> 波形 1</label>
@@ -158,21 +175,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
       <div class="slider-row"><span class="sl-label">A</span><input type="range" id="a2" min="0" max="10" value="4" oninput="upd()"><span class="sl-val" id="av2">0.4</span></div>
       <div class="slider-row"><span class="sl-label">f</span><input type="range" id="f2" min="1" max="12" value="8" oninput="upd()"><span class="sl-val" id="fv2">8 Hz</span></div>
     </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">コントロール</div>
-    <div class="ctrl-row">
-      <button class="btn primary" id="btn" onclick="tog()" style="min-width:100px;text-align:center">▶ 開始</button>
-      <button class="btn btn-icon" onclick="rst()" title="リセット">↺</button>
-    </div>
-    <div class="spd-row">
-      <span>速度</span>
-      <input type="range" id="sls" min="1" max="5" value="1" oninput="updS()">
-      <span id="sv">×0.1</span>
-    </div>
-    <div class="prog-wrap"><div id="pg"></div></div>
-    <div class="status" id="st">待機中</div>
   </div>
 
   <div class="card">
@@ -587,24 +589,25 @@ function computeSpMax(){
   return mx||0.001;
 }
 function tog(){
+  const b=document.getElementById('btn');
   if(ph==='idle'||ph==='done'){
     rst();spMax=computeSpMax();compressT=0;ph='compressing';
-    document.getElementById('btn').textContent='⏸ 一時停止';
+    b.textContent='⏸ 一時停止';b.classList.add('active');
     animateCompress();
   }
   else if(ph==='compressing'){
     if(compressRaf)cancelAnimationFrame(compressRaf);cancelDrop();
-    ph='running';document.getElementById('btn').textContent='⏸ 一時停止';
+    ph='running';b.textContent='⏸ 一時停止';b.classList.add('active');
     drawComp();frame();
   }
-  else if(ph==='running'){ph='paused';cancelAnimationFrame(raf);document.getElementById('btn').textContent='▶ 再開';}
-  else if(ph==='paused'){ph='running';document.getElementById('btn').textContent='⏸ 一時停止';frame();}
+  else if(ph==='running'){ph='paused';cancelAnimationFrame(raf);b.textContent='▶ 再開';b.classList.remove('active');}
+  else if(ph==='paused'){ph='running';b.textContent='⏸ 一時停止';b.classList.add('active');frame();}
 }
 function rst(){
   if(raf)cancelAnimationFrame(raf);
   if(compressRaf)cancelAnimationFrame(compressRaf);cancelDrop();
   ph='idle';fw=0;sp=[];compressT=0;
-  document.getElementById('btn').textContent='▶ 開始';
+  const b=document.getElementById('btn');b.textContent='▶ 開始';b.classList.remove('active');
   document.getElementById('wt').textContent='巻きつけ平面';
   document.getElementById('st').textContent='待機中';
   document.getElementById('pg').style.width='0%';
