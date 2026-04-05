@@ -16,6 +16,7 @@
   --text: #2d3748;
   --muted: #718096;
   --radius: 8px;
+  --gold: #d97706;
 }
 body.dark {
   --primary: #60a5fa;
@@ -27,6 +28,7 @@ body.dark {
   --border: #334155;
   --text: #e2e8f0;
   --muted: #94a3b8;
+  --gold: #fbbf24;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
@@ -366,7 +368,7 @@ body.dark .cap-spin-val { background: #0b1220; }
           </div>
           <div class="ctrl-row">
             <div class="slider-row">
-              <input type="range" id="sl-c1" min="0" max="100" step="1" value="60" oninput="update()">
+              <input type="range" id="sl-c1" min="0" max="100" step="1" value="60" oninput="activeParam='c1';update()">
               <span class="ctrl-val" id="disp-c1">—</span>
             </div>
           </div>
@@ -402,7 +404,7 @@ body.dark .cap-spin-val { background: #0b1220; }
           </div>
           <div class="ctrl-row">
             <div class="slider-row">
-              <input type="range" id="sl-c2" min="0" max="100" step="1" value="60" oninput="update()">
+              <input type="range" id="sl-c2" min="0" max="100" step="1" value="60" oninput="activeParam='c2';update()">
               <span class="ctrl-val" id="disp-c2">—</span>
             </div>
           </div>
@@ -668,15 +670,24 @@ function drawCircuit(topo, freqMHz, cableM, vf, c1pF, c1open, c2pF, c2short) {
   const t  = 'var(--text)';
   const ac = 'var(--accent2)';
   const ff = "'Space Mono',monospace";
+  const gold = 'var(--gold)';
 
-  const wire   = (x1,y1,x2,y2) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${t}" stroke-width="2"/>`;
-  const serCap = (cx,cy) => `<line x1="${cx-2.5}" y1="${cy-11}" x2="${cx-2.5}" y2="${cy+11}" stroke="${t}" stroke-width="2.5"/><line x1="${cx+2.5}" y1="${cy-11}" x2="${cx+2.5}" y2="${cy+11}" stroke="${t}" stroke-width="2.5"/>`;
-  const shCap  = (jx,yt,yb) => `<line x1="${jx-10}" y1="${yt}" x2="${jx+10}" y2="${yt}" stroke="${t}" stroke-width="2.2"/><line x1="${jx-10}" y1="${yb}" x2="${jx+10}" y2="${yb}" stroke="${t}" stroke-width="2.2"/>`;
-  const gnd    = (x,y) => `<line x1="${x-9}" y1="${y}" x2="${x+9}" y2="${y}" stroke="${t}" stroke-width="2"/><line x1="${x-5.5}" y1="${y+4}" x2="${x+5.5}" y2="${y+4}" stroke="${t}" stroke-width="1.5"/><line x1="${x-2}" y1="${y+8}" x2="${x+2}" y2="${y+8}" stroke="${t}" stroke-width="1.5"/>`;
+  // Highlight colors based on active parameter
+  const c1Hi = activeParam === 'c1' || activeParam === 'drag';
+  const c2Hi = activeParam === 'c2' || activeParam === 'drag';
+  const c1Col = c1Hi ? gold : t;
+  const c2Col = c2Hi ? gold : t;
+  const c1Lbl = c1Hi ? gold : ac;
+  const c2Lbl = c2Hi ? gold : ac;
+
+  const wire   = (x1,y1,x2,y2,col) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col||t}" stroke-width="2"/>`;
+  const serCap = (cx,cy,col) => `<line x1="${cx-2.5}" y1="${cy-11}" x2="${cx-2.5}" y2="${cy+11}" stroke="${col||t}" stroke-width="2.5"/><line x1="${cx+2.5}" y1="${cy-11}" x2="${cx+2.5}" y2="${cy+11}" stroke="${col||t}" stroke-width="2.5"/>`;
+  const shCap  = (jx,yt,yb,col) => `<line x1="${jx-10}" y1="${yt}" x2="${jx+10}" y2="${yt}" stroke="${col||t}" stroke-width="2.2"/><line x1="${jx-10}" y1="${yb}" x2="${jx+10}" y2="${yb}" stroke="${col||t}" stroke-width="2.2"/>`;
+  const gnd    = (x,y,col) => `<line x1="${x-9}" y1="${y}" x2="${x+9}" y2="${y}" stroke="${col||t}" stroke-width="2"/><line x1="${x-5.5}" y1="${y+4}" x2="${x+5.5}" y2="${y+4}" stroke="${col||t}" stroke-width="1.5"/><line x1="${x-2}" y1="${y+8}" x2="${x+2}" y2="${y+8}" stroke="${col||t}" stroke-width="1.5"/>`;
   const port   = (cx,cy) => `<circle cx="${cx}" cy="${cy}" r="7" fill="none" stroke="${t}" stroke-width="2"/>`;
   const dot    = (cx,cy) => `<circle cx="${cx}" cy="${cy}" r="3" fill="${t}"/>`;
-  const lbl    = (x,y,anc,str,fs) => `<text x="${x}" y="${y}" text-anchor="${anc}" font-size="${fs||10}" fill="${ac}" font-family="${ff}">${str}</text>`;
-  const valtxt = (x,y,anc,str) => `<text x="${x}" y="${y}" text-anchor="${anc}" font-size="9" fill="${t}" font-family="${ff}" opacity="0.9">${str}</text>`;
+  const lbl    = (x,y,anc,str,fs,col) => `<text x="${x}" y="${y}" text-anchor="${anc}" font-size="${fs||10}" fill="${col||ac}" font-family="${ff}">${str}</text>`;
+  const valtxt = (x,y,anc,str,col) => `<text x="${x}" y="${y}" text-anchor="${anc}" font-size="9" fill="${col||t}" font-family="${ff}" opacity="0.9">${str}</text>`;
   const box    = (x1,y1,w,h,label) => `<rect x="${x1}" y="${y1}" width="${w}" height="${h}" fill="none" stroke="${t}" stroke-width="2"/><text x="${x1+w/2}" y="${y1+h/2+4}" text-anchor="middle" font-size="10" fill="${t}" font-family="${ff}">${label}</text>`;
 
   const freqStr  = freqMHz.toFixed(2) + 'MHz';
@@ -688,14 +699,20 @@ function drawCircuit(topo, freqMHz, cableM, vf, c1pF, c1open, c2pF, c2short) {
   let s = '';
   const cy = 34; // horizontal centerline
 
-  // C1 shunt: hangs down from (jx,cy), label+value to right of GND
+  // C1 shunt: hangs down from (jx,cy)
   const drawC1shunt = (jx) => {
-    s += wire(jx, cy, jx, cy+13);
-    s += shCap(jx, cy+15, cy+22);
-    s += wire(jx, cy+22, jx, cy+30);
-    s += gnd(jx, cy+30);
-    s += lbl(jx+14, cy+30, 'start', 'C₁', 10);
-    s += valtxt(jx+14, cy+41, 'start', c1Str);
+    if (c1open) {
+      // Open: no shunt branch drawn — show label only
+      s += lbl(jx+5, cy+22, 'start', 'C₁', 10, c1Lbl);
+      s += valtxt(jx+5, cy+33, 'start', c1Str, c1Col);
+      return;
+    }
+    s += wire(jx, cy, jx, cy+13, c1Col);
+    s += shCap(jx, cy+15, cy+22, c1Col);
+    s += wire(jx, cy+22, jx, cy+30, c1Col);
+    s += gnd(jx, cy+30, c1Col);
+    s += lbl(jx+14, cy+30, 'start', 'C₁', 10, c1Lbl);
+    s += valtxt(jx+14, cy+41, 'start', c1Str, c1Col);
   };
 
   // PA port (left edge)
@@ -704,38 +721,46 @@ function drawCircuit(topo, freqMHz, cableM, vf, c1pF, c1open, c2pF, c2short) {
   s += valtxt(22, 54, 'middle', freqStr);
   s += wire(29, cy, 48, cy);
 
-  // Coax box: x=48–128, h=24 (+33%), stays left
-  // vfStr above box (cy-16=18), two rows inside (cy-3, cy+9)
+  // Coax box
   s += `<rect x="48" y="${cy-12}" width="80" height="24" fill="none" stroke="${t}" stroke-width="2"/>`;
   s += valtxt(88, cy-3,  'middle', '同軸ケーブル');
   s += valtxt(88, cy+9,  'middle', cableStr);
   s += valtxt(88, cy-16, 'middle', vfStr);
 
   if (topo === 'A') {
-    // Coax → [long blank wire] → C2(series) → junction(C1∥) → 50Ω
-    // C2 at cx=244, junction at x=284, 50Ω box at x=308
-    // C2 value at cy+20 (clear of C1 upper plate at cy+15) with 15px horizontal gap
     const jx = 284;
-    s += wire(128, cy, 241, cy);                    // long middle (blank)
-    s += serCap(244, cy);                           // C2 plates
-    s += lbl(244, cy-15, 'middle', 'C₂', 10);      // above C2
-    s += valtxt(244, cy+20, 'middle', c2Str);       // below C2 (cy+20 keeps clear of C1 plate)
-    s += wire(247, cy, jx, cy);                     // C2 → junction
+    if (c2short) {
+      // Short: no capacitor plates, direct wire
+      s += wire(128, cy, jx, cy);
+      s += lbl(216, cy-15, 'middle', 'C₂', 10, c2Lbl);
+      s += valtxt(216, cy+9, 'middle', c2Str, c2Col);
+    } else {
+      s += wire(128, cy, 241, cy);
+      s += serCap(244, cy, c2Col);
+      s += lbl(244, cy-15, 'middle', 'C₂', 10, c2Lbl);
+      s += valtxt(244, cy+20, 'middle', c2Str, c2Col);
+      s += wire(247, cy, jx, cy);
+    }
     s += dot(jx, cy);
-    s += wire(jx, cy, 308, cy);                     // junction → 50Ω
+    s += wire(jx, cy, 308, cy);
     s += box(308, cy-12, 68, 24, '50Ω');
     drawC1shunt(jx);
   } else {
-    // Coax → [long blank wire] → junction(C1∥) → C2(series) → 50Ω
-    // junction at x=242, C2 at cx=272, 50Ω box at x=308
     const jx = 242;
-    s += wire(128, cy, jx, cy);                     // long middle (blank)
+    s += wire(128, cy, jx, cy);
     s += dot(jx, cy);
-    s += wire(jx, cy, 270, cy);                     // junction → C2
-    s += serCap(272, cy);                           // C2 plates
-    s += lbl(272, cy-15, 'middle', 'C₂', 10);      // above C2
-    s += valtxt(272, cy+20, 'middle', c2Str);       // below C2 (cy+20, 5px right of C1 plates)
-    s += wire(275, cy, 308, cy);                    // C2 → 50Ω
+    if (c2short) {
+      // Short: direct wire to 50Ω
+      s += wire(jx, cy, 308, cy);
+      s += lbl(275, cy-15, 'middle', 'C₂', 10, c2Lbl);
+      s += valtxt(275, cy+9, 'middle', c2Str, c2Col);
+    } else {
+      s += wire(jx, cy, 270, cy);
+      s += serCap(272, cy, c2Col);
+      s += lbl(272, cy-15, 'middle', 'C₂', 10, c2Lbl);
+      s += valtxt(272, cy+20, 'middle', c2Str, c2Col);
+      s += wire(275, cy, 308, cy);
+    }
     s += box(308, cy-12, 68, 24, '50Ω');
     drawC1shunt(jx);
   }
@@ -861,6 +886,8 @@ function toggleCableLock() {
 // Outside green (cable unlocked): cable+C1+C2 (full solver)
 // ============================================================
 const hull = svgEl('area-hull');
+let activeParam  = null;
+let activeTimer  = 0;
 let isDragging = false;
 let dragUseFullSolver = false;
 
@@ -878,6 +905,7 @@ hull.addEventListener('mouseleave', () => {
 // Unified mousedown: coordinate-based hull check + cable lock support
 svgEl('smith-svg').addEventListener('mousedown', (e) => {
   isDragging = true;
+  activeParam = 'drag';
   const [gr, gi] = gammaFromEvent(e);
   const [sx, sy] = eventToSVGCoords(e);
   if (cableLocked || (svgEl('tr-area').checked && isInHull(sx, sy))) {
@@ -893,6 +921,7 @@ svgEl('smith-svg').addEventListener('mousedown', (e) => {
 
 svgEl('smith-svg').addEventListener('mousemove', (e) => {
   if (!isDragging) return;
+  activeParam = 'drag';
   const [gr, gi] = gammaFromEvent(e);
   if (!dragUseFullSolver || cableLocked) {
     inverseFromGamma(gr, gi);
@@ -903,6 +932,10 @@ svgEl('smith-svg').addEventListener('mousemove', (e) => {
 });
 
 document.addEventListener('mouseup', () => { isDragging = false; dragUseFullSolver = false; });
+document.addEventListener('pointerup', () => {
+  clearTimeout(activeTimer);
+  activeTimer = setTimeout(() => { activeParam = null; update(); }, 150);
+});
 
 // Click inside green: C1+C2 only
 hull.addEventListener('click', (e) => {
@@ -1007,7 +1040,7 @@ function update() {
 
   // Reachable area — trace 4 boundary edges of (C1,C2) parameter rectangle
   const areaEl = svgEl('area-hull');
-  if (showArea) {
+  if (showArea && !c1open && !c2short) {
     areaEl.removeAttribute('display');
     const NB = 60;
     const bpts = [];
@@ -1044,7 +1077,7 @@ function update() {
   const N = 120;
 
   const tc1 = svgEl('trace-c1'), m1 = svgEl('c1-marker');
-  if (showC1) {
+  if (showC1 && !c1open) {
     tc1.removeAttribute('display');
     const pts = [];
     for (let i = 0; i <= N; i++) {
@@ -1061,7 +1094,7 @@ function update() {
   }
 
   const tc2 = svgEl('trace-c2'), m2 = svgEl('c2-marker');
-  if (showC2) {
+  if (showC2 && !c2short) {
     tc2.removeAttribute('display');
     const pts = [];
     for (let i = 0; i <= N; i++) {
