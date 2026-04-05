@@ -266,7 +266,7 @@ body.dark .cap-spin-val { background: #0b1220; }
 
       <!-- Circuit diagram -->
       <div class="circuit-wrap">
-        <svg id="circuit-svg" viewBox="0 0 380 96" xmlns="http://www.w3.org/2000/svg"></svg>
+        <svg id="circuit-svg" viewBox="0 0 408 96" xmlns="http://www.w3.org/2000/svg"></svg>
       </div>
 
       <!-- Numeric results -->
@@ -725,23 +725,24 @@ function drawCircuit(topo, freqMHz, cableM, vf, c1pF, c1open, c2pF, c2short) {
 
   // Coax box width proportional to cable length in λ
   const MAX_COAX_W = 210;
+  const RIGHT_W = 150; // fixed width for C1/C2/50Ω cluster
+  const FIXED_VB_W = 48 + MAX_COAX_W + RIGHT_W; // always 408 — keeps all elements same size
   const coaxStep = parseInt(svgEl('sl-cable').value); // 0-16
   const coaxW = coaxStep === 0 ? 4 : Math.round((coaxStep / 16) * MAX_COAX_W);
   const COAX_L = 48;
   const COAX_R = COAX_L + coaxW;
 
-  // Dynamic viewBox width
-  const RIGHT_W = 150; // fixed width for C1/C2/50Ω cluster
-  const VB_W = COAX_R + RIGHT_W;
-  el.setAttribute('viewBox', `0 0 ${VB_W} 96`);
+  // Always use fixed viewBox — size of all elements stays constant regardless of cable length
+  el.setAttribute('viewBox', `0 0 ${FIXED_VB_W} 96`);
 
-  // Draw coax box (text OUTSIDE, below the box)
+  // Draw coax box
   const cableStrokeW = cableHi ? '2.5' : '2';
   const coaxCx = COAX_L + coaxW / 2;
   s += `<rect x="${COAX_L}" y="${cy-12}" width="${coaxW}" height="24" fill="none" stroke="${cableCol}" stroke-width="${cableStrokeW}"/>`;
-  // Labels below the box
-  s += valtxt(coaxCx, cy+18, 'middle', '同軸ケーブル', cableCol);
-  s += valtxt(coaxCx, cy+29, 'middle', cableStr + '  ' + vfStr, cableCol);
+  // Labels below the box — clamp x to min 90 so they never overlap the PA area (x≈22)
+  const coaxLblX = Math.max(coaxCx, 90);
+  s += valtxt(coaxLblX, cy+22, 'middle', '同軸ケーブル', cableCol);
+  s += valtxt(coaxLblX, cy+33, 'middle', cableStr + '  ' + vfStr, cableCol);
 
   if (topo === 'A') {
     // Coax → C2(series) → junction(C1∥) → 50Ω
