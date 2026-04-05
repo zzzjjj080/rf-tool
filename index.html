@@ -229,145 +229,65 @@
     <h2>方向性結合器</h2>
     <div class="info-box">Z₀ = 50Ω固定。</div>
 
-    <h3>1-A：電力 → 方結</h3>
-    <div class="grid">
-      <div>
-        <div style="display:flex;gap:12px">
-          <div class="form-group" style="flex:1">
-            <label>FWD [W]</label>
-            <input type="number" id="m1_pfwd_a" step="100" value="3000" min="0" oninput="calc_m1a()" style="max-width:100%">
-          </div>
-          <div class="form-group" style="flex:1">
-            <label>結合度 [<span class="notx">dB</span>]<span class="tip"><span class="tip-icon">i</span><span class="tip-box">方向性結合器が分岐する信号の割合。正の値で入力（例: 50 → −50dB）。範囲: 0〜70、高電力RF系では50〜60が多い</span></span></label>
-            <input type="number" id="m1_cc_a" step="1" value="50" min="1" max="100" oninput="calc_m1a()" style="max-width:100%">
-          </div>
-        </div>
-        <svg class="coupler-diag" id="coupler-diag-1a" viewBox="0 0 400 172" width="100%" style="margin-top:8px;border:1px solid var(--border);border-radius:6px;display:block">
-          <rect width="400" height="172" style="fill:var(--card)"/>
-          <defs>
-            <marker id="ah1a" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-              <path d="M0,0 L8,3 L0,6Z" fill="#2563eb"/>
-            </marker>
-          </defs>
-          <!-- Main line: IN → coupler → THRU -->
-          <line x1="10" y1="72" x2="133" y2="72" stroke="#2563eb" stroke-width="2.5" marker-end="url(#ah1a)"/>
-          <line x1="267" y1="72" x2="390" y2="72" stroke="#64748b" stroke-width="2"/>
-          <!-- Coupler box -->
-          <rect x="133" y="52" width="134" height="40" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
-          <text x="200" y="68" text-anchor="middle" font-size="11" font-weight="bold" fill="#1e40af" font-family="sans-serif">方向性結合器</text>
-          <text x="200" y="84" text-anchor="middle" font-size="11" fill="#2563eb" font-family="sans-serif">−<tspan id="d1a_cc_diag">50</tspan> dB</text>
-          <!-- Port dots -->
-          <circle cx="10" cy="72" r="5" fill="#2563eb"/>
-          <circle cx="390" cy="72" r="5" fill="#64748b"/>
-          <!-- Labels above line -->
-          <text x="15" y="46" font-size="11" font-weight="bold" fill="#2563eb" font-family="sans-serif">IN (FWD): <tspan id="d1a_fwd_diag">3000</tspan> W</text>
-          <text x="270" y="46" font-size="10" fill="#64748b" font-family="sans-serif">THRU / Load</text>
-          <!-- Coupled port: line + down arrowhead -->
-          <line x1="200" y1="92" x2="200" y2="119" stroke="#dc2626" stroke-width="2"/>
-          <polygon points="194,119 200,130 206,119" fill="#dc2626"/>
-          <!-- Coupled output box -->
-          <rect x="55" y="132" width="290" height="36" rx="5" fill="#fff5f5" stroke="#dc2626" stroke-width="1.5"/>
-          <text x="200" y="145" text-anchor="middle" font-size="10" fill="#dc2626" font-family="sans-serif">COUPLED OUT</text>
-          <text x="75" y="161" font-size="12" font-weight="bold" fill="#dc2626" font-family="sans-serif">Vpp: <tspan id="d1a_vpp_diag">—</tspan> mVpp</text>
-          <text x="345" y="161" text-anchor="end" font-size="11" fill="#666" font-family="sans-serif">Vrms: <tspan id="d1a_vrms_diag">—</tspan> mVrms</text>
-        </svg>
-      </div>
-      <div>
-        <div class="result-grid">
-          <div class="result-item highlight">
-            <div class="label">方結出力 <span class="notx">Vpp</span></div>
-            <div class="value" id="m1a_vpp">—</div>
-            <div class="unit"><span class="notx">mVpp</span></div>
-          </div>
-          <div class="result-item highlight">
-            <div class="label">方結出力 <span class="notx">Vrms</span></div>
-            <div class="value" id="m1a_vrms">—</div>
-            <div class="unit"><span class="notx">mVrms</span></div>
-          </div>
-          <div class="result-item">
-            <div class="label">結合電力</div>
-            <div class="value" id="m1a_pout">—</div>
-            <div class="unit">W</div>
-          </div>
-        </div>
-        <canvas id="chart1a" width="280" height="155" style="margin-top:10px;border:1px solid var(--border);border-radius:4px;background:#fff;max-width:100%"></canvas>
-      </div>
+    <h3>電力 ⇄ 方結出力電圧</h3>
+    <div style="overflow-x:auto;margin-top:8px">
+      <svg class="coupler-diag" id="coupler-main-diag" viewBox="0 0 740 232" width="100%" style="min-width:560px;border:1px solid var(--border);border-radius:8px;display:block">
+        <rect width="740" height="232" style="fill:var(--card)"/>
+        <defs>
+          <marker id="bigArr" markerWidth="14" markerHeight="10" refX="13" refY="5" orient="auto">
+            <path d="M0,0 L14,5 L0,10Z" fill="#2563eb"/>
+          </marker>
+          <marker id="midArr" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <path d="M0,0 L10,3.5 L0,7Z" fill="#2563eb"/>
+          </marker>
+        </defs>
+        <!-- Main power line (thick arrows show high-power FWD direction) -->
+        <line x1="14" y1="93" x2="237" y2="93" stroke="#2563eb" stroke-width="8" stroke-linecap="round" marker-end="url(#bigArr)"/>
+        <line x1="441" y1="93" x2="716" y2="93" stroke="#2563eb" stroke-width="5" stroke-linecap="round" marker-end="url(#midArr)"/>
+        <circle cx="14" cy="93" r="6" fill="#2563eb"/>
+        <circle cx="718" cy="93" r="6" fill="#2563eb"/>
+        <!-- Coupler box -->
+        <rect x="240" y="66" width="200" height="54" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+        <text x="340" y="82" text-anchor="middle" font-size="11" font-weight="bold" fill="#1e40af" font-family="sans-serif">方向性結合器</text>
+        <!-- Coupling factor input: −[  ]dB -->
+        <text x="262" y="105" font-size="12" fill="#2563eb" font-family="sans-serif">−</text>
+        <foreignObject x="274" y="89" width="65" height="26">
+          <input type="number" id="m1_cc" value="50" step="1" min="1" max="100" oninput="calc_m1_from_cc()"
+            style="width:100%;height:100%;border:1px solid #93c5fd;border-radius:3px;padding:2px 4px;font-size:12px;text-align:center;background:#fff;color:#1e40af;box-sizing:border-box"/>
+        </foreignObject>
+        <text x="342" y="105" font-size="12" fill="#2563eb" font-family="sans-serif">dB</text>
+        <!-- FWD input (left, above main line) -->
+        <text x="18" y="26" font-size="11" font-weight="bold" fill="#2563eb" font-family="sans-serif">FWD [W]</text>
+        <foreignObject x="18" y="32" width="186" height="36">
+          <input type="number" id="m1_fwd" value="3000" step="100" min="0" oninput="calc_m1_from_fwd()"
+            style="width:100%;height:100%;border:2px solid #2563eb;border-radius:5px;padding:4px 8px;font-size:16px;font-weight:bold;color:#2563eb;background:#eff6ff;box-sizing:border-box"/>
+        </foreignObject>
+        <!-- THRU label (right, above main line) -->
+        <text x="446" y="78" font-size="11" fill="#64748b" font-family="sans-serif">THRU / Load</text>
+        <!-- Coupled port line (moderate arrow going down) -->
+        <line x1="340" y1="120" x2="340" y2="150" stroke="#dc2626" stroke-width="2.5"/>
+        <polygon points="334,147 340,158 346,147" fill="#dc2626"/>
+        <!-- COUPLED OUT box -->
+        <rect x="14" y="160" width="712" height="68" rx="7" fill="#fff5f5" stroke="#dc2626" stroke-width="1.5"/>
+        <text x="370" y="174" text-anchor="middle" font-size="10" fill="#dc2626" font-family="sans-serif" letter-spacing="0.5">COUPLED OUT</text>
+        <!-- Vpp input -->
+        <text x="28" y="205" font-size="11" font-weight="bold" fill="#dc2626" font-family="sans-serif">Vpp</text>
+        <foreignObject x="56" y="186" width="155" height="32">
+          <input type="number" id="m1_vpp" value="3464" step="10" min="0" oninput="calc_m1_from_vpp()"
+            style="width:100%;height:100%;border:2px solid #dc2626;border-radius:5px;padding:3px 8px;font-size:16px;font-weight:bold;color:#dc2626;background:#fff5f5;box-sizing:border-box"/>
+        </foreignObject>
+        <text x="215" y="205" font-size="12" fill="#dc2626" font-family="sans-serif">mVpp</text>
+        <!-- Vrms display (calculated) -->
+        <text x="256" y="200" font-size="11" fill="#888" font-family="sans-serif">→  Vrms:</text>
+        <text x="316" y="200" font-size="13" font-weight="bold" fill="#555" font-family="sans-serif" id="m1_vrms_diag">—</text>
+        <text x="380" y="200" font-size="11" fill="#888" font-family="sans-serif">mVrms</text>
+        <!-- Coupling power display -->
+        <text x="600" y="192" font-size="10" fill="#888" font-family="sans-serif" text-anchor="middle">結合電力</text>
+        <text x="600" y="210" font-size="14" font-weight="bold" fill="#555" font-family="sans-serif" text-anchor="middle" id="m1_pout_diag">—</text>
+        <text x="600" y="223" font-size="10" fill="#888" font-family="sans-serif" text-anchor="middle">W</text>
+      </svg>
     </div>
-
-    <div class="section-divider"></div>
-
-    <h3>1-B：方結 → 電力</h3>
-    <div class="grid">
-      <div>
-        <div class="form-group">
-          <label>入力種別</label>
-          <div style="display:flex;gap:16px;margin-top:4px">
-            <label style="text-transform:none;font-weight:normal;display:flex;align-items:center;gap:4px;cursor:pointer">
-              <input type="radio" name="m1b_type" id="m1b_type_vrms" value="vrms" onchange="update_m1b_unit();calc_m1b()"> <span class="notx">Vrms</span>
-            </label>
-            <label style="text-transform:none;font-weight:normal;display:flex;align-items:center;gap:4px;cursor:pointer">
-              <input type="radio" name="m1b_type" id="m1b_type_vpp" value="vpp" checked onchange="update_m1b_unit();calc_m1b()"> <span class="notx">Vpp</span>
-            </label>
-          </div>
-        </div>
-        <div style="display:flex;gap:12px">
-          <div class="form-group" style="flex:1">
-            <label>電圧値 [<span class="notx" id="m1b_unit_lbl">mVpp</span>]</label>
-            <input type="number" id="m1b_vval" step="10" value="3464" min="0" oninput="calc_m1b()" style="max-width:100%">
-          </div>
-          <div class="form-group" style="flex:1">
-            <label>結合度 [<span class="notx">dB</span>]<span class="tip"><span class="tip-icon">i</span><span class="tip-box">方向性結合器が分岐する信号の割合。正の値で入力（例: 50 → −50dB）。範囲: 0〜70、高電力RF系では50〜60が多い</span></span></label>
-            <input type="number" id="m1b_cc" step="1" value="50" min="1" max="100" oninput="calc_m1b()" style="max-width:100%">
-          </div>
-        </div>
-        <svg class="coupler-diag" id="coupler-diag-1b" viewBox="0 0 400 172" width="100%" style="margin-top:8px;border:1px solid var(--border);border-radius:6px;display:block">
-          <rect width="400" height="172" style="fill:var(--card)"/>
-          <!-- Main line (left and right of coupler box) -->
-          <line x1="10" y1="72" x2="133" y2="72" stroke="#16a34a" stroke-width="2.5"/>
-          <line x1="267" y1="72" x2="390" y2="72" stroke="#64748b" stroke-width="2"/>
-          <!-- Left-pointing arrowhead at FWD port (calculated output) -->
-          <polygon points="22,66 10,72 22,78" fill="#16a34a"/>
-          <!-- Coupler box (green theme) -->
-          <rect x="133" y="52" width="134" height="40" rx="6" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5"/>
-          <text x="200" y="68" text-anchor="middle" font-size="11" font-weight="bold" fill="#14532d" font-family="sans-serif">方向性結合器</text>
-          <text x="200" y="84" text-anchor="middle" font-size="11" fill="#16a34a" font-family="sans-serif">−<tspan id="d1b_cc_diag">50</tspan> dB</text>
-          <!-- Port dots -->
-          <circle cx="10" cy="72" r="5" fill="#16a34a"/>
-          <circle cx="390" cy="72" r="5" fill="#64748b"/>
-          <!-- Labels above line -->
-          <text x="15" y="46" font-size="11" font-weight="bold" fill="#16a34a" font-family="sans-serif">FWD (推算): <tspan id="d1b_power_diag">—</tspan> W</text>
-          <text x="270" y="46" font-size="10" fill="#64748b" font-family="sans-serif">THRU / Load</text>
-          <!-- Coupled port: line + UP arrowhead (input from bottom) -->
-          <line x1="200" y1="132" x2="200" y2="102" stroke="#dc2626" stroke-width="2"/>
-          <polygon points="194,102 200,92 206,102" fill="#dc2626"/>
-          <!-- Coupled input box -->
-          <rect x="55" y="132" width="290" height="36" rx="5" fill="#fff5f5" stroke="#dc2626" stroke-width="1.5"/>
-          <text x="200" y="145" text-anchor="middle" font-size="10" fill="#dc2626" font-family="sans-serif">COUPLED IN</text>
-          <text x="75" y="161" font-size="12" font-weight="bold" fill="#dc2626" font-family="sans-serif"><tspan id="d1b_type_diag">Vpp</tspan>: <tspan id="d1b_vval_diag">—</tspan> mV</text>
-          <text x="345" y="161" text-anchor="end" font-size="11" fill="#666" font-family="sans-serif"><tspan id="d1b_alt_diag">—</tspan></text>
-        </svg>
-      </div>
-      <div>
-        <div class="result-grid">
-          <div class="result-item highlight">
-            <div class="label">推算電力</div>
-            <div class="value" id="m1b_power">—</div>
-            <div class="unit">W</div>
-          </div>
-          <div class="result-item">
-            <div class="label">電力 <span class="notx">dBW</span></div>
-            <div class="value" id="m1b_dbw">—</div>
-            <div class="unit"><span class="notx">dBW</span></div>
-          </div>
-          <div class="result-item">
-            <div class="label">電力 <span class="notx">dBm</span></div>
-            <div class="value" id="m1b_dbm">—</div>
-            <div class="unit"><span class="notx">dBm</span></div>
-          </div>
-        </div>
-        <canvas id="chart1b" width="280" height="155" style="margin-top:10px;border:1px solid var(--border);border-radius:4px;background:#fff;max-width:100%"></canvas>
-      </div>
-    </div>
+    <canvas id="chart1" width="560" height="155" style="margin-top:10px;border:1px solid var(--border);border-radius:4px;background:#fff;max-width:100%;display:block"></canvas>
 
     <div class="section-divider"></div>
 
@@ -1027,30 +947,51 @@ function switchTab(id) {
 }
 
 // ============================================================
-// MODULE 1
+// MODULE 1 — 方向性結合器（双方向入力）
 // ============================================================
-function calc_m1a() {
-  const p = get('m1_pfwd_a');
-  const cc = get('m1_cc_a');  // 正の値で入力（内部でマイナス扱い）
-  if (isNaN(p) || isNaN(cc) || p <= 0) {
-    set('m1a_vrms','—'); set('m1a_vpp','—'); set('m1a_pout','—');
-    ['d1a_vpp_diag','d1a_vrms_diag'].forEach(id => { const e=document.getElementById(id); if(e) e.textContent='—'; });
+let m1_lastInput = 'fwd';
+
+function calc_m1_from_fwd() {
+  m1_lastInput = 'fwd';
+  const fwd = get('m1_fwd');
+  const cc  = get('m1_cc');
+  if (isNaN(fwd) || isNaN(cc) || fwd <= 0 || cc <= 0) {
+    ['m1_vrms_diag','m1_pout_diag'].forEach(id => { const e=document.getElementById(id); if(e) e.textContent='—'; });
     return;
   }
-  const pout = p * Math.pow(10, -cc/10);  // W（結合度は正値なのでマイナスをつける）
+  const pout = fwd * Math.pow(10, -cc/10);
   const vrms = Math.sqrt(pout * Z0);
-  const vpp = vrms * 2 * Math.SQRT2;
-  set('m1a_vrms', fmt(vrms * 1000));   // mV表示
-  set('m1a_vpp', fmt(vpp * 1000));     // mV表示
-  set('m1a_pout', fmt(pout, 6));
-  saveLog('結合器1A', `FWD=${p}W, 結合度=${cc}dB`, `Vrms=${fmt(vrms*1000)}mV, Vpp=${fmt(vpp*1000)}mV`);
-  // SVG diagram update
+  const vpp  = vrms * 2 * Math.SQRT2;
+  document.getElementById('m1_vpp').value = parseFloat((vpp * 1000).toFixed(1));
   const d = id => document.getElementById(id);
-  if (d('d1a_fwd_diag')) d('d1a_fwd_diag').textContent = p % 1 === 0 ? p : fmt(p);
-  if (d('d1a_cc_diag'))  d('d1a_cc_diag').textContent  = cc % 1 === 0 ? cc : fmt(cc);
-  if (d('d1a_vpp_diag')) d('d1a_vpp_diag').textContent = fmt(vpp * 1000);
-  if (d('d1a_vrms_diag'))d('d1a_vrms_diag').textContent= fmt(vrms * 1000);
-  drawChart1A();
+  if (d('m1_vrms_diag')) d('m1_vrms_diag').textContent = fmt(vrms * 1000);
+  if (d('m1_pout_diag')) d('m1_pout_diag').textContent = fmt(pout, 6);
+  saveLog('結合器', `FWD=${fwd}W, 結合度=${cc}dB`, `Vpp=${fmt(vpp*1000)}mVpp, Vrms=${fmt(vrms*1000)}mVrms`);
+  drawChart1();
+}
+
+function calc_m1_from_vpp() {
+  m1_lastInput = 'vpp';
+  const vpp_mv = get('m1_vpp');
+  const cc     = get('m1_cc');
+  if (isNaN(vpp_mv) || isNaN(cc) || vpp_mv <= 0 || cc <= 0) {
+    ['m1_vrms_diag','m1_pout_diag'].forEach(id => { const e=document.getElementById(id); if(e) e.textContent='—'; });
+    return;
+  }
+  const vrms = vpp_mv / 1000 / (2 * Math.SQRT2);
+  const pout = vrms * vrms / Z0;
+  const fwd  = pout / Math.pow(10, -cc/10);
+  document.getElementById('m1_fwd').value = parseFloat(fwd.toFixed(1));
+  const d = id => document.getElementById(id);
+  if (d('m1_vrms_diag')) d('m1_vrms_diag').textContent = fmt(vrms * 1000);
+  if (d('m1_pout_diag')) d('m1_pout_diag').textContent = fmt(pout, 6);
+  saveLog('結合器', `Vpp=${vpp_mv}mVpp, 結合度=${cc}dB`, `FWD=${fmt(fwd,2)}W`);
+  drawChart1();
+}
+
+function calc_m1_from_cc() {
+  if (m1_lastInput === 'vpp') calc_m1_from_vpp();
+  else calc_m1_from_fwd();
 }
 
 // ============================================================
@@ -1104,101 +1045,6 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFormula
 function fv(v, d=4) { return (isNaN(v)||!isFinite(v)) ? '?' : fmt(v, d); }
 
 const formulaConfigs = {
-
-  // ===== MODULE 1-A: 方向性結合器 → 出力電力 =====
-  'm1a_vrms': {
-    inputIds: ['m1_pfwd_a', 'm1_cc_a'],
-    buildHTML() {
-      const p = get('m1_pfwd_a'), cc = get('m1_cc_a');
-      const pout = p * Math.pow(10, -cc/10);
-      const vrms = Math.sqrt(pout * Z0) * 1000;
-      return `<div class="fp-title">計算式 — 方結出力 Vrms</div>
-        <div class="fp-sym">P<sub>out</sub> = FWD電力 × 10<sup>−結合度/10</sup></div>
-        <div class="fp-sub">　= ${fv(p,2)} W × 10<sup>−${fv(cc,1)}/10</sup> = <b>${fv(pout,4)} W</b></div>
-        <div class="fp-sym" style="margin-top:8px">Vrms = √( P<sub>out</sub> × Z₀ ) × 1000</div>
-        <div class="fp-sub">　= √( ${fv(pout,4)} W × 50 Ω ) × 1000</div>
-        <div class="fp-result">= ${fv(vrms,4)} mVrms</div>`;
-    }
-  },
-  'm1a_vpp': {
-    inputIds: ['m1_pfwd_a', 'm1_cc_a'],
-    buildHTML() {
-      const p = get('m1_pfwd_a'), cc = get('m1_cc_a');
-      const pout = p * Math.pow(10, -cc/10);
-      const vrms = Math.sqrt(pout * Z0) * 1000;
-      const vpp  = vrms * 2 * Math.SQRT2;
-      return `<div class="fp-title">計算式 — 方結出力 Vpp</div>
-        <div class="fp-sym">Vrms = √( FWD電力 × 10<sup>−結合度/10</sup> × Z₀ ) × 1000</div>
-        <div class="fp-sub">　= ${fv(vrms,4)} mVrms</div>
-        <div class="fp-sym" style="margin-top:8px">Vpp = Vrms × 2√2</div>
-        <div class="fp-sub">　= ${fv(vrms,4)} × 2√2</div>
-        <div class="fp-result">= ${fv(vpp,4)} mVpp</div>`;
-    }
-  },
-  'm1a_pout': {
-    inputIds: ['m1_pfwd_a', 'm1_cc_a'],
-    buildHTML() {
-      const p = get('m1_pfwd_a'), cc = get('m1_cc_a');
-      const pout = p * Math.pow(10, -cc/10);
-      return `<div class="fp-title">計算式 — 結合電力</div>
-        <div class="fp-sym">P<sub>out</sub> = FWD電力 × 10<sup>−結合度/10</sup></div>
-        <div class="fp-sub">　= ${fv(p,2)} W × 10<sup>−${fv(cc,1)}/10</sup></div>
-        <div class="fp-result">= ${fv(pout,6)} W</div>`;
-    }
-  },
-
-  // ===== MODULE 1-B: センサー出力 → FWD電力 =====
-  'm1b_power': {
-    inputIds: ['m1b_vval', 'm1b_cc'],
-    buildHTML() {
-      const vval_mv = get('m1b_vval'), cc = get('m1b_cc');
-      const type = document.querySelector('input[name="m1b_type"]:checked')?.value || 'vrms';
-      const vval = vval_mv / 1000;
-      const vrms = type === 'vrms' ? vval : vval / (2 * Math.SQRT2);
-      const pout = vrms * vrms / Z0;
-      const pfwd = pout / Math.pow(10, -cc/10);
-      const typeLabel = type === 'vrms' ? 'mVrms' : 'mVpp';
-      const vrmsNote = type === 'vrms' ? `Vrms = センサー出力 = ${fv(vrms*1000,4)} mVrms` : `Vrms = ${fv(vval_mv,4)} mVpp ÷ 2√2 = ${fv(vrms*1000,4)} mVrms`;
-      return `<div class="fp-title">計算式 — 推算FWD電力</div>
-        <div class="fp-sym">Vrms [V] = センサー出力 [${typeLabel}] ÷ 1000${type==='vpp'?' ÷ 2√2':''}</div>
-        <div class="fp-sub">　${vrmsNote}</div>
-        <div class="fp-sym" style="margin-top:8px">P<sub>out</sub> = Vrms² ÷ Z₀</div>
-        <div class="fp-sub">　= ${fv(vrms,6)}² ÷ 50 = ${fv(pout,6)} W</div>
-        <div class="fp-sym" style="margin-top:8px">P<sub>FWD</sub> = P<sub>out</sub> ÷ 10<sup>−結合度/10</sup></div>
-        <div class="fp-sub">　= ${fv(pout,6)} ÷ 10<sup>−${fv(cc,1)}/10</sup></div>
-        <div class="fp-result">= ${fv(pfwd,4)} W</div>`;
-    }
-  },
-  'm1b_dbw': {
-    inputIds: ['m1b_vval', 'm1b_cc'],
-    buildHTML() {
-      const vval_mv = get('m1b_vval'), cc = get('m1b_cc');
-      const type = document.querySelector('input[name="m1b_type"]:checked')?.value || 'vrms';
-      const vrms = (vval_mv/1000) / (type === 'vpp' ? 2*Math.SQRT2 : 1);
-      const pfwd = (vrms*vrms/Z0) / Math.pow(10,-cc/10);
-      const dbw  = 10 * Math.log10(pfwd);
-      return `<div class="fp-title">計算式 — 電力 dBW</div>
-        <div class="fp-sym">dBW = 10 × log₁₀( P<sub>FWD</sub> )</div>
-        <div class="fp-sub">　= 10 × log₁₀( ${fv(pfwd,4)} W )</div>
-        <div class="fp-result">= ${fv(dbw,4)} dBW</div>`;
-    }
-  },
-  'm1b_dbm': {
-    inputIds: ['m1b_vval', 'm1b_cc'],
-    buildHTML() {
-      const vval_mv = get('m1b_vval'), cc = get('m1b_cc');
-      const type = document.querySelector('input[name="m1b_type"]:checked')?.value || 'vrms';
-      const vrms = (vval_mv/1000) / (type === 'vpp' ? 2*Math.SQRT2 : 1);
-      const pfwd = (vrms*vrms/Z0) / Math.pow(10,-cc/10);
-      const dbw  = 10 * Math.log10(pfwd);
-      const dbm  = dbw + 30;
-      return `<div class="fp-title">計算式 — 電力 dBm</div>
-        <div class="fp-sym">dBm = dBW + 30</div>
-        <div class="fp-sub">　= ${fv(dbw,4)} + 30</div>
-        <div class="fp-result">= ${fv(dbm,4)} dBm</div>
-        <div class="fp-sub" style="margin-top:6px;color:#94a3b8">（1 W = 0 dBW = 30 dBm）</div>`;
-    }
-  },
 
   // ===== MODULE 1-C: FWD/REF → VSWR/Γ/ロードパワー =====
   'm1c_pabs': {
@@ -1690,7 +1536,7 @@ const formulaConfigs = {
 /* ===== ARROW KEY / SPINNER SNAP TO CLEAN VALUE ===== */
 (function wireSnapInputs() {
   const SNAP_IDS = [
-    'm1_pfwd_a', 'm1b_vval', 'm1c_pfwd', 'm1c_pref', 'm1c_tol',
+    'm1_fwd', 'm1_vpp', 'm1c_pfwd', 'm1c_pref', 'm1c_tol',
     'm2_v', 'm2_i', 'm2_freq',
     'm3s_v', 'm3s_i', 'm3s_freq',
     'm4_w', 'm4_dbm', 'm4_dbw',
@@ -1778,45 +1624,6 @@ const formulaConfigs = {
     });
   });
 })();
-
-function update_m1b_unit() {
-  const type = document.querySelector('input[name="m1b_type"]:checked').value;
-  document.getElementById('m1b_unit_lbl').textContent = type === 'vrms' ? 'mVrms' : 'mVpp';
-}
-
-function calc_m1b() {
-  const type = document.querySelector('input[name="m1b_type"]:checked').value;
-  const vval_mv = get('m1b_vval');  // mV入力
-  const cc = get('m1b_cc');         // 正の値入力（結合度）
-  if (isNaN(vval_mv) || isNaN(cc) || vval_mv <= 0) {
-    set('m1b_power','—'); set('m1b_dbw','—'); set('m1b_dbm','—');
-    const dp = document.getElementById('d1b_power_diag'); if (dp) dp.textContent = '—';
-    return;
-  }
-  const vval = vval_mv / 1000;  // V換算
-  let vrms;
-  if (type === 'vrms') vrms = vval;
-  else vrms = vval / (2 * Math.SQRT2);  // Vpp -> Vrms
-  const pout = vrms*vrms / Z0;
-  const pfwd = pout / Math.pow(10, -cc/10);  // 結合度は正値なのでマイナスをつける
-  const dbw = 10 * Math.log10(pfwd);
-  const dbm = dbw + 30;
-  set('m1b_power', fmt(pfwd, 2));
-  set('m1b_dbw', fmt(dbw));
-  set('m1b_dbm', fmt(dbm));
-  saveLog('結合器1B', `${type}=${vval_mv}mV, 結合度=${cc}dB`, `P=${fmt(pfwd,2)}W`);
-  // SVG diagram update
-  const d = id => document.getElementById(id);
-  if (d('d1b_cc_diag'))    d('d1b_cc_diag').textContent    = cc % 1 === 0 ? cc : fmt(cc);
-  if (d('d1b_power_diag')) d('d1b_power_diag').textContent = fmt(pfwd, 2);
-  if (d('d1b_type_diag'))  d('d1b_type_diag').textContent  = type === 'vrms' ? 'Vrms' : 'Vpp';
-  if (d('d1b_vval_diag'))  d('d1b_vval_diag').textContent  = fmt(vval_mv);
-  if (d('d1b_alt_diag')) {
-    const altMv = type === 'vrms' ? vval_mv * 2 * Math.SQRT2 : vval_mv / (2 * Math.SQRT2);
-    d('d1b_alt_diag').textContent = type === 'vrms' ? `→ ${fmt(altMv)} mVpp` : `→ ${fmt(altMv)} mVrms`;
-  }
-  drawChart1B();
-}
 
 function calc_m1c() {
   const pf = get('m1c_pfwd');
@@ -1933,43 +1740,19 @@ function drawMiniChart(canvas, cfg) {
   ctx.fillText(cfg.yLabel || '', 0, 0); ctx.restore();
 }
 
-function drawChart1A() {
-  const p = get('m1_pfwd_a');
-  const cc = get('m1_cc_a');
-  const canvas = document.getElementById('chart1a');
-  if (!canvas || isNaN(p) || isNaN(cc) || p <= 0) return;
-  const xMax = 5000;
-  const dotX = p;
-  const dotY = Math.sqrt(p * Math.pow(10,-cc/10) * Z0) * 1000 * 2 * Math.SQRT2;
+function drawChart1() {
+  const fwd    = get('m1_fwd');
+  const cc     = get('m1_cc');
+  const vpp_mv = get('m1_vpp');
+  const canvas = document.getElementById('chart1');
+  if (!canvas || isNaN(cc) || cc <= 0) return;
   drawMiniChart(canvas, {
     fn: x => Math.sqrt(x * Math.pow(10,-cc/10) * Z0) * 1000 * 2 * Math.SQRT2,
-    xMin: 0, xMax,
+    xMin: 0, xMax: 5000,
     xLabel: 'FWD (W)', yLabel: 'mVpp',
-    dotX, dotY,
+    dotX: isNaN(fwd) || fwd <= 0 ? 0 : fwd,
+    dotY: isNaN(vpp_mv) ? 0 : vpp_mv,
     color: '#2563eb', yMin: 0
-  });
-}
-
-function drawChart1B() {
-  const type = document.querySelector('input[name="m1b_type"]:checked').value;
-  const vval_mv = get('m1b_vval');
-  const cc = get('m1b_cc');
-  const canvas = document.getElementById('chart1b');
-  if (!canvas || isNaN(vval_mv) || isNaN(cc) || vval_mv <= 0) return;
-  // 5000W FWD に対応するセンサー出力mV をxMaxに固定
-  const vrms5000 = Math.sqrt(5000 * Math.pow(10, -cc/10) * Z0) * 1000;
-  const xMax = type === 'vrms' ? vrms5000 : vrms5000 * 2 * Math.SQRT2;
-  const toVrms = v_mv => type === 'vrms' ? v_mv/1000 : v_mv/1000/(2*Math.SQRT2);
-  const toPfwd = v_mv => { const vr = toVrms(v_mv); return (vr*vr/Z0) / Math.pow(10,-cc/10); };
-  const dotX = vval_mv;
-  const dotY = toPfwd(vval_mv);
-  const xLbl = type === 'vrms' ? 'mVrms' : 'mVpp';
-  drawMiniChart(canvas, {
-    fn: x => toPfwd(x),
-    xMin: 0, xMax,
-    xLabel: xLbl, yLabel: 'FWD (W)',
-    dotX, dotY,
-    color: '#16a34a', yMin: 0
   });
 }
 
@@ -2787,8 +2570,7 @@ addSegment('fixed', {name: '方向性結合器', db: 0.5});
 addSegment('cable', {name: 'ケーブル', loss: 0.1, len: 5});
 
 // Init: run all calculations with default values
-calc_m1a();
-calc_m1b();
+calc_m1_from_fwd();
 calc_m1c();
 calc_m2();
 // 初期進行波を3000Wにキッカリ合わせる
