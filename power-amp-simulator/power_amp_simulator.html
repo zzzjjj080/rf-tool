@@ -176,6 +176,24 @@ select{background:var(--panel2);border:1px solid var(--border);color:var(--text)
     RFシステムでは効率・歪み・出力電力のバランスが設計の鍵となり、用途に応じて<span class="hl2">A級・D級・E級</span>などのクラスを使い分けます。<br>
     各セクションで<span class="hl3">回路図 + 波形</span>を並べ、パラメータを変えると何が変わるかを直感的に体感できます。
   </p>
+  <div class="explain-cards" style="margin-top:10px;">
+    <div class="explain-card">
+      <div class="explain-card-head" style="background:#4a6fa5;">スマートフォン・IoT</div>
+      <div class="explain-card-body">送信PA出力は<span class="hl">数十〜数百 mW</span>。電池駆動のため効率優先。Wi-Fi/BLEは〜20 dBm、LTEは最大23 dBm。</div>
+    </div>
+    <div class="explain-card">
+      <div class="explain-card-head" style="background:#5a7a5a;">基地局・衛星</div>
+      <div class="explain-card-body">マクロ基地局では<span class="hl">数十〜数百 W</span>。GaN PAで高効率化。衛星中継器は数百W〜kW級も。</div>
+    </div>
+    <div class="explain-card">
+      <div class="explain-card-head" style="background:#7a5a7a;">産業・プラズマ</div>
+      <div class="explain-card-body">半導体製造装置（エッチング等）は<span class="hl">数百W〜数kW</span>のRF電力を2〜60 MHzで供給。プラズマ生成・制御に直結。</div>
+    </div>
+    <div class="explain-card">
+      <div class="explain-card-head" style="background:#7a6a3a;">オーディオ</div>
+      <div class="explain-card-body">スピーカー駆動は<span class="hl">数W〜数kW</span>（PA・コンサート用途）。D級が主流で90%超の効率を実現。</div>
+    </div>
+  </div>
   <div class="explain-cards">
     <div class="explain-card">
       <div class="explain-card-head accent">A級 — リニア</div>
