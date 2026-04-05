@@ -264,21 +264,27 @@
         <!-- 結合出力 box -->
         <rect x="140" y="174" width="200" height="108" rx="6" fill="#fff5f5" stroke="#dc2626" stroke-width="1.5"/>
         <text x="240" y="189" text-anchor="middle" font-size="12" fill="#dc2626" font-family="sans-serif" letter-spacing="0.5">結合出力</text>
-        <!-- Vpp input row — input ends at x=268, unit at x=272 -->
-        <text x="150" y="215" font-size="13" font-weight="bold" fill="#dc2626" font-family="sans-serif">Vpp</text>
-        <foreignObject x="178" y="199" width="90" height="28">
-          <input type="number" id="m1_vpp" value="3464" step="10" min="0" oninput="calc_m1_from_vpp()" class="coupler-input"
+        <!-- 結合電力 input row (GREEN, top) -->
+        <text x="148" y="215" font-size="12" font-weight="bold" fill="#16a34a" font-family="sans-serif">結合電力</text>
+        <foreignObject x="208" y="199" width="60" height="28">
+          <input type="number" id="m1_pout" step="0.001" min="0" oninput="calc_m1_from_pout()" class="coupler-input"
+            style="width:100%;height:100%;border:2px solid #16a34a;border-radius:4px;padding:2px 4px;font-size:15px;font-weight:bold;color:#16a34a;background:#f0fdf4;box-sizing:border-box"/>
+        </foreignObject>
+        <text x="272" y="215" font-size="12" fill="#16a34a" font-family="sans-serif">W</text>
+        <!-- Vrms input row (ORANGE, middle) -->
+        <text x="150" y="241" font-size="13" fill="#ea580c" font-family="sans-serif">Vrms</text>
+        <foreignObject x="178" y="225" width="90" height="28">
+          <input type="number" id="m1_vrms" step="100" min="0" oninput="calc_m1_from_vrms()" class="coupler-input"
+            style="width:100%;height:100%;border:2px solid #ea580c;border-radius:4px;padding:2px 4px;font-size:15px;font-weight:bold;color:#ea580c;background:#fff7ed;box-sizing:border-box"/>
+        </foreignObject>
+        <text x="272" y="241" font-size="12" fill="#ea580c" font-family="sans-serif">mVrms</text>
+        <!-- Vpp input row (RED, bottom) -->
+        <text x="150" y="265" font-size="13" font-weight="bold" fill="#dc2626" font-family="sans-serif">Vpp</text>
+        <foreignObject x="178" y="249" width="90" height="28">
+          <input type="number" id="m1_vpp" value="3464" step="100" min="0" oninput="calc_m1_from_vpp()" class="coupler-input"
             style="width:100%;height:100%;border:2px solid #dc2626;border-radius:4px;padding:2px 4px;font-size:15px;font-weight:bold;color:#dc2626;background:#fff5f5;box-sizing:border-box"/>
         </foreignObject>
-        <text x="272" y="215" font-size="12" fill="#dc2626" font-family="sans-serif">mVpp</text>
-        <!-- Vrms display row (orange) — right-aligned at x=268 -->
-        <text x="150" y="241" font-size="13" fill="#ea580c" font-family="sans-serif">Vrms</text>
-        <text x="268" y="241" font-size="14" font-weight="bold" fill="#ea580c" font-family="sans-serif" text-anchor="end" id="m1_vrms_diag">—</text>
-        <text x="272" y="241" font-size="12" fill="#ea580c" font-family="sans-serif">mVrms</text>
-        <!-- 結合電力 display row (green) — right-aligned at x=268 -->
-        <text x="150" y="265" font-size="13" fill="#16a34a" font-family="sans-serif">結合電力</text>
-        <text x="268" y="265" font-size="14" font-weight="bold" fill="#16a34a" font-family="sans-serif" text-anchor="end" id="m1_pout_diag">—</text>
-        <text x="272" y="265" font-size="12" fill="#16a34a" font-family="sans-serif">W</text>
+        <text x="272" y="265" font-size="12" fill="#dc2626" font-family="sans-serif">mVpp</text>
         <!-- Formula panel -->
         <rect x="352" y="110" width="278" height="170" rx="6" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
         <text x="491" y="128" text-anchor="middle" font-size="12" font-weight="bold" fill="#374151" font-family="sans-serif">計算式</text>
@@ -289,61 +295,10 @@
         <text x="362" y="200" font-size="12" font-family="sans-serif"><tspan fill="#ea580c">Vrms</tspan><tspan fill="#374151"> = √(</tspan><tspan fill="#16a34a">結合電力</tspan><tspan fill="#374151"> × 50) × 1000</tspan><tspan fill="#888"> [mVrms]</tspan></text>
         <!-- Formula 3: Vpp = Vrms × 2√2 -->
         <text x="362" y="235" font-size="12" font-family="sans-serif"><tspan fill="#dc2626">Vpp</tspan><tspan fill="#374151"> = </tspan><tspan fill="#ea580c">Vrms</tspan><tspan fill="#374151"> × 2√2</tspan><tspan fill="#888"> [mVpp]</tspan></text>
-        <!-- Note -->
-        <text x="362" y="264" font-size="10" fill="#94a3b8" font-family="sans-serif">結合度単位: dB   Z₀ = 50Ω</text>
       </svg>
       <canvas id="chart1" width="260" height="260" style="border:1px solid var(--border);border-radius:4px;background:#fff;flex-shrink:0;display:block"></canvas>
     </div>
 
-    <div class="section-divider"></div>
-
-    <h3>1-C：FWD / REF → VSWR / Γ / ロードパワー</h3>
-    <div class="grid">
-      <div>
-        <div class="form-group">
-          <label>FWD [W]</label>
-          <input type="number" id="m1c_pfwd" step="100" value="3000" min="0" oninput="calc_m1c()">
-        </div>
-        <div class="form-group">
-          <label>REF [W]</label>
-          <input type="number" id="m1c_pref" step="10" value="600" min="0" oninput="calc_m1c()">
-        </div>
-        <div class="form-group">
-          <label>反射電力許容上限 [W]（合否判定）</label>
-          <input type="number" id="m1c_tol" step="10" value="600" min="0" oninput="calc_m1c()">
-        </div>
-      </div>
-      <div>
-        <div class="result-grid">
-          <div class="result-item highlight">
-            <div class="label">ロードパワー</div>
-            <div class="value" id="m1c_pabs">—</div>
-            <div class="unit">W</div>
-          </div>
-          <div class="result-item highlight">
-            <div class="label">反射係数 |Γ|<span class="tip" style="text-transform:none"><span class="tip-icon">i</span><span class="tip-box">反射係数の大きさ。範囲: 0（完全整合）〜1（完全反射）</span></span></div>
-            <div class="value" id="m1c_gamma">—</div>
-            <div class="unit">（無次元）</div>
-          </div>
-          <div class="result-item">
-            <div class="label">VSWR<span class="tip" style="text-transform:none"><span class="tip-icon">i</span><span class="tip-box">定在波比。範囲: 1（完全整合）〜∞（完全反射）。実用上は1.5以下が目標</span></span></div>
-            <div class="value" id="m1c_vswr">—</div>
-            <div class="unit">—</div>
-          </div>
-          <div class="result-item">
-            <div class="label">反射損失<span class="tip" style="text-transform:none"><span class="tip-icon">i</span><span class="tip-box">入射電力に対する反射電力の比（dB）。大きいほど整合が良い。範囲: 0dB（完全反射）〜∞dB（完全整合）</span></span></div>
-            <div class="value" id="m1c_rl">—</div>
-            <div class="unit">dB</div>
-          </div>
-          <div class="result-item">
-            <div class="label">合否判定</div>
-            <div class="value" id="m1c_judge" style="font-size:14px">—</div>
-            <div class="unit"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <canvas id="chart1c" width="560" height="110" style="margin-top:10px;border:1px solid var(--border);border-radius:4px;background:#fff;max-width:100%;display:block"></canvas>
   </div>
 </div>
 
@@ -961,17 +916,13 @@ function calc_m1_from_fwd() {
   m1_lastInput = 'fwd';
   const fwd = get('m1_fwd');
   const cc  = get('m1_cc');
-  if (isNaN(fwd) || isNaN(cc) || fwd <= 0 || cc <= 0) {
-    ['m1_vrms_diag','m1_pout_diag'].forEach(id => { const e=document.getElementById(id); if(e) e.textContent='—'; });
-    return;
-  }
+  if (isNaN(fwd) || isNaN(cc) || fwd <= 0 || cc <= 0) return;
   const pout = fwd * Math.pow(10, -cc/10);
   const vrms = Math.sqrt(pout * Z0);
   const vpp  = vrms * 2 * Math.SQRT2;
   document.getElementById('m1_vpp').value = parseFloat((vpp * 1000).toFixed(1));
-  const d = id => document.getElementById(id);
-  if (d('m1_vrms_diag')) d('m1_vrms_diag').textContent = fmt(vrms * 1000);
-  if (d('m1_pout_diag')) d('m1_pout_diag').textContent = parseFloat(pout.toPrecision(3));
+  document.getElementById('m1_vrms').value = parseFloat((vrms * 1000).toFixed(1));
+  document.getElementById('m1_pout').value = parseFloat(pout.toPrecision(3));
   saveLog('結合器', `FWD=${fwd}W, 結合度=${cc}dB`, `Vpp=${fmt(vpp*1000)}mVpp, Vrms=${fmt(vrms*1000)}mVrms`);
   drawChart1();
 }
@@ -980,23 +931,52 @@ function calc_m1_from_vpp() {
   m1_lastInput = 'vpp';
   const vpp_mv = get('m1_vpp');
   const cc     = get('m1_cc');
-  if (isNaN(vpp_mv) || isNaN(cc) || vpp_mv <= 0 || cc <= 0) {
-    ['m1_vrms_diag','m1_pout_diag'].forEach(id => { const e=document.getElementById(id); if(e) e.textContent='—'; });
-    return;
-  }
+  if (isNaN(vpp_mv) || isNaN(cc) || vpp_mv <= 0 || cc <= 0) return;
   const vrms = vpp_mv / 1000 / (2 * Math.SQRT2);
   const pout = vrms * vrms / Z0;
   const fwd  = pout / Math.pow(10, -cc/10);
   document.getElementById('m1_fwd').value = parseFloat(fwd.toFixed(1));
-  const d = id => document.getElementById(id);
-  if (d('m1_vrms_diag')) d('m1_vrms_diag').textContent = fmt(vrms * 1000);
-  if (d('m1_pout_diag')) d('m1_pout_diag').textContent = parseFloat(pout.toPrecision(3));
+  document.getElementById('m1_vrms').value = parseFloat((vrms * 1000).toFixed(1));
+  document.getElementById('m1_pout').value = parseFloat(pout.toPrecision(3));
   saveLog('結合器', `Vpp=${vpp_mv}mVpp, 結合度=${cc}dB`, `FWD=${fmt(fwd,2)}W`);
+  drawChart1();
+}
+
+function calc_m1_from_vrms() {
+  m1_lastInput = 'vrms';
+  const vrms_mv = get('m1_vrms');
+  const cc      = get('m1_cc');
+  if (isNaN(vrms_mv) || isNaN(cc) || vrms_mv <= 0 || cc <= 0) return;
+  const vrms = vrms_mv / 1000;
+  const pout = vrms * vrms / Z0;
+  const vpp  = vrms * 2 * Math.SQRT2;
+  const fwd  = pout / Math.pow(10, -cc/10);
+  document.getElementById('m1_fwd').value = parseFloat(fwd.toFixed(1));
+  document.getElementById('m1_vpp').value = parseFloat((vpp * 1000).toFixed(1));
+  document.getElementById('m1_pout').value = parseFloat(pout.toPrecision(3));
+  saveLog('結合器', `Vrms=${vrms_mv}mVrms, 結合度=${cc}dB`, `FWD=${fmt(fwd,2)}W`);
+  drawChart1();
+}
+
+function calc_m1_from_pout() {
+  m1_lastInput = 'pout';
+  const pout = get('m1_pout');
+  const cc   = get('m1_cc');
+  if (isNaN(pout) || isNaN(cc) || pout <= 0 || cc <= 0) return;
+  const vrms = Math.sqrt(pout * Z0);
+  const vpp  = vrms * 2 * Math.SQRT2;
+  const fwd  = pout / Math.pow(10, -cc/10);
+  document.getElementById('m1_fwd').value = parseFloat(fwd.toFixed(1));
+  document.getElementById('m1_vrms').value = parseFloat((vrms * 1000).toFixed(1));
+  document.getElementById('m1_vpp').value = parseFloat((vpp * 1000).toFixed(1));
+  saveLog('結合器', `結合電力=${pout}W, 結合度=${cc}dB`, `FWD=${fmt(fwd,2)}W`);
   drawChart1();
 }
 
 function calc_m1_from_cc() {
   if (m1_lastInput === 'vpp') calc_m1_from_vpp();
+  else if (m1_lastInput === 'vrms') calc_m1_from_vrms();
+  else if (m1_lastInput === 'pout') calc_m1_from_pout();
   else calc_m1_from_fwd();
 }
 
@@ -1051,59 +1031,6 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFormula
 function fv(v, d=4) { return (isNaN(v)||!isFinite(v)) ? '?' : fmt(v, d); }
 
 const formulaConfigs = {
-
-  // ===== MODULE 1-C: FWD/REF → VSWR/Γ/ロードパワー =====
-  'm1c_pabs': {
-    inputIds: ['m1c_pfwd', 'm1c_pref'],
-    buildHTML() {
-      const pf = get('m1c_pfwd'), pr = get('m1c_pref');
-      const pabs = pf - pr;
-      return `<div class="fp-title">計算式 — ロードパワー</div>
-        <div class="fp-sym">P<sub>load</sub> = P<sub>FWD</sub> − P<sub>REF</sub></div>
-        <div class="fp-sub">　= ${fv(pf,3)} W − ${fv(pr,3)} W</div>
-        <div class="fp-result">= ${fv(pabs,4)} W</div>`;
-    }
-  },
-  'm1c_gamma': {
-    inputIds: ['m1c_pfwd', 'm1c_pref'],
-    buildHTML() {
-      const pf = get('m1c_pfwd'), pr = get('m1c_pref');
-      const gamma = Math.sqrt(pr / pf);
-      return `<div class="fp-title">計算式 — 反射係数 |Γ|</div>
-        <div class="fp-sym">|Γ| = √( P<sub>REF</sub> / P<sub>FWD</sub> )</div>
-        <div class="fp-sub">　= √( ${fv(pr,3)} / ${fv(pf,3)} )</div>
-        <div class="fp-result">= ${fv(gamma,4)}</div>
-        <div class="fp-sub" style="margin-top:6px;color:#94a3b8">（0 = 完全整合, 1 = 完全反射）</div>`;
-    }
-  },
-  'm1c_vswr': {
-    inputIds: ['m1c_pfwd', 'm1c_pref'],
-    buildHTML() {
-      const pf = get('m1c_pfwd'), pr = get('m1c_pref');
-      const gamma = Math.sqrt(pr / pf);
-      const vswr  = (1 + gamma) / (1 - gamma);
-      return `<div class="fp-title">計算式 — VSWR</div>
-        <div class="fp-sym">|Γ| = √( P<sub>REF</sub> / P<sub>FWD</sub> ) = ${fv(gamma,4)}</div>
-        <div class="fp-sym" style="margin-top:8px">VSWR = ( 1 + |Γ| ) / ( 1 − |Γ| )</div>
-        <div class="fp-sub">　= ( 1 + ${fv(gamma,4)} ) / ( 1 − ${fv(gamma,4)} )</div>
-        <div class="fp-result">= ${fv(vswr,4)}</div>
-        <div class="fp-sub" style="margin-top:6px;color:#94a3b8">（1 = 完全整合, 実用目標 ≦ 1.5）</div>`;
-    }
-  },
-  'm1c_rl': {
-    inputIds: ['m1c_pfwd', 'm1c_pref'],
-    buildHTML() {
-      const pf = get('m1c_pfwd'), pr = get('m1c_pref');
-      const gamma = Math.sqrt(pr / pf);
-      const rl    = -20 * Math.log10(gamma);
-      return `<div class="fp-title">計算式 — 反射損失</div>
-        <div class="fp-sym">|Γ| = √( P<sub>REF</sub> / P<sub>FWD</sub> ) = ${fv(gamma,4)}</div>
-        <div class="fp-sym" style="margin-top:8px">RL = −20 × log₁₀( |Γ| )</div>
-        <div class="fp-sub">　= −20 × log₁₀( ${fv(gamma,4)} )</div>
-        <div class="fp-result">= ${fv(rl,4)} dB</div>
-        <div class="fp-sub" style="margin-top:6px;color:#94a3b8">（大きいほど整合が良い）</div>`;
-    }
-  },
 
   // ===== MODULE 2: VIセンサー =====
   'm2_zmag': {
@@ -1542,7 +1469,7 @@ const formulaConfigs = {
 /* ===== ARROW KEY / SPINNER SNAP TO CLEAN VALUE ===== */
 (function wireSnapInputs() {
   const SNAP_IDS = [
-    'm1_fwd', 'm1_vpp', 'm1c_pfwd', 'm1c_pref', 'm1c_tol',
+    'm1_fwd', 'm1_vpp', 'm1_vrms', 'm1_pout',
     'm2_v', 'm2_i', 'm2_freq',
     'm3s_v', 'm3s_i', 'm3s_freq',
     'm4_w', 'm4_dbm', 'm4_dbw',
@@ -1631,33 +1558,6 @@ const formulaConfigs = {
   });
 })();
 
-function calc_m1c() {
-  const pf = get('m1c_pfwd');
-  const pr = get('m1c_pref');
-  const tol = get('m1c_tol');
-  if (isNaN(pf) || isNaN(pr) || pf <= 0 || pr < 0 || pr >= pf) {
-    ['m1c_pabs','m1c_gamma','m1c_vswr','m1c_rl'].forEach(id=>set(id,'—'));
-    set('m1c_judge', '—');
-    return;
-  }
-  const pabs = pf - pr;
-  const gamma = Math.sqrt(pr / pf);
-  const vswr = (1 + gamma) / (1 - gamma);
-  const rl = -20 * Math.log10(gamma);
-  set('m1c_pabs', fmt(pabs));
-  set('m1c_gamma', fmt(gamma));
-  set('m1c_vswr', fmt(vswr));
-  set('m1c_rl', fmt(rl));
-  if (!isNaN(tol) && tol > 0) {
-    const pass = pr <= tol;
-    document.getElementById('m1c_judge').innerHTML =
-      `<span class="badge ${pass?'badge-pass':'badge-fail'}">${pass?'PASS':'FAIL'}</span>`;
-  } else {
-    set('m1c_judge', '—');
-  }
-  saveLog('結合器1C', `FWD=${pf}W, REF=${pr}W`, `ロードパワー=${fmt(pabs)}W, Γ=${fmt(gamma)}, VSWR=${fmt(vswr)}`);
-  drawChart1C();
-}
 
 // ============================================================
 // MODULE 1 CHARTS
@@ -1762,69 +1662,6 @@ function drawChart1() {
   });
 }
 
-function drawChart1C() {
-  const pf = get('m1c_pfwd');
-  const pr = get('m1c_pref');
-  const tol = get('m1c_tol');
-  const canvas = document.getElementById('chart1c');
-  if (!canvas || isNaN(pf) || isNaN(pr) || pf <= 0 || pr < 0 || pr >= pf) return;
-  const ctx = canvas.getContext('2d');
-  const W = canvas.width, H = canvas.height;
-  ctx.clearRect(0,0,W,H);
-  const pabs = pf - pr;
-  const PAD = {t:10, r:20, b:28, l:90};
-  const barsData = [
-    { label:'FWD',         value: pf,   color:'#2563eb' },
-    { label:'ロードパワー', value: pabs, color:'#16a34a' },
-    { label:'REF',         value: pr,   color:'#f97316' },
-  ];
-  const bh = Math.floor((H - PAD.t - PAD.b - 8) / 3);
-  const gap = 4;
-  const xMax = 5000;
-  const barW = W - PAD.l - PAD.r;
-  const xToC = x => PAD.l + x / xMax * barW;
-
-  // grid lines
-  ctx.strokeStyle='#e8e8e8'; ctx.lineWidth=1;
-  const NX = 5;
-  for (let i=0;i<=NX;i++) {
-    const xv = xMax * i / NX;
-    const cx = xToC(xv);
-    ctx.beginPath(); ctx.moveTo(cx, PAD.t); ctx.lineTo(cx, H-PAD.b); ctx.stroke();
-    ctx.fillStyle='#888'; ctx.font='9px sans-serif'; ctx.textAlign='center';
-    ctx.fillText(fmtShort(xv)+'W', cx, H-PAD.b+10);
-  }
-
-  // bars
-  barsData.forEach((d, i) => {
-    const y = PAD.t + i*(bh+gap);
-    const bw = xToC(d.value) - PAD.l;
-    ctx.fillStyle = d.color + '33';  // faint fill
-    ctx.fillRect(PAD.l, y, barW, bh);
-    ctx.fillStyle = d.color;
-    ctx.fillRect(PAD.l, y, Math.max(bw,0), bh);
-    // label
-    ctx.fillStyle='#333'; ctx.font='bold 10px sans-serif'; ctx.textAlign='right';
-    ctx.fillText(d.label, PAD.l-4, y+bh/2+4);
-    // value text
-    ctx.fillStyle='#fff'; ctx.font='bold 10px sans-serif'; ctx.textAlign='left';
-    const valTxt = fmtShort(d.value)+'W';
-    const txX = PAD.l + Math.max(bw,0) + 4;
-    ctx.fillStyle = bw > 30 ? '#fff' : d.color;
-    ctx.textAlign = bw > 30 ? 'right' : 'left';
-    ctx.fillText(valTxt, bw > 30 ? PAD.l + bw - 4 : txX, y+bh/2+4);
-  });
-
-  // tolerance line
-  if (!isNaN(tol) && tol > 0) {
-    const tx = xToC(tol);
-    ctx.strokeStyle='#dc2626'; ctx.lineWidth=1.5; ctx.setLineDash([4,3]);
-    ctx.beginPath(); ctx.moveTo(tx, PAD.t); ctx.lineTo(tx, H-PAD.b); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle='#dc2626'; ctx.font='bold 9px sans-serif'; ctx.textAlign='center';
-    ctx.fillText('上限', tx, PAD.t-1);
-  }
-}
 
 // ============================================================
 // MODULE 2
@@ -2577,7 +2414,6 @@ addSegment('cable', {name: 'ケーブル', loss: 0.1, len: 5});
 
 // Init: run all calculations with default values
 calc_m1_from_fwd();
-calc_m1c();
 calc_m2();
 // 初期進行波を3000Wにキッカリ合わせる
 document.getElementById('m2_pfwd_in').value = 3000;
