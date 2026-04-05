@@ -345,7 +345,7 @@ body.dark .cap-spin-val { background: #0b1220; }
             <span class="clname">ケーブル長</span>
           </div>
           <div class="slider-row">
-            <input type="range" id="sl-cable" min="0" max="16" step="1" value="2" oninput="onCableSlider()">
+            <input type="range" id="sl-cable" min="0" max="7" step="1" value="2" oninput="onCableSlider()">
             <span class="ctrl-val" id="disp-cable">0/16λ</span>
           </div>
           <div class="input-row" style="margin-top:5px;">
@@ -655,7 +655,7 @@ function onCableMeterInput() {
   const cableM = parseFloat(svgEl('in-cable-m').value);
   if (isNaN(cableM) || cableM < 0) return;
   const lambdaM = getLambdaM(getFcenter() * 1e6, getVf());
-  const steps = Math.max(0, Math.min(16, Math.round((cableM / lambdaM) * 16)));
+  const steps = Math.max(0, Math.min(7, Math.round((cableM / lambdaM) * 16)));
   svgEl('sl-cable').value = steps;
   activeParam = 'cable'; update();
 }
@@ -850,7 +850,7 @@ function inverseFromGammaFull(gr, gi) {
   const c2Min = capState.c2min, c2Max = capState.c2max;
   const NC = 20;
   let bestDist = Infinity, bestK = 0, bestI = 50, bestJ = 50;
-  for (let k = 0; k <= 8; k++) {  // λ/2 で一周するため 8/16λ 以上は不要
+  for (let k = 0; k <= 7; k++) {  // 8/16λ は 0/16λ と等価のため不使用
     const cableLam = k / 16;
     for (let i = 0; i <= NC; i++) {
       const c1v = slToCap(i / NC * 100, c1Min, c1Max);
