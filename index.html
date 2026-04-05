@@ -31,9 +31,9 @@
   .tab-btn.active { color: #fff; border-bottom-color: var(--accent); background: rgba(255,255,255,0.1); }
   .tab-divider { display: none; }
   .visualizer-btn { background: rgba(255,255,255,0.05); }
-  .tab-btn.featured { color: #fcd34d; background: rgba(251,191,36,0.12); border-bottom: 3px solid #f59e0b; }
+  .tab-btn.featured { color: #fcd34d; background: rgba(251,191,36,0.12); border-bottom: 3px solid #f59e0b; font-weight: 700; }
   .tab-btn.featured:hover { background: rgba(251,191,36,0.22); color: #fde68a; }
-  .tab-btn.featured.active { color: #fff; background: rgba(255,255,255,0.1); border-bottom-color: var(--accent); }
+  .tab-btn.featured.active { color: #fff; font-weight: 700; background: rgba(255,255,255,0.1); border-bottom-color: var(--accent); }
   .container { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
@@ -204,7 +204,6 @@
 <header>
   <div>
     <h1>RF計算ツール</h1>
-    <span>プラズマエッチング系 現場用計算アプリ (フェーズ1)</span>
   </div>
   <button id="dark-toggle" onclick="toggleDark()">🌙 ダーク</button>
 </header>
@@ -212,7 +211,7 @@
 <div class="tabs">
   <button class="tab-btn active" onclick="switchTab('mod1')">① 方向性結合器</button>
   <button class="tab-btn" onclick="switchTab('mod2')">② VIセンサー</button>
-  <button class="tab-btn featured" onclick="switchTab('mod3')">★ ③ スミスチャート解析</button>
+  <button class="tab-btn featured" onclick="switchTab('mod3')">③ スミスチャート解析</button>
   <button class="tab-btn" onclick="switchTab('mod4')">④ 電力単位換算</button>
   <button class="tab-btn" onclick="switchTab('mod5')">⑤ ケーブル損失補正</button>
   <div class="tab-divider">📊 ビジュアライザー ▶</div>
@@ -220,11 +219,11 @@
   <button class="tab-btn visualizer-btn" onclick="window.location.href='adc-visualizer/adc_visualizer.html'">⑦ ADC ↗</button>
   <button class="tab-btn visualizer-btn" onclick="window.location.href='digital-filter-designer/digital_filter_designer.html'">⑧ フィルター ↗</button>
   <button class="tab-btn visualizer-btn" onclick="window.location.href='pid-visualizer/pid-visualizer.html'">⑨ PID制御 ↗</button>
-  <button class="tab-btn visualizer-btn" onclick="window.location.href='fft-visualizer/fft-visualizer.html'">⑩ FFT ↗</button>
+  <button class="tab-btn visualizer-btn featured" onclick="window.location.href='fft-visualizer/fft-visualizer.html'">⑩ FFT ↗</button>
   <button class="tab-btn visualizer-btn" onclick="window.location.href='network-analyzer-tutorial/network_analyzer_tutorial.html'">⑪ NA入門 ↗</button>
   <button class="tab-btn visualizer-btn" onclick="window.location.href='power-amp-simulator/power_amp_simulator.html'">⑫ パワーアンプ ↗</button>
   <button class="tab-btn visualizer-btn" onclick="window.location.href='pll-simulator/pll_simulator.html'">⑬ PLL ↗</button>
-  <button class="tab-btn visualizer-btn" onclick="window.location.href='matching/index.html'">⑭ マッチングNW ↗</button>
+  <button class="tab-btn visualizer-btn featured" onclick="window.location.href='matching/index.html'">⑭ 負荷変動 ↗</button>
 </div>
 
 <div class="container">
