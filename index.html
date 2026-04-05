@@ -2850,18 +2850,33 @@ smithClickHandler(document.getElementById('smith3_chart'), calc_m3s, 'm3s_v', 'm
 // ============================================================
 // MODULE 3: Smith Chart Animation
 // ============================================================
-let m3s_animId   = null;
-let m3s_trail    = [];
-let m3s_animT    = 0;
-let m3s_animBase = null;
-let m3s_lastPt   = null;  // 停止時に位置を保持するため
+let m3s_animId        = null;
+let m3s_trail         = [];
+let m3s_animT         = 0;
+let m3s_animBase      = null;
+let m3s_lastPt        = null;  // 停止時に位置を保持するため
+let m3s_prevAnimMode  = 'none';
+let m3s_autoEnabledY  = false; // shunt_b 入場時に sc3_y を自動ONしたか
+let m3s_autoEnabledVswr = false; // txline 入場時に sc3_vswr を自動ONしたか
 
 function m3s_onModeChange() {
   if (m3s_animId) { cancelAnimationFrame(m3s_animId); m3s_animId = null; }
   m3s_trail = [];
   m3s_animT = 0;
   const mode = document.querySelector('input[name="m3s_anim"]:checked')?.value;
+
+  // 前モード終了時：自動ONしたオーバーレイを元に戻す
+  if (m3s_prevAnimMode === 'shunt_b' && m3s_autoEnabledY) {
+    document.getElementById('sc3_y').checked = false;
+    m3s_autoEnabledY = false;
+  }
+  if (m3s_prevAnimMode === 'txline' && m3s_autoEnabledVswr) {
+    document.getElementById('sc3_vswr').checked = false;
+    m3s_autoEnabledVswr = false;
+  }
+
   if (!mode || mode === 'none') {
+    m3s_prevAnimMode = 'none';
     // 停止時：最後のアニメ位置を入力値に反映してから再描画
     if (m3s_lastPt) {
       const {zr, zx} = m3s_lastPt;
@@ -2899,6 +2914,20 @@ function m3s_onModeChange() {
     Rn: zr0 / Z0, Xn: zx0 / Z0,
     Gn: Y0.r * Z0
   };
+
+  // 新モード開始時：必要なオーバーレイを自動ON（既にONなら自動扱いしない）
+  if (mode === 'shunt_b') {
+    const el = document.getElementById('sc3_y');
+    if (!el.checked) { el.checked = true; m3s_autoEnabledY = true; }
+    else { m3s_autoEnabledY = false; }
+  }
+  if (mode === 'txline') {
+    const el = document.getElementById('sc3_vswr');
+    if (!el.checked) { el.checked = true; m3s_autoEnabledVswr = true; }
+    else { m3s_autoEnabledVswr = false; }
+  }
+  m3s_prevAnimMode = mode;
+
   m3s_animLoop();
 }
 
