@@ -447,23 +447,6 @@
       <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
         <div style="font-size:11px;font-weight:600;color:var(--muted)">クリックで Z を逆算</div>
         <canvas id="smith_chart" width="360" height="360" style="border:1px solid var(--border);border-radius:6px;background:#fff;cursor:crosshair"></canvas>
-        <!-- V/I 波形ボックス -->
-        <div style="margin-top:8px;width:280px;border:1px solid var(--border);border-radius:6px;background:rgba(0,212,255,0.03);padding:8px 10px 8px 10px;box-sizing:border-box">
-          <div style="font-size:11px;font-weight:700;color:#00d4ff;margin-bottom:7px;letter-spacing:0.5px">V/I 波形</div>
-          <!-- 周波数プリセットボタン -->
-          <div style="display:flex;align-items:center;gap:5px;margin-bottom:5px;flex-wrap:wrap">
-            <button id="m2_preset_btn_27" onclick="m2FreqPresetBtn(27.12)" style="padding:3px 9px;font-size:11px;height:26px;border-radius:4px;border:1px solid #00d4ff;background:#00d4ff;color:#0f172a;font-weight:700;cursor:pointer;transition:all 0.15s">27.12 MHz</button>
-            <button id="m2_preset_btn_12" onclick="m2FreqPresetBtn(12.88)" style="padding:3px 9px;font-size:11px;height:26px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--muted);font-weight:600;cursor:pointer;transition:all 0.15s">12.88 MHz</button>
-            <span id="m2_freq_display" style="font-size:11px;color:var(--text);font-weight:600;margin-left:4px">27.120 MHz</span>
-            <input type="hidden" id="m2_freq" value="27.12">
-          </div>
-          <div style="margin-bottom:5px;display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted)">
-            <span>−10%</span>
-            <input type="range" id="m2_freq_slider" min="-10" max="10" value="0" step="1" style="flex:1;accent-color:#00d4ff" oninput="m2FreqSlider()">
-            <span>+10%</span>
-          </div>
-          <canvas id="chart2_wave" style="width:260px;height:160px;border:1px solid var(--border);border-radius:4px;display:block;margin:0 auto"></canvas>
-        </div>
         <div style="font-size:11px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:2px">
           <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-weight:normal;text-transform:none">
             <input type="checkbox" id="sc_z" checked onchange="calc_m2()">
@@ -477,6 +460,23 @@
             <input type="checkbox" id="sc_vswr" onchange="calc_m2()">
             VSWR サークル
           </label>
+        </div>
+        <!-- V/I 波形ボックス -->
+        <div style="margin-top:8px;width:360px;border:1px solid var(--border);border-radius:6px;background:rgba(0,212,255,0.03);padding:8px 10px 8px 10px;box-sizing:border-box">
+          <div style="font-size:11px;font-weight:700;color:#00d4ff;margin-bottom:7px;letter-spacing:0.5px">V/I 波形（オシロスコープ）</div>
+          <!-- 周波数プリセットボタン -->
+          <div style="display:flex;align-items:center;gap:5px;margin-bottom:5px;flex-wrap:wrap">
+            <button id="m2_preset_btn_27" onclick="m2FreqPresetBtn(27.12)" style="padding:3px 9px;font-size:11px;height:26px;border-radius:4px;border:1px solid #00d4ff;background:#00d4ff;color:#0f172a;font-weight:700;cursor:pointer;transition:all 0.15s">27.12 MHz</button>
+            <button id="m2_preset_btn_12" onclick="m2FreqPresetBtn(12.88)" style="padding:3px 9px;font-size:11px;height:26px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--muted);font-weight:600;cursor:pointer;transition:all 0.15s">12.88 MHz</button>
+            <span id="m2_freq_display" style="font-size:11px;color:var(--text);font-weight:600;margin-left:4px">27.120 MHz</span>
+            <input type="hidden" id="m2_freq" value="27.12">
+          </div>
+          <div style="margin-bottom:5px;display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted)">
+            <span>−10%</span>
+            <input type="range" id="m2_freq_slider" min="-10" max="10" value="0" step="1" style="flex:1;accent-color:#00d4ff" oninput="m2FreqSlider()">
+            <span>+10%</span>
+          </div>
+          <canvas id="chart2_wave" style="width:340px;height:200px;border:1px solid var(--border);border-radius:4px;display:block;margin:0 auto"></canvas>
         </div>
       </div>
     </div>
