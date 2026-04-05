@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RF計算ツール</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <style>
   :root {
     --primary: #1a6fa8;
@@ -651,50 +652,50 @@
 
       <!-- W 行 -->
       <div style="display:grid;grid-template-columns:220px 1fr 1fr;align-items:center;border-bottom:1px solid var(--border);background:#eff6ff">
-        <div style="display:flex;align-items:center;gap:6px;padding:7px 10px">
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 10px">
           <span style="font-size:13px;font-weight:700;color:#2563eb;width:36px;flex-shrink:0">W</span>
-          <input type="number" id="m4_w" step="any" min="0" value="100" placeholder="—" oninput="calc_m4('w')"
+          <input type="number" id="m4_w" step="100" min="0" value="100" placeholder="—" oninput="calc_m4('w')"
             style="width:100px;font-size:15px;font-weight:700;color:#2563eb;border:1.5px solid #93c5fd;border-radius:4px;padding:3px 6px;background:#fff;outline:none;box-sizing:border-box">
           <span style="font-size:12px;color:#2563eb;font-weight:600">W</span>
         </div>
-        <div style="padding:7px 12px;font-size:11px;font-family:monospace;color:#374151;border-left:1px solid var(--border)">
-          W はSI基本単位<br>
-          <span style="color:#ea580c">dBm</span> = 10·log₁₀(W) + 30<br>
-          <span style="color:#16a34a">dBW</span> = 10·log₁₀(W)
+        <div style="padding:8px 14px;border-left:1px solid var(--border)">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">W はSI基本単位</div>
+          <span class="m4tex" data-tex="\textcolor{#ea580c}{\text{dBm}} = 10\log_{10}(W) + 30"></span><br>
+          <span class="m4tex" data-tex="\textcolor{#16a34a}{\text{dBW}} = 10\log_{10}(W)"></span>
         </div>
-        <div style="padding:7px 12px;font-size:11px;color:var(--muted);border-left:1px solid var(--border)">RF電力制御・測定の<b>基準量</b>。装置の出力設定・電力計の表示などで直接使用。エネルギー収支の計算にはWが必須。</div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--muted);border-left:1px solid var(--border)">RF電力制御・測定の<b>基準量</b>。装置の出力設定・電力計の表示などで直接使用。エネルギー収支の計算にはWが必須。</div>
       </div>
 
       <!-- dBm 行 -->
       <div style="display:grid;grid-template-columns:220px 1fr 1fr;align-items:center;border-bottom:1px solid var(--border);background:#fff7ed">
-        <div style="display:flex;align-items:center;gap:6px;padding:7px 10px">
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 10px">
           <span style="font-size:13px;font-weight:700;color:#ea580c;width:36px;flex-shrink:0" class="notx">dBm</span>
-          <input type="number" id="m4_dbm" step="any" placeholder="—" oninput="calc_m4('dbm')"
+          <input type="number" id="m4_dbm" step="10" placeholder="—" oninput="calc_m4('dbm')"
             style="width:100px;font-size:15px;font-weight:700;color:#ea580c;border:1.5px solid #fdba74;border-radius:4px;padding:3px 6px;background:#fff;outline:none;box-sizing:border-box">
           <span style="font-size:12px;color:#ea580c;font-weight:600" class="notx">dBm</span>
         </div>
-        <div style="padding:7px 12px;font-size:11px;font-family:monospace;color:#374151;border-left:1px solid var(--border)">
-          基準: <b>1 mW</b><br>
-          <span style="color:#ea580c">dBm</span> = 10·log₁₀(W / 0.001)<br>
-          W = 10<sup style="font-size:9px">(dBm−30)/10</sup>
+        <div style="padding:8px 14px;border-left:1px solid var(--border)">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">基準: 1 mW</div>
+          <span class="m4tex" data-tex="\textcolor{#ea580c}{\text{dBm}} = 10\log_{10}(W) + 30"></span><br>
+          <span class="m4tex" data-tex="W = 10^{(\text{dBm}-30)/10}"></span>
         </div>
-        <div style="padding:7px 12px;font-size:11px;color:var(--muted);border-left:1px solid var(--border)">1 mW基準の対数表現。<b>加減算で利得・損失計算が可能</b>（例: 出力50dBm−損失3dB=47dBm）。RF計測器・スペアナで標準的に使用。</div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--muted);border-left:1px solid var(--border)">1 mW基準の対数表現。<b>加減算で利得・損失計算が可能</b>（例: 出力50dBm−損失3dB=47dBm）。RF計測器・スペアナで標準的に使用。</div>
       </div>
 
       <!-- dBW 行 -->
       <div style="display:grid;grid-template-columns:220px 1fr 1fr;align-items:center;border-bottom:1px solid var(--border);background:#f0fdf4">
-        <div style="display:flex;align-items:center;gap:6px;padding:7px 10px">
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 10px">
           <span style="font-size:13px;font-weight:700;color:#16a34a;width:36px;flex-shrink:0" class="notx">dBW</span>
-          <input type="number" id="m4_dbw" step="any" placeholder="—" oninput="calc_m4('dbw')"
+          <input type="number" id="m4_dbw" step="10" placeholder="—" oninput="calc_m4('dbw')"
             style="width:100px;font-size:15px;font-weight:700;color:#16a34a;border:1.5px solid #86efac;border-radius:4px;padding:3px 6px;background:#fff;outline:none;box-sizing:border-box">
           <span style="font-size:12px;color:#16a34a;font-weight:600" class="notx">dBW</span>
         </div>
-        <div style="padding:7px 12px;font-size:11px;font-family:monospace;color:#374151;border-left:1px solid var(--border)">
-          基準: <b>1 W</b><br>
-          <span style="color:#16a34a">dBW</span> = 10·log₁₀(W)<br>
-          W = 10<sup style="font-size:9px">dBW/10</sup>&nbsp;&nbsp;<span style="color:#ea580c">dBm</span> = dBW + 30
+        <div style="padding:8px 14px;border-left:1px solid var(--border)">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">基準: 1 W</div>
+          <span class="m4tex" data-tex="\textcolor{#16a34a}{\text{dBW}} = 10\log_{10}(W)"></span><br>
+          <span class="m4tex" data-tex="W = 10^{\text{dBW}/10},\quad \textcolor{#ea580c}{\text{dBm}} = \text{dBW}+30"></span>
         </div>
-        <div style="padding:7px 12px;font-size:11px;color:var(--muted);border-left:1px solid var(--border)">1 W基準の対数表現。dBmと<b>常に30の差</b>（dBm = dBW+30）。高電力レーダー・放送・プラズマ系でよく使われる表記。</div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--muted);border-left:1px solid var(--border)">1 W基準の対数表現。dBmと<b>常に30の差</b>（dBm = dBW+30）。高電力レーダー・放送・プラズマ系でよく使われる表記。</div>
       </div>
 
       <!-- 区切り -->
@@ -702,48 +703,46 @@
 
       <!-- Vrms 行 -->
       <div style="display:grid;grid-template-columns:220px 1fr 1fr;align-items:center;border-bottom:1px solid var(--border)">
-        <div style="display:flex;align-items:center;gap:6px;padding:7px 10px">
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 10px">
           <span style="font-size:13px;font-weight:700;color:#0369a1;width:36px;flex-shrink:0" class="notx">Vrms</span>
           <span id="m4_vrms" style="width:100px;font-size:15px;font-weight:700;color:#0369a1;display:inline-block;text-align:right;padding-right:4px">—</span>
           <span style="font-size:12px;color:#0369a1;font-weight:600" class="notx">Vrms</span>
         </div>
-        <div style="padding:7px 12px;font-size:11px;font-family:monospace;color:#374151;border-left:1px solid var(--border)">
-          Z₀ = 50Ω 固定<br>
-          <span style="color:#0369a1">Vrms</span> = √(W × 50)
+        <div style="padding:8px 14px;border-left:1px solid var(--border)">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">Z₀ = 50Ω 固定</div>
+          <span class="m4tex" data-tex="\textcolor{#0369a1}{V_\text{rms}} = \sqrt{W \times 50}"></span>
         </div>
-        <div style="padding:7px 12px;font-size:11px;color:var(--muted);border-left:1px solid var(--border)">50Ω系での<b>実効電圧</b>。オシロスコープのRMS測定値に相当。コネクタ・ケーブルの電圧耐量確認に使用。</div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--muted);border-left:1px solid var(--border)">50Ω系での<b>実効電圧</b>。オシロスコープのRMS測定値に相当。コネクタ・ケーブルの電圧耐量確認に使用。</div>
       </div>
 
       <!-- Vpp 行 -->
       <div style="display:grid;grid-template-columns:220px 1fr 1fr;align-items:center;border-bottom:1px solid var(--border)">
-        <div style="display:flex;align-items:center;gap:6px;padding:7px 10px">
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 10px">
           <span style="font-size:13px;font-weight:700;color:#7c3aed;width:36px;flex-shrink:0" class="notx">Vpp</span>
           <span id="m4_vpp" style="width:100px;font-size:15px;font-weight:700;color:#7c3aed;display:inline-block;text-align:right;padding-right:4px">—</span>
           <span style="font-size:12px;color:#7c3aed;font-weight:600" class="notx">Vpp</span>
         </div>
-        <div style="padding:7px 12px;font-size:11px;font-family:monospace;color:#374151;border-left:1px solid var(--border)">
-          正弦波のピーク間電圧<br>
-          <span style="color:#7c3aed">Vpp</span> = Vrms × 2√2 ≈ Vrms × 2.828
+        <div style="padding:8px 14px;border-left:1px solid var(--border)">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">正弦波のピーク間電圧</div>
+          <span class="m4tex" data-tex="\textcolor{#7c3aed}{V_\text{pp}} = V_\text{rms} \times 2\sqrt{2} \approx V_\text{rms} \times 2.828"></span>
         </div>
-        <div style="padding:7px 12px;font-size:11px;color:var(--muted);border-left:1px solid var(--border)">オシロスコープで<b>直接読める</b>値。信号発生器の振幅設定もVpp表記が多い。Vrmsの2√2倍（正弦波の場合）。</div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--muted);border-left:1px solid var(--border)">オシロスコープで<b>直接読める</b>値。信号発生器の振幅設定もVpp表記が多い。Vrmsの2√2倍（正弦波の場合）。</div>
       </div>
 
       <!-- Irms 行 -->
       <div style="display:grid;grid-template-columns:220px 1fr 1fr;align-items:center">
-        <div style="display:flex;align-items:center;gap:6px;padding:7px 10px">
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 10px">
           <span style="font-size:13px;font-weight:700;color:#0891b2;width:36px;flex-shrink:0" class="notx">Irms</span>
           <span id="m4_irms" style="width:100px;font-size:15px;font-weight:700;color:#0891b2;display:inline-block;text-align:right;padding-right:4px">—</span>
           <span style="font-size:12px;color:#0891b2;font-weight:600" class="notx">Irms</span>
         </div>
-        <div style="padding:7px 12px;font-size:11px;font-family:monospace;color:#374151;border-left:1px solid var(--border)">
-          <span style="color:#0891b2">Irms</span> = Vrms / 50 = √(W / 50)
+        <div style="padding:8px 14px;border-left:1px solid var(--border)">
+          <span class="m4tex" data-tex="\textcolor{#0891b2}{I_\text{rms}} = \frac{V_\text{rms}}{50} = \sqrt{\frac{W}{50}}"></span>
         </div>
-        <div style="padding:7px 12px;font-size:11px;color:var(--muted);border-left:1px solid var(--border)">50Ω負荷を流れる<b>実効電流</b>。高電力時のコネクタ・同軸ケーブルの<b>電流耐量チェック</b>（例: N型コネクタ ≈ 25A上限）に必須。</div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--muted);border-left:1px solid var(--border)">50Ω負荷を流れる<b>実効電流</b>。高電力時のコネクタ・同軸ケーブルの<b>電流耐量チェック</b>（例: N型コネクタ ≈ 25A上限）に必須。</div>
       </div>
 
     </div><!-- end table -->
-
-    <button class="btn btn-secondary btn-sm" onclick="clearMod4()" style="margin-top:10px">クリア</button>
     <canvas id="chart4" width="900" height="160" style="margin-top:12px;border:1px solid var(--border);border-radius:4px;background:#fff;width:100%;display:block;cursor:crosshair" title="クリックで値を設定"></canvas>
 
     <!-- dB 基礎早見表 -->
@@ -3027,5 +3026,11 @@ function m3s_animLoop() {
 }
 </script>
 <div id="formula-popup" role="tooltip" aria-live="polite"></div>
+
+<!-- KaTeX 数式レンダリング (mod4 変換式列) -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"
+  onload="document.querySelectorAll('.m4tex[data-tex]').forEach(el=>{
+    try{ katex.render(el.dataset.tex, el, {throwOnError:false, displayMode:false, output:'html'}); }catch(e){}
+  })"></script>
 </body>
 </html>
