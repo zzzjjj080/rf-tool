@@ -28,6 +28,8 @@ h1{font-family:'Space Mono',monospace;font-size:clamp(22px,5vw,36px);font-weight
 .subtitle{font-size:11px;color:var(--text-dim);margin-top:5px;font-family:'Space Mono',monospace;letter-spacing:1px}
 .theme-toggle{position:absolute;top:20px;right:0;padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:var(--panel);color:var(--text);cursor:pointer;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;transition:all .2s;box-shadow:0 1px 4px var(--shadow)}
 .theme-toggle:hover{border-color:var(--accent);color:var(--accent)}
+.back-link{position:absolute;top:20px;left:0;text-decoration:none;padding:7px 14px;border-radius:20px;border:1.5px solid var(--accent);background:var(--panel);color:var(--accent);font-family:'Space Mono',monospace;font-size:11px;font-weight:700;transition:all .2s;box-shadow:0 1px 4px var(--shadow);display:inline-flex;align-items:center;gap:4px}
+.back-link:hover{opacity:.8}
 
 /* Section units */
 .section-unit{background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:14px;box-shadow:0 1px 4px var(--shadow)}
@@ -171,6 +173,7 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
 
 <!-- HEADER -->
 <header>
+  <a href="../index.html" class="back-link">← RF ツールに戻る</a>
   <div class="header-tag">RF Tool — Phase-Locked Loop</div>
   <h1>PLL シミュレーター</h1>
   <div class="subtitle">Phase Locked Loop — ロック動作をインタラクティブに学ぶ</div>
@@ -1586,6 +1589,5 @@ function showMetricDetail(key) {
 function closeMetricModal() { document.getElementById('metric-modal').classList.remove('open'); }
 document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeMetricModal(); });
 </script>
-<a href="../index.html" style="position:fixed;bottom:16px;right:16px;background:#1e3a5f;color:#7dd3fc;font-family:'Space Mono',monospace;font-size:11px;padding:7px 14px;border-radius:20px;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,.4);z-index:9999;border:1px solid rgba(125,211,252,.3)">← RF-TOOL</a>
 </body>
 </html>

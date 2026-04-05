@@ -66,6 +66,8 @@ h1 { font-family: 'Space Mono', monospace; font-size: clamp(22px,5vw,36px); font
   transition: all 0.2s; box-shadow: 0 1px 4px var(--shadow);
 }
 .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+.back-link{position:absolute;top:20px;left:0;text-decoration:none;padding:7px 14px;border-radius:20px;border:1.5px solid var(--accent);background:var(--panel);color:var(--accent);font-family:'Space Mono',monospace;font-size:11px;font-weight:700;transition:all .2s;box-shadow:0 1px 4px var(--shadow);display:inline-flex;align-items:center;gap:4px}
+.back-link:hover{opacity:.8}
 
 /* ── Flow arrow ── */
 .flow-arrow { text-align: center; color: var(--text-dim); font-size: 18px; line-height: 1; margin: 3px 0; opacity: 0.4; }
@@ -539,6 +541,7 @@ canvas { display: block; width: 100%; }
 <div class="container">
 
   <header>
+    <a href="../index.html" class="back-link">← RF ツールに戻る</a>
     <div class="header-tag">Algorithm Visualizer</div>
     <h1>CORDIC</h1>
     <div class="subtitle">IQ信号 → 事前回転チェック → 直角三角形の積み上げ → 振幅・位相</div>
@@ -1907,6 +1910,5 @@ window.addEventListener('resize',fullUpdate);
 if(document.readyState==='complete') requestAnimationFrame(fullUpdate);
 else window.addEventListener('load',()=>requestAnimationFrame(fullUpdate));
 </script>
-<a href="../index.html" style="position:fixed;bottom:16px;right:16px;background:#1e3a5f;color:#7dd3fc;font-family:'Space Mono',monospace;font-size:11px;padding:7px 14px;border-radius:20px;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,.4);z-index:9999;border:1px solid rgba(125,211,252,.3)">← RF-TOOL</a>
 </body>
 </html>
