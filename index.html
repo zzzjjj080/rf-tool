@@ -332,7 +332,7 @@
             <input type="number" id="m2_cc" step="1" value="63" min="1" max="100" oninput="calc_m2()">
           </div>
           <div class="form-group">
-            <label>結合度 [<span class="notx">dBΩ</span>]<span class="tip"><span class="tip-icon">i</span><span class="tip-box">電流センサーのトランスインピーダンス。dBΩ = dB − 20·log₁₀(Z₀)。50Ω系では dB−33.98。dBから自動計算</span></span></label>
+            <label>結合度 [<span class="notx">dBΩ</span>]<span class="tip"><span class="tip-icon">i</span><span class="tip-box">【導出ステップ】① VIセンサーのI出力は電流→電圧変換（トランスインピーダンス）。結合度をΩ次元で表したのが dBΩ。② 変換式: dBΩ = CC[dB] − 20·log₁₀(Z₀)。③ 初期値の計算: CC=63dB, Z₀=50Ω → 20·log₁₀(50)=20×1.699=33.98dB → 63−33.98=29.02 dBΩ。④ 物理的意味: 29.02 dBΩ ≈ 28.3Ω のトランスインピーダンス（10^(29.02/20)）。dBから自動計算</span></span></label>
             <input type="number" id="m2_cc_dbo" readonly tabindex="-1" style="background:#f0f4f8;color:#94a3b8;cursor:default">
           </div>
           <div class="form-group">
@@ -431,8 +431,22 @@
       <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
         <div style="font-size:11px;font-weight:600;color:var(--muted)">クリックで Z を逆算</div>
         <canvas id="smith_chart" width="360" height="360" style="border:1px solid var(--border);border-radius:6px;background:#fff;cursor:crosshair"></canvas>
-        <div style="font-size:11px;font-weight:600;color:var(--muted);margin-top:8px;align-self:flex-start">フェーザー図（V / I）</div>
-        <canvas id="chart2_phasor" width="280" height="160" style="border:1px solid var(--border);border-radius:4px;background:#fff;display:block"></canvas>
+        <div style="font-size:11px;font-weight:600;color:var(--muted);margin-top:8px;align-self:flex-start">V・I 出力波形</div>
+        <!-- 周波数設定 -->
+        <div style="display:flex;align-items:center;gap:6px;width:280px;margin-bottom:3px">
+          <select id="m2_freq_preset" onchange="m2FreqPreset()" style="flex:0 0 auto;width:auto;max-width:none;padding:3px 6px;font-size:11px;height:26px">
+            <option value="27.12">27.12 MHz</option>
+            <option value="12.88">12.88 MHz</option>
+          </select>
+          <input type="number" id="m2_freq" value="27.12" step="0.01" min="24.408" max="29.832" style="width:72px;max-width:none;padding:3px 6px;font-size:11px;height:26px" oninput="m2FreqInput()">
+          <span style="font-size:11px;color:var(--muted)">MHz</span>
+        </div>
+        <div style="width:280px;margin-bottom:4px;display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted)">
+          <span>−10%</span>
+          <input type="range" id="m2_freq_slider" min="-10" max="10" value="0" step="1" style="flex:1;accent-color:#1a6fa8" oninput="m2FreqSlider()">
+          <span>+10%</span>
+        </div>
+        <canvas id="chart2_wave" style="width:280px;height:180px;border:1px solid var(--border);border-radius:4px;display:block"></canvas>
         <div style="font-size:11px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:2px">
           <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-weight:normal;text-transform:none">
             <input type="checkbox" id="sc_z" checked onchange="calc_m2()">
@@ -1805,7 +1819,7 @@ function calc_m2() {
   setMatchBadge(vswr, 'm2_match_badge');
 
   drawSmithChart({gr: gam.r, gi: gam.i, zr, zx});
-  drawPhasor(theta_deg, zmag, 'chart2_phasor');
+  drawWaveform_m2();
   saveLog('VIセンサー2', `|V|=${V_mV}mV, |I|=${I_mA}mA, θ=${theta_deg}°, CC=${cc}dB`, `ロードパワー=${fmt(pabs)}W, Z=${fmt(zr)}+j${fmt(zx)}Ω, |Γ|=${fmt(gmag)}`);
 }
 
@@ -1968,6 +1982,136 @@ function drawPhasor(theta_deg, zmag, canvasId='chart2_phasor') {
   // |Z| label
   ctx.fillStyle = '#555'; ctx.font = '9px sans-serif'; ctx.textAlign = 'left';
   ctx.fillText(`|Z|=${fmt(zmag,3)}Ω`, CW - PAD - 60, PAD*0.8);
+}
+
+// ============================================================
+// MODULE 2: 周波数設定 & V/I 出力波形
+// ============================================================
+let _m2FreqBase = 27.12;
+
+function m2FreqPreset() {
+  _m2FreqBase = parseFloat(document.getElementById('m2_freq_preset').value);
+  const sl = document.getElementById('m2_freq_slider');
+  sl.value = 0;
+  const inp = document.getElementById('m2_freq');
+  inp.min = (_m2FreqBase * 0.9).toFixed(4);
+  inp.max = (_m2FreqBase * 1.1).toFixed(4);
+  inp.value = _m2FreqBase.toFixed(3);
+  calc_m2();
+}
+
+function m2FreqSlider() {
+  const pct  = parseFloat(document.getElementById('m2_freq_slider').value);
+  const freq = _m2FreqBase * (1 + pct / 100);
+  document.getElementById('m2_freq').value = freq.toFixed(3);
+  calc_m2();
+}
+
+function m2FreqInput() {
+  const freq = parseFloat(document.getElementById('m2_freq').value);
+  if (!isNaN(freq) && freq > 0) {
+    const pct = (freq / _m2FreqBase - 1) * 100;
+    document.getElementById('m2_freq_slider').value =
+      Math.max(-10, Math.min(10, Math.round(pct)));
+  }
+  calc_m2();
+}
+
+function drawWaveform_m2() {
+  const cv = document.getElementById('chart2_wave');
+  if (!cv) return;
+
+  const V_mV      = get('m2_v')     || 0;   // センサー出力 mV pp
+  const I_mA      = get('m2_i')     || 0;   // センサー出力 mA pp
+  const theta_deg = get('m2_theta') || 0;   // V−I 位相差 [°]
+  const freq_MHz  = parseFloat(document.getElementById('m2_freq')?.value) || _m2FreqBase;
+
+  // I出力を電圧に換算: I_mV_equiv = I_mA × Z₀(50Ω)
+  // 整合時(Z=50Ω)にV出力とI出力電圧が一致する
+  const Z0 = 50;
+  const V_amp  = V_mV / 2;               // peak [mV]
+  const I_amp  = (I_mA / 2) * Z0;        // peak [mV equiv]
+  const maxAmp = Math.max(V_amp, I_amp, 1e-9);
+
+  const dpr = window.devicePixelRatio || 1;
+  const CW = 280, CH = 180;
+  cv.width  = Math.round(CW * dpr);
+  cv.height = Math.round(CH * dpr);
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  // Background
+  ctx.fillStyle = '#0a0e1a';
+  ctx.fillRect(0, 0, CW, CH);
+
+  const PAD_L = 8, PAD_R = 8, PAD_T = 20, PAD_B = 18;
+  const plotW = CW - PAD_L - PAD_R;
+  const plotH = CH - PAD_T - PAD_B;
+  const y0 = PAD_T + plotH / 2;
+
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i <= 4; i++) {
+    const y = PAD_T + plotH * i / 4;
+    ctx.beginPath(); ctx.moveTo(PAD_L, y); ctx.lineTo(PAD_L + plotW, y); ctx.stroke();
+  }
+  for (let i = 0; i <= 2; i++) {
+    const x = PAD_L + plotW * i / 2;
+    ctx.beginPath(); ctx.moveTo(x, PAD_T); ctx.lineTo(x, PAD_T + plotH); ctx.stroke();
+  }
+
+  // Zero line
+  ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(PAD_L, y0); ctx.lineTo(PAD_L + plotW, y0); ctx.stroke();
+
+  // Waveforms
+  const theta_rad = theta_deg * Math.PI / 180;
+  const nPts = 500;
+  const drawAmp = plotH / 2 * 0.85;
+
+  function drawWave(phase, relAmp, color) {
+    ctx.beginPath();
+    for (let i = 0; i <= nPts; i++) {
+      const t = i / nPts;
+      const yPx = y0 - drawAmp * relAmp * Math.sin(2 * Math.PI * 2 * t + phase);
+      const xPx = PAD_L + t * plotW;
+      i === 0 ? ctx.moveTo(xPx, yPx) : ctx.lineTo(xPx, yPx);
+    }
+    ctx.strokeStyle = color; ctx.lineWidth = 1.8; ctx.stroke();
+  }
+
+  drawWave(0,           I_amp / maxAmp, '#ff6b35');  // I output (orange)
+  drawWave(theta_rad,   V_amp / maxAmp, '#00d4ff');  // V output (blue)
+
+  // Header row: legend left, freq right
+  ctx.font = '9px sans-serif';
+  const ly = PAD_T - 7;
+
+  // V legend
+  ctx.fillStyle = '#00d4ff';
+  ctx.fillRect(PAD_L, ly - 3, 12, 2);
+  ctx.textAlign = 'left';
+  ctx.fillText(`V: ${V_mV.toFixed(0)} mV pp`, PAD_L + 16, ly + 1);
+
+  // I legend
+  const I_mV_equiv = (I_mA * Z0).toFixed(0);
+  ctx.fillStyle = '#ff6b35';
+  ctx.fillRect(PAD_L + 84, ly - 3, 12, 2);
+  ctx.fillText(`I: ${I_mV_equiv} mV pp`, PAD_L + 100, ly + 1);
+
+  // Freq label (top right)
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.textAlign = 'right';
+  ctx.fillText(`${freq_MHz.toFixed(3)} MHz`, CW - PAD_R, ly + 1);
+
+  // X axis labels
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.textAlign = 'center';
+  ctx.fillText('0', PAD_L, PAD_T + plotH + 13);
+  ctx.fillText('T', PAD_L + plotW / 2, PAD_T + plotH + 13);
+  ctx.fillText('2T', PAD_L + plotW, PAD_T + plotH + 13);
 }
 
 function drawSmithChart(point, canvasId='smith_chart', prefix='sc', trail=[]) {
