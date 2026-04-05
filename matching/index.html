@@ -757,7 +757,7 @@ function drawCircuit(topo, freqMHz, cableM, vf, c1pF, c1open, c2pF, c2short) {
     } else {
       s += wire(COAX_R, cy, c2cx-3, cy);
       s += serCap(c2cx, cy, c2Col);
-      s += valtxt(c2cx-20, cy+36, 'start', `C₂ = ${c2Str}`, c2Col);
+      s += valtxt(c2cx-32, cy+36, 'start', `C₂ = ${c2Str}`, c2Col);
       s += wire(c2cx+3, cy, jx, cy);
     }
     s += dot(jx, cy);
