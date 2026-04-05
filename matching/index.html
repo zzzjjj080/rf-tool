@@ -266,7 +266,7 @@ body.dark .cap-spin-val { background: #0b1220; }
 
       <!-- Circuit diagram -->
       <div class="circuit-wrap">
-        <svg id="circuit-svg" viewBox="0 0 380 82" xmlns="http://www.w3.org/2000/svg"></svg>
+        <svg id="circuit-svg" viewBox="0 0 380 96" xmlns="http://www.w3.org/2000/svg"></svg>
       </div>
 
       <!-- Numeric results -->
@@ -306,6 +306,34 @@ body.dark .cap-spin-val { background: #0b1220; }
         <div class="radio-group" style="flex-direction:column; gap:8px;">
           <label><input type="radio" name="topology" value="A" onchange="update()"> A: 同軸ケーブル → 直列C2 → 並列C1 → ダミー</label>
           <label><input type="radio" name="topology" value="B" checked onchange="update()"> B: 同軸ケーブル → 並列C1 → 直列C2 → ダミー</label>
+        </div>
+      </div>
+
+      <!-- ===== Frequency ===== -->
+      <div class="card">
+        <h3>周波数設定</h3>
+        <div class="ctrl-row">
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <div class="radio-group">
+              <label><input type="radio" name="fcenter" value="27.12" checked onchange="onFcenterChange()"> 27.12 MHz</label>
+              <label><input type="radio" name="fcenter" value="12.88" onchange="onFcenterChange()"> 12.88 MHz</label>
+            </div>
+            <button class="reset-btn" onclick="resetFreq()">リセット</button>
+          </div>
+        </div>
+        <div class="ctrl-row" style="margin-top:8px;">
+          <div class="ctrl-label">
+            <span class="clname">オフセット</span>
+          </div>
+          <div class="slider-row">
+            <input type="range" id="sl-offset" min="-10" max="10" step="1" value="0" oninput="onOffsetSlider()">
+            <span class="ctrl-val" id="disp-offset">+0%</span>
+          </div>
+          <div class="input-row" style="margin-top:5px;">
+            <input type="number" id="in-freq" class="num-input" style="width:80px;" step="0.01" oninput="onFreqInput()">
+            <span class="unit">MHz</span>
+            <span class="freq-display" id="disp-freq" style="font-size:12px;"></span>
+          </div>
         </div>
       </div>
 
@@ -412,34 +440,6 @@ body.dark .cap-spin-val { background: #0b1220; }
             <input type="checkbox" id="ck-c2-short" onchange="update()">
             C2 = ∞（ショート：C2なし・ゼロΩ）
           </label>
-        </div>
-      </div>
-
-      <!-- ===== Frequency ===== -->
-      <div class="card">
-        <h3>周波数設定</h3>
-        <div class="ctrl-row">
-          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-            <div class="radio-group">
-              <label><input type="radio" name="fcenter" value="27.12" checked onchange="onFcenterChange()"> 27.12 MHz</label>
-              <label><input type="radio" name="fcenter" value="12.88" onchange="onFcenterChange()"> 12.88 MHz</label>
-            </div>
-            <button class="reset-btn" onclick="resetFreq()">リセット</button>
-          </div>
-        </div>
-        <div class="ctrl-row" style="margin-top:8px;">
-          <div class="ctrl-label">
-            <span class="clname">オフセット</span>
-          </div>
-          <div class="slider-row">
-            <input type="range" id="sl-offset" min="-10" max="10" step="1" value="0" oninput="onOffsetSlider()">
-            <span class="ctrl-val" id="disp-offset">+0%</span>
-          </div>
-          <div class="input-row" style="margin-top:5px;">
-            <input type="number" id="in-freq" class="num-input" style="width:80px;" step="0.01" oninput="onFreqInput()">
-            <span class="unit">MHz</span>
-            <span class="freq-display" id="disp-freq" style="font-size:12px;"></span>
-          </div>
         </div>
       </div>
 
@@ -723,48 +723,64 @@ function drawCircuit(topo, freqMHz, cableM, vf, c1pF, c1open, c2pF, c2short) {
   s += valtxt(22, 54, 'middle', freqStr);
   s += wire(29, cy, 48, cy);
 
-  // Coax box (highlighted when cable slider is active)
+  // Coax box width proportional to cable length in λ
+  const MAX_COAX_W = 210;
+  const coaxStep = parseInt(svgEl('sl-cable').value); // 0-16
+  const coaxW = coaxStep === 0 ? 4 : Math.round((coaxStep / 16) * MAX_COAX_W);
+  const COAX_L = 48;
+  const COAX_R = COAX_L + coaxW;
+
+  // Dynamic viewBox width
+  const RIGHT_W = 150; // fixed width for C1/C2/50Ω cluster
+  const VB_W = COAX_R + RIGHT_W;
+  el.setAttribute('viewBox', `0 0 ${VB_W} 96`);
+
+  // Draw coax box (text OUTSIDE, below the box)
   const cableStrokeW = cableHi ? '2.5' : '2';
-  s += `<rect x="48" y="${cy-12}" width="80" height="24" fill="none" stroke="${cableCol}" stroke-width="${cableStrokeW}"/>`;
-  s += valtxt(88, cy-3,  'middle', '同軸ケーブル', cableCol);
-  s += valtxt(88, cy+9,  'middle', cableStr,       cableCol);
-  s += valtxt(88, cy-16, 'middle', vfStr,           cableCol);
+  const coaxCx = COAX_L + coaxW / 2;
+  s += `<rect x="${COAX_L}" y="${cy-12}" width="${coaxW}" height="24" fill="none" stroke="${cableCol}" stroke-width="${cableStrokeW}"/>`;
+  // Labels below the box
+  s += valtxt(coaxCx, cy+18, 'middle', '同軸ケーブル', cableCol);
+  s += valtxt(coaxCx, cy+29, 'middle', cableStr + '  ' + vfStr, cableCol);
 
   if (topo === 'A') {
-    const jx = 284;
+    // Coax → C2(series) → junction(C1∥) → 50Ω
+    const c2cx = COAX_R + 16;
+    const jx   = COAX_R + 56;
+    const b50  = COAX_R + 80;
     if (c2short) {
-      // Short: no capacitor plates, direct wire
-      s += wire(128, cy, jx, cy);
-      s += lbl(216, cy-15, 'middle', 'C₂', 10, c2Lbl);
-      s += valtxt(216, cy+9, 'middle', c2Str, c2Col);
+      s += wire(COAX_R, cy, jx, cy);
+      s += lbl(COAX_R + 28, cy-15, 'middle', 'C₂', 10, c2Lbl);
+      s += valtxt(COAX_R + 28, cy+9, 'middle', c2Str, c2Col);
     } else {
-      s += wire(128, cy, 241, cy);
-      s += serCap(244, cy, c2Col);
-      s += lbl(244, cy-15, 'middle', 'C₂', 10, c2Lbl);
-      s += valtxt(244, cy+20, 'middle', c2Str, c2Col);
-      s += wire(247, cy, jx, cy);
+      s += wire(COAX_R, cy, c2cx-3, cy);
+      s += serCap(c2cx, cy, c2Col);
+      s += lbl(c2cx, cy-15, 'middle', 'C₂', 10, c2Lbl);
+      s += valtxt(c2cx, cy+20, 'middle', c2Str, c2Col);
+      s += wire(c2cx+3, cy, jx, cy);
     }
     s += dot(jx, cy);
-    s += wire(jx, cy, 308, cy);
-    s += box(308, cy-12, 68, 24, '50Ω');
+    s += wire(jx, cy, b50, cy);
+    s += box(b50, cy-12, 68, 24, '50Ω');
     drawC1shunt(jx);
   } else {
-    const jx = 242;
-    s += wire(128, cy, jx, cy);
+    // Coax → junction(C1∥) → C2(series) → 50Ω
+    const jx  = COAX_R;
+    const c2cx = COAX_R + 30;
+    const b50  = COAX_R + 66;
     s += dot(jx, cy);
     if (c2short) {
-      // Short: direct wire to 50Ω
-      s += wire(jx, cy, 308, cy);
-      s += lbl(275, cy-15, 'middle', 'C₂', 10, c2Lbl);
-      s += valtxt(275, cy+9, 'middle', c2Str, c2Col);
+      s += wire(jx, cy, b50, cy);
+      s += lbl(jx + 33, cy-15, 'middle', 'C₂', 10, c2Lbl);
+      s += valtxt(jx + 33, cy+9, 'middle', c2Str, c2Col);
     } else {
-      s += wire(jx, cy, 270, cy);
-      s += serCap(272, cy, c2Col);
-      s += lbl(272, cy-15, 'middle', 'C₂', 10, c2Lbl);
-      s += valtxt(272, cy+20, 'middle', c2Str, c2Col);
-      s += wire(275, cy, 308, cy);
+      s += wire(jx, cy, c2cx-3, cy);
+      s += serCap(c2cx, cy, c2Col);
+      s += lbl(c2cx, cy-15, 'middle', 'C₂', 10, c2Lbl);
+      s += valtxt(c2cx, cy+20, 'middle', c2Str, c2Col);
+      s += wire(c2cx+3, cy, b50, cy);
     }
-    s += box(308, cy-12, 68, 24, '50Ω');
+    s += box(b50, cy-12, 68, 24, '50Ω');
     drawC1shunt(jx);
   }
 
