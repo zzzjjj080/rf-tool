@@ -212,9 +212,9 @@
 </header>
 
 <div class="tabs">
-  <button class="tab-btn active" onclick="switchTab('mod1')">① 方向性結合器</button>
+  <button class="tab-btn" onclick="switchTab('mod1')">① 方向性結合器</button>
   <button class="tab-btn" onclick="switchTab('mod2')">② VIセンサー</button>
-  <button class="tab-btn featured" onclick="switchTab('mod3')">③ スミスチャート解析</button>
+  <button class="tab-btn featured active" onclick="switchTab('mod3')">③ スミスチャート解析</button>
   <button class="tab-btn" onclick="switchTab('mod4')">④ 電力単位換算</button>
   <button class="tab-btn" onclick="switchTab('mod5')">⑤ ケーブル損失補正</button>
   <div class="tab-divider">📊 ビジュアライザー ▶</div>
@@ -232,7 +232,7 @@
 <div class="container">
 
 <!-- ===== MODULE 1: Directional Coupler ===== -->
-<div id="mod1" class="tab-panel active">
+<div id="mod1" class="tab-panel">
   <div class="card">
     <h2>方向性結合器</h2>
     <div class="info-box">Z₀ = 50Ω固定。</div>
@@ -453,7 +453,7 @@
 </div>
 
 <!-- ===== MODULE 3: Smith Chart Analyzer ===== -->
-<div id="mod3" class="tab-panel">
+<div id="mod3" class="tab-panel active">
   <div class="card">
     <h2>スミスチャート解析</h2>
     <div class="info-box">V・I の実測値（直接値）を入力してインピーダンスを算出し、スミスチャートにプロットします。Z₀ = 50Ω。スミスチャートをクリックするとZを逆算して入力値を更新します。</div>
