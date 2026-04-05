@@ -637,60 +637,111 @@
 <div id="mod4" class="tab-panel">
   <div class="card">
     <h2>電力単位換算</h2>
-    <div class="info-box">いずれかのカードに直接値を入力すると残りを自動計算します。<span style="opacity:0.6;font-size:11px;margin-left:6px">🔍 クリックで計算式を表示</span></div>
+    <div class="info-box">いずれかの行に値を入力すると残りを自動計算します。</div>
 
-    <!-- 上段: 入力カード (W / dBm / dBW) -->
-    <div class="result-grid" style="grid-template-columns:repeat(3,1fr)">
-      <div class="result-item" style="border:2px solid #2563eb;background:#eff6ff;cursor:default">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div class="label" style="font-size:12px;font-weight:700;color:#2563eb;letter-spacing:0;text-transform:none">W</div>
-          <span onclick="m4ToggleFormula('w')" title="計算式を表示" style="font-size:10px;opacity:0.4;cursor:pointer;user-select:none" id="m4_fi_w">🔍</span>
-        </div>
-        <input type="number" id="m4_w" step="any" min="0" value="100" placeholder="—" oninput="calc_m4('w')"
-          style="width:100%;border:none;background:transparent;font-size:22px;font-weight:700;color:#2563eb;text-align:center;outline:none;padding:4px 0;margin:2px 0;box-sizing:border-box">
-        <div class="unit">W</div>
-      </div>
-      <div class="result-item" style="border:2px solid #ea580c;background:#fff7ed;cursor:default">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div class="label" style="font-size:12px;font-weight:700;color:#ea580c;letter-spacing:0;text-transform:none"><span class="notx">dBm</span></div>
-          <span onclick="m4ToggleFormula('dbm')" title="計算式を表示" style="font-size:10px;opacity:0.4;cursor:pointer;user-select:none" id="m4_fi_dbm">🔍</span>
-        </div>
-        <input type="number" id="m4_dbm" step="any" placeholder="—" oninput="calc_m4('dbm')"
-          style="width:100%;border:none;background:transparent;font-size:22px;font-weight:700;color:#ea580c;text-align:center;outline:none;padding:4px 0;margin:2px 0;box-sizing:border-box">
-        <div class="unit"><span class="notx">dBm</span></div>
-      </div>
-      <div class="result-item" style="border:2px solid #16a34a;background:#f0fdf4;cursor:default">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div class="label" style="font-size:12px;font-weight:700;color:#16a34a;letter-spacing:0;text-transform:none"><span class="notx">dBW</span></div>
-          <span onclick="m4ToggleFormula('dbw')" title="計算式を表示" style="font-size:10px;opacity:0.4;cursor:pointer;user-select:none" id="m4_fi_dbw">🔍</span>
-        </div>
-        <input type="number" id="m4_dbw" step="any" placeholder="—" oninput="calc_m4('dbw')"
-          style="width:100%;border:none;background:transparent;font-size:22px;font-weight:700;color:#16a34a;text-align:center;outline:none;padding:4px 0;margin:2px 0;box-sizing:border-box">
-        <div class="unit"><span class="notx">dBW</span></div>
-      </div>
-    </div>
+    <!-- 縦1列レイアウト: [ラベル+入力+単位] | [変換式] | [概説] -->
+    <div style="margin-top:12px;border:1px solid var(--border);border-radius:8px;overflow:hidden">
 
-    <!-- 下段: 計算結果カード (Vrms / Vpp / Irms) -->
-    <div class="result-grid" style="grid-template-columns:repeat(3,1fr);margin-top:8px">
-      <div class="result-item">
-        <div class="label"><span class="notx">Vrms</span>（50Ω）</div>
-        <div class="value" id="m4_vrms">—</div>
-        <div class="unit"><span class="notx">Vrms</span></div>
+      <!-- ヘッダー行 -->
+      <div style="display:grid;grid-template-columns:220px 1fr 1fr;background:var(--primary);color:#fff;font-size:11px;font-weight:600;padding:5px 10px;gap:0">
+        <div>単位 / 値</div>
+        <div style="padding-left:12px">変換式</div>
+        <div style="padding-left:12px">用途・背景</div>
       </div>
-      <div class="result-item">
-        <div class="label"><span class="notx">Vpp</span>（50Ω）</div>
-        <div class="value" id="m4_vpp">—</div>
-        <div class="unit"><span class="notx">Vpp</span></div>
-      </div>
-      <div class="result-item">
-        <div class="label">電流 <span class="notx">Irms</span>（50Ω）</div>
-        <div class="value" id="m4_irms">—</div>
-        <div class="unit"><span class="notx">Irms</span></div>
-      </div>
-    </div>
 
-    <!-- 計算過程パネル -->
-    <div id="m4_formula_panel" style="display:none;margin-top:10px;background:#f8fafc;border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:12px;font-family:monospace;line-height:1.9;color:#374151"></div>
+      <!-- W 行 -->
+      <div style="display:grid;grid-template-columns:220px 1fr 1fr;align-items:center;border-bottom:1px solid var(--border);background:#eff6ff">
+        <div style="display:flex;align-items:center;gap:6px;padding:7px 10px">
+          <span style="font-size:13px;font-weight:700;color:#2563eb;width:36px;flex-shrink:0">W</span>
+          <input type="number" id="m4_w" step="any" min="0" value="100" placeholder="—" oninput="calc_m4('w')"
+            style="width:100px;font-size:15px;font-weight:700;color:#2563eb;border:1.5px solid #93c5fd;border-radius:4px;padding:3px 6px;background:#fff;outline:none;box-sizing:border-box">
+          <span style="font-size:12px;color:#2563eb;font-weight:600">W</span>
+        </div>
+        <div style="padding:7px 12px;font-size:11px;font-family:monospace;color:#374151;border-left:1px solid var(--border)">
+          W はSI基本単位<br>
+          <span style="color:#ea580c">dBm</span> = 10·log₁₀(W) + 30<br>
+          <span style="color:#16a34a">dBW</span> = 10·log₁₀(W)
+        </div>
+        <div style="padding:7px 12px;font-size:11px;color:var(--muted);border-left:1px solid var(--border)">RF電力制御・測定の<b>基準量</b>。装置の出力設定・電力計の表示などで直接使用。エネルギー収支の計算にはWが必須。</div>
+      </div>
+
+      <!-- dBm 行 -->
+      <div style="display:grid;grid-template-columns:220px 1fr 1fr;align-items:center;border-bottom:1px solid var(--border);background:#fff7ed">
+        <div style="display:flex;align-items:center;gap:6px;padding:7px 10px">
+          <span style="font-size:13px;font-weight:700;color:#ea580c;width:36px;flex-shrink:0" class="notx">dBm</span>
+          <input type="number" id="m4_dbm" step="any" placeholder="—" oninput="calc_m4('dbm')"
+            style="width:100px;font-size:15px;font-weight:700;color:#ea580c;border:1.5px solid #fdba74;border-radius:4px;padding:3px 6px;background:#fff;outline:none;box-sizing:border-box">
+          <span style="font-size:12px;color:#ea580c;font-weight:600" class="notx">dBm</span>
+        </div>
+        <div style="padding:7px 12px;font-size:11px;font-family:monospace;color:#374151;border-left:1px solid var(--border)">
+          基準: <b>1 mW</b><br>
+          <span style="color:#ea580c">dBm</span> = 10·log₁₀(W / 0.001)<br>
+          W = 10<sup style="font-size:9px">(dBm−30)/10</sup>
+        </div>
+        <div style="padding:7px 12px;font-size:11px;color:var(--muted);border-left:1px solid var(--border)">1 mW基準の対数表現。<b>加減算で利得・損失計算が可能</b>（例: 出力50dBm−損失3dB=47dBm）。RF計測器・スペアナで標準的に使用。</div>
+      </div>
+
+      <!-- dBW 行 -->
+      <div style="display:grid;grid-template-columns:220px 1fr 1fr;align-items:center;border-bottom:1px solid var(--border);background:#f0fdf4">
+        <div style="display:flex;align-items:center;gap:6px;padding:7px 10px">
+          <span style="font-size:13px;font-weight:700;color:#16a34a;width:36px;flex-shrink:0" class="notx">dBW</span>
+          <input type="number" id="m4_dbw" step="any" placeholder="—" oninput="calc_m4('dbw')"
+            style="width:100px;font-size:15px;font-weight:700;color:#16a34a;border:1.5px solid #86efac;border-radius:4px;padding:3px 6px;background:#fff;outline:none;box-sizing:border-box">
+          <span style="font-size:12px;color:#16a34a;font-weight:600" class="notx">dBW</span>
+        </div>
+        <div style="padding:7px 12px;font-size:11px;font-family:monospace;color:#374151;border-left:1px solid var(--border)">
+          基準: <b>1 W</b><br>
+          <span style="color:#16a34a">dBW</span> = 10·log₁₀(W)<br>
+          W = 10<sup style="font-size:9px">dBW/10</sup>&nbsp;&nbsp;<span style="color:#ea580c">dBm</span> = dBW + 30
+        </div>
+        <div style="padding:7px 12px;font-size:11px;color:var(--muted);border-left:1px solid var(--border)">1 W基準の対数表現。dBmと<b>常に30の差</b>（dBm = dBW+30）。高電力レーダー・放送・プラズマ系でよく使われる表記。</div>
+      </div>
+
+      <!-- 区切り -->
+      <div style="background:var(--bg);padding:4px 10px;font-size:10px;color:var(--muted);font-weight:600;letter-spacing:0.5px;border-bottom:1px solid var(--border)">50Ω系 計算結果（読み取り専用）</div>
+
+      <!-- Vrms 行 -->
+      <div style="display:grid;grid-template-columns:220px 1fr 1fr;align-items:center;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:6px;padding:7px 10px">
+          <span style="font-size:13px;font-weight:700;color:#0369a1;width:36px;flex-shrink:0" class="notx">Vrms</span>
+          <span id="m4_vrms" style="width:100px;font-size:15px;font-weight:700;color:#0369a1;display:inline-block;text-align:right;padding-right:4px">—</span>
+          <span style="font-size:12px;color:#0369a1;font-weight:600" class="notx">Vrms</span>
+        </div>
+        <div style="padding:7px 12px;font-size:11px;font-family:monospace;color:#374151;border-left:1px solid var(--border)">
+          Z₀ = 50Ω 固定<br>
+          <span style="color:#0369a1">Vrms</span> = √(W × 50)
+        </div>
+        <div style="padding:7px 12px;font-size:11px;color:var(--muted);border-left:1px solid var(--border)">50Ω系での<b>実効電圧</b>。オシロスコープのRMS測定値に相当。コネクタ・ケーブルの電圧耐量確認に使用。</div>
+      </div>
+
+      <!-- Vpp 行 -->
+      <div style="display:grid;grid-template-columns:220px 1fr 1fr;align-items:center;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:6px;padding:7px 10px">
+          <span style="font-size:13px;font-weight:700;color:#7c3aed;width:36px;flex-shrink:0" class="notx">Vpp</span>
+          <span id="m4_vpp" style="width:100px;font-size:15px;font-weight:700;color:#7c3aed;display:inline-block;text-align:right;padding-right:4px">—</span>
+          <span style="font-size:12px;color:#7c3aed;font-weight:600" class="notx">Vpp</span>
+        </div>
+        <div style="padding:7px 12px;font-size:11px;font-family:monospace;color:#374151;border-left:1px solid var(--border)">
+          正弦波のピーク間電圧<br>
+          <span style="color:#7c3aed">Vpp</span> = Vrms × 2√2 ≈ Vrms × 2.828
+        </div>
+        <div style="padding:7px 12px;font-size:11px;color:var(--muted);border-left:1px solid var(--border)">オシロスコープで<b>直接読める</b>値。信号発生器の振幅設定もVpp表記が多い。Vrmsの2√2倍（正弦波の場合）。</div>
+      </div>
+
+      <!-- Irms 行 -->
+      <div style="display:grid;grid-template-columns:220px 1fr 1fr;align-items:center">
+        <div style="display:flex;align-items:center;gap:6px;padding:7px 10px">
+          <span style="font-size:13px;font-weight:700;color:#0891b2;width:36px;flex-shrink:0" class="notx">Irms</span>
+          <span id="m4_irms" style="width:100px;font-size:15px;font-weight:700;color:#0891b2;display:inline-block;text-align:right;padding-right:4px">—</span>
+          <span style="font-size:12px;color:#0891b2;font-weight:600" class="notx">Irms</span>
+        </div>
+        <div style="padding:7px 12px;font-size:11px;font-family:monospace;color:#374151;border-left:1px solid var(--border)">
+          <span style="color:#0891b2">Irms</span> = Vrms / 50 = √(W / 50)
+        </div>
+        <div style="padding:7px 12px;font-size:11px;color:var(--muted);border-left:1px solid var(--border)">50Ω負荷を流れる<b>実効電流</b>。高電力時のコネクタ・同軸ケーブルの<b>電流耐量チェック</b>（例: N型コネクタ ≈ 25A上限）に必須。</div>
+      </div>
+
+    </div><!-- end table -->
 
     <button class="btn btn-secondary btn-sm" onclick="clearMod4()" style="margin-top:10px">クリア</button>
     <canvas id="chart4" width="900" height="160" style="margin-top:12px;border:1px solid var(--border);border-radius:4px;background:#fff;width:100%;display:block;cursor:crosshair" title="クリックで値を設定"></canvas>
