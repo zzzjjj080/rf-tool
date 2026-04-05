@@ -360,7 +360,7 @@ body.dark .cap-spin-val { background: #0b1220; }
             <span class="clname">速度係数 VF</span>
           </div>
           <div class="slider-row">
-            <input type="range" id="sl-vf" min="50" max="95" step="1" value="66" oninput="update()">
+            <input type="range" id="sl-vf" min="50" max="95" step="1" value="66" oninput="activeParam='vf';update()">
             <span class="ctrl-val" id="disp-vf">0.66</span>
           </div>
         </div>
@@ -626,17 +626,17 @@ function getCableLam() { return parseInt(svgEl('sl-cable').value) / 16; }
 function onFcenterChange() {
   svgEl('sl-offset').value = 0;
   svgEl('in-freq').value = getFcenter().toFixed(3);
-  update();
+  activeParam = 'freq'; update();
 }
 function resetFreq() {
   svgEl('sl-offset').value = 0;
   svgEl('in-freq').value = getFcenter().toFixed(3);
-  update();
+  activeParam = 'freq'; update();
 }
 function onOffsetSlider() {
   const fc = getFcenter(), off = getOffsetPct();
   svgEl('in-freq').value = (fc * (1 + off / 100)).toFixed(3);
-  update();
+  activeParam = 'freq'; update();
 }
 function onFreqInput() {
   const fc = getFcenter();
@@ -644,7 +644,7 @@ function onFreqInput() {
   if (isNaN(freqMHz) || freqMHz <= 0) return;
   const offset = Math.round((freqMHz / fc - 1) * 100);
   svgEl('sl-offset').value = Math.max(-10, Math.min(10, offset));
-  update();
+  activeParam = 'freq'; update();
 }
 function onCableSlider() {
   const fCenterHz = getFcenter() * 1e6, vf = getVf();
@@ -676,9 +676,12 @@ function drawCircuit(topo, freqMHz, cableM, vf, c1pF, c1open, c2pF, c2short) {
   const c1Hi    = activeParam === 'c1' || activeParam === 'drag';
   const c2Hi    = activeParam === 'c2' || activeParam === 'drag';
   const cableHi = activeParam === 'cable';
+  const vfHi    = activeParam === 'vf';
+  const freqHi  = activeParam === 'freq';
   const c1Col    = c1Hi    ? gold : t;
   const c2Col    = c2Hi    ? gold : t;
-  const cableCol = cableHi ? gold : t;
+  const cableCol = (cableHi || vfHi) ? gold : t;
+  const freqCol  = freqHi  ? gold : t;
   const c1Lbl = c1Hi ? gold : ac;
   const c2Lbl = c2Hi ? gold : ac;
 
@@ -689,7 +692,7 @@ function drawCircuit(topo, freqMHz, cableM, vf, c1pF, c1open, c2pF, c2short) {
   const port   = (cx,cy) => `<circle cx="${cx}" cy="${cy}" r="7" fill="none" stroke="${t}" stroke-width="2"/>`;
   const dot    = (cx,cy) => `<circle cx="${cx}" cy="${cy}" r="3" fill="${t}"/>`;
   const lbl    = (x,y,anc,str,fs,col) => `<text x="${x}" y="${y}" text-anchor="${anc}" font-size="${fs||10}" fill="${col||ac}" font-family="${ff}">${str}</text>`;
-  const valtxt = (x,y,anc,str,col) => `<text x="${x}" y="${y}" text-anchor="${anc}" font-size="9" fill="${col||t}" font-family="${ff}" opacity="0.9">${str}</text>`;
+  const valtxt = (x,y,anc,str,col,fs) => `<text x="${x}" y="${y}" text-anchor="${anc}" font-size="${fs||11}" fill="${col||t}" font-family="${ff}" opacity="0.9">${str}</text>`;
   const box    = (x1,y1,w,h,label) => `<rect x="${x1}" y="${y1}" width="${w}" height="${h}" fill="none" stroke="${t}" stroke-width="2"/><text x="${x1+w/2}" y="${y1+h/2+4}" text-anchor="middle" font-size="10" fill="${t}" font-family="${ff}">${label}</text>`;
 
   const freqStr  = freqMHz.toFixed(2) + 'MHz';
@@ -704,23 +707,21 @@ function drawCircuit(topo, freqMHz, cableM, vf, c1pF, c1open, c2pF, c2short) {
   // C1 shunt: hangs down from (jx,cy)
   const drawC1shunt = (jx) => {
     if (c1open) {
-      // Open: no shunt branch drawn — show label only
-      s += lbl(jx+5, cy+22, 'start', 'C₁', 10, c1Lbl);
-      s += valtxt(jx+5, cy+33, 'start', c1Str, c1Col);
+      s += valtxt(jx+5, cy+55, 'start', 'C₁ = open', c1Col);
       return;
     }
     s += wire(jx, cy, jx, cy+13, c1Col);
     s += shCap(jx, cy+15, cy+22, c1Col);
     s += wire(jx, cy+22, jx, cy+30, c1Col);
     s += gnd(jx, cy+30, c1Col);
-    s += lbl(jx+14, cy+30, 'start', 'C₁', 10, c1Lbl);
-    s += valtxt(jx+14, cy+41, 'start', c1Str, c1Col);
+    // Label inline: "C₁ = 101pF" to the right of the shunt, lower
+    s += valtxt(jx+16, cy+50, 'start', `C₁ = ${c1Str}`, c1Col);
   };
 
   // PA port (left edge)
   s += port(22, cy);
-  s += lbl(22, 12, 'middle', 'PA', 10);
-  s += valtxt(22, cy+24, 'middle', freqStr);
+  s += lbl(22, 12, 'middle', 'PA', 10, freqHi ? gold : ac);
+  s += valtxt(22, cy+24, 'middle', freqStr, freqCol);
   s += wire(29, cy, 48, cy);
 
   // Coax box width proportional to cable length in λ
@@ -752,13 +753,11 @@ function drawCircuit(topo, freqMHz, cableM, vf, c1pF, c1open, c2pF, c2short) {
     const b50  = COAX_R + 80;
     if (c2short) {
       s += wire(COAX_R, cy, jx, cy);
-      s += lbl(COAX_R + 28, cy+14, 'middle', 'C₂', 10, c2Lbl);
-      s += valtxt(COAX_R + 28, cy+25, 'middle', c2Str, c2Col);
+      s += valtxt(COAX_R + 28, cy+14, 'middle', `C₂ = short`, c2Col);
     } else {
       s += wire(COAX_R, cy, c2cx-3, cy);
       s += serCap(c2cx, cy, c2Col);
-      s += lbl(c2cx, cy+14, 'middle', 'C₂', 10, c2Lbl);
-      s += valtxt(c2cx, cy+25, 'middle', c2Str, c2Col);
+      s += valtxt(c2cx, cy+14, 'middle', `C₂ = ${c2Str}`, c2Col);
       s += wire(c2cx+3, cy, jx, cy);
     }
     s += dot(jx, cy);
@@ -775,13 +774,11 @@ function drawCircuit(topo, freqMHz, cableM, vf, c1pF, c1open, c2pF, c2short) {
     s += dot(jx, cy);
     if (c2short) {
       s += wire(jx, cy, b50, cy);
-      s += lbl(jx + 33, cy+14, 'middle', 'C₂', 10, c2Lbl);
-      s += valtxt(jx + 33, cy+25, 'middle', c2Str, c2Col);
+      s += valtxt(jx + 33, cy+14, 'middle', `C₂ = short`, c2Col);
     } else {
       s += wire(jx, cy, c2cx-3, cy);
       s += serCap(c2cx, cy, c2Col);
-      s += lbl(c2cx, cy+14, 'middle', 'C₂', 10, c2Lbl);
-      s += valtxt(c2cx, cy+25, 'middle', c2Str, c2Col);
+      s += valtxt(c2cx, cy+14, 'middle', `C₂ = ${c2Str}`, c2Col);
       s += wire(c2cx+3, cy, b50, cy);
     }
     s += box(b50, cy-12, 68, 24, '50Ω');
