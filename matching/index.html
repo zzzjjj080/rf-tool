@@ -689,7 +689,7 @@ function drawCircuit(topo, freqMHz, cableM, vf, c1pF, c1open, c2pF, c2short) {
   const serCap = (cx,cy,col) => `<line x1="${cx-2.5}" y1="${cy-11}" x2="${cx-2.5}" y2="${cy+11}" stroke="${col||t}" stroke-width="2.5"/><line x1="${cx+2.5}" y1="${cy-11}" x2="${cx+2.5}" y2="${cy+11}" stroke="${col||t}" stroke-width="2.5"/>`;
   const shCap  = (jx,yt,yb,col) => `<line x1="${jx-10}" y1="${yt}" x2="${jx+10}" y2="${yt}" stroke="${col||t}" stroke-width="2.2"/><line x1="${jx-10}" y1="${yb}" x2="${jx+10}" y2="${yb}" stroke="${col||t}" stroke-width="2.2"/>`;
   const gnd    = (x,y,col) => `<line x1="${x-9}" y1="${y}" x2="${x+9}" y2="${y}" stroke="${col||t}" stroke-width="2"/><line x1="${x-5.5}" y1="${y+4}" x2="${x+5.5}" y2="${y+4}" stroke="${col||t}" stroke-width="1.5"/><line x1="${x-2}" y1="${y+8}" x2="${x+2}" y2="${y+8}" stroke="${col||t}" stroke-width="1.5"/>`;
-  const port   = (cx,cy) => `<circle cx="${cx}" cy="${cy}" r="7" fill="none" stroke="${t}" stroke-width="2"/>`;
+  const port   = (cx,cy,col) => `<circle cx="${cx}" cy="${cy}" r="7" fill="none" stroke="${col||t}" stroke-width="2"/>`;
   const dot    = (cx,cy) => `<circle cx="${cx}" cy="${cy}" r="3" fill="${t}"/>`;
   const lbl    = (x,y,anc,str,fs,col) => `<text x="${x}" y="${y}" text-anchor="${anc}" font-size="${fs||10}" fill="${col||ac}" font-family="${ff}">${str}</text>`;
   const valtxt = (x,y,anc,str,col,fs) => `<text x="${x}" y="${y}" text-anchor="${anc}" font-size="${fs||11}" fill="${col||t}" font-family="${ff}" opacity="0.9">${str}</text>`;
@@ -719,7 +719,7 @@ function drawCircuit(topo, freqMHz, cableM, vf, c1pF, c1open, c2pF, c2short) {
   };
 
   // PA port (left edge)
-  s += port(22, cy);
+  s += port(22, cy, freqHi ? gold : t);
   s += lbl(22, 12, 'middle', 'PA', 10, freqHi ? gold : ac);
   s += valtxt(22, cy+24, 'middle', freqStr, freqCol);
   s += wire(29, cy, 48, cy);
@@ -753,11 +753,11 @@ function drawCircuit(topo, freqMHz, cableM, vf, c1pF, c1open, c2pF, c2short) {
     const b50  = COAX_R + 80;
     if (c2short) {
       s += wire(COAX_R, cy, jx, cy);
-      s += valtxt(COAX_R + 28, cy+14, 'middle', `C₂ = short`, c2Col);
+      s += valtxt(COAX_R + 32, cy+24, 'start', `C₂ = short`, c2Col);
     } else {
       s += wire(COAX_R, cy, c2cx-3, cy);
       s += serCap(c2cx, cy, c2Col);
-      s += valtxt(c2cx, cy+14, 'middle', `C₂ = ${c2Str}`, c2Col);
+      s += valtxt(c2cx+8, cy+24, 'start', `C₂ = ${c2Str}`, c2Col);
       s += wire(c2cx+3, cy, jx, cy);
     }
     s += dot(jx, cy);
@@ -774,11 +774,11 @@ function drawCircuit(topo, freqMHz, cableM, vf, c1pF, c1open, c2pF, c2short) {
     s += dot(jx, cy);
     if (c2short) {
       s += wire(jx, cy, b50, cy);
-      s += valtxt(jx + 33, cy+14, 'middle', `C₂ = short`, c2Col);
+      s += valtxt(jx + 36, cy+24, 'start', `C₂ = short`, c2Col);
     } else {
       s += wire(jx, cy, c2cx-3, cy);
       s += serCap(c2cx, cy, c2Col);
-      s += valtxt(c2cx, cy+14, 'middle', `C₂ = ${c2Str}`, c2Col);
+      s += valtxt(c2cx+8, cy+24, 'start', `C₂ = ${c2Str}`, c2Col);
       s += wire(c2cx+3, cy, b50, cy);
     }
     s += box(b50, cy-12, 68, 24, '50Ω');
