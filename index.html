@@ -231,60 +231,57 @@
 
     <h3>電力 ⇄ 方結出力電圧</h3>
     <div style="overflow-x:auto;margin-top:8px">
-      <svg class="coupler-diag" id="coupler-main-diag" viewBox="0 0 740 232" width="100%" style="min-width:560px;border:1px solid var(--border);border-radius:8px;display:block">
-        <rect width="740" height="232" style="fill:var(--card)"/>
+      <svg class="coupler-diag" id="coupler-main-diag" viewBox="0 0 740 268" width="100%" style="min-width:560px;border:1px solid var(--border);border-radius:8px;display:block">
+        <rect width="740" height="268" style="fill:var(--card)"/>
         <defs>
-          <marker id="bigArr" markerWidth="14" markerHeight="10" refX="13" refY="5" orient="auto">
-            <path d="M0,0 L14,5 L0,10Z" fill="#2563eb"/>
+          <marker id="bigArr" markerWidth="12" markerHeight="10" refX="11" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+            <path d="M0,0 L12,5 L0,10Z" fill="#2563eb"/>
           </marker>
-          <marker id="midArr" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-            <path d="M0,0 L10,3.5 L0,7Z" fill="#2563eb"/>
+          <marker id="midArr" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+            <path d="M0,0 L10,4 L0,8Z" fill="#2563eb"/>
           </marker>
         </defs>
-        <!-- Main power line (thick arrows show high-power FWD direction) -->
-        <line x1="14" y1="93" x2="237" y2="93" stroke="#2563eb" stroke-width="8" stroke-linecap="round" marker-end="url(#bigArr)"/>
-        <line x1="441" y1="93" x2="716" y2="93" stroke="#2563eb" stroke-width="5" stroke-linecap="round" marker-end="url(#midArr)"/>
-        <circle cx="14" cy="93" r="6" fill="#2563eb"/>
-        <circle cx="718" cy="93" r="6" fill="#2563eb"/>
+        <!-- Main power line -->
+        <line x1="14" y1="90" x2="237" y2="90" stroke="#2563eb" stroke-width="7" stroke-linecap="round" marker-end="url(#bigArr)"/>
+        <line x1="441" y1="90" x2="716" y2="90" stroke="#2563eb" stroke-width="4" stroke-linecap="round" marker-end="url(#midArr)"/>
+        <circle cx="14" cy="90" r="5" fill="#2563eb"/>
+        <circle cx="720" cy="90" r="5" fill="#2563eb"/>
         <!-- Coupler box -->
-        <rect x="240" y="66" width="200" height="54" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
-        <text x="340" y="82" text-anchor="middle" font-size="11" font-weight="bold" fill="#1e40af" font-family="sans-serif">方向性結合器</text>
-        <!-- Coupling factor input: −[  ]dB -->
-        <text x="262" y="105" font-size="12" fill="#2563eb" font-family="sans-serif">−</text>
-        <foreignObject x="274" y="89" width="65" height="26">
+        <rect x="240" y="65" width="200" height="50" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+        <text x="340" y="80" text-anchor="middle" font-size="11" font-weight="bold" fill="#1e40af" font-family="sans-serif">方向性結合器</text>
+        <text x="262" y="100" font-size="13" fill="#2563eb" font-family="sans-serif">−</text>
+        <foreignObject x="274" y="84" width="60" height="24">
           <input type="number" id="m1_cc" value="50" step="1" min="1" max="100" oninput="calc_m1_from_cc()"
-            style="width:100%;height:100%;border:1px solid #93c5fd;border-radius:3px;padding:2px 4px;font-size:12px;text-align:center;background:#fff;color:#1e40af;box-sizing:border-box"/>
+            style="width:100%;height:100%;border:2px solid #2563eb;border-radius:4px;padding:2px 4px;font-size:13px;font-weight:bold;text-align:center;background:#eff6ff;color:#1e40af;box-sizing:border-box"/>
         </foreignObject>
-        <text x="342" y="105" font-size="12" fill="#2563eb" font-family="sans-serif">dB</text>
+        <text x="337" y="100" font-size="13" fill="#2563eb" font-family="sans-serif">dB</text>
         <!-- FWD input (left, above main line) -->
-        <text x="18" y="26" font-size="11" font-weight="bold" fill="#2563eb" font-family="sans-serif">FWD [W]</text>
-        <foreignObject x="18" y="32" width="186" height="36">
+        <text x="18" y="20" font-size="11" font-weight="bold" fill="#2563eb" font-family="sans-serif">FWD [W]</text>
+        <foreignObject x="18" y="26" width="110" height="28">
           <input type="number" id="m1_fwd" value="3000" step="100" min="0" oninput="calc_m1_from_fwd()"
-            style="width:100%;height:100%;border:2px solid #2563eb;border-radius:5px;padding:4px 8px;font-size:16px;font-weight:bold;color:#2563eb;background:#eff6ff;box-sizing:border-box"/>
+            style="width:100%;height:100%;border:2px solid #2563eb;border-radius:5px;padding:3px 6px;font-size:15px;font-weight:bold;color:#2563eb;background:#eff6ff;box-sizing:border-box"/>
         </foreignObject>
-        <!-- THRU label (right, above main line) -->
-        <text x="446" y="78" font-size="11" fill="#64748b" font-family="sans-serif">THRU / Load</text>
-        <!-- Coupled port line (moderate arrow going down) -->
-        <line x1="340" y1="120" x2="340" y2="150" stroke="#dc2626" stroke-width="2.5"/>
-        <polygon points="334,147 340,158 346,147" fill="#dc2626"/>
-        <!-- COUPLED OUT box -->
-        <rect x="14" y="160" width="712" height="68" rx="7" fill="#fff5f5" stroke="#dc2626" stroke-width="1.5"/>
-        <text x="370" y="174" text-anchor="middle" font-size="10" fill="#dc2626" font-family="sans-serif" letter-spacing="0.5">COUPLED OUT</text>
-        <!-- Vpp input -->
-        <text x="28" y="205" font-size="11" font-weight="bold" fill="#dc2626" font-family="sans-serif">Vpp</text>
-        <foreignObject x="56" y="186" width="155" height="32">
+        <!-- Coupled port arrow (down) -->
+        <line x1="340" y1="115" x2="340" y2="150" stroke="#dc2626" stroke-width="2.5"/>
+        <polygon points="334,149 340,162 346,149" fill="#dc2626"/>
+        <!-- 結合出力 box (vertical layout) -->
+        <rect x="14" y="162" width="712" height="98" rx="7" fill="#fff5f5" stroke="#dc2626" stroke-width="1.5"/>
+        <text x="370" y="177" text-anchor="middle" font-size="10" fill="#dc2626" font-family="sans-serif" letter-spacing="0.5">結合出力</text>
+        <!-- Vpp input row -->
+        <text x="30" y="201" font-size="11" font-weight="bold" fill="#dc2626" font-family="sans-serif">Vpp</text>
+        <foreignObject x="55" y="185" width="100" height="24">
           <input type="number" id="m1_vpp" value="3464" step="10" min="0" oninput="calc_m1_from_vpp()"
-            style="width:100%;height:100%;border:2px solid #dc2626;border-radius:5px;padding:3px 8px;font-size:16px;font-weight:bold;color:#dc2626;background:#fff5f5;box-sizing:border-box"/>
+            style="width:100%;height:100%;border:2px solid #dc2626;border-radius:5px;padding:2px 6px;font-size:14px;font-weight:bold;color:#dc2626;background:#fff5f5;box-sizing:border-box"/>
         </foreignObject>
-        <text x="215" y="205" font-size="12" fill="#dc2626" font-family="sans-serif">mVpp</text>
-        <!-- Vrms display (calculated) -->
-        <text x="256" y="200" font-size="11" fill="#888" font-family="sans-serif">→  Vrms:</text>
-        <text x="316" y="200" font-size="13" font-weight="bold" fill="#555" font-family="sans-serif" id="m1_vrms_diag">—</text>
-        <text x="380" y="200" font-size="11" fill="#888" font-family="sans-serif">mVrms</text>
-        <!-- Coupling power display -->
-        <text x="600" y="192" font-size="10" fill="#888" font-family="sans-serif" text-anchor="middle">結合電力</text>
-        <text x="600" y="210" font-size="14" font-weight="bold" fill="#555" font-family="sans-serif" text-anchor="middle" id="m1_pout_diag">—</text>
-        <text x="600" y="223" font-size="10" fill="#888" font-family="sans-serif" text-anchor="middle">W</text>
+        <text x="159" y="201" font-size="11" fill="#dc2626" font-family="sans-serif">mVpp</text>
+        <!-- Vrms display row -->
+        <text x="30" y="223" font-size="11" fill="#666" font-family="sans-serif">Vrms</text>
+        <text x="68" y="223" font-size="13" font-weight="bold" fill="#555" font-family="sans-serif" id="m1_vrms_diag">—</text>
+        <text x="140" y="223" font-size="11" fill="#888" font-family="sans-serif">mVrms</text>
+        <!-- 結合電力 display row -->
+        <text x="30" y="246" font-size="11" fill="#666" font-family="sans-serif">結合電力</text>
+        <text x="82" y="246" font-size="13" font-weight="bold" fill="#555" font-family="sans-serif" id="m1_pout_diag">—</text>
+        <text x="152" y="246" font-size="11" fill="#888" font-family="sans-serif">W</text>
       </svg>
     </div>
     <canvas id="chart1" width="560" height="155" style="margin-top:10px;border:1px solid var(--border);border-radius:4px;background:#fff;max-width:100%;display:block"></canvas>
