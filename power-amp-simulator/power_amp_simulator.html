@@ -72,8 +72,12 @@ canvas{display:block;width:100%}
 .input-group.orange label{color:var(--accent2)}
 .input-group.green label{color:var(--green)}
 .input-group.gold label{color:var(--gold)}
-.tip-box{display:none;position:absolute;bottom:calc(100% + 8px);left:0;background:var(--panel);border:1px solid var(--accent);border-radius:8px;padding:9px 13px;font-size:12px;font-family:'Noto Sans JP',sans-serif;line-height:1.75;color:var(--text);min-width:220px;max-width:300px;z-index:200;box-shadow:0 4px 16px var(--shadow);pointer-events:none;text-transform:none;letter-spacing:0;font-weight:400}
-.input-group:hover .tip-box{display:block}
+.tip-wrap{display:flex;align-items:center;gap:5px;position:relative}
+.tip-wrap label{flex:1}
+.tip-icon{width:14px;height:14px;line-height:14px;text-align:center;border-radius:50%;border:1px solid currentColor;font-size:9px;font-family:'Space Mono',monospace;font-weight:700;cursor:help;opacity:.5;flex-shrink:0}
+.tip-icon:hover{opacity:1}
+.tip-box{display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--panel);border:1px solid var(--accent);border-radius:8px;padding:9px 13px;font-size:12px;font-family:'Noto Sans JP',sans-serif;line-height:1.75;color:var(--text);min-width:220px;max-width:300px;z-index:200;box-shadow:0 4px 16px var(--shadow);pointer-events:none;text-transform:none;letter-spacing:0;font-weight:400}
+.tip-icon:hover~.tip-box{display:block}
 .input-group-inline{display:flex;align-items:center;gap:8px}
 input[type="range"]{-webkit-appearance:none;width:100%;height:4px;background:var(--border);border-radius:2px;outline:none;cursor:pointer}
 input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;box-shadow:0 1px 4px var(--shadow)}
@@ -225,24 +229,33 @@ select{background:var(--panel2);border:1px solid var(--border);color:var(--text)
   </div>
   <div class="param-zone">
     <div class="input-group">
-      <label>入力振幅 Vin</label>
-      <div class="tip-box">アンプに入力する元信号の振幅（0〜1 V換算）。<br>大きくするとVoutも大きくなるが、クリッピング（波形の頭切れ）が起きやすくなる。これが増幅前の「元信号」。</div>
+      <div class="tip-wrap">
+        <label>入力振幅 Vin</label>
+        <span class="tip-icon">?</span>
+        <div class="tip-box">アンプに入力する元信号の振幅（0〜1 V換算）。大きくするとVoutも大きくなるが、クリッピング（波形の頭切れ）が起きやすくなる。これが増幅前の「元信号」。</div>
+      </div>
       <div class="input-group-inline">
         <input type="range" id="slA_ain" min="0.1" max="1.0" step="0.01" value="0.8" oninput="onParam('amplitude',this.value)">
         <span class="input-val" id="vA_ain">0.80</span>
       </div>
     </div>
     <div class="input-group gold">
-      <label>バイアス点 Vbe</label>
-      <div class="tip-box">トランジスタのベース−エミッタ間電圧。Si BJTでは通常0.6〜0.7 V。この値でQ点（動作点）が決まり、導通角・アイドル電流・歪みが変化する。低すぎるとB級に近づき波形が歪みやすい。</div>
+      <div class="tip-wrap">
+        <label>バイアス点 Vbe</label>
+        <span class="tip-icon">?</span>
+        <div class="tip-box">トランジスタのベース−エミッタ間電圧。Si BJTでは通常0.6〜0.7 V。この値でQ点（動作点）が決まり、導通角・アイドル電流・歪みが変化する。低すぎるとB級に近づき波形が歪みやすい。</div>
+      </div>
       <div class="input-group-inline">
         <input type="range" id="slA_vgs" min="0.1" max="1.0" step="0.01" value="0.50" oninput="onParam('a_vgs',this.value)">
         <span class="input-val" id="vA_vgs">0.50</span>
       </div>
     </div>
     <div class="input-group orange">
-      <label>負荷抵抗 RL</label>
-      <div class="tip-box">出力に接続する負荷の抵抗値。RF系では通常50 Ω（インピーダンス整合の標準値）。50 Ωから外れると最大電力転送が得られず損失が増える（最大電力転送定理）。</div>
+      <div class="tip-wrap">
+        <label>負荷抵抗 RL</label>
+        <span class="tip-icon">?</span>
+        <div class="tip-box">出力に接続する負荷の抵抗値。RF系では通常50 Ω（インピーダンス整合の標準値）。50 Ωから外れると最大電力転送が得られず損失が増える（最大電力転送定理）。</div>
+      </div>
       <div class="input-group-inline">
         <input type="range" id="slA_rl" min="10" max="200" step="1" value="50" oninput="onParam('a_rl',this.value)">
         <span class="input-val" id="vA_rl">50 Ω</span>
@@ -272,24 +285,33 @@ select{background:var(--panel2);border:1px solid var(--border);color:var(--text)
   </div>
   <div class="param-zone">
     <div class="input-group">
-      <label>入力振幅 Vin</label>
-      <div class="tip-box">PWM変調の元となる正弦波の振幅。三角波キャリアとの比較によってデューティ比が変調される。大きくすると出力Voutも増えるが、デューティ比が飽和しやすくなる。</div>
+      <div class="tip-wrap">
+        <label>入力振幅 Vin</label>
+        <span class="tip-icon">?</span>
+        <div class="tip-box">PWM変調の元となる正弦波の振幅。三角波キャリアとの比較によってデューティ比が変調される。大きくすると出力Voutも増えるが、デューティ比が飽和しやすくなる。</div>
+      </div>
       <div class="input-group-inline">
         <input type="range" id="slD_ain" min="0.1" max="1.0" step="0.01" value="0.8" oninput="onParam('amplitude',this.value)">
         <span class="input-val" id="vD_ain">0.80</span>
       </div>
     </div>
     <div class="input-group orange">
-      <label>デューティ比</label>
-      <div class="tip-box">PWM信号のON時間の比率（0.5 = 50% が理想値）。50%から外れると出力波形が非対称になり高調波歪み（THD）が増加する。D級の効率はこの対称性で大きく変わる。</div>
+      <div class="tip-wrap">
+        <label>デューティ比</label>
+        <span class="tip-icon">?</span>
+        <div class="tip-box">PWM信号のON時間の比率（0.5 = 50% が理想値）。50%から外れると出力波形が非対称になり高調波歪み（THD）が増加する。D級の効率はこの対称性で大きく変わる。</div>
+      </div>
       <div class="input-group-inline">
         <input type="range" id="slD_duty" min="0.30" max="0.70" step="0.01" value="0.50" oninput="onParam('d_duty',this.value)">
         <span class="input-val" id="vD_duty">0.50</span>
       </div>
     </div>
     <div class="input-group green">
-      <label>LCカットオフ</label>
-      <div class="tip-box">ローパスフィルタ（LCフィルタ）の遮断周波数の相対値。高いほどPWMの高調波を効果的に除去できてリップルが減るが、信号の遅延（位相ずれ）も大きくなる。</div>
+      <div class="tip-wrap">
+        <label>LCカットオフ</label>
+        <span class="tip-icon">?</span>
+        <div class="tip-box">ローパスフィルタ（LCフィルタ）の遮断周波数の相対値。高いほどPWMの高調波を効果的に除去できてリップルが減るが、信号の遅延（位相ずれ）も大きくなる。</div>
+      </div>
       <div class="input-group-inline">
         <input type="range" id="slD_lc" min="0.1" max="1.0" step="0.01" value="0.50" oninput="onParam('d_lcCutoff',this.value)">
         <span class="input-val" id="vD_lc">0.50</span>
@@ -319,24 +341,33 @@ select{background:var(--panel2);border:1px solid var(--border);color:var(--text)
   </div>
   <div class="param-zone">
     <div class="input-group">
-      <label>入力振幅 Vin</label>
-      <div class="tip-box">スイッチを駆動するRF信号の振幅。E級は固定の共振周波数で動作するため、振幅よりもfsw/f0の一致の方が効率に大きく影響する。</div>
+      <div class="tip-wrap">
+        <label>入力振幅 Vin</label>
+        <span class="tip-icon">?</span>
+        <div class="tip-box">スイッチを駆動するRF信号の振幅。E級は固定の共振周波数で動作するため、振幅よりもfsw/f0の一致の方が効率に大きく影響する。</div>
+      </div>
       <div class="input-group-inline">
         <input type="range" id="slE_ain" min="0.1" max="1.0" step="0.01" value="0.8" oninput="onParam('amplitude',this.value)">
         <span class="input-val" id="vE_ain">0.80</span>
       </div>
     </div>
     <div class="input-group gold">
-      <label>fsw / f0 比</label>
-      <div class="tip-box">スイッチング周波数（fsw）と共振周波数（f0）の比。1.0のときZVS（ゼロ電圧スイッチング）が成立し最高効率95%超を実現。ずれると損失が急増するため、設計では精密な周波数合わせが必要。</div>
+      <div class="tip-wrap">
+        <label>fsw / f0 比</label>
+        <span class="tip-icon">?</span>
+        <div class="tip-box">スイッチング周波数（fsw）と共振周波数（f0）の比。1.0のときZVS（ゼロ電圧スイッチング）が成立し最高効率95%超を実現。ずれると損失が急増するため、設計では精密な周波数合わせが必要。</div>
+      </div>
       <div class="input-group-inline">
         <input type="range" id="slE_fsw" min="0.5" max="2.0" step="0.01" value="1.00" oninput="onParam('e_fswRatio',this.value)">
         <span class="input-val" id="vE_fsw">1.00</span>
       </div>
     </div>
     <div class="input-group orange">
-      <label>Q 値</label>
-      <div class="tip-box">直列LC共振回路のQ値（Quality factor）。高いほど出力波形がきれいな正弦波に近づくが、許容帯域幅が狭くなり周波数ずれへの感度が上がる。実用的なE級アンプでは Q=5〜15 程度が多い。</div>
+      <div class="tip-wrap">
+        <label>Q 値</label>
+        <span class="tip-icon">?</span>
+        <div class="tip-box">直列LC共振回路のQ値（Quality factor）。高いほど出力波形がきれいな正弦波に近づくが、許容帯域幅が狭くなり周波数ずれへの感度が上がる。実用的なE級アンプでは Q=5〜15 程度が多い。</div>
+      </div>
       <div class="input-group-inline">
         <input type="range" id="slE_q" min="1" max="20" step="0.5" value="5" oninput="onParam('e_Q',this.value)">
         <span class="input-val" id="vE_q">5.0</span>
