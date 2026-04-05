@@ -44,7 +44,11 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:'SF Mono','Fira Code','Consolas',monospace;min-height:100vh;padding:16px}
-h1{font-size:14px;font-weight:400;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+h1{font-size:14px;font-weight:400;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;padding-left:140px}
+.intro{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;margin-bottom:12px;font-size:13px;line-height:1.75;color:var(--text2)}
+.intro b{color:var(--text);font-weight:600}
+.intro .hl{color:var(--teal)}
+.intro .hl2{color:var(--amber)}
 .layout{display:grid;grid-template-columns:244px 1fr;gap:12px}
 @media(max-width:640px){.layout{grid-template-columns:1fr}}
 
@@ -121,6 +125,18 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
 </head>
 <body>
 <h1>FFT Winding Visualizer <button class="btn" id="thbtn" onclick="toggleTheme()" style="font-size:11px;padding:5px 12px;text-transform:none;letter-spacing:0">🌙 ダーク</button></h1>
+<div class="intro">
+  <b>このツールで分かること</b>：
+  複数の正弦波が重なった合成信号を FFT（高速フーリエ変換）にかけると、
+  <span class="hl">どの周波数の成分がどれだけ含まれているか</span>（スペクトル）が一目で分かります。<br>
+  <b>なぜ分かりにくいのか</b>：
+  FFT の式 <code>X(f) = ∫ x(t)·e<sup>−j2πft</sup> dt</code> は正確ですが、
+  「なぜこの積分でスペクトルが取り出せるのか」は数式だけでは直感的に見えにくいです。<br>
+  <b>このビジュアライザーでは</b>：
+  信号を複素螺旋（巻きつけ）に乗せ、その<span class="hl2">重心</span>がどこにあるかを図示します。
+  信号の周波数と巻きつけ周波数が一致したとき重心が原点から最も遠ざかり、
+  これがスペクトルのピークになる仕組みが視覚的に確認できます。
+</div>
 <div class="layout">
 
 <!-- Side panel -->
