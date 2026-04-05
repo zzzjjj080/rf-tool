@@ -233,15 +233,15 @@
 
     <h3>電力 ⇄ 方結出力電圧</h3>
     <div style="display:flex;gap:14px;align-items:flex-start;margin-top:8px;flex-wrap:wrap">
-      <svg class="coupler-diag" id="coupler-main-diag" viewBox="0 0 480 290" style="width:480px;max-width:100%;border:1px solid var(--border);border-radius:8px;display:block;flex-shrink:0">
-        <rect width="480" height="290" style="fill:var(--card)"/>
+      <svg class="coupler-diag" id="coupler-main-diag" viewBox="0 0 640 290" style="width:640px;max-width:100%;border:1px solid var(--border);border-radius:8px;display:block;flex-shrink:0">
+        <rect width="640" height="290" style="fill:var(--card)"/>
         <defs>
           <marker id="bigArr" markerWidth="30" markerHeight="22" refX="29" refY="11" orient="auto" markerUnits="userSpaceOnUse">
             <path d="M0,0 L30,11 L0,22Z" fill="#2563eb"/>
           </marker>
         </defs>
         <!-- Single main power line, arrowhead at right end only -->
-        <line x1="10" y1="98" x2="462" y2="98" stroke="#2563eb" stroke-width="7" stroke-linecap="round" marker-end="url(#bigArr)"/>
+        <line x1="10" y1="98" x2="622" y2="98" stroke="#2563eb" stroke-width="7" stroke-linecap="round" marker-end="url(#bigArr)"/>
         <circle cx="10" cy="98" r="6" fill="#2563eb"/>
         <!-- Coupler box on top of line (fill covers line underneath) -->
         <rect x="140" y="70" width="200" height="56" rx="6" fill="var(--card)" stroke="#2563eb" stroke-width="2"/>
@@ -279,8 +279,21 @@
         <text x="150" y="265" font-size="13" fill="#666" font-family="sans-serif">結合電力</text>
         <text x="202" y="265" font-size="14" font-weight="bold" fill="#555" font-family="sans-serif" id="m1_pout_diag">—</text>
         <text x="260" y="265" font-size="12" fill="#888" font-family="sans-serif">W</text>
+        <!-- Formula panel (right of coupler/output boxes, below main line) -->
+        <rect x="352" y="110" width="278" height="170" rx="6" fill="#f0f9ff" stroke="#bfdbfe" stroke-width="1.5"/>
+        <text x="491" y="128" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e40af" font-family="sans-serif">計算式</text>
+        <line x1="362" y1="135" x2="620" y2="135" stroke="#bfdbfe" stroke-width="1"/>
+        <!-- Pout formula -->
+        <text x="362" y="152" font-size="11" fill="#64748b" font-family="sans-serif">結合電力 Pout [W]</text>
+        <text x="362" y="170" font-size="12" fill="#1e3a5f" font-family="'Courier New',monospace">Pout = FWD × 10<tspan dy="-5" font-size="9">(−cc/10)</tspan></text>
+        <!-- Vrms formula -->
+        <text x="362" y="196" font-size="11" fill="#64748b" font-family="sans-serif">Vrms [mVrms]</text>
+        <text x="362" y="214" font-size="12" fill="#1e3a5f" font-family="'Courier New',monospace">Vrms = √(Pout × 50) × 1000</text>
+        <!-- Vpp formula -->
+        <text x="362" y="240" font-size="11" fill="#64748b" font-family="sans-serif">Vpp [mVpp]</text>
+        <text x="362" y="258" font-size="12" fill="#1e3a5f" font-family="'Courier New',monospace">Vpp = Vrms × 2√2</text>
       </svg>
-      <canvas id="chart1" width="380" height="290" style="border:1px solid var(--border);border-radius:4px;background:#fff;flex-shrink:0;display:block"></canvas>
+      <canvas id="chart1" width="240" height="290" style="border:1px solid var(--border);border-radius:4px;background:#fff;flex-shrink:0;display:block"></canvas>
     </div>
 
     <div class="section-divider"></div>
