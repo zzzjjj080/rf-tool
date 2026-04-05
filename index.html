@@ -233,17 +233,17 @@
 
     <h3>電力 ⇄ 方結出力電圧</h3>
     <div style="display:flex;gap:14px;align-items:flex-start;margin-top:8px;flex-wrap:wrap">
-      <svg class="coupler-diag" id="coupler-main-diag" viewBox="0 0 640 290" style="width:640px;max-width:100%;border:1px solid var(--border);border-radius:8px;display:block;flex-shrink:0">
-        <rect width="640" height="290" style="fill:var(--card)"/>
+      <svg class="coupler-diag" id="coupler-main-diag" viewBox="0 0 640 320" style="width:640px;max-width:100%;border:1px solid var(--border);border-radius:8px;display:block;flex-shrink:0">
+        <rect width="640" height="320" style="fill:var(--card)"/>
         <defs>
           <marker id="bigArr" markerWidth="30" markerHeight="22" refX="29" refY="11" orient="auto" markerUnits="userSpaceOnUse">
             <path d="M0,0 L30,11 L0,22Z" fill="#2563eb"/>
           </marker>
         </defs>
-        <!-- Single main power line, arrowhead at right end only -->
+        <!-- Main power line -->
         <line x1="10" y1="98" x2="622" y2="98" stroke="#2563eb" stroke-width="7" stroke-linecap="round" marker-end="url(#bigArr)"/>
         <circle cx="10" cy="98" r="6" fill="#2563eb"/>
-        <!-- Coupler box on top of line (purple = coupler) -->
+        <!-- Coupler box (purple) -->
         <rect x="140" y="70" width="200" height="56" rx="6" fill="var(--card)" stroke="#7c3aed" stroke-width="2"/>
         <text x="240" y="87" text-anchor="middle" font-size="13" font-weight="bold" fill="#5b21b6" font-family="sans-serif">方向性結合器</text>
         <text x="158" y="113" font-size="15" fill="#7c3aed" font-family="sans-serif">−</text>
@@ -252,49 +252,47 @@
             style="width:100%;height:100%;border:2px solid #7c3aed;border-radius:4px;padding:2px 3px;font-size:15px;font-weight:bold;text-align:center;background:#f5f3ff;color:#5b21b6;box-sizing:border-box"/>
         </foreignObject>
         <text x="235" y="113" font-size="15" fill="#7c3aed" font-family="sans-serif">dB</text>
-        <!-- FWD input (left of coupler, above line) -->
+        <!-- FWD input -->
         <text x="10" y="53" font-size="13" font-weight="bold" fill="#2563eb" font-family="sans-serif">FWD [W]</text>
         <foreignObject x="10" y="59" width="104" height="30">
           <input type="number" id="m1_fwd" value="3000" step="100" min="0" oninput="calc_m1_from_fwd()" class="coupler-input"
             style="width:100%;height:100%;border:2px solid #2563eb;border-radius:5px;padding:2px 6px;font-size:16px;font-weight:bold;color:#2563eb;background:#eff6ff;box-sizing:border-box"/>
         </foreignObject>
         <!-- Coupled port arrow (down) -->
-        <line x1="240" y1="126" x2="240" y2="162" stroke="#dc2626" stroke-width="2.5"/>
-        <polygon points="234,161 240,173 246,161" fill="#dc2626"/>
-        <!-- 結合出力 box -->
-        <rect x="140" y="174" width="200" height="108" rx="6" fill="#fff5f5" stroke="#dc2626" stroke-width="1.5"/>
-        <text x="240" y="189" text-anchor="middle" font-size="12" fill="#dc2626" font-family="sans-serif" letter-spacing="0.5">結合出力</text>
-        <!-- 結合電力 input row (GREEN, top) -->
-        <text x="148" y="215" font-size="12" font-weight="bold" fill="#16a34a" font-family="sans-serif">結合電力</text>
-        <foreignObject x="208" y="199" width="60" height="28">
-          <input type="number" id="m1_pout" step="0.001" min="0" oninput="calc_m1_from_pout()" class="coupler-input"
+        <line x1="240" y1="126" x2="240" y2="158" stroke="#dc2626" stroke-width="2.5"/>
+        <polygon points="234,157 240,169 246,157" fill="#dc2626"/>
+        <!-- 結合出力 box: 3 rows × 38px + header + padding = 170px -->
+        <rect x="140" y="170" width="200" height="148" rx="6" fill="#fff5f5" stroke="#dc2626" stroke-width="1.5"/>
+        <text x="240" y="186" text-anchor="middle" font-size="12" fill="#dc2626" font-family="sans-serif">結合出力</text>
+        <!-- Row 1: 結合電力 (green), center y=210 -->
+        <text x="148" y="214" font-size="12" font-weight="bold" fill="#16a34a" font-family="sans-serif">結合電力</text>
+        <foreignObject x="208" y="196" width="60" height="28">
+          <input type="number" id="m1_pout" step="0.01" min="0" oninput="calc_m1_from_pout()" class="coupler-input"
             style="width:100%;height:100%;border:2px solid #16a34a;border-radius:4px;padding:2px 4px;font-size:15px;font-weight:bold;color:#16a34a;background:#f0fdf4;box-sizing:border-box"/>
         </foreignObject>
-        <text x="272" y="215" font-size="12" fill="#16a34a" font-family="sans-serif">W</text>
-        <!-- Vrms input row (ORANGE, middle) -->
-        <text x="150" y="241" font-size="13" fill="#ea580c" font-family="sans-serif">Vrms</text>
-        <foreignObject x="178" y="225" width="90" height="28">
+        <text x="272" y="214" font-size="12" fill="#16a34a" font-family="sans-serif">W</text>
+        <!-- Row 2: Vrms (orange), center y=248 -->
+        <text x="148" y="252" font-size="13" fill="#ea580c" font-family="sans-serif">Vrms</text>
+        <foreignObject x="186" y="234" width="82" height="28">
           <input type="number" id="m1_vrms" step="100" min="0" oninput="calc_m1_from_vrms()" class="coupler-input"
             style="width:100%;height:100%;border:2px solid #ea580c;border-radius:4px;padding:2px 4px;font-size:15px;font-weight:bold;color:#ea580c;background:#fff7ed;box-sizing:border-box"/>
         </foreignObject>
-        <text x="272" y="241" font-size="12" fill="#ea580c" font-family="sans-serif">mVrms</text>
-        <!-- Vpp input row (RED, bottom) -->
-        <text x="150" y="265" font-size="13" font-weight="bold" fill="#dc2626" font-family="sans-serif">Vpp</text>
-        <foreignObject x="178" y="249" width="90" height="28">
+        <text x="272" y="252" font-size="12" fill="#ea580c" font-family="sans-serif">mVrms</text>
+        <!-- Row 3: Vpp (red), center y=286 -->
+        <text x="148" y="290" font-size="13" font-weight="bold" fill="#dc2626" font-family="sans-serif">Vpp</text>
+        <foreignObject x="186" y="272" width="82" height="28">
           <input type="number" id="m1_vpp" value="3464" step="100" min="0" oninput="calc_m1_from_vpp()" class="coupler-input"
             style="width:100%;height:100%;border:2px solid #dc2626;border-radius:4px;padding:2px 4px;font-size:15px;font-weight:bold;color:#dc2626;background:#fff5f5;box-sizing:border-box"/>
         </foreignObject>
-        <text x="272" y="265" font-size="12" fill="#dc2626" font-family="sans-serif">mVpp</text>
-        <!-- Formula panel -->
-        <rect x="352" y="110" width="278" height="170" rx="6" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
-        <text x="491" y="128" text-anchor="middle" font-size="12" font-weight="bold" fill="#374151" font-family="sans-serif">計算式</text>
-        <line x1="362" y1="135" x2="620" y2="135" stroke="#cbd5e1" stroke-width="1"/>
-        <!-- Formula 1: 結合電力 = FWD × 10^(-結合度/10) -->
-        <text x="362" y="165" font-size="12" font-family="sans-serif"><tspan fill="#16a34a">結合電力</tspan><tspan fill="#374151"> = </tspan><tspan fill="#2563eb">FWD</tspan><tspan fill="#374151"> × 10</tspan><tspan dy="-5" font-size="9" fill="#7c3aed">(−結合度/10)</tspan><tspan dy="5" fill="#888"> [W]</tspan></text>
-        <!-- Formula 2: Vrms = √(結合電力 × 50) × 1000 -->
-        <text x="362" y="200" font-size="12" font-family="sans-serif"><tspan fill="#ea580c">Vrms</tspan><tspan fill="#374151"> = √(</tspan><tspan fill="#16a34a">結合電力</tspan><tspan fill="#374151"> × 50) × 1000</tspan><tspan fill="#888"> [mVrms]</tspan></text>
-        <!-- Formula 3: Vpp = Vrms × 2√2 -->
-        <text x="362" y="235" font-size="12" font-family="sans-serif"><tspan fill="#dc2626">Vpp</tspan><tspan fill="#374151"> = </tspan><tspan fill="#ea580c">Vrms</tspan><tspan fill="#374151"> × 2√2</tspan><tspan fill="#888"> [mVpp]</tspan></text>
+        <text x="272" y="290" font-size="12" fill="#dc2626" font-family="sans-serif">mVpp</text>
+        <!-- Formula panel: aligned with output rows -->
+        <rect x="352" y="170" width="278" height="148" rx="6" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+        <!-- Formula 1 aligned with 結合電力 row (y=214) -->
+        <text x="362" y="214" font-size="11" font-family="sans-serif"><tspan fill="#16a34a">結合電力</tspan><tspan fill="#374151"> = </tspan><tspan fill="#2563eb">FWD</tspan><tspan fill="#374151"> × 10</tspan><tspan dy="-5" font-size="9" fill="#7c3aed">(−結合度/10)</tspan><tspan dy="5" fill="#888"> [W]</tspan></text>
+        <!-- Formula 2 aligned with Vrms row (y=252) -->
+        <text x="362" y="252" font-size="11" font-family="sans-serif"><tspan fill="#ea580c">Vrms</tspan><tspan fill="#374151"> = √(</tspan><tspan fill="#16a34a">結合電力</tspan><tspan fill="#374151"> × 50) × 1000</tspan><tspan fill="#888"> [mVrms]</tspan></text>
+        <!-- Formula 3 aligned with Vpp row (y=290) -->
+        <text x="362" y="290" font-size="11" font-family="sans-serif"><tspan fill="#dc2626">Vpp</tspan><tspan fill="#374151"> = </tspan><tspan fill="#ea580c">Vrms</tspan><tspan fill="#374151"> × 2√2</tspan><tspan fill="#888"> [mVpp]</tspan></text>
       </svg>
       <canvas id="chart1" width="260" height="260" style="border:1px solid var(--border);border-radius:4px;background:#fff;flex-shrink:0;display:block"></canvas>
     </div>
