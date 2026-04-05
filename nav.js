@@ -39,7 +39,7 @@
   const css = `
 #rf-nav {
   /* ページ固有フォントの影響を受けないよう明示的に指定 */
-  font-family: 'Segoe UI', sans-serif !important;
+  font-family: 'Noto Sans JP', 'Segoe UI', sans-serif !important;
   font-size: 14px !important;
   line-height: 1.4;
   position: sticky; top: 0; z-index: 9999;
@@ -54,14 +54,14 @@
 #rf-nav-title {
   font-size: 20px !important;          /* index.html header h1 と同値 */
   font-weight: 700; letter-spacing: 0.5px; flex: 1;
-  font-family: 'Segoe UI', sans-serif !important;
+  font-family: 'Noto Sans JP', 'Segoe UI', sans-serif !important;
 }
 #rf-nav-dark {
   padding: 6px 14px; border-radius: 16px;
   border: 1px solid rgba(255,255,255,0.35);
   background: rgba(255,255,255,0.1); color: #fff;
   cursor: pointer; font-size: 11px !important; font-weight: 600;
-  font-family: 'Segoe UI', sans-serif !important;
+  font-family: 'Noto Sans JP', 'Segoe UI', sans-serif !important;
   transition: background 0.2s; white-space: nowrap;
 }
 #rf-nav-dark:hover { background: rgba(255,255,255,0.22); }
@@ -74,7 +74,7 @@
   color: rgba(255,255,255,0.75);
   border: none; background: none; cursor: pointer;
   font-size: 11px !important;          /* index.html .tab-btn と同値 */
-  font-family: 'Segoe UI', sans-serif !important;
+  font-family: 'Noto Sans JP', 'Segoe UI', sans-serif !important;
   white-space: nowrap;
   border-bottom: 3px solid transparent;
   transition: all 0.2s;
