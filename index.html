@@ -613,8 +613,8 @@
           </div>
           <div style="margin-top:8px;display:flex;align-items:center;gap:8px">
             <span style="color:var(--muted)">速度</span>
-            <input type="range" id="m3s_speed" min="1" max="10" value="3" style="flex:1;accent-color:var(--accent)" oninput="document.getElementById('m3s_speed_lbl').textContent=this.value">
-            <span id="m3s_speed_lbl" style="color:var(--muted);min-width:12px">3</span>
+            <input type="range" id="m3s_speed" min="1" max="10" value="9" style="flex:1;accent-color:var(--accent)" oninput="document.getElementById('m3s_speed_lbl').textContent=this.value">
+            <span id="m3s_speed_lbl" style="color:var(--muted);min-width:12px">9</span>
           </div>
         </div>
         <div style="font-size:11px;font-weight:600;color:var(--muted)">クリックで Z を逆算</div>
@@ -3205,7 +3205,7 @@ function m3s_animLoop() {
   const mode = document.querySelector('input[name="m3s_anim"]:checked')?.value;
   if (!mode || mode === 'none' || !m3s_animBase) return;
 
-  const speed = parseInt(document.getElementById('m3s_speed')?.value || 3);
+  const speed = parseInt(document.getElementById('m3s_speed')?.value || 9);
   m3s_animT += 0.12 * Math.pow(speed / 10, 2);
 
   const pt = m3s_animPoint(m3s_animT);
