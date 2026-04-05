@@ -266,7 +266,7 @@ body.dark .cap-spin-val { background: #0b1220; }
 
       <!-- Circuit diagram -->
       <div class="circuit-wrap">
-        <svg id="circuit-svg" viewBox="0 0 408 96" xmlns="http://www.w3.org/2000/svg"></svg>
+        <svg id="circuit-svg" viewBox="0 0 428 110" xmlns="http://www.w3.org/2000/svg"></svg>
       </div>
 
       <!-- Numeric results -->
@@ -699,7 +699,7 @@ function drawCircuit(topo, freqMHz, cableM, vf, c1pF, c1open, c2pF, c2short) {
   const c2Str    = c2short ? 'short' : fmtCap(c2pF).replace(' ', '');
 
   let s = '';
-  const cy = 34; // horizontal centerline
+  const cy = 46; // horizontal centerline (raised 12px vs old 34 to give headroom above)
 
   // C1 shunt: hangs down from (jx,cy)
   const drawC1shunt = (jx) => {
@@ -719,30 +719,31 @@ function drawCircuit(topo, freqMHz, cableM, vf, c1pF, c1open, c2pF, c2short) {
 
   // PA port (left edge)
   s += port(22, cy);
-  s += lbl(22, 18, 'middle', 'PA', 10);
-  s += valtxt(22, 54, 'middle', freqStr);
+  s += lbl(22, 12, 'middle', 'PA', 10);
+  s += valtxt(22, cy+24, 'middle', freqStr);
   s += wire(29, cy, 48, cy);
 
   // Coax box width proportional to cable length in λ
   const MAX_COAX_W = 210;
-  const RIGHT_W = 150; // fixed width for C1/C2/50Ω cluster
-  const FIXED_VB_W = 48 + MAX_COAX_W + RIGHT_W; // always 408 — keeps all elements same size
+  const RIGHT_W = 170; // fixed width for C1/C2/50Ω cluster (extra 20px for gap before C1)
+  const FIXED_VB_W = 48 + MAX_COAX_W + RIGHT_W; // always 428 — keeps all elements same size
   const coaxStep = parseInt(svgEl('sl-cable').value); // 0-16
   const coaxW = coaxStep === 0 ? 4 : Math.round((coaxStep / 16) * MAX_COAX_W);
   const COAX_L = 48;
   const COAX_R = COAX_L + coaxW;
 
   // Always use fixed viewBox — size of all elements stays constant regardless of cable length
-  el.setAttribute('viewBox', `0 0 ${FIXED_VB_W} 96`);
+  el.setAttribute('viewBox', `0 0 ${FIXED_VB_W} 110`);
 
   // Draw coax box
   const cableStrokeW = cableHi ? '2.5' : '2';
   const coaxCx = COAX_L + coaxW / 2;
   s += `<rect x="${COAX_L}" y="${cy-12}" width="${coaxW}" height="24" fill="none" stroke="${cableCol}" stroke-width="${cableStrokeW}"/>`;
-  // Labels below the box — clamp x to min 90 so they never overlap the PA area (x≈22)
-  const coaxLblX = Math.max(coaxCx, 90);
-  s += valtxt(coaxLblX, cy+22, 'middle', '同軸ケーブル', cableCol);
-  s += valtxt(coaxLblX, cy+33, 'middle', cableStr + '  ' + vfStr, cableCol);
+  // Labels ABOVE the box: label on top, value below (closer to box)
+  // Clamp x so they don't overlap PA port (right edge ≈ x48)
+  const coaxLblX = Math.max(coaxCx, 62);
+  s += valtxt(coaxLblX, cy-30, 'middle', '同軸ケーブル', cableCol);
+  s += valtxt(coaxLblX, cy-20, 'middle', cableStr + '  ' + vfStr, cableCol);
 
   if (topo === 'A') {
     // Coax → C2(series) → junction(C1∥) → 50Ω
@@ -751,13 +752,13 @@ function drawCircuit(topo, freqMHz, cableM, vf, c1pF, c1open, c2pF, c2short) {
     const b50  = COAX_R + 80;
     if (c2short) {
       s += wire(COAX_R, cy, jx, cy);
-      s += lbl(COAX_R + 28, cy-15, 'middle', 'C₂', 10, c2Lbl);
-      s += valtxt(COAX_R + 28, cy+9, 'middle', c2Str, c2Col);
+      s += lbl(COAX_R + 28, cy+14, 'middle', 'C₂', 10, c2Lbl);
+      s += valtxt(COAX_R + 28, cy+25, 'middle', c2Str, c2Col);
     } else {
       s += wire(COAX_R, cy, c2cx-3, cy);
       s += serCap(c2cx, cy, c2Col);
-      s += lbl(c2cx, cy-15, 'middle', 'C₂', 10, c2Lbl);
-      s += valtxt(c2cx, cy+20, 'middle', c2Str, c2Col);
+      s += lbl(c2cx, cy+14, 'middle', 'C₂', 10, c2Lbl);
+      s += valtxt(c2cx, cy+25, 'middle', c2Str, c2Col);
       s += wire(c2cx+3, cy, jx, cy);
     }
     s += dot(jx, cy);
@@ -765,20 +766,22 @@ function drawCircuit(topo, freqMHz, cableM, vf, c1pF, c1open, c2pF, c2short) {
     s += box(b50, cy-12, 68, 24, '50Ω');
     drawC1shunt(jx);
   } else {
-    // Coax → junction(C1∥) → C2(series) → 50Ω
-    const jx  = COAX_R;
-    const c2cx = COAX_R + 30;
-    const b50  = COAX_R + 66;
+    // Coax → gap wire → junction(C1∥) → C2(series) → 50Ω
+    const GAP = 16; // wire gap between coax exit and C1 junction
+    const jx   = COAX_R + GAP;
+    const c2cx = COAX_R + GAP + 30;
+    const b50  = COAX_R + GAP + 66;
+    s += wire(COAX_R, cy, jx, cy); // gap wire
     s += dot(jx, cy);
     if (c2short) {
       s += wire(jx, cy, b50, cy);
-      s += lbl(jx + 33, cy-15, 'middle', 'C₂', 10, c2Lbl);
-      s += valtxt(jx + 33, cy+9, 'middle', c2Str, c2Col);
+      s += lbl(jx + 33, cy+14, 'middle', 'C₂', 10, c2Lbl);
+      s += valtxt(jx + 33, cy+25, 'middle', c2Str, c2Col);
     } else {
       s += wire(jx, cy, c2cx-3, cy);
       s += serCap(c2cx, cy, c2Col);
-      s += lbl(c2cx, cy-15, 'middle', 'C₂', 10, c2Lbl);
-      s += valtxt(c2cx, cy+20, 'middle', c2Str, c2Col);
+      s += lbl(c2cx, cy+14, 'middle', 'C₂', 10, c2Lbl);
+      s += valtxt(c2cx, cy+25, 'middle', c2Str, c2Col);
       s += wire(c2cx+3, cy, b50, cy);
     }
     s += box(b50, cy-12, 68, 24, '50Ω');
