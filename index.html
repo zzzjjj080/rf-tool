@@ -1046,8 +1046,8 @@ function calc_m1a() {
   saveLog('結合器1A', `FWD=${p}W, 結合度=${cc}dB`, `Vrms=${fmt(vrms*1000)}mV, Vpp=${fmt(vpp*1000)}mV`);
   // SVG diagram update
   const d = id => document.getElementById(id);
-  if (d('d1a_fwd_diag')) d('d1a_fwd_diag').textContent = fmt(p);
-  if (d('d1a_cc_diag'))  d('d1a_cc_diag').textContent  = fmt(cc, 1);
+  if (d('d1a_fwd_diag')) d('d1a_fwd_diag').textContent = p % 1 === 0 ? p : fmt(p);
+  if (d('d1a_cc_diag'))  d('d1a_cc_diag').textContent  = cc % 1 === 0 ? cc : fmt(cc);
   if (d('d1a_vpp_diag')) d('d1a_vpp_diag').textContent = fmt(vpp * 1000);
   if (d('d1a_vrms_diag'))d('d1a_vrms_diag').textContent= fmt(vrms * 1000);
   drawChart1A();
@@ -1807,7 +1807,7 @@ function calc_m1b() {
   saveLog('結合器1B', `${type}=${vval_mv}mV, 結合度=${cc}dB`, `P=${fmt(pfwd,2)}W`);
   // SVG diagram update
   const d = id => document.getElementById(id);
-  if (d('d1b_cc_diag'))    d('d1b_cc_diag').textContent    = fmt(cc, 1);
+  if (d('d1b_cc_diag'))    d('d1b_cc_diag').textContent    = cc % 1 === 0 ? cc : fmt(cc);
   if (d('d1b_power_diag')) d('d1b_power_diag').textContent = fmt(pfwd, 2);
   if (d('d1b_type_diag'))  d('d1b_type_diag').textContent  = type === 'vrms' ? 'Vrms' : 'Vpp';
   if (d('d1b_vval_diag'))  d('d1b_vval_diag').textContent  = fmt(vval_mv);
