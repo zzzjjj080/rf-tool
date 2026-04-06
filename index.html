@@ -589,8 +589,25 @@
 
       <!-- 右: スミスチャート -->
       <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
-        <!-- アニメーション制御（最上部） -->
-        <div style="width:360px;padding:8px 10px;background:#f7fafc;border:1px solid var(--border);border-radius:6px;font-size:11px">
+        <div style="font-size:11px;font-weight:600;color:var(--muted)">クリックで Z を逆算</div>
+        <canvas id="smith3_chart" width="360" height="360" style="border:1px solid var(--border);border-radius:6px;background:#fff;cursor:crosshair"></canvas>
+        <!-- オーバーレイ切替チェックボックス（キャンバス直下） -->
+        <div style="font-size:11px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:2px">
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-weight:normal;text-transform:none">
+            <input type="checkbox" id="sc3_z" checked onchange="calc_m3s()">
+            <span class="notx">Z</span>（インピーダンス）
+          </label>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-weight:normal;text-transform:none">
+            <input type="checkbox" id="sc3_y" onchange="calc_m3s()">
+            <span class="notx">Y</span>（アドミタンス）
+          </label>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-weight:normal;text-transform:none">
+            <input type="checkbox" id="sc3_vswr" onchange="calc_m3s()">
+            VSWR サークル
+          </label>
+        </div>
+        <!-- アニメーション制御 -->
+        <div style="width:360px;padding:8px 10px;background:#f7fafc;border:1px solid var(--border);border-radius:6px;font-size:11px;margin-top:4px">
           <div style="font-weight:600;color:var(--muted);margin-bottom:6px">アニメーションモード</div>
           <div style="display:flex;flex-direction:column;gap:5px">
             <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-weight:normal;text-transform:none">
@@ -633,23 +650,6 @@
             <input type="range" id="m3s_speed" min="1" max="10" value="9" style="flex:1;accent-color:var(--accent)" oninput="document.getElementById('m3s_speed_lbl').textContent=this.value">
             <span id="m3s_speed_lbl" style="color:var(--muted);min-width:12px">9</span>
           </div>
-        </div>
-        <div style="font-size:11px;font-weight:600;color:var(--muted)">クリックで Z を逆算</div>
-        <canvas id="smith3_chart" width="360" height="360" style="border:1px solid var(--border);border-radius:6px;background:#fff;cursor:crosshair"></canvas>
-        <!-- グリッド表示チェックボックス（キャンバス下） -->
-        <div style="font-size:11px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:2px">
-          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-weight:normal;text-transform:none">
-            <input type="checkbox" id="sc3_z" checked onchange="calc_m3s()">
-            <span class="notx">Z</span>（インピーダンス）
-          </label>
-          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-weight:normal;text-transform:none">
-            <input type="checkbox" id="sc3_y" onchange="calc_m3s()">
-            <span class="notx">Y</span>（アドミタンス）
-          </label>
-          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-weight:normal;text-transform:none">
-            <input type="checkbox" id="sc3_vswr" onchange="calc_m3s()">
-            VSWR サークル
-          </label>
         </div>
       </div>
     </div>
