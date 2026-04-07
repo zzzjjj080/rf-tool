@@ -441,35 +441,35 @@ h1 {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
+                  <tr id="sweep-row-0" style="transition:background 0.15s;">
                     <td style="font-family:monospace;font-weight:700;color:var(--green);">10 MHz</td>
                     <td style="text-align:center;font-family:monospace;font-size:12px;">50+j31 Ω</td>
                     <td style="text-align:center;font-family:monospace;color:var(--green);font-weight:700;">0.300</td>
                     <td style="text-align:center;font-family:monospace;">73°</td>
                     <td style="text-align:center;font-family:monospace;color:var(--green);">−10.5 dB</td>
                   </tr>
-                  <tr>
+                  <tr id="sweep-row-1" style="transition:background 0.15s;">
                     <td style="font-family:monospace;font-weight:700;color:var(--green);">20 MHz</td>
                     <td style="text-align:center;font-family:monospace;font-size:12px;">50+j63 Ω</td>
                     <td style="text-align:center;font-family:monospace;color:var(--green);font-weight:700;">0.532</td>
                     <td style="text-align:center;font-family:monospace;">58°</td>
                     <td style="text-align:center;font-family:monospace;color:var(--green);">−5.5 dB</td>
                   </tr>
-                  <tr>
+                  <tr id="sweep-row-2" style="transition:background 0.15s;">
                     <td style="font-family:monospace;font-weight:700;color:var(--gold);">30 MHz</td>
                     <td style="text-align:center;font-family:monospace;font-size:12px;">50+j94 Ω</td>
                     <td style="text-align:center;font-family:monospace;color:var(--gold);font-weight:700;">0.686</td>
                     <td style="text-align:center;font-family:monospace;">47°</td>
                     <td style="text-align:center;font-family:monospace;color:var(--gold);">−3.3 dB</td>
                   </tr>
-                  <tr>
+                  <tr id="sweep-row-3" style="transition:background 0.15s;">
                     <td style="font-family:monospace;font-weight:700;color:var(--accent2);">40 MHz</td>
                     <td style="text-align:center;font-family:monospace;font-size:12px;">50+j126 Ω</td>
                     <td style="text-align:center;font-family:monospace;color:var(--accent2);font-weight:700;">0.783</td>
                     <td style="text-align:center;font-family:monospace;">38°</td>
                     <td style="text-align:center;font-family:monospace;color:var(--accent2);">−2.1 dB</td>
                   </tr>
-                  <tr>
+                  <tr id="sweep-row-4" style="transition:background 0.15s;">
                     <td style="font-family:monospace;font-weight:700;color:var(--red);">50 MHz</td>
                     <td style="text-align:center;font-family:monospace;font-size:12px;">50+j157 Ω</td>
                     <td style="text-align:center;font-family:monospace;color:var(--red);font-weight:700;">0.844</td>
@@ -571,16 +571,43 @@ h1 {
 
     <!-- Intro banner -->
     <div class="step-intro">
-      <div class="step-intro-title">🔰 ABCD行列（カスケード行列）とは？</div>
+      <div class="step-intro-title">ABCD行列（カスケード行列）とは？</div>
       <div class="step-intro-body">
         <p>
           2ポート回路（入力端子と出力端子を持つ回路）の特性を表す方法の一つが <strong>ABCD行列</strong>（または伝達行列）です。
           入力側の電圧・電流と出力側の電圧・電流を次の式で結びつけます：
         </p>
-        <p style="text-align:center;font-family:'Space Mono',monospace;font-size:15px;margin:12px 0;">
-          [V₁]&nbsp;=&nbsp;[A &nbsp;B]&nbsp;×&nbsp;[&nbsp;V₂&nbsp;]<br>
-          [I₁]&nbsp;&nbsp;&nbsp;[C &nbsp;D]&nbsp;&nbsp;&nbsp;[−I₂]
-        </p>
+        <!-- Proper matrix equation using mat-bracket CSS -->
+        <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin:18px 0;flex-wrap:wrap;">
+          <div class="matrix-wrap" style="margin:0;">
+            <span class="mat-bracket">[</span>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:0;padding:2px 0;">
+              <span style="font-size:15px;padding:4px 10px;font-family:'Space Mono',monospace;">V₁</span>
+              <span style="font-size:15px;padding:4px 10px;font-family:'Space Mono',monospace;">I₁</span>
+            </div>
+            <span class="mat-bracket">]</span>
+          </div>
+          <span style="font-size:18px;font-family:'Space Mono',monospace;padding:0 2px;">=</span>
+          <div class="matrix-wrap" style="margin:0;">
+            <span class="mat-bracket">[</span>
+            <div style="display:grid;grid-template-columns:auto auto;gap:0 4px;padding:2px 0;text-align:center;">
+              <span style="font-size:16px;font-weight:700;padding:4px 14px;color:var(--accent);">A</span>
+              <span style="font-size:16px;font-weight:700;padding:4px 14px;color:var(--gold);">B</span>
+              <span style="font-size:16px;font-weight:700;padding:4px 14px;color:var(--green);">C</span>
+              <span style="font-size:16px;font-weight:700;padding:4px 14px;color:var(--accent2);">D</span>
+            </div>
+            <span class="mat-bracket">]</span>
+          </div>
+          <span style="font-size:18px;font-family:'Space Mono',monospace;padding:0 2px;">×</span>
+          <div class="matrix-wrap" style="margin:0;">
+            <span class="mat-bracket">[</span>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0;padding:2px 0;">
+              <span style="font-size:15px;padding:4px 10px;font-family:'Space Mono',monospace;">  V₂</span>
+              <span style="font-size:15px;padding:4px 10px;font-family:'Space Mono',monospace;">−I₂</span>
+            </div>
+            <span class="mat-bracket">]</span>
+          </div>
+        </div>
         <p>
           S パラメータと違い、ABCD 行列は <strong>回路を直列につないだときに行列の積で合成できる</strong> という大きな利点があります。
           ケーブル・フィルタ・増幅器などを組み合わせた系全体の特性を、ブロックごとに計算して掛け合わせるだけで求められます。
@@ -1753,6 +1780,23 @@ function sweepS11(fMHz) {
 }
 let sweepHoverIdx = null;
 
+function highlightSweepRow(idx) {
+  const dark = isDark();
+  const hlBg  = dark ? 'rgba(251,191,36,0.13)' : 'rgba(217,119,6,0.10)';
+  const hlOut = dark ? '#fbbf2466' : '#d9770666';
+  for (let i = 0; i < SWEEP_FREQS.length; i++) {
+    const row = document.getElementById('sweep-row-' + i);
+    if (!row) continue;
+    if (i === idx) {
+      row.style.background = hlBg;
+      row.style.boxShadow = 'inset 3px 0 0 ' + (dark ? '#fbbf24' : '#d97706');
+    } else {
+      row.style.background = '';
+      row.style.boxShadow = '';
+    }
+  }
+}
+
 function drawSweepSmith() {
   const canvas = document.getElementById('sweep-smith-canvas');
   if (!canvas) return;
@@ -2055,7 +2099,7 @@ function initSweepHover() {
   const smithCv  = document.getElementById('sweep-smith-canvas');
   const sparamCv = document.getElementById('sweep-sparam-canvas');
 
-  function redrawBoth() { drawSweepSmith(); drawSweepSParam(); }
+  function redrawBoth() { drawSweepSmith(); drawSweepSParam(); highlightSweepRow(sweepHoverIdx); }
 
   // Nearest-dot finder for Smith chart (by canvas distance)
   function findNearestSmith(clientX, clientY) {
