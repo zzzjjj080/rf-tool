@@ -428,7 +428,7 @@ h1 {
             <!-- Table -->
             <div style="flex:1;min-width:280px;">
               <div style="font-size:12px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">
-                VNA 出力データ例：50 Ω＋100 nH 誘導性負荷
+                VNA 出力データ例：50 Ω＋500 nH 誘導性負荷
               </div>
               <table class="de-table" style="font-size:13px;">
                 <thead>
@@ -443,50 +443,52 @@ h1 {
                 <tbody>
                   <tr>
                     <td style="font-family:monospace;font-weight:700;color:var(--green);">10 MHz</td>
-                    <td style="text-align:center;font-family:monospace;font-size:12px;">50+j6 Ω</td>
-                    <td style="text-align:center;font-family:monospace;color:var(--green);font-weight:700;">0.063</td>
-                    <td style="text-align:center;font-family:monospace;">86°</td>
-                    <td style="text-align:center;font-family:monospace;color:var(--green);">−24 dB</td>
+                    <td style="text-align:center;font-family:monospace;font-size:12px;">50+j31 Ω</td>
+                    <td style="text-align:center;font-family:monospace;color:var(--green);font-weight:700;">0.300</td>
+                    <td style="text-align:center;font-family:monospace;">73°</td>
+                    <td style="text-align:center;font-family:monospace;color:var(--green);">−10.5 dB</td>
                   </tr>
                   <tr>
                     <td style="font-family:monospace;font-weight:700;color:var(--green);">20 MHz</td>
-                    <td style="text-align:center;font-family:monospace;font-size:12px;">50+j13 Ω</td>
-                    <td style="text-align:center;font-family:monospace;color:var(--green);font-weight:700;">0.124</td>
-                    <td style="text-align:center;font-family:monospace;">83°</td>
-                    <td style="text-align:center;font-family:monospace;color:var(--green);">−18 dB</td>
+                    <td style="text-align:center;font-family:monospace;font-size:12px;">50+j63 Ω</td>
+                    <td style="text-align:center;font-family:monospace;color:var(--green);font-weight:700;">0.532</td>
+                    <td style="text-align:center;font-family:monospace;">58°</td>
+                    <td style="text-align:center;font-family:monospace;color:var(--green);">−5.5 dB</td>
                   </tr>
                   <tr>
                     <td style="font-family:monospace;font-weight:700;color:var(--gold);">30 MHz</td>
-                    <td style="text-align:center;font-family:monospace;font-size:12px;">50+j19 Ω</td>
-                    <td style="text-align:center;font-family:monospace;color:var(--gold);font-weight:700;">0.185</td>
-                    <td style="text-align:center;font-family:monospace;">79°</td>
-                    <td style="text-align:center;font-family:monospace;color:var(--gold);">−15 dB</td>
+                    <td style="text-align:center;font-family:monospace;font-size:12px;">50+j94 Ω</td>
+                    <td style="text-align:center;font-family:monospace;color:var(--gold);font-weight:700;">0.686</td>
+                    <td style="text-align:center;font-family:monospace;">47°</td>
+                    <td style="text-align:center;font-family:monospace;color:var(--gold);">−3.3 dB</td>
                   </tr>
                   <tr>
                     <td style="font-family:monospace;font-weight:700;color:var(--accent2);">40 MHz</td>
-                    <td style="text-align:center;font-family:monospace;font-size:12px;">50+j25 Ω</td>
-                    <td style="text-align:center;font-family:monospace;color:var(--accent2);font-weight:700;">0.244</td>
-                    <td style="text-align:center;font-family:monospace;">76°</td>
-                    <td style="text-align:center;font-family:monospace;color:var(--accent2);">−12 dB</td>
+                    <td style="text-align:center;font-family:monospace;font-size:12px;">50+j126 Ω</td>
+                    <td style="text-align:center;font-family:monospace;color:var(--accent2);font-weight:700;">0.783</td>
+                    <td style="text-align:center;font-family:monospace;">38°</td>
+                    <td style="text-align:center;font-family:monospace;color:var(--accent2);">−2.1 dB</td>
                   </tr>
                   <tr>
                     <td style="font-family:monospace;font-weight:700;color:var(--red);">50 MHz</td>
-                    <td style="text-align:center;font-family:monospace;font-size:12px;">50+j31 Ω</td>
-                    <td style="text-align:center;font-family:monospace;color:var(--red);font-weight:700;">0.300</td>
-                    <td style="text-align:center;font-family:monospace;">73°</td>
-                    <td style="text-align:center;font-family:monospace;color:var(--red);">−10 dB</td>
+                    <td style="text-align:center;font-family:monospace;font-size:12px;">50+j157 Ω</td>
+                    <td style="text-align:center;font-family:monospace;color:var(--red);font-weight:700;">0.844</td>
+                    <td style="text-align:center;font-family:monospace;">32°</td>
+                    <td style="text-align:center;font-family:monospace;color:var(--red);">−1.5 dB</td>
                   </tr>
                 </tbody>
               </table>
               <div style="margin-top:8px;font-size:12px;color:var(--text-dim);line-height:1.7;">
                 周波数↑ → jωL↑ → |S₁₁|↑（反射増加）<br>
-                右のスミスチャートがこの5点の軌跡です →
+                右のチャートがこの5点 — スミスチャートと Sパラメータ表示の2通り
               </div>
             </div>
-            <!-- Sweep Smith chart -->
+            <!-- Sweep charts: Smith + S-param stacked -->
             <div style="flex:0 0 auto;text-align:center;">
               <canvas id="sweep-smith-canvas" width="520" height="520"
                 style="width:260px;height:260px;display:block;border-radius:8px;cursor:default;"></canvas>
+              <canvas id="sweep-sparam-canvas" width="520" height="360"
+                style="width:260px;height:180px;display:block;border-radius:8px;margin-top:6px;cursor:default;"></canvas>
               <div class="hint" style="margin-top:6px;max-width:260px;text-align:center;">
                 🖱 点にマウスを乗せると値が表示されます
               </div>
@@ -1744,7 +1746,7 @@ function drawSmithS0(canvasId, ptMain) {
 // ── Sweep Smith chart (おまけ section) ───────────────────────────
 const SWEEP_FREQS = [10, 20, 30, 40, 50]; // MHz
 function sweepS11(fMHz) {
-  const X = 2 * Math.PI * fMHz * 1e6 * 100e-9; // ωL for 100nH
+  const X = 2 * Math.PI * fMHz * 1e6 * 500e-9; // ωL for 500nH
   // ZL = 50+jX, S11 = jX/(100+jX) = X²/(10000+X²) + j100X/(10000+X²)
   const d = 10000 + X * X;
   return { re: X * X / d, im: 100 * X / d };
@@ -1857,7 +1859,7 @@ function drawSweepSmith() {
   ctx.fillText('S₁₁ (Γ)', 5, 14);
   ctx.fillStyle = dark ? '#64748b' : '#94a3b8';
   ctx.font = `${Math.round(CSS * 0.036)}px Noto Sans JP, sans-serif`;
-  ctx.fillText('50Ω+100nH', 5, 27);
+  ctx.fillText('50Ω+500nH', 5, 27);
 
   // Hover tooltip
   if (sweepHoverIdx !== null) {
@@ -1867,7 +1869,7 @@ function drawSweepSmith() {
     const mag = Math.sqrt(s.re * s.re + s.im * s.im);
     const ph  = Math.atan2(s.im, s.re) * 180 / Math.PI;
     const db  = 20 * Math.log10(Math.max(mag, 1e-9));
-    const X   = 2 * Math.PI * f * 1e6 * 100e-9;
+    const X   = 2 * Math.PI * f * 1e6 * 500e-9;
     const lines = [
       'f = ' + f + ' MHz',
       '|S₁₁| = ' + mag.toFixed(3),
@@ -1896,11 +1898,169 @@ function drawSweepSmith() {
   }
 }
 
-function initSweepHover() {
-  const canvas = document.getElementById('sweep-smith-canvas');
+function drawSweepSParam() {
+  const canvas = document.getElementById('sweep-sparam-canvas');
   if (!canvas) return;
-  function findNearest(clientX, clientY) {
-    const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  const CW = 260, CH = 180;
+  canvas.width  = CW * dpr; canvas.height = CH * dpr;
+  canvas.style.width = CW + 'px'; canvas.style.height = CH + 'px';
+  const ctx = canvas.getContext('2d'); ctx.scale(dpr, dpr);
+
+  const dark = isDark();
+  const bg     = dark ? '#1a2235' : '#f8fafc';
+  const border = dark ? '#334155' : '#cbd5e1';
+  const grid   = dark ? '#1e2d40' : '#e8f0f8';
+  const dim    = dark ? '#64748b' : '#94a3b8';
+  const magCol = dark ? '#00d4ff' : '#0284c7';
+  const phCol  = dark ? '#fbbf24' : '#d97706';
+
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, CW, CH);
+
+  // Layout
+  const mx = 34, rx = CW - 8;
+  const pw = rx - mx;
+  const FMIN = 10, FMAX = 50;
+  const titleH = 17, xLabelH = 18, divH = 5;
+  const totalPH = CH - titleH - xLabelH;
+  const magH = Math.round(totalPH * 0.58);
+  const phH  = totalPH - magH - divH;
+  const magY1 = titleH, magY2 = magY1 + magH;
+  const phY1  = magY2 + divH, phY2 = phY1 + phH;
+
+  const fToX  = f  => mx + (f - FMIN) / (FMAX - FMIN) * pw;
+  const dBmin = -13, dBmax = 0;
+  const dBToY = db => magY2 - (db - dBmin) / (dBmax - dBmin) * magH;
+  const phMin = 20, phMax = 90;
+  const phToY = ph => phY2 - (ph - phMin) / (phMax - phMin) * phH;
+
+  // --- Magnitude panel ---
+  // Grid
+  [-12, -9, -6, -3, 0].forEach(db => {
+    const y = dBToY(db);
+    if (y < magY1 - 1 || y > magY2 + 1) return;
+    ctx.strokeStyle = grid; ctx.lineWidth = db === 0 ? 0.7 : 0.5;
+    ctx.beginPath(); ctx.moveTo(mx, y); ctx.lineTo(rx, y); ctx.stroke();
+    ctx.fillStyle = dim; ctx.font = '9px Space Mono, monospace';
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    ctx.fillText(db.toString(), mx - 3, y);
+  });
+  // dB axis label
+  ctx.save(); ctx.translate(9, magY1 + magH / 2); ctx.rotate(-Math.PI / 2);
+  ctx.fillStyle = dim; ctx.font = '9px Space Mono, monospace';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('dB', 0, 0); ctx.restore();
+
+  // S11 magnitude continuous trace
+  ctx.beginPath(); ctx.strokeStyle = magCol; ctx.lineWidth = 2;
+  for (let i = 0; i <= 200; i++) {
+    const f = FMIN + (FMAX - FMIN) * i / 200;
+    const s = sweepS11(f);
+    const mag = Math.sqrt(s.re * s.re + s.im * s.im);
+    const db  = 20 * Math.log10(Math.max(mag, 1e-9));
+    const x   = fToX(f);
+    const y   = Math.max(magY1, Math.min(magY2, dBToY(db)));
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  // Panel border
+  ctx.strokeStyle = border; ctx.lineWidth = 1;
+  ctx.strokeRect(mx, magY1, pw, magH);
+
+  // --- Phase panel ---
+  // Grid
+  [30, 60, 90].forEach(ph => {
+    const y = phToY(ph);
+    if (y < phY1 - 1 || y > phY2 + 1) return;
+    ctx.strokeStyle = grid; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(mx, y); ctx.lineTo(rx, y); ctx.stroke();
+    ctx.fillStyle = dim; ctx.font = '9px Space Mono, monospace';
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    ctx.fillText(ph + '°', mx - 3, y);
+  });
+  // Phase axis label
+  ctx.save(); ctx.translate(9, phY1 + phH / 2); ctx.rotate(-Math.PI / 2);
+  ctx.fillStyle = dim; ctx.font = '9px Space Mono, monospace';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('∠°', 0, 0); ctx.restore();
+
+  // Phase continuous trace
+  ctx.beginPath(); ctx.strokeStyle = phCol; ctx.lineWidth = 2;
+  for (let i = 0; i <= 200; i++) {
+    const f = FMIN + (FMAX - FMIN) * i / 200;
+    const s = sweepS11(f);
+    const ph = Math.atan2(s.im, s.re) * 180 / Math.PI;
+    const x  = fToX(f);
+    const y  = Math.max(phY1, Math.min(phY2, phToY(ph)));
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  // Panel border
+  ctx.strokeStyle = border; ctx.lineWidth = 1;
+  ctx.strokeRect(mx, phY1, pw, phH);
+
+  // X-axis labels (MHz)
+  ctx.fillStyle = dim; ctx.font = '9px Space Mono, monospace';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  SWEEP_FREQS.forEach(f => ctx.fillText(f + '', fToX(f), phY2 + 3));
+  ctx.fillText('[MHz]', mx + pw / 2, CH - 9);
+
+  // Title
+  ctx.font = 'bold 10px Space Mono, monospace';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  ctx.fillStyle = magCol; ctx.fillText('|S₁₁|', mx, 3);
+  ctx.fillStyle = phCol;  ctx.fillText('∠S₁₁', mx + 44, 3);
+
+  // --- 5 frequency dots ---
+  const dotColors = [
+    dark ? '#22c55e' : '#16a34a',
+    dark ? '#22c55e' : '#16a34a',
+    dark ? '#fbbf24' : '#d97706',
+    dark ? '#ff6b35' : '#ea580c',
+    dark ? '#f87171' : '#dc2626',
+  ];
+  SWEEP_FREQS.forEach((f, i) => {
+    const s   = sweepS11(f);
+    const mag = Math.sqrt(s.re * s.re + s.im * s.im);
+    const db  = 20 * Math.log10(Math.max(mag, 1e-9));
+    const ph  = Math.atan2(s.im, s.re) * 180 / Math.PI;
+    const hover = sweepHoverIdx === i;
+    const col = hover ? (dark ? '#fbbf24' : '#d97706') : dotColors[i];
+    const dR  = hover ? 6 : 4;
+    const x   = fToX(f);
+
+    // Vertical highlight line
+    if (hover) {
+      ctx.strokeStyle = (dark ? '#fbbf24' : '#d97706') + '55';
+      ctx.setLineDash([3, 3]); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x, magY1); ctx.lineTo(x, phY2); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    // Magnitude dot
+    const ym = Math.max(magY1 + dR, Math.min(magY2 - dR, dBToY(db)));
+    ctx.beginPath(); ctx.arc(x, ym, dR, 0, Math.PI * 2);
+    ctx.fillStyle = col; ctx.fill();
+    ctx.strokeStyle = dark ? '#1a2235' : '#fff';
+    ctx.lineWidth = hover ? 2 : 1.5; ctx.stroke();
+    // Phase dot
+    const yp = Math.max(phY1 + dR, Math.min(phY2 - dR, phToY(ph)));
+    ctx.beginPath(); ctx.arc(x, yp, dR, 0, Math.PI * 2);
+    ctx.fillStyle = col; ctx.fill();
+    ctx.strokeStyle = dark ? '#1a2235' : '#fff';
+    ctx.lineWidth = hover ? 2 : 1.5; ctx.stroke();
+  });
+}
+
+function initSweepHover() {
+  const smithCv  = document.getElementById('sweep-smith-canvas');
+  const sparamCv = document.getElementById('sweep-sparam-canvas');
+
+  function redrawBoth() { drawSweepSmith(); drawSweepSParam(); }
+
+  // Nearest-dot finder for Smith chart (by canvas distance)
+  function findNearestSmith(clientX, clientY) {
+    if (!smithCv) return null;
+    const rect = smithCv.getBoundingClientRect();
     const CSS = 260, cx = CSS / 2, cy = CSS / 2, r = CSS * 0.41;
     const sx = CSS / rect.width;
     const mx = (clientX - rect.left) * sx;
@@ -1914,14 +2074,44 @@ function initSweepHover() {
     });
     return bestIdx;
   }
-  canvas.addEventListener('mousemove', e => { sweepHoverIdx = findNearest(e.clientX, e.clientY); drawSweepSmith(); });
-  canvas.addEventListener('mouseleave', () => { sweepHoverIdx = null; drawSweepSmith(); });
-  canvas.addEventListener('touchmove', e => {
-    e.preventDefault();
-    sweepHoverIdx = findNearest(e.touches[0].clientX, e.touches[0].clientY);
-    drawSweepSmith();
-  }, { passive: false });
-  canvas.addEventListener('touchend', () => { sweepHoverIdx = null; drawSweepSmith(); });
+
+  // Nearest-dot finder for S-param chart (by x-axis proximity)
+  function findNearestSParam(clientX) {
+    if (!sparamCv) return null;
+    const rect = sparamCv.getBoundingClientRect();
+    const CW = 260, mx = 34, rx = CW - 8, pw = rx - mx;
+    const FMIN = 10, FMAX = 50;
+    const sx = CW / rect.width;
+    const px = (clientX - rect.left) * sx;
+    const fToX = f => mx + (f - FMIN) / (FMAX - FMIN) * pw;
+    let bestIdx = null, bestD = 18;
+    SWEEP_FREQS.forEach((f, i) => {
+      const d = Math.abs(px - fToX(f));
+      if (d < bestD) { bestD = d; bestIdx = i; }
+    });
+    return bestIdx;
+  }
+
+  if (smithCv) {
+    smithCv.addEventListener('mousemove', e => { sweepHoverIdx = findNearestSmith(e.clientX, e.clientY); redrawBoth(); });
+    smithCv.addEventListener('mouseleave', () => { sweepHoverIdx = null; redrawBoth(); });
+    smithCv.addEventListener('touchmove', e => {
+      e.preventDefault();
+      sweepHoverIdx = findNearestSmith(e.touches[0].clientX, e.touches[0].clientY);
+      redrawBoth();
+    }, { passive: false });
+    smithCv.addEventListener('touchend', () => { sweepHoverIdx = null; redrawBoth(); });
+  }
+  if (sparamCv) {
+    sparamCv.addEventListener('mousemove', e => { sweepHoverIdx = findNearestSParam(e.clientX); redrawBoth(); });
+    sparamCv.addEventListener('mouseleave', () => { sweepHoverIdx = null; redrawBoth(); });
+    sparamCv.addEventListener('touchmove', e => {
+      e.preventDefault();
+      sweepHoverIdx = findNearestSParam(e.touches[0].clientX);
+      redrawBoth();
+    }, { passive: false });
+    sparamCv.addEventListener('touchend', () => { sweepHoverIdx = null; redrawBoth(); });
+  }
 }
 
 function drawS0Diagrams() {
@@ -2284,7 +2474,7 @@ function drawSmith(ptBefore, ptAfter) {
 function showStep(n) {
   document.querySelectorAll('.step-panel').forEach((p, i) => p.classList.toggle('active', i + 1 === n));
   document.querySelectorAll('.step-btn').forEach((b, i) => b.classList.toggle('active', i + 1 === n));
-  if (n === 1) setTimeout(() => { updateS0(); drawSweepSmith(); }, 50);
+  if (n === 1) setTimeout(() => { updateS0(); drawSweepSmith(); drawSweepSParam(); }, 50);
   if (n === 3) setTimeout(drawFlowSVG, 50);
   if (n === 5) setTimeout(() => { updateS4(); drawConceptSVG(); }, 80);
 }
@@ -2303,6 +2493,7 @@ function toggleTheme() {
   drawFlowSVG();
   drawConceptSVG();
   drawSweepSmith();
+  drawSweepSParam();
   if (document.getElementById('step5').classList.contains('active')) updateS4();
 }
 
@@ -2314,6 +2505,7 @@ window.addEventListener('load', () => {
   initSweepHover();
   updateS0();
   drawSweepSmith();
+  drawSweepSParam();
   updateS1();
   updateS2();
   updateS3();
