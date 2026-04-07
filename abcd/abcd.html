@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ABCD行列 &amp; De-embedding 入門 — RF Tool</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+JP:wght@300;400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+JP:wght@300;400;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 /* ── Light mode ── */
 :root {
@@ -154,7 +154,7 @@ h1 {
 .mat-cell.c { color: var(--green);   background: color-mix(in srgb, var(--green)   8%, transparent); }
 .mat-cell.d { color: var(--accent2); background: color-mix(in srgb, var(--accent2) 8%, transparent); }
 /* mini matrix for cascade blocks */
-.mat-mini { font-family: 'Space Mono', monospace; font-size: 15px; line-height: 2.0; }
+.mat-mini { font-family: 'Roboto Mono', 'Courier New', monospace; font-size: 15px; line-height: 1.0; font-variant-numeric: tabular-nums; }
 .mat-mini .a { color: var(--accent); }
 .mat-mini .b { color: var(--gold); }
 .mat-mini .c { color: var(--green); }
@@ -295,19 +295,14 @@ h1 {
     <div class="step-intro">
       <div class="step-intro-title">📡 Sパラメータ（散乱行列）とは？</div>
       <div class="step-intro-body">
-        <p>
-          <strong>S パラメータ（Scattering Parameters）</strong>は、RF 回路・マイクロ波回路で最もよく使われる特性表現です。
-          「信号がどれだけ<strong>反射されるか（S₁₁）</strong>」「どれだけ<strong>通り抜けるか（S₂₁）</strong>」を
-          複素数（大きさ＋位相）で表します。
-        </p>
-        <p>
-          ネットワークアナライザー（VNA）が直接測定するのは S パラメータです。
-          インピーダンス Z やアドミタンス Y と違い、S パラメータは
-          <strong>基準インピーダンス Z₀（通常 50 Ω）に対する入射波・反射波・透過波の比</strong>として定義されます。
-        </p>
-        <p>
-          まず具体的な数値で S パラメータの「感覚」をつかんでから、ABCD 行列の話に進みましょう。
-        </p>
+        <ul>
+          <li>RF・マイクロ波回路で最もよく使われる特性表現 — VNA（ネットワークアナライザー）が直接測定する量</li>
+          <li><strong>S₁₁</strong>（反射係数）：ポート1から入れた信号が<strong>跳ね返ってくる割合</strong></li>
+          <li><strong>S₂₁</strong>（透過係数）：ポート1から入れた信号が<strong>ポート2へ抜ける割合</strong></li>
+          <li>大きさと位相をセットにした複素数で表す（例：0.686∠47°）</li>
+          <li>基準インピーダンス <strong>Z₀（通常 50 Ω）</strong>に対する入射波・反射波・透過波の比として定義</li>
+        </ul>
+        <p style="margin-top:10px;">まずは具体的な数値で S パラメータの感覚をつかんでから、ABCD 行列へ進みましょう。</p>
       </div>
     </div>
 
@@ -415,11 +410,11 @@ h1 {
         <!-- Frequency sweep note -->
         <div class="callout" style="margin-top:18px;border-left-color:var(--text-dim);">
           <div class="callout-title" style="color:var(--text-dim);">📝 おまけ：実際の測定は「周波数スイープ」</div>
-          <p style="margin-bottom:14px;">
-            VNA（ネットワークアナライザー）では周波数を少しずつ変えながら S パラメータを連続測定します。
-            すると周波数ごとに異なる S₁₁ の値が得られ、スミスチャート上に <strong>軌跡（トレース）</strong> として描かれます。
-            <strong>このデモは1行分（ある1周波数でのスナップショット）に相当</strong>します。
-          </p>
+          <ul style="margin-bottom:14px;">
+            <li>VNA は周波数をスイープしながら S パラメータを連続測定する</li>
+            <li>周波数ごとに S₁₁ の値が変わり、スミスチャート上に<strong>軌跡（トレース）</strong>として描かれる</li>
+            <li>上のデモは特定の 1 周波数での「スナップショット」に相当</li>
+          </ul>
           <!-- Table + Smith chart side by side -->
           <div style="display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap;">
             <!-- Table -->
@@ -543,14 +538,19 @@ h1 {
     <div class="card" style="border-color:var(--accent);border-width:2px;">
       <div class="card-title" style="color:var(--text);">🚀 次のステップへ：なぜ ABCD 行列が必要か？</div>
       <div class="warn-box">
-        <strong>S パラメータの限界：</strong>複数の 2ポート回路を直列につなぐとき、
-        S パラメータで合成しようとすると非常に複雑な式（シグナルフロウグラフ）が必要になります。
+        <strong>S パラメータの限界</strong>
+        <ul style="margin:6px 0 0;">
+          <li>複数の 2ポート回路を直列につなぐと、S パラメータでの合成には複雑な式（シグナルフロウグラフ）が必要</li>
+          <li>ブロックが増えるほど計算が爆発的に複雑になる</li>
+        </ul>
       </div>
       <div class="info-box" style="margin-top:10px;">
-        <strong>ABCD 行列の利点：</strong>直列接続のとき、
-        ABCD 行列は単純な <strong>行列の積 M_total = M₁ × M₂ × M₃ × …</strong> で合成できます。<br>
-        もちろん S パラメータと ABCD 行列は完全に相互変換できるので、
-        VNA で測定した S パラメータも ABCD に変換して使えます。
+        <strong>ABCD 行列の利点</strong>
+        <ul style="margin:6px 0 0;">
+          <li>直列接続 → 行列の積 <strong>M_total = M₁ × M₂ × M₃ × …</strong> で一発合成</li>
+          <li>S パラメータと完全に相互変換可能 → VNA の測定値をそのまま活用できる</li>
+          <li>Z₀ に依存しないため、異なる測定系のデータも統一的に扱える</li>
+        </ul>
       </div>
       <div style="text-align:center;margin-top:16px;">
         <button onclick="showStep(2)" style="background:var(--accent);color:#fff;border:none;padding:12px 32px;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;">
@@ -744,20 +744,13 @@ h1 {
     <div class="step-intro">
       <div class="step-intro-title">⛓ 直列接続とは？ — なぜ行列の積で合成できるのか</div>
       <div class="step-intro-body">
-        <p>
-          複数の 2ポート回路ブロックを <strong>直列につないだとき、合成 ABCD 行列は各ブロックの行列積</strong> で求まります。
-        </p>
-        <p style="text-align:center;font-family:'Space Mono',monospace;font-size:14px;margin:12px 0;">
-          M_total = M₁ × M₂ × M₃ × …
-        </p>
-        <p>
-          これは ABCD 行列の最大の利点です。S パラメータでは複数のブロックを合成するのに複雑な式が必要ですが、
-          ABCD 行列なら <strong>単純な行列の掛け算だけ</strong> で済みます。
-          たとえばケーブル → フィルタ → 増幅器の合成特性も、それぞれの ABCD 行列を掛け合わせるだけです。
-        </p>
-        <p>
-          下で 3 つのブロックの素子タイプ・値・周波数を変えて、合成結果がどう変わるかを確認してください。
-        </p>
+        <ul>
+          <li>複数の 2ポート回路を直列につなぐ → 合成 ABCD 行列は<strong>各ブロックの行列積</strong>で求まる</li>
+          <li style="font-family:'Space Mono',monospace;font-size:13px;list-style:none;padding-left:0;margin:4px 0 4px 1.5em;">M_total = M₁ × M₂ × M₃ × …</li>
+          <li>S パラメータでの合成は複雑（シグナルフロウグラフが必要）だが、ABCD なら<strong>行列の掛け算だけ</strong></li>
+          <li>ケーブル → フィルタ → 増幅器のような多段構成も、それぞれの ABCD を掛け合わせるだけ</li>
+        </ul>
+        <p style="margin-top:8px;font-size:13px;color:var(--text-dim);">3 つのブロックのタイプ・値・周波数を変えて、合成結果がどう変わるか確認してください。</p>
       </div>
     </div>
 
@@ -902,9 +895,12 @@ h1 {
       <div class="step-intro-title">🔲 ABCD 行列とは？ — S パラメータとの相互変換</div>
       <div class="step-intro-body">
         <!-- Brief ABCD intro -->
-        <p>
-          <strong>ABCD 行列</strong>（伝達行列）とは、2ポート回路の入出力ポートの電圧・電流を結びつける 2×2 行列です：
-        </p>
+        <ul style="margin-bottom:12px;">
+          <li><strong>ABCD 行列</strong>（伝達行列）— 2ポート回路の入出力ポートの電圧・電流を結びつける 2×2 行列</li>
+          <li>Z₀（基準インピーダンス）に依存しない → 測定系が違っても同じ値になる</li>
+          <li>S パラメータと完全に相互変換可能（変換には Z₀ が必要）</li>
+        </ul>
+        <p style="margin-bottom:6px;font-size:13px;color:var(--text-dim);">定義式：</p>
         <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin:14px 0;flex-wrap:wrap;">
           <div class="matrix-wrap" style="margin:0;">
             <span class="mat-bracket">[</span>
@@ -941,11 +937,6 @@ h1 {
           <span><strong style="color:var(--text);">V₂, I₂</strong> = ポート2（出力側）の電圧・電流</span>
           <span>−I₂：出力電流の符号規約（流れ出る向きを正とする）</span>
         </div>
-        <p>
-          VNA が測定する <strong>S パラメータ</strong>（S11, S21 など）と ABCD 行列は完全に相互変換できます。
-          変換には <strong>基準インピーダンス Z₀</strong>（通常 50 Ω）が必要です。
-          ABCD 行列は Z₀ に依存しないため、異なる測定系で測ったデータを統一的に扱えます。
-        </p>
 
         <!-- Concrete example: step1 data → ABCD -->
         <div class="callout" style="margin-top:18px;border-left-color:var(--accent);">
@@ -1136,26 +1127,14 @@ h1 {
     <div class="step-intro">
       <div class="step-intro-title">🔬 De-embedding（脱埋め込み）とは？</div>
       <div class="step-intro-body">
-        <p>
-          実際の測定では、被測定物（<strong>DUT</strong>: Device Under Test）の前後に
-          ケーブル・コネクタ・基板パターンなどの <strong>治具（fixture）</strong>が接続されています。
-          VNA が測定するのは「DUT + 治具」込みの特性です。
-        </p>
-        <p style="text-align:center;font-family:'Space Mono',monospace;font-size:13px;margin:12px 0;">
-          VNA ── [治具A（FA）] ── [DUT] ── [治具B（FB）] ── VNA<br>
-          測定値 M = FA × DUT × FB
-        </p>
-        <p>
-          治具の ABCD 行列が分かっていれば、<strong>逆行列演算</strong>で DUT の真の特性を取り出せます：
-        </p>
-        <p style="text-align:center;font-family:'Space Mono',monospace;font-size:14px;margin:12px 0;">
-          DUT = FA⁻¹ × M × FB⁻¹
-        </p>
-        <p>
-          これは <strong>VIセンサーによるインピーダンス補正</strong> の原理でもあります。
-          ケーブルや CT・電圧プローブの特性（インダクタンス・容量）を de-embedding することで、
-          プラズマ負荷の真のインピーダンスを計算できます。
-        </p>
+        <ul>
+          <li>実際の測定では <strong>DUT</strong>（被測定物）の前後にケーブル・コネクタ・基板などの<strong>治具（fixture）</strong>が入る</li>
+          <li>VNA が測定するのは「DUT + 治具込み」の特性 — DUT 単体の値ではない</li>
+          <li style="font-family:'Space Mono',monospace;font-size:12px;list-style:none;padding-left:0;margin:4px 0 4px 1.5em;">VNA ── [治具A（FA）] ── [DUT] ── [治具B（FB）] ── VNA<br>&nbsp;&nbsp;測定値 M = FA × DUT × FB</li>
+          <li>治具の ABCD 行列が既知なら、<strong>逆行列演算</strong>で DUT を取り出せる</li>
+          <li style="font-family:'Space Mono',monospace;font-size:13px;list-style:none;padding-left:0;margin:4px 0 4px 1.5em;">DUT = FA⁻¹ × M × FB⁻¹</li>
+          <li><strong>VI センサーのインピーダンス補正</strong>も同じ原理 — ケーブルや CT・電圧プローブの影響を除去して、プラズマ負荷の真のインピーダンスを計算する</li>
+        </ul>
       </div>
     </div>
 
@@ -1430,7 +1409,7 @@ function matrixMini(M) {
     if (reZ) return (c.im >= 0 ? 'j' : '−j') + fn(Math.abs(c.im));
     return fn(c.re) + (c.im >= 0 ? '+j' : '−j') + fn(Math.abs(c.im));
   };
-  return `<span class="a">${f(A)}</span> &nbsp; <span class="b">${f(B)}</span><br><span class="c">${f(Cm)}</span> &nbsp; <span class="d">${f(D)}</span>`;
+  return `<div style="display:inline-grid;grid-template-columns:auto auto;gap:6px 20px;text-align:right;"><span class="a">${f(A)}</span><span class="b">${f(B)}</span><span class="c">${f(Cm)}</span><span class="d">${f(D)}</span></div>`;
 }
 
 function chipHTML(label, val, sub, hi) {
