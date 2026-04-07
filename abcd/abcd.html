@@ -274,23 +274,217 @@ h1 {
   <!-- Step navigation -->
   <nav class="steps-nav">
     <button class="step-btn active" onclick="showStep(1)">
-      <span class="step-num">1</span>ABCD行列とは？
+      <span class="step-num">1</span>Sパラメータとは？
     </button>
     <button class="step-btn" onclick="showStep(2)">
-      <span class="step-num">2</span>カスケード接続
+      <span class="step-num">2</span>ABCD行列とは？
     </button>
     <button class="step-btn" onclick="showStep(3)">
-      <span class="step-num">3</span>S↔ABCD変換
+      <span class="step-num">3</span>カスケード接続
     </button>
     <button class="step-btn" onclick="showStep(4)">
-      <span class="step-num">4</span>De-embedding体験
+      <span class="step-num">4</span>S↔ABCD変換
+    </button>
+    <button class="step-btn" onclick="showStep(5)">
+      <span class="step-num">5</span>De-embedding体験
     </button>
   </nav>
 
   <!-- ═══════════════════════════════════════════════════════════
-       STEP 1 : ABCD行列とは？
+       STEP 1 : Sパラメータとは？
   ═══════════════════════════════════════════════════════════ -->
   <div class="step-panel active" id="step1">
+
+    <div class="step-intro">
+      <div class="step-intro-title">📡 Sパラメータ（散乱行列）とは？</div>
+      <div class="step-intro-body">
+        <p>
+          <strong>S パラメータ（Scattering Parameters）</strong>は、RF 回路・マイクロ波回路で最もよく使われる特性表現です。
+          「信号がどれだけ<strong>反射されるか（S₁₁）</strong>」「どれだけ<strong>通り抜けるか（S₂₁）</strong>」を
+          複素数（大きさ＋位相）で表します。
+        </p>
+        <p>
+          ネットワークアナライザー（VNA）が直接測定するのは S パラメータです。
+          インピーダンス Z やアドミタンス Y と違い、S パラメータは
+          <strong>基準インピーダンス Z₀（通常 50 Ω）に対する入射波・反射波・透過波の比</strong>として定義されます。
+        </p>
+        <p>
+          まず具体的な数値で S パラメータの「感覚」をつかんでから、ABCD 行列の話に進みましょう。
+        </p>
+      </div>
+    </div>
+
+    <!-- S11 / S21 explanation -->
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">🔁 S₁₁（反射係数 Γ）</div>
+        <div class="diagram-wrap">
+          <svg id="s0-s11-svg" viewBox="0 0 320 100" xmlns="http://www.w3.org/2000/svg"></svg>
+        </div>
+        <div class="callout">
+          <div class="callout-title">S₁₁ の定義</div>
+          <ul>
+            <li>ポート1から入れた波のうち、<strong>跳ね返ってくる割合</strong></li>
+            <li>|S₁₁| = 0 → 完全整合（反射ゼロ、最高の状態）</li>
+            <li>|S₁₁| = 1 → 全反射（開放・短絡など）</li>
+            <li>スミスチャートにプロットされるのはこの S₁₁（= Γ）</li>
+          </ul>
+          <div class="formula-box" style="margin-top:10px;">
+            <span class="f-label">1 ポート負荷の場合</span>
+            S₁₁ = Γ = (Z_L − Z₀) / (Z_L + Z₀)
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">➡ S₂₁（透過係数）</div>
+        <div class="diagram-wrap">
+          <svg id="s0-s21-svg" viewBox="0 0 320 100" xmlns="http://www.w3.org/2000/svg"></svg>
+        </div>
+        <div class="callout">
+          <div class="callout-title">S₂₁ の定義</div>
+          <ul>
+            <li>ポート1から入れた波のうち、<strong>ポート2へ抜けていく割合</strong></li>
+            <li>|S₂₁| = 1 → 完全透過（0 dB）</li>
+            <li>|S₂₁| = 0.707 → −3 dB（電力が半分になる点）</li>
+            <li>|S₂₁| ≈ 0 → 全反射または全損失</li>
+          </ul>
+          <div class="formula-box" style="margin-top:10px;">
+            <span class="f-label">受動回路の電力保存則</span>
+            |S₁₁|² + |S₂₁|² ≤ 1（等号：無損失回路）
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive demo -->
+    <div class="card">
+      <div class="card-title">🎮 インタラクティブ体験：S パラメータの値を動かしてみよう</div>
+      <div class="inner-tabs" id="s0-tabs">
+        <button class="inner-tab active" onclick="setS0Mode('load')">①1ポート：負荷 Z_L → S₁₁</button>
+        <button class="inner-tab" onclick="setS0Mode('element')">②2ポート：回路素子 → S₁₁ + S₂₁</button>
+      </div>
+
+      <!-- Load mode -->
+      <div id="s0-load-panel">
+        <div class="info-box">
+          負荷インピーダンス Z_L を変えると S₁₁（反射係数 Γ）がどう変わるか確認してください。
+          Z_L = Z₀ = 50 Ω のとき S₁₁ = 0（完全整合）になります。
+        </div>
+        <div class="two-col">
+          <div>
+            <div class="form-group">
+              <label>負荷抵抗 R_L（実部）</label>
+              <div class="slider-row">
+                <input type="range" id="s0-rl" min="0" max="500" value="50" oninput="updateS0()">
+                <span class="slider-val" id="s0-rl-val">50 Ω</span>
+              </div>
+              <div class="hint">R_L = 50 Ω = Z₀ で完全整合（S₁₁ = 0）。0 Ω = 短絡、∞ Ω = 開放で全反射になります。</div>
+            </div>
+            <div class="form-group">
+              <label>負荷リアクタンス X_L（虚部）</label>
+              <div class="slider-row">
+                <input type="range" id="s0-xl" min="-300" max="300" value="0" oninput="updateS0()">
+                <span class="slider-val" id="s0-xl-val">0 Ω</span>
+              </div>
+              <div class="hint">X_L ≠ 0 → 誘導性（正）または容量性（負）の負荷。スミスチャート上で上下に動きます。</div>
+            </div>
+            <div class="result-row" id="s0-load-results"></div>
+            <div class="callout" id="s0-load-callout" style="margin-top:14px;"></div>
+            <!-- Reference table -->
+            <div style="margin-top:18px;">
+              <div style="font-weight:700;color:var(--accent);font-size:13px;margin-bottom:8px;">📋 代表的な負荷の S₁₁</div>
+              <table class="de-table">
+                <thead>
+                  <tr>
+                    <th>負荷</th>
+                    <th style="text-align:center;">Z_L</th>
+                    <th style="text-align:center;">|S₁₁|</th>
+                    <th style="text-align:center;">∠S₁₁</th>
+                    <th style="text-align:center;">dB</th>
+                  </tr>
+                </thead>
+                <tbody id="s0-ref-body"></tbody>
+              </table>
+            </div>
+          </div>
+          <div>
+            <canvas id="smith-canvas-s0" width="760" height="760" style="width:100%;max-width:380px;height:auto;display:block;margin:0 auto;border-radius:8px;"></canvas>
+            <div class="hint" style="text-align:center;margin-top:8px;">スミスチャート上の S₁₁（Γ）の位置</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Element mode -->
+      <div id="s0-elem-panel" style="display:none;">
+        <div class="info-box">
+          2ポート回路素子を選択すると、S₁₁（反射）と S₂₁（透過）が同時に計算されます。
+          周波数を動かして L・C の周波数依存性を確認してください。
+        </div>
+        <div class="two-col">
+          <div>
+            <div class="form-group">
+              <label>素子タイプ</label>
+              <select id="s0-elem-type" onchange="updateS0()">
+                <option value="series-R">直列 R（損失抵抗）</option>
+                <option value="series-L" selected>直列 L（配線インダクタンス）</option>
+                <option value="series-C">直列 C（直流カット）</option>
+                <option value="shunt-R">並列 R（シャント抵抗）</option>
+                <option value="shunt-C">並列 C（寄生容量）</option>
+              </select>
+              <div class="hint">素子の種類によって S₁₁/S₂₁ の周波数依存性が変わります。</div>
+            </div>
+            <div class="form-group">
+              <label id="s0-elem-lbl-label">インダクタンス L</label>
+              <div class="slider-row">
+                <input type="range" id="s0-elem-val" min="1" max="500" value="100" oninput="updateS0()">
+                <span class="slider-val" id="s0-elem-val-lbl">100 nH</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>周波数 f</label>
+              <div class="slider-row">
+                <input type="range" id="s0-freq" min="1" max="1000" value="13" oninput="updateS0()">
+                <span class="slider-val" id="s0-freq-val">13 MHz</span>
+              </div>
+              <div class="hint">周波数を変えると L・C のリアクタンスが変化し、S₁₁/S₂₁ が動きます。</div>
+            </div>
+            <div class="result-row" id="s0-elem-results"></div>
+            <div class="callout" id="s0-elem-callout" style="margin-top:14px;"></div>
+          </div>
+          <div>
+            <canvas id="smith-canvas-s0e" width="760" height="760" style="width:100%;max-width:380px;height:auto;display:block;margin:0 auto;border-radius:8px;"></canvas>
+            <div class="hint" style="text-align:center;margin-top:8px;">スミスチャート上の S₁₁ の位置</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transition to ABCD -->
+    <div class="card" style="border-color:var(--accent);border-width:2px;">
+      <div class="card-title" style="color:var(--text);">🚀 次のステップへ：なぜ ABCD 行列が必要か？</div>
+      <div class="warn-box">
+        <strong>S パラメータの限界：</strong>複数の 2ポート回路を直列につなぐとき、
+        S パラメータで合成しようとすると非常に複雑な式（シグナルフロウグラフ）が必要になります。
+      </div>
+      <div class="info-box" style="margin-top:10px;">
+        <strong>ABCD 行列の利点：</strong>直列（カスケード）接続のとき、
+        ABCD 行列は単純な <strong>行列の積 M_total = M₁ × M₂ × M₃ × …</strong> で合成できます。<br>
+        もちろん S パラメータと ABCD 行列は完全に相互変換できるので、
+        VNA で測定した S パラメータも ABCD に変換して使えます。
+      </div>
+      <div style="text-align:center;margin-top:16px;">
+        <button onclick="showStep(2)" style="background:var(--accent);color:#fff;border:none;padding:12px 32px;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;">
+          ② ABCD 行列の説明へ →
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       STEP 2 : ABCD行列とは？
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="step-panel" id="step2">
 
     <!-- Intro banner -->
     <div class="step-intro">
@@ -436,9 +630,9 @@ h1 {
   </div>
 
   <!-- ═══════════════════════════════════════════════════════════
-       STEP 2 : カスケード接続
+       STEP 3 : カスケード接続
   ═══════════════════════════════════════════════════════════ -->
-  <div class="step-panel" id="step2">
+  <div class="step-panel" id="step3">
 
     <div class="step-intro">
       <div class="step-intro-title">⛓ カスケード接続とは？ — なぜ行列の積で合成できるのか</div>
@@ -593,9 +787,9 @@ h1 {
   </div>
 
   <!-- ═══════════════════════════════════════════════════════════
-       STEP 3 : S↔ABCD 変換
+       STEP 4 : S↔ABCD 変換
   ═══════════════════════════════════════════════════════════ -->
-  <div class="step-panel" id="step3">
+  <div class="step-panel" id="step4">
 
     <div class="step-intro">
       <div class="step-intro-title">🔄 S パラメータと ABCD 行列の相互変換</div>
@@ -720,9 +914,9 @@ h1 {
   </div>
 
   <!-- ═══════════════════════════════════════════════════════════
-       STEP 4 : De-embedding 体験
+       STEP 5 : De-embedding 体験
   ═══════════════════════════════════════════════════════════ -->
-  <div class="step-panel" id="step4">
+  <div class="step-panel" id="step5">
 
     <div class="step-intro">
       <div class="step-intro-title">🔬 De-embedding（脱埋め込み）とは？</div>
@@ -1191,7 +1385,228 @@ function drawConceptSVG() {
 }
 
 // ════════════════════════════════════════════════════════════════
-// STEP 1
+// STEP 1 — S-parameter intro
+// ════════════════════════════════════════════════════════════════
+let s0mode = 'load';
+
+function setS0Mode(mode) {
+  s0mode = mode;
+  document.querySelectorAll('#s0-tabs .inner-tab').forEach((b, i) => {
+    b.classList.toggle('active', (i === 0 && mode === 'load') || (i === 1 && mode === 'element'));
+  });
+  document.getElementById('s0-load-panel').style.display  = mode === 'load'    ? '' : 'none';
+  document.getElementById('s0-elem-panel').style.display  = mode === 'element' ? '' : 'none';
+  updateS0();
+}
+
+function updateS0() {
+  drawS0Diagrams();
+  if (s0mode === 'load') updateS0Load();
+  else                    updateS0Elem();
+}
+
+function updateS0Load() {
+  const rl = parseFloat(document.getElementById('s0-rl').value);
+  const xl = parseFloat(document.getElementById('s0-xl').value);
+  document.getElementById('s0-rl-val').textContent = rl + ' Ω';
+  document.getElementById('s0-xl-val').textContent = (xl >= 0 ? '+' : '') + xl + ' Ω';
+
+  const ZL = C0(rl, xl);
+  const Z0 = 50;
+  const S11 = cDiv(cSub(ZL, C0(Z0)), cAdd(ZL, C0(Z0)));
+  const mag = cAbs(S11);
+  const ph  = cArg(S11) * 180 / Math.PI;
+  const db  = 20 * Math.log10(Math.max(1e-9, mag));
+
+  document.getElementById('s0-load-results').innerHTML =
+    chipHTML('|S₁₁|', mag.toFixed(3), '反射係数', true) +
+    chipHTML('∠S₁₁', ph.toFixed(1) + '°', '位相', false) +
+    chipHTML('S₁₁ [dB]', db.toFixed(1) + ' dB', '反射損失', false);
+
+  let msg = '';
+  if (mag < 0.05)
+    msg = '<span style="color:var(--green)">✅ ほぼ完全整合！</span> Z_L ≈ Z₀ = 50 Ω のため入射波はほぼ全部通り抜けます。';
+  else if (mag > 0.95)
+    msg = '<span style="color:var(--red)">❌ ほぼ全反射！</span> Z_L が Z₀ と大きくかけ離れています（開放/短絡に近い状態）。';
+  else
+    msg = `|S₁₁| = ${mag.toFixed(3)} → 入射電力の <strong>${(mag*mag*100).toFixed(1)}%</strong> が反射、<strong>${((1-mag*mag)*100).toFixed(1)}%</strong> が通過（無損失の場合）。`;
+  document.getElementById('s0-load-callout').innerHTML = `<div class="callout-title">結果の解釈</div>${msg}`;
+
+  // Reference table
+  const refs = [
+    ['開放（∞Ω）',   C0(1e6, 0)],
+    ['短絡（0 Ω）',  C0(0, 0)],
+    ['整合（50 Ω）', C0(50, 0)],
+    ['100 Ω',        C0(100, 0)],
+    ['25 Ω',         C0(25, 0)],
+    ['50+j50 Ω',    C0(50, 50)],
+    ['50−j50 Ω',    C0(50, -50)],
+  ];
+  document.getElementById('s0-ref-body').innerHTML = refs.map(([name, Zl]) => {
+    const s = cDiv(cSub(Zl, C0(Z0)), cAdd(Zl, C0(Z0)));
+    const m = cAbs(s);
+    const p = cArg(s) * 180 / Math.PI;
+    const d = 20 * Math.log10(Math.max(1e-9, m));
+    const hi = Math.abs(Zl.re - rl) < 5 && Math.abs(Zl.im - xl) < 5;
+    const Zstr = Zl.re >= 1e5 ? '∞' : Zl.re + (Zl.im !== 0 ? (Zl.im > 0 ? '+j' : '−j') + Math.abs(Zl.im) : '');
+    return `<tr ${hi ? 'style="background:color-mix(in srgb, var(--accent) 12%, var(--panel));"' : ''}>
+      <td style="font-size:13px;">${name}</td>
+      <td style="text-align:center;font-family:monospace;font-size:12px;">${Zstr} Ω</td>
+      <td style="text-align:center;font-family:monospace;color:var(--accent);font-size:13px;font-weight:700;">${m.toFixed(3)}</td>
+      <td style="text-align:center;font-family:monospace;font-size:12px;color:var(--text-dim);">${p.toFixed(0)}°</td>
+      <td style="text-align:center;font-family:monospace;font-size:12px;color:var(--accent2);">${d.toFixed(1)}</td>
+    </tr>`;
+  }).join('');
+
+  drawSmithS0('smith-canvas-s0', S11);
+}
+
+function updateS0Elem() {
+  const etype = document.getElementById('s0-elem-type').value;
+  const eval_ = parseFloat(document.getElementById('s0-elem-val').value);
+  const fMHz  = parseFloat(document.getElementById('s0-freq').value);
+  const freq  = fMHz * 1e6;
+  document.getElementById('s0-freq-val').textContent = fMHz + ' MHz';
+
+  let unit = ' Ω';
+  if (etype === 'series-L') unit = ' nH';
+  else if (etype === 'series-C' || etype === 'shunt-C') unit = ' pF';
+  document.getElementById('s0-elem-val-lbl').textContent = eval_ + unit;
+  document.getElementById('s0-elem-lbl-label').textContent =
+    (etype === 'series-R' || etype === 'shunt-R') ? '抵抗値 R' :
+    etype === 'series-L' ? 'インダクタンス L' : 'キャパシタンス C';
+
+  const M = blockToAbcd(etype, eval_, freq);
+  const [[S11, S12], [S21, S22]] = abcdToS(M, 50);
+
+  document.getElementById('s0-elem-results').innerHTML =
+    chipHTML('|S₁₁|', cAbs(S11).toFixed(3), '反射係数', true) +
+    chipHTML('∠S₁₁', (cArg(S11)*180/Math.PI).toFixed(1) + '°', '', false) +
+    chipHTML('|S₂₁|', cAbs(S21).toFixed(3), '透過係数', false) +
+    chipHTML('S₂₁ [dB]', (20*Math.log10(Math.max(1e-9,cAbs(S21)))).toFixed(1)+' dB', '', false);
+
+  const pwr = cAbs(S11)*cAbs(S11) + cAbs(S21)*cAbs(S21);
+  document.getElementById('s0-elem-callout').innerHTML =
+    `<div class="callout-title">結果の解釈</div><ul>
+      <li>反射（S₁₁）：入射電力の <strong style="color:var(--accent2)">${(cAbs(S11)*cAbs(S11)*100).toFixed(1)}%</strong></li>
+      <li>透過（S₂₁）：入射電力の <strong style="color:var(--green)">${(cAbs(S21)*cAbs(S21)*100).toFixed(1)}%</strong></li>
+      <li>|S₁₁|² + |S₂₁|² = ${pwr.toFixed(3)} ${pwr > 1.01 ? '⚠️ エラー' : '✅ 電力保存則 OK'}</li>
+    </ul>`;
+
+  drawSmithS0('smith-canvas-s0e', S11);
+}
+
+function drawSmithS0(canvasId, ptMain) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const CSS = 380;
+  canvas.width  = CSS * dpr;
+  canvas.height = CSS * dpr;
+  canvas.style.width  = CSS + 'px';
+  canvas.style.height = CSS + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const dark = isDark();
+  const cx = CSS / 2, cy = CSS / 2, r = CSS * 0.43;
+
+  ctx.fillStyle = dark ? '#1a2235' : '#f8fafc';
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+
+  ctx.setLineDash([]);
+  ctx.strokeStyle = dark ? 'rgba(100,116,139,0.28)' : 'rgba(100,116,139,0.22)';
+  ctx.lineWidth = 0.9;
+  for (const rL of [0, 0.2, 0.5, 1, 2, 5]) {
+    const cc = rL / (1 + rL), rc = 1 / (1 + rL);
+    ctx.beginPath(); ctx.arc(cx + cc * r, cy, rc * r, 0, Math.PI * 2); ctx.stroke();
+  }
+  for (const xL of [0.2, 0.5, 1, 2, 5, -0.2, -0.5, -1, -2, -5]) {
+    ctx.beginPath(); ctx.arc(cx + r, cy - (1/xL)*r, Math.abs(1/xL)*r, 0, Math.PI * 2); ctx.stroke();
+  }
+  ctx.strokeStyle = dark ? 'rgba(148,163,184,0.4)' : 'rgba(71,85,105,0.35)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(cx - r, cy); ctx.lineTo(cx + r, cy); ctx.stroke();
+  ctx.strokeStyle = dark ? '#334155' : '#94a3b8';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+
+  ctx.fillStyle = dark ? '#475569' : '#94a3b8';
+  ctx.font = `${Math.round(CSS * 0.028)}px Space Mono, monospace`;
+  ctx.textAlign = 'center';
+  for (const [rL, lbl] of [[0,'0'],[0.5,'0.5'],[1,'1'],[2,'2'],[5,'5']]) {
+    const px = cx + (rL/(1+rL) - 1/(1+rL))*r + r/(1+rL);
+    ctx.fillText(lbl, px, cy - 6);
+  }
+  ctx.font = `${Math.round(CSS * 0.024)}px Space Mono, monospace`;
+  ctx.textAlign = 'right';
+  for (const [xL, lbl] of [[0.5,'j0.5'],[1,'j1'],[2,'j2'],[-0.5,'−j0.5'],[-1,'−j1'],[-2,'−j2']]) {
+    ctx.fillText(lbl, cx + r - 10, cy - (1/xL)*r + (xL > 0 ? -4 : 14));
+  }
+  ctx.fillStyle = dark ? '#475569' : '#94a3b8';
+  ctx.beginPath(); ctx.arc(cx, cy, 2.5, 0, Math.PI * 2); ctx.fill();
+
+  if (ptMain && cAbs(ptMain) <= 1.05) {
+    const x = cx + ptMain.re * r;
+    const y = cy - ptMain.im * r;
+    const col = dark ? '#00d4ff' : '#0284c7';
+    ctx.strokeStyle = col + '55';
+    ctx.setLineDash([4, 4]); ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(x, y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath(); ctx.arc(x, y, 10, 0, Math.PI * 2);
+    ctx.fillStyle = col; ctx.fill();
+    ctx.strokeStyle = dark ? '#1a2235' : '#fff'; ctx.lineWidth = 2.5; ctx.stroke();
+    ctx.fillStyle = col;
+    ctx.font = `bold ${Math.round(CSS * 0.04)}px Space Mono, monospace`;
+    ctx.textAlign = x > cx ? 'left' : 'right';
+    ctx.fillText('S₁₁', x + (x > cx ? 14 : -14), y - 10);
+  }
+}
+
+function drawS0Diagrams() {
+  const lc = tc('#60a5fa','#0284c7');
+  const ac2 = tc('#ff6b35','#ea580c');
+  const wc = tc('#94a3b8','#64748b');
+  const tx = tc('#e2e8f0','#1e293b');
+  const gn = tc('#22c55e','#16a34a');
+
+  // S11 diagram: 1-port, incident and reflected arrows
+  const s11svg = document.getElementById('s0-s11-svg');
+  if (s11svg) {
+    s11svg.innerHTML = `
+      <rect x="200" y="20" width="80" height="60" rx="8" fill="none" stroke="${ac2}" stroke-width="2.5"/>
+      <text x="240" y="46" text-anchor="middle" font-size="13" fill="${ac2}" font-weight="700" font-family="Space Mono,monospace">Z_L</text>
+      <text x="240" y="64" text-anchor="middle" font-size="11" fill="${wc}" font-family="Noto Sans JP,sans-serif">負荷</text>
+      <line x1="30" y1="40" x2="200" y2="40" stroke="${wc}" stroke-width="2"/>
+      <circle cx="30" cy="40" r="5" fill="${lc}"/>
+      <text x="30" y="22" text-anchor="middle" font-size="12" fill="${tx}" font-weight="700" font-family="Noto Sans JP,sans-serif">P1</text>
+      <text x="100" y="30" text-anchor="middle" font-size="11" fill="${gn}" font-family="Noto Sans JP,sans-serif">入射波 →</text>
+      <text x="100" y="72" text-anchor="middle" font-size="11" fill="${ac2}" font-family="Noto Sans JP,sans-serif">← 反射波（S₁₁）</text>
+      <line x1="30" y1="60" x2="200" y2="60" stroke="${ac2}" stroke-width="1.5" stroke-dasharray="5,3"/>`;
+  }
+
+  // S21 diagram: 2-port, port1→DUT→port2
+  const s21svg = document.getElementById('s0-s21-svg');
+  if (s21svg) {
+    s21svg.innerHTML = `
+      <circle cx="30"  cy="50" r="5" fill="${lc}"/>
+      <circle cx="290" cy="50" r="5" fill="${lc}"/>
+      <text x="30"  y="22" text-anchor="middle" font-size="12" fill="${tx}" font-weight="700" font-family="Noto Sans JP,sans-serif">P1</text>
+      <text x="290" y="22" text-anchor="middle" font-size="12" fill="${tx}" font-weight="700" font-family="Noto Sans JP,sans-serif">P2</text>
+      <line x1="30" y1="50" x2="100" y2="50" stroke="${wc}" stroke-width="2"/>
+      <rect x="100" y="25" width="120" height="50" rx="8" fill="none" stroke="${lc}" stroke-width="2.5"/>
+      <text x="160" y="47" text-anchor="middle" font-size="13" fill="${lc}" font-weight="700" font-family="Space Mono,monospace">2ポート</text>
+      <text x="160" y="65" text-anchor="middle" font-size="11" fill="${wc}" font-family="Noto Sans JP,sans-serif">回路</text>
+      <line x1="220" y1="50" x2="290" y2="50" stroke="${wc}" stroke-width="2"/>
+      <text x="65" y="38" text-anchor="middle" font-size="10" fill="${gn}" font-family="Noto Sans JP,sans-serif">入射波→</text>
+      <text x="255" y="38" text-anchor="middle" font-size="10" fill="${gn}" font-family="Noto Sans JP,sans-serif">→透過（S₂₁）</text>
+      <text x="65" y="70" text-anchor="middle" font-size="10" fill="${ac2}" font-family="Noto Sans JP,sans-serif">←反射（S₁₁）</text>`;
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// STEP 2 (was STEP 1)
 // ════════════════════════════════════════════════════════════════
 let s1mode = 'series';
 
@@ -1509,8 +1924,9 @@ function drawSmith(ptBefore, ptAfter) {
 function showStep(n) {
   document.querySelectorAll('.step-panel').forEach((p, i) => p.classList.toggle('active', i + 1 === n));
   document.querySelectorAll('.step-btn').forEach((b, i) => b.classList.toggle('active', i + 1 === n));
-  if (n === 2) setTimeout(drawFlowSVG, 50);
-  if (n === 4) setTimeout(() => { updateS4(); drawConceptSVG(); }, 80);
+  if (n === 1) setTimeout(updateS0, 50);
+  if (n === 3) setTimeout(drawFlowSVG, 50);
+  if (n === 5) setTimeout(() => { updateS4(); drawConceptSVG(); }, 80);
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -1522,16 +1938,18 @@ function toggleTheme() {
   html.dataset.theme = wasDark ? 'light' : 'dark';
   const btn = document.getElementById('rf-nav-dark');
   if (btn) btn.textContent = wasDark ? '🌙 ダーク' : '☀️ ライト';
+  updateS0();
   updateS1();
   drawFlowSVG();
   drawConceptSVG();
-  if (document.getElementById('step4').classList.contains('active')) updateS4();
+  if (document.getElementById('step5').classList.contains('active')) updateS4();
 }
 
 // ════════════════════════════════════════════════════════════════
 // Init
 // ════════════════════════════════════════════════════════════════
 window.addEventListener('load', () => {
+  updateS0();
   updateS1();
   updateS2();
   updateS3();
