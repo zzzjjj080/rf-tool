@@ -255,6 +255,163 @@ h1 {
   .step-btn { min-width: 50%; border-bottom: 1px solid var(--border); }
   .mat-inner { grid-template-columns: 1fr; }
   .cascade-vis { flex-direction: column; align-items: flex-start; }
+  .jig-preset-grid { grid-template-columns: repeat(3, 1fr); }
+  .calc-steps-grid { grid-template-columns: 1fr; }
+  .fmeas-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Jig preset cards ── */
+.jig-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.jig-card {
+  background: var(--panel2);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 6px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+.jig-card:hover { border-color: var(--accent); }
+.jig-card.active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--panel));
+}
+.jig-card-icon { font-size: 22px; margin-bottom: 5px; }
+.jig-card-name { font-size: 11px; font-weight: 700; color: var(--text); line-height: 1.3; }
+.jig-card-name small { font-weight: 400; color: var(--text-dim); }
+.jig-formula-box {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-top: 12px;
+  font-size: 12px;
+  line-height: 1.9;
+  font-family: 'Space Mono', monospace;
+  color: var(--text-dim);
+  white-space: pre-line;
+}
+.jig-formula-box:empty { display: none; }
+
+/* ── Calc steps layout ── */
+.calc-steps-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.calc-step {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+}
+.calc-step.highlight-step {
+  border-color: var(--accent2);
+  background: color-mix(in srgb, var(--accent2) 6%, var(--panel));
+}
+.calc-step-header {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.highlight-step .calc-step-header { color: var(--accent2); }
+
+/* ── Matrix compact display ── */
+.mat-display {
+  display: inline-flex;
+  align-items: center;
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  margin: 4px 0;
+}
+.mat-bracket-lg {
+  font-size: 42px;
+  font-weight: 100;
+  line-height: 1;
+  color: var(--text);
+  padding: 0 2px;
+  user-select: none;
+}
+.mat-2x2 { border-collapse: separate; border-spacing: 4px 3px; }
+.mat-2x2 td {
+  padding: 4px 10px;
+  border-radius: 4px;
+  white-space: nowrap;
+  text-align: center;
+  font-size: 12px;
+}
+.mc-a { color: var(--accent);  background: color-mix(in srgb, var(--accent)  8%, transparent); }
+.mc-b { color: var(--gold);    background: color-mix(in srgb, var(--gold)    8%, transparent); }
+.mc-c { color: var(--green);   background: color-mix(in srgb, var(--green)   8%, transparent); }
+.mc-d { color: var(--accent2); background: color-mix(in srgb, var(--accent2) 8%, transparent); }
+.det-formula {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  color: var(--text-dim);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  line-height: 1.8;
+  word-break: break-all;
+}
+.mul-hint {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.8;
+  margin-bottom: 8px;
+}
+
+/* ── F_meas input grid ── */
+.fmeas-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+.fmeas-cell {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px;
+}
+.fmeas-cell-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.fmeas-inputs { display: flex; gap: 5px; align-items: flex-end; }
+.fmeas-input-group { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.fmeas-input-group label {
+  font-size: 10px; color: var(--text-dim);
+  font-family: 'Space Mono', monospace;
+  text-transform: none; letter-spacing: 0; margin-bottom: 0; font-weight: 400;
+}
+.fmeas-input-group input[type="number"] {
+  width: 100%; padding: 5px 6px;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--text);
+  font-family: 'Space Mono', monospace; font-size: 12px; text-align: right;
+  transition: border-color 0.2s;
+}
+.fmeas-input-group input[type="number"]:focus { outline: none; border-color: var(--accent); }
+.fmeas-j {
+  font-family: 'Space Mono', monospace; font-size: 12px;
+  color: var(--text-dim); padding-bottom: 7px; flex-shrink: 0;
 }
 </style>
 </head>
@@ -1133,20 +1290,20 @@ h1 {
       <div class="step-intro-title">🔬 直列接続の応用 — De-embedding（脱埋め込み）</div>
       <div class="step-intro-body">
         <ul>
-          <li><strong>Step 3 の復習：</strong>部品を直列接続すると行列の積になる — M_total = M₁ × M₂ × M₃</li>
-          <li>実際の測定では、DUT の前後に<strong>治具（ケーブル・コネクタ・基板など）</strong>が挟まる</li>
-          <li>VNA が計測するのは「治具 A ＋ DUT ＋ 治具 B」の合成特性であり、DUT 単体の値ではない：
-            <div style="font-family:'Roboto Mono',monospace;font-size:13px;margin:6px 0 6px 1.2em;color:var(--text);">M（測定値） = FA × DUT × FB</div>
+          <li><strong>Step 3 の復習：</strong>部品を直列接続すると行列の積になる — F_total = F₁ × F₂ × …</li>
+          <li>実際の測定では DUT の前後に<strong>治具（ケーブル・コネクタ・基板など）</strong>が挟まる</li>
+          <li>VNA が計測するのは「治具 ＋ DUT」の合成特性であり、DUT 単体の値ではない：
+            <div style="font-family:'Roboto Mono',monospace;font-size:13px;margin:6px 0 6px 1.2em;color:var(--text);">F_meas = F_jig × F_dut</div>
           </li>
-          <li>治具の ABCD 行列が既知なら、<strong>逆行列をかけるだけ</strong>で DUT を取り出せる：
-            <div style="font-family:'Roboto Mono',monospace;font-size:13px;margin:6px 0 6px 1.2em;color:var(--text);">DUT = FA⁻¹ × M × FB⁻¹</div>
+          <li>治具の F 行列が既知なら、<strong>逆行列をかけるだけ</strong>で DUT を取り出せる：
+            <div style="font-family:'Roboto Mono',monospace;font-size:13px;margin:6px 0 6px 1.2em;color:var(--text);">F_dut = [F_jig]⁻¹ × F_meas</div>
           </li>
         </ul>
         <div class="callout" style="margin-top:10px;">
-          <div class="callout-title">💡 "De-embedding" という言葉の意味</div>
-          <strong>Embedding（埋め込み）</strong>＝ DUT が治具の中に埋め込まれた状態で測定されること。<br>
-          <strong>De-embedding（脱埋め込み）</strong>＝ その治具の影響を数学的に取り除く（"de-" = 除去）操作。<br>
-          難しそうな名前だが、やっていることは Step 3 の <em>逆向きの行列積</em> にすぎない。
+          <div class="callout-title">💡 逆行列とは？</div>
+          行列 F に対して F⁻¹ × F = 単位行列 I になるものを<strong>逆行列</strong>という。<br>
+          2×2 行列では <strong>det = AD − BC</strong> を使って解析的に求められる：
+          F⁻¹ = 1/det × [[D, −B], [−C, A]]
         </div>
       </div>
     </div>
@@ -1159,131 +1316,168 @@ h1 {
       </div>
     </div>
 
+    <!-- Row 1: F_meas input + Jig preset selection -->
     <div class="two-col">
-      <!-- Left: inputs -->
-      <div>
-        <div class="card">
-          <div class="card-title">📊 測定値（治具込み）の入力</div>
-          <div class="info-box">
-            VNA で測定した S₁₁・S₂₁ を入力してください。<br>
-            ここでは S₁₂ = S₂₁、S₂₂ = S₁₁ と仮定（対称回路）します。
-          </div>
-          <div class="form-group">
-            <label>|S₁₁| 反射係数の大きさ（0〜1）</label>
-            <div class="slider-row">
-              <input type="range" id="meas-s11m" min="0" max="99" value="40" oninput="updateS4()">
-              <span class="slider-val" id="meas-s11m-val">0.40</span>
+
+      <!-- F_meas input card -->
+      <div class="card">
+        <div class="card-title">📊 計測値 [F_meas] の入力</div>
+        <div class="info-box" style="margin-top:0;">
+          VNA で取得した F 行列（ABCD 行列）の 4 要素を入力してください。<br>
+          デフォルトは<strong>単位行列</strong>（整合・無損失の理想状態）。
+        </div>
+        <div class="fmeas-grid">
+          <div class="fmeas-cell">
+            <div class="fmeas-cell-label" style="color:var(--accent)">A（無次元）</div>
+            <div class="fmeas-inputs">
+              <div class="fmeas-input-group">
+                <label>Re</label>
+                <input type="number" id="fmeas-a-re" value="1" step="0.01" oninput="updateS4()">
+              </div>
+              <span class="fmeas-j">+j</span>
+              <div class="fmeas-input-group">
+                <label>Im</label>
+                <input type="number" id="fmeas-a-im" value="0" step="0.01" oninput="updateS4()">
+              </div>
             </div>
-            <div class="hint">0 = 完全整合（反射なし）、1 = 完全不整合（全反射）</div>
           </div>
-          <div class="form-group">
-            <label>∠S₁₁ 反射係数の位相（°）</label>
-            <div class="slider-row">
-              <input type="range" id="meas-s11p" min="-180" max="180" value="-120" oninput="updateS4()">
-              <span class="slider-val" id="meas-s11p-val">−120°</span>
+          <div class="fmeas-cell">
+            <div class="fmeas-cell-label" style="color:var(--gold)">B（Ω）</div>
+            <div class="fmeas-inputs">
+              <div class="fmeas-input-group">
+                <label>Re</label>
+                <input type="number" id="fmeas-b-re" value="0" step="0.1" oninput="updateS4()">
+              </div>
+              <span class="fmeas-j">+j</span>
+              <div class="fmeas-input-group">
+                <label>Im</label>
+                <input type="number" id="fmeas-b-im" value="0" step="0.1" oninput="updateS4()">
+              </div>
             </div>
-            <div class="hint">スミスチャート上の点がどの方向を向くかを決めます。</div>
           </div>
-          <div class="form-group">
-            <label>|S₂₁| 透過係数の大きさ（0〜1）</label>
-            <div class="slider-row">
-              <input type="range" id="meas-s21m" min="1" max="99" value="85" oninput="updateS4()">
-              <span class="slider-val" id="meas-s21m-val">0.85</span>
+          <div class="fmeas-cell">
+            <div class="fmeas-cell-label" style="color:var(--green)">C（S）</div>
+            <div class="fmeas-inputs">
+              <div class="fmeas-input-group">
+                <label>Re</label>
+                <input type="number" id="fmeas-c-re" value="0" step="0.001" oninput="updateS4()">
+              </div>
+              <span class="fmeas-j">+j</span>
+              <div class="fmeas-input-group">
+                <label>Im</label>
+                <input type="number" id="fmeas-c-im" value="0" step="0.001" oninput="updateS4()">
+              </div>
             </div>
-            <div class="hint">1 = 完全通過（0 dB）、0.707 ≈ −3 dB 点</div>
           </div>
-          <div class="form-group">
-            <label>∠S₂₁ 透過係数の位相（°）</label>
-            <div class="slider-row">
-              <input type="range" id="meas-s21p" min="-180" max="180" value="-30" oninput="updateS4()">
-              <span class="slider-val" id="meas-s21p-val">−30°</span>
+          <div class="fmeas-cell">
+            <div class="fmeas-cell-label" style="color:var(--accent2)">D（無次元）</div>
+            <div class="fmeas-inputs">
+              <div class="fmeas-input-group">
+                <label>Re</label>
+                <input type="number" id="fmeas-d-re" value="1" step="0.01" oninput="updateS4()">
+              </div>
+              <span class="fmeas-j">+j</span>
+              <div class="fmeas-input-group">
+                <label>Im</label>
+                <input type="number" id="fmeas-d-im" value="0" step="0.01" oninput="updateS4()">
+              </div>
             </div>
           </div>
         </div>
-
-        <div class="card">
-          <div class="card-title">🔧 治具（Fixture）の設定</div>
-          <div class="info-box">
-            治具の種類と値を設定します。実際には VNA キャリブレーションや既知の構造から治具 ABCD 行列を求めます。
-          </div>
-          <div class="form-group">
-            <label>治具 A（ポート1側）タイプ</label>
-            <select id="fix-a-type" onchange="updateS4()">
-              <option value="series-L" selected>直列 L（ケーブルインダクタンス）</option>
-              <option value="series-R">直列 R（ケーブル抵抗）</option>
-              <option value="shunt-C">並列 C（配線対地容量）</option>
-              <option value="thru">スルー（治具なし）</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>治具 A 値</label>
-            <div class="slider-row">
-              <input type="range" id="fix-a-val" min="1" max="300" value="50" oninput="updateS4()">
-              <span class="slider-val" id="fix-a-val-lbl">50 nH</span>
-            </div>
-          </div>
-          <div class="form-group">
-            <label>治具 B（ポート2側）タイプ</label>
-            <select id="fix-b-type" onchange="updateS4()">
-              <option value="series-L" selected>直列 L</option>
-              <option value="series-R">直列 R</option>
-              <option value="shunt-C">並列 C</option>
-              <option value="thru">スルー（治具なし）</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>治具 B 値</label>
-            <div class="slider-row">
-              <input type="range" id="fix-b-val" min="1" max="300" value="50" oninput="updateS4()">
-              <span class="slider-val" id="fix-b-val-lbl">50 nH</span>
-            </div>
-          </div>
-          <div class="form-group" style="margin-bottom:0;">
-            <label>周波数 f</label>
-            <div class="slider-row">
-              <input type="range" id="s4-freq" min="1" max="1000" value="13" oninput="updateS4()">
-              <span class="slider-val" id="s4-freq-val">13 MHz</span>
-            </div>
+        <div class="form-group" style="margin-top:16px;margin-bottom:0;">
+          <label>周波数 f（ジグ行列計算用）</label>
+          <div class="slider-row">
+            <input type="range" id="s4-freq" min="1" max="1000" value="13" oninput="updateS4()">
+            <span class="slider-val" id="s4-freq-val">13 MHz</span>
           </div>
         </div>
       </div>
 
-      <!-- Right: output -->
-      <div>
-        <div class="card">
-          <div class="card-title">🎯 De-embedding 結果比較</div>
-          <div class="hint" style="margin-bottom:12px;">
-            治具を除去した後の DUT 真値（補正後）と、補正前の測定値を比較します。
-            治具の値を大きくするほど補正前後の差が大きくなります。
+      <!-- Jig preset selection card -->
+      <div class="card">
+        <div class="card-title">🔧 計測ジグの選択</div>
+        <div class="jig-preset-grid">
+          <div class="jig-card" data-jig="coax" onclick="selectJig('coax')">
+            <div class="jig-card-icon">📡</div>
+            <div class="jig-card-name">同軸ケーブル<br><small>伝送線路</small></div>
           </div>
-          <table class="de-table">
-            <thead>
-              <tr>
-                <th>パラメータ</th>
-                <th style="color:var(--accent);text-align:center;">補正前（測定値）</th>
-                <th style="color:var(--accent2);text-align:center;">補正後（DUT真値）</th>
-              </tr>
-            </thead>
-            <tbody id="s4-table-body"></tbody>
-          </table>
+          <div class="jig-card active" data-jig="series_l" onclick="selectJig('series_l')">
+            <div class="jig-card-icon">🔗</div>
+            <div class="jig-card-name">コネクタ<br><small>直列 L</small></div>
+          </div>
+          <div class="jig-card" data-jig="pcb" onclick="selectJig('pcb')">
+            <div class="jig-card-icon">🟩</div>
+            <div class="jig-card-name">PCBパターン<br><small>短い伝送路</small></div>
+          </div>
+          <div class="jig-card" data-jig="shunt_c" onclick="selectJig('shunt_c')">
+            <div class="jig-card-icon">⚡</div>
+            <div class="jig-card-name">シャントC<br><small>寄生容量</small></div>
+          </div>
+          <div class="jig-card" data-jig="thru" onclick="selectJig('thru')">
+            <div class="jig-card-icon">➡️</div>
+            <div class="jig-card-name">理想スルー<br><small>単位行列</small></div>
+          </div>
         </div>
+        <div id="s4-jig-params"></div>
+        <div class="jig-formula-box" id="s4-jig-formula"></div>
+      </div>
+    </div>
 
-        <div class="card">
-          <div class="card-title">🗺 スミスチャート — S₁₁ の補正前後</div>
-          <div class="hint" style="margin-bottom:10px;">
-            <strong style="color:var(--accent)">M（青）</strong>：補正前の測定値 S₁₁
-            <strong style="color:var(--accent2)">D（橙）</strong>：補正後の DUT 真値 S₁₁<br>
-            外周（|Γ|=1）は全反射。中心が完全整合（50Ω）。
-          </div>
-          <canvas id="smith-canvas" width="760" height="760" style="width:100%;max-width:380px;height:auto;display:block;margin:0 auto;border-radius:8px;"></canvas>
-          <div class="callout" style="margin-top:14px;">
-            <div class="callout-title">治具インダクタンスの影響</div>
-            治具の直列 L が増えると、スミスチャート上の点が <strong>時計回りに回転</strong>（位相遅れ）します。
-            de-embedding はこの回転を逆方向に戻す操作に相当します。
-          </div>
+    <!-- Step-by-step calculation -->
+    <div class="card">
+      <div class="card-title">📐 De-embedding の計算ステップ</div>
+      <div class="calc-steps-grid">
+        <div class="calc-step">
+          <div class="calc-step-header">① 計測値 [F_meas]</div>
+          <div class="hint" style="margin-bottom:8px;">入力した ABCD 行列をそのまま使用。</div>
+          <div id="s4-step1-body"></div>
+        </div>
+        <div class="calc-step">
+          <div class="calc-step-header">② 選択ジグ [F_jig]</div>
+          <div class="hint" style="margin-bottom:8px;">プリセットとパラメータから計算した治具の F 行列。</div>
+          <div id="s4-step2-body"></div>
+        </div>
+        <div class="calc-step">
+          <div class="calc-step-header">③ 逆行列 [F_jig]⁻¹</div>
+          <div id="s4-step3-body"></div>
+        </div>
+        <div class="calc-step highlight-step">
+          <div class="calc-step-header">④ DUT = [F_jig]⁻¹ × [F_meas]</div>
+          <div id="s4-step4-body"></div>
         </div>
       </div>
     </div>
+
+    <!-- Result overview: Smith + table -->
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">🗺 スミスチャート — S₁₁ の補正前後</div>
+        <div class="hint" style="margin-bottom:10px;">
+          <strong style="color:var(--accent)">M（青）</strong>：補正前 F_meas の S₁₁ &nbsp;
+          <strong style="color:var(--accent2)">D（橙）</strong>：補正後 DUT の S₁₁
+        </div>
+        <canvas id="smith-canvas" width="760" height="760" style="width:100%;max-width:380px;height:auto;display:block;margin:0 auto;border-radius:8px;"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-title">🎯 補正前後の Sパラメータ比較</div>
+        <table class="de-table">
+          <thead>
+            <tr>
+              <th>パラメータ</th>
+              <th style="color:var(--accent);text-align:center;">補正前（F_meas）</th>
+              <th style="color:var(--accent2);text-align:center;">補正後（DUT）</th>
+            </tr>
+          </thead>
+          <tbody id="s4-table-body"></tbody>
+        </table>
+        <div class="callout" style="margin-top:14px;">
+          <div class="callout-title">確認方法</div>
+          「理想スルー」を選ぶと F_jig = 単位行列 → F_jig⁻¹ = 単位行列 → DUT = F_meas となり、<strong>補正前後が一致</strong>します。
+          コネクタや同軸ケーブルを選ぶと打ち消し効果が視覚的に確認できます。
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- ═══════════════════════════════════════════════════════════
@@ -2644,52 +2838,210 @@ function updateS3() {
 // ════════════════════════════════════════════════════════════════
 // STEP 4 — De-embedding
 // ════════════════════════════════════════════════════════════════
+
+let s4JigType = 'series_l';
+
+const S4_JIGS = {
+  coax: {
+    label: '同軸ケーブル（伝送線路）',
+    params: [
+      { id: 's4p-theta', label: '電気長 θ（°）',             min: 1, max: 90,  def: 30, fmt: v => v + '°'  },
+      { id: 's4p-z0',    label: '特性インピーダンス Z₀（Ω）', min: 10, max: 200, def: 50, fmt: v => v + ' Ω' }
+    ],
+    formula: 'F = [[cos θ,  jZ₀ sin θ],\n     [j sin θ / Z₀,  cos θ]]',
+    matrix(vals, freq) {
+      const th = vals[0] * Math.PI / 180, z0 = vals[1];
+      const c = Math.cos(th), s = Math.sin(th);
+      return [[C0(c), C0(0, z0*s)], [C0(0, s/z0), C0(c)]];
+    }
+  },
+  series_l: {
+    label: 'コネクタ（直列インダクタンス L）',
+    params: [
+      { id: 's4p-l', label: 'インダクタンス L（nH）', min: 1, max: 500, def: 50, fmt: v => v + ' nH' }
+    ],
+    formula: 'F = [[1,  jωL],\n     [0,  1]]',
+    matrix(vals, freq) {
+      const jwL = C0(0, 2*Math.PI*freq * vals[0]*1e-9);
+      return [[C0(1), jwL], [C0(0), C0(1)]];
+    }
+  },
+  pcb: {
+    label: 'PCBパターン（短い伝送線路、FR4 εr=4.3）',
+    params: [
+      { id: 's4p-mm',     label: 'パターン長（mm）',              min: 1, max: 200, def: 20, fmt: v => v + ' mm' },
+      { id: 's4p-pcbz0',  label: '特性インピーダンス Z₀（Ω）',    min: 20, max: 100, def: 50, fmt: v => v + ' Ω'  }
+    ],
+    formula: 'θ = 2πf √εr · l / c₀  (εr = 4.3)\nF = [[cos θ,  jZ₀ sin θ],\n     [j sin θ / Z₀,  cos θ]]',
+    matrix(vals, freq) {
+      const l = vals[0]*1e-3, z0 = vals[1];
+      const beta = 2*Math.PI*freq*Math.sqrt(4.3)/3e8;
+      const th = beta*l, c = Math.cos(th), s = Math.sin(th);
+      return [[C0(c), C0(0, z0*s)], [C0(0, s/z0), C0(c)]];
+    }
+  },
+  shunt_c: {
+    label: 'シャントキャパシタンス（並列 C）',
+    params: [
+      { id: 's4p-c', label: 'キャパシタンス C（pF）', min: 1, max: 500, def: 100, fmt: v => v + ' pF' }
+    ],
+    formula: 'F = [[1,   0],\n     [jωC, 1]]',
+    matrix(vals, freq) {
+      const jwC = C0(0, 2*Math.PI*freq * vals[0]*1e-12);
+      return [[C0(1), C0(0)], [jwC, C0(1)]];
+    }
+  },
+  thru: {
+    label: '理想スルー（背面板・フランジ）',
+    params: [],
+    formula: 'F = [[1, 0],\n     [0, 1]]  （単位行列）',
+    matrix(vals, freq) { return mI(); }
+  }
+};
+
+function selectJig(key) {
+  s4JigType = key;
+  document.querySelectorAll('.jig-card').forEach(c =>
+    c.classList.toggle('active', c.dataset.jig === key));
+  renderJigParams();
+  updateS4();
+}
+
+function renderJigParams() {
+  const jig = S4_JIGS[s4JigType];
+  const paramsEl   = document.getElementById('s4-jig-params');
+  const formulaEl  = document.getElementById('s4-jig-formula');
+  if (!paramsEl) return;
+
+  if (!jig.params.length) {
+    paramsEl.innerHTML = '<div class="info-box" style="margin-top:0;margin-bottom:0;">パラメータなし — F_jig = 単位行列（de-embedding 不要）</div>';
+  } else {
+    paramsEl.innerHTML = jig.params.map(p => `
+      <div class="form-group" style="margin-top:12px;margin-bottom:0;">
+        <label>${p.label}</label>
+        <div class="slider-row">
+          <input type="range" id="${p.id}" min="${p.min}" max="${p.max}" value="${p.def}" oninput="updateS4()">
+          <span class="slider-val" id="${p.id}-lbl">${p.fmt(p.def)}</span>
+        </div>
+      </div>`).join('');
+  }
+  if (formulaEl) formulaEl.textContent = jig.formula;
+}
+
+// Format complex number compactly for matrix cells
+function fmtCm(c) {
+  const fn = v => {
+    const a = Math.abs(v);
+    if (a < 5e-9) return '0';
+    if (a >= 1000) return v.toFixed(1);
+    if (a >= 100)  return v.toFixed(2);
+    if (a >= 10)   return v.toFixed(3);
+    if (a >= 0.1)  return v.toFixed(4);
+    return v.toExponential(2);
+  };
+  const re = Math.abs(c.re) < 5e-9 ? 0 : c.re;
+  const im = Math.abs(c.im) < 5e-9 ? 0 : c.im;
+  if (!im && !re) return '0';
+  if (!im) return fn(re);
+  if (!re) return (im >= 0 ? 'j' : '−j') + fn(Math.abs(im));
+  return fn(re) + (im >= 0 ? '+j' : '−j') + fn(Math.abs(im));
+}
+
+function renderMat(M) {
+  const [[a,b],[c,d]] = M;
+  return `<div class="mat-display">
+    <span class="mat-bracket-lg">[</span>
+    <table class="mat-2x2"><tr>
+      <td class="mc-a">${fmtCm(a)}</td><td class="mc-b">${fmtCm(b)}</td>
+    </tr><tr>
+      <td class="mc-c">${fmtCm(c)}</td><td class="mc-d">${fmtCm(d)}</td>
+    </tr></table>
+    <span class="mat-bracket-lg">]</span>
+  </div>
+  <div style="font-size:11px;color:var(--text-dim);margin-top:6px;font-family:'Space Mono',monospace;">
+    <span class="mc-a" style="background:none;">A</span>&nbsp;
+    <span class="mc-b" style="background:none;">B[Ω]</span>&nbsp;&nbsp;
+    <span class="mc-c" style="background:none;">C[S]</span>&nbsp;
+    <span class="mc-d" style="background:none;">D</span>
+  </div>`;
+}
+
 function updateS4() {
-  const s11m = parseFloat(document.getElementById('meas-s11m').value) / 100;
-  const s11p = parseFloat(document.getElementById('meas-s11p').value) * Math.PI / 180;
-  const s21m = parseFloat(document.getElementById('meas-s21m').value) / 100;
-  const s21p = parseFloat(document.getElementById('meas-s21p').value) * Math.PI / 180;
   const fMHz = parseFloat(document.getElementById('s4-freq').value);
   const freq = fMHz * 1e6;
+  document.getElementById('s4-freq-val').textContent = fMHz + ' MHz';
 
-  document.getElementById('meas-s11m-val').textContent = s11m.toFixed(2);
-  document.getElementById('meas-s11p-val').textContent = parseFloat(document.getElementById('meas-s11p').value) + '°';
-  document.getElementById('meas-s21m-val').textContent = s21m.toFixed(2);
-  document.getElementById('meas-s21p-val').textContent = parseFloat(document.getElementById('meas-s21p').value) + '°';
-  document.getElementById('s4-freq-val').textContent   = fMHz + ' MHz';
+  // Read F_meas
+  const rv = id => parseFloat(document.getElementById(id).value) || 0;
+  const Fmeas = [
+    [C0(rv('fmeas-a-re') || 1, rv('fmeas-a-im')), C0(rv('fmeas-b-re'), rv('fmeas-b-im'))],
+    [C0(rv('fmeas-c-re'), rv('fmeas-c-im')), C0(rv('fmeas-d-re') || 1, rv('fmeas-d-im'))]
+  ];
+  // Fix: if user has cleared A or D, keep 1
+  if (document.getElementById('fmeas-a-re').value === '') Fmeas[0][0] = C0(1, rv('fmeas-a-im'));
+  if (document.getElementById('fmeas-d-re').value === '') Fmeas[1][1] = C0(1, rv('fmeas-d-im'));
 
-  const faType = document.getElementById('fix-a-type').value;
-  const faVal  = parseFloat(document.getElementById('fix-a-val').value);
-  document.getElementById('fix-a-val').disabled = (faType === 'thru');
-  document.getElementById('fix-a-val-lbl').textContent = blockSliderLabel(faType, faVal);
+  // Compute F_jig
+  const jig = S4_JIGS[s4JigType];
+  jig.params.forEach(p => {
+    const el = document.getElementById(p.id), lbl = document.getElementById(p.id+'-lbl');
+    if (el && lbl) lbl.textContent = p.fmt(parseFloat(el.value));
+  });
+  const vals = jig.params.map(p => {
+    const el = document.getElementById(p.id);
+    return el ? parseFloat(el.value) : p.def;
+  });
+  const Fjig = jig.matrix(vals, freq);
+  const Fjig_inv = mInv(Fjig);
+  const Fdut = mMul(Fjig_inv, Fmeas);
 
-  const fbType = document.getElementById('fix-b-type').value;
-  const fbVal  = parseFloat(document.getElementById('fix-b-val').value);
-  document.getElementById('fix-b-val').disabled = (fbType === 'thru');
-  document.getElementById('fix-b-val-lbl').textContent = blockSliderLabel(fbType, fbVal);
+  // ── Step displays ──
+  document.getElementById('s4-step1-body').innerHTML = renderMat(Fmeas);
+  document.getElementById('s4-step2-body').innerHTML = renderMat(Fjig);
 
-  const S11m  = cPolar(s11m, s11p);
-  const S21m  = cPolar(s21m, s21p);
-  const Smeas = [[S11m, S21m], [S21m, S11m]];
-  const Mmeas = sToAbcd(Smeas, 50);
+  // Step 3: det + inverse
+  const [[a,b],[c,d]] = Fjig;
+  const AD = cMul(a, d), BC = cMul(b, c);
+  const det = cSub(AD, BC);
+  document.getElementById('s4-step3-body').innerHTML = `
+    <div class="det-formula">
+      det = A·D − B·C<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;= ${fmtCm(AD)} − ${fmtCm(BC)}<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;= <strong>${fmtCm(det)}</strong>
+    </div>
+    <div class="hint" style="margin-bottom:6px;">F⁻¹ = (1/det) × [[D, −B], [−C, A]]</div>
+    ${renderMat(Fjig_inv)}`;
 
-  const FA   = blockToAbcd(faType, faVal, freq);
-  const FB   = blockToAbcd(fbType, fbVal, freq);
-  const Mdut = mMul(mMul(mInv(FA), Mmeas), mInv(FB));
-  const [[S11d, S12d], [S21d, S22d]] = abcdToS(Mdut, 50);
+  // Step 4: multiply breakdown + result
+  const [[fi_a,fi_b],[fi_c,fi_d]] = Fjig_inv;
+  const [[fm_a,fm_b],[fm_c,fm_d]] = Fmeas;
+  document.getElementById('s4-step4-body').innerHTML = `
+    <div class="mul-hint">
+      DUT_A = F⁻¹_A·M_A + F⁻¹_B·M_C<br>
+      DUT_B = F⁻¹_A·M_B + F⁻¹_B·M_D<br>
+      DUT_C = F⁻¹_C·M_A + F⁻¹_D·M_C<br>
+      DUT_D = F⁻¹_C·M_B + F⁻¹_D·M_D
+    </div>
+    ${renderMat(Fdut)}`;
+
+  // Smith + table
+  const Smeas = abcdToS(Fmeas, 50);
+  const Sdut  = abcdToS(Fdut,  50);
+  const S11m = Smeas[0][0], S21m = Smeas[1][0];
+  const S11d = Sdut[0][0],  S21d = Sdut[1][0];
 
   const rows = [
-    ['|S₁₁|',     s11m.toFixed(3),                                  cAbs(S11d).toFixed(3)],
-    ['∠S₁₁ (°)', (s11p*180/Math.PI).toFixed(1),                    (cArg(S11d)*180/Math.PI).toFixed(1)],
-    ['|S₂₁|',     s21m.toFixed(3),                                  cAbs(S21d).toFixed(3)],
-    ['∠S₂₁ (°)', (s21p*180/Math.PI).toFixed(1),                    (cArg(S21d)*180/Math.PI).toFixed(1)],
-    ['S₁₁ [dB]',  (20*Math.log10(Math.max(1e-9,s11m))).toFixed(1), (20*Math.log10(Math.max(1e-9,cAbs(S11d)))).toFixed(1)],
-    ['S₂₁ [dB]',  (20*Math.log10(s21m)).toFixed(1),                (20*Math.log10(Math.max(1e-9,cAbs(S21d)))).toFixed(1)],
+    ['|S₁₁|',     cAbs(S11m).toFixed(3), cAbs(S11d).toFixed(3)],
+    ['∠S₁₁ (°)', (cArg(S11m)*180/Math.PI).toFixed(1), (cArg(S11d)*180/Math.PI).toFixed(1)],
+    ['|S₂₁|',     cAbs(S21m).toFixed(3), cAbs(S21d).toFixed(3)],
+    ['∠S₂₁ (°)', (cArg(S21m)*180/Math.PI).toFixed(1), (cArg(S21d)*180/Math.PI).toFixed(1)],
+    ['S₁₁ [dB]',  (20*Math.log10(Math.max(1e-9,cAbs(S11m)))).toFixed(1), (20*Math.log10(Math.max(1e-9,cAbs(S11d)))).toFixed(1)],
+    ['S₂₁ [dB]',  (20*Math.log10(Math.max(1e-9,cAbs(S21m)))).toFixed(1), (20*Math.log10(Math.max(1e-9,cAbs(S21d)))).toFixed(1)],
   ];
-  document.getElementById('s4-table-body').innerHTML = rows.map(([p, before, after]) =>
+  document.getElementById('s4-table-body').innerHTML = rows.map(([p, b, a]) =>
     `<tr><td style="font-size:13px;">${p}</td>
-     <td style="text-align:center;font-family:monospace;font-size:14px;color:var(--accent);">${before}</td>
-     <td style="text-align:center;font-family:monospace;font-size:14px;color:var(--accent2);">${after}</td></tr>`
+     <td style="text-align:center;font-family:monospace;font-size:14px;color:var(--accent);">${b}</td>
+     <td style="text-align:center;font-family:monospace;font-size:14px;color:var(--accent2);">${a}</td></tr>`
   ).join('');
 
   drawSmith(S11m, S11d);
@@ -2796,7 +3148,7 @@ function showStep(n) {
   document.querySelectorAll('.step-btn').forEach((b, i) => b.classList.toggle('active', i + 1 === n));
   if (n === 1) setTimeout(() => { updateS0(); drawSweepSmith(); drawSweepSParam(); }, 50);
   if (n === 3) setTimeout(drawFlowSVG, 50); // 直列接続
-  if (n === 4) setTimeout(() => { updateS4(); drawConceptSVG(); }, 80);
+  if (n === 4) setTimeout(() => { renderJigParams(); updateS4(); drawConceptSVG(); }, 80);
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -2830,6 +3182,7 @@ window.addEventListener('load', () => {
   updateS1();
   updateS2();
   updateS3();
+  renderJigParams();
   updateS4();
 });
 </script>
