@@ -1021,46 +1021,82 @@ h1 {
     <!-- A/B/C/D element meanings -->
     <div class="card" style="margin-top:20px;">
       <div class="card-title">📖 A・B・C・D 各要素の意味</div>
-      <div class="callout" style="margin-bottom:14px;">
-        各要素は「特定の終端条件でのポート間比率」として定義されます。直感的には「行列のどこにゼロや1が立つか」で回路の性質が分かります。
+
+      <!-- Port variable legend -->
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;padding:10px 14px;background:var(--panel);border-radius:8px;border:1px solid var(--border);font-size:13px;line-height:1.7;">
+        <span>📌 <strong>ポート変数：</strong></span>
+        <span><strong>V₁</strong>・<strong>I₁</strong> = 入力ポート（ポート1）の電圧・電流</span>
+        <span style="color:var(--text-dim);">／</span>
+        <span><strong>V₂</strong>・<strong>I₂</strong> = 出力ポート（ポート2）の電圧・電流</span>
+        <span style="color:var(--text-dim);">（I はポートへ流れ込む向きを正とする）</span>
       </div>
+
       <div class="meaning-grid">
-        <div class="meaning-item">
-          <div class="sym">A</div>
+
+        <!-- A -->
+        <div class="meaning-item" style="border-top:3px solid var(--accent);">
+          <div class="sym" style="color:var(--accent);">A</div>
+          <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--text-dim);margin-bottom:8px;text-transform:uppercase;">電圧伝達比 ／ 無次元</div>
           <div class="def">
-            <strong>出力短絡時（V₂=0）の電圧比 V₁/V₂</strong><br>
-            A=1 → 電圧変換なし（直列素子のみの場合）<br>
-            単位：なし（無次元）
+            <strong>ポート2 開放時（I₂=0）の電圧比 V₁/V₂</strong><br>
+            出力側を「何も接続しない」状態にしたとき、入力電圧 V₁ と出力電圧 V₂ の比。
+            <em>信号が電圧としてどれだけ通り抜けるか</em>を示す。<br>
+            <span style="color:var(--accent);">A=1</span> → 電圧がそのまま伝わる（直列素子だけの回路はつねに A=1）<br>
+            <span style="color:var(--text-dim);font-size:12px;">A≠1 になるのはトランスなど電圧変換が起きるときだけ</span>
           </div>
-          <div class="formula">直列Z：A = 1</div>
+          <div class="formula" style="color:var(--accent);background:var(--panel);">直列Z：A = 1　／　並列Y：A = 1</div>
         </div>
-        <div class="meaning-item">
-          <div class="sym">B</div>
+
+        <!-- B -->
+        <div class="meaning-item" style="border-top:3px solid var(--gold);">
+          <div class="sym" style="color:var(--gold);">B</div>
+          <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--text-dim);margin-bottom:8px;text-transform:uppercase;">転送インピーダンス ／ Ω</div>
           <div class="def">
-            <strong>出力短絡時の転送インピーダンス V₁/I₂</strong><br>
-            B = 0 → 直列成分ゼロ（並列素子のみの場合）<br>
-            単位：Ω（オーム）
+            <strong>ポート2 短絡時（V₂=0）の転送インピーダンス V₁/I₂</strong><br>
+            出力側を「ショート」したとき、出口に流れる電流 I₂ と入力電圧 V₁ の比（単位 Ω）。
+            <em>直列に入っているインピーダンスの大きさ</em>がそのまま現れる。<br>
+            <span style="color:var(--gold);">B=Z</span> → 直列素子のインピーダンス値（L なら B=jωL）<br>
+            <span style="color:var(--text-dim);font-size:12px;">B=0 → 直列成分ゼロ（並列素子だけの回路）</span>
           </div>
-          <div class="formula">直列Z：B = Z</div>
+          <div class="formula" style="color:var(--gold);background:var(--panel);">直列Z：B = Z　／　並列Y：B = 0</div>
         </div>
-        <div class="meaning-item">
-          <div class="sym">C</div>
+
+        <!-- C -->
+        <div class="meaning-item" style="border-top:3px solid var(--green);">
+          <div class="sym" style="color:var(--green);">C</div>
+          <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--text-dim);margin-bottom:8px;text-transform:uppercase;">転送アドミタンス ／ S（＝1/Ω）</div>
           <div class="def">
-            <strong>出力開放時（I₂=0）の転送アドミタンス I₁/V₂</strong><br>
-            C = 0 → 並列成分ゼロ（直列素子のみの場合）<br>
-            単位：S（ジーメンス＝1/Ω）
+            <strong>ポート2 開放時（I₂=0）の転送アドミタンス I₁/V₂</strong><br>
+            出力側を「開放」したとき、出口電圧 V₂ と入力電流 I₁ の比（単位 S）。
+            <em>横に分流するアドミタンスの大きさ</em>がそのまま現れる。<br>
+            <span style="color:var(--green);">C=Y</span> → 並列素子のアドミタンス値（C なら C=jωC）<br>
+            <span style="color:var(--text-dim);font-size:12px;">C=0 → 並列成分ゼロ（直列素子だけの回路）</span>
           </div>
-          <div class="formula">並列Y：C = Y</div>
+          <div class="formula" style="color:var(--green);background:var(--panel);">直列Z：C = 0　／　並列Y：C = Y</div>
         </div>
-        <div class="meaning-item">
-          <div class="sym">D</div>
+
+        <!-- D -->
+        <div class="meaning-item" style="border-top:3px solid var(--accent2);">
+          <div class="sym" style="color:var(--accent2);">D</div>
+          <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--text-dim);margin-bottom:8px;text-transform:uppercase;">電流伝達比 ／ 無次元</div>
           <div class="def">
-            <strong>出力開放時の電流比 I₁/I₂</strong><br>
-            D = 1 → 電流変換なし（並列素子のみの場合）<br>
-            単位：なし（無次元）
+            <strong>ポート2 短絡時（V₂=0）の電流比 I₁/I₂</strong><br>
+            出力側を「ショート」したとき、入力電流 I₁ と出力電流 I₂ の比。
+            <em>電流がどれだけそのまま通り抜けるか</em>を示す。<br>
+            <span style="color:var(--accent2);">D=1</span> → 電流がそのまま通過（並列素子だけの回路はつねに D=1）<br>
+            <span style="color:var(--text-dim);font-size:12px;">D≠1 になるのはトランスなど電流変換が起きるときだけ</span>
           </div>
-          <div class="formula">並列Y：D = 1</div>
+          <div class="formula" style="color:var(--accent2);background:var(--panel);">直列Z：D = 1　／　並列Y：D = 1</div>
         </div>
+
+      </div>
+
+      <!-- Summary callout -->
+      <div class="callout" style="margin-top:16px;font-size:13px;">
+        💡 <strong>パターン早見：</strong>
+        直列インピーダンスZのみ → <span style="color:var(--accent);">A</span>=<span style="color:var(--accent2);">D</span>=1, <span style="color:var(--gold);">B</span>=Z, <span style="color:var(--green);">C</span>=0　／
+        並列アドミタンスYのみ → <span style="color:var(--accent);">A</span>=<span style="color:var(--accent2);">D</span>=1, <span style="color:var(--gold);">B</span>=0, <span style="color:var(--green);">C</span>=Y　／
+        行列式 AD−BC=1（受動可逆回路の条件）
       </div>
     </div>
 
