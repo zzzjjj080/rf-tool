@@ -750,6 +750,12 @@ h1 {
           <li>S パラメータでの合成は複雑（シグナルフロウグラフが必要）だが、ABCD なら<strong>行列の掛け算だけ</strong></li>
           <li>ケーブル → フィルタ → 増幅器のような多段構成も、それぞれの ABCD を掛け合わせるだけ</li>
         </ul>
+        <div class="info-box" style="margin-top:10px;font-size:13px;">
+          💡 <strong>M という記号について：</strong>
+          ABCD 行列は「伝達行列（Transmission <strong>M</strong>atrix）」とも呼ばれます。
+          このページでは各ブロックの ABCD 行列を <strong>M₁, M₂, M₃</strong>（Matrix の頭文字＋番号）と表記しています。
+          M_total はそれらを掛け合わせた合成行列です。
+        </div>
         <p style="margin-top:8px;font-size:13px;color:var(--text-dim);">3 つのブロックのタイプ・値・周波数を変えて、合成結果がどう変わるか確認してください。</p>
       </div>
     </div>
@@ -843,18 +849,6 @@ h1 {
       </div>
     </div>
 
-    <!-- Shared frequency -->
-    <div class="card">
-      <div class="form-group" style="margin-bottom:0;">
-        <label>共通周波数 f</label>
-        <div class="slider-row">
-          <input type="range" id="s2-freq" min="1" max="1000" value="13" oninput="updateS2()">
-          <span class="slider-val" id="s2-freq-val">13 MHz</span>
-        </div>
-        <div class="hint">ABCD 行列は周波数依存です。L や C を含む場合、周波数を上げるとリアクタンスが変わります。</div>
-      </div>
-    </div>
-
     <!-- Cascade visualization -->
     <div class="card">
       <div class="card-title">🔗 直列合成結果（行列積）</div>
@@ -882,6 +876,16 @@ h1 {
       <div class="callout" style="margin-top:14px;">
         <div class="callout-title">合成回路の S パラメータ（Z₀ = 50 Ω）</div>
         <div id="s2-s-result"></div>
+      </div>
+      <!-- Shared frequency slider at bottom -->
+      <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border);">
+        <div class="form-group" style="margin-bottom:0;">
+          <label>共通周波数 f <span style="font-size:11px;color:var(--text-dim);font-weight:400;">（L・C のリアクタンスに影響）</span></label>
+          <div class="slider-row">
+            <input type="range" id="s2-freq" min="1" max="1000" value="13" oninput="updateS2()" style="max-width:220px;">
+            <span class="slider-val" id="s2-freq-val">13 MHz</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1538,25 +1542,35 @@ function drawFlowSVG() {
   const ac2= tc('#ff6b35','#ea580c');
   const gn = tc('#22c55e','#16a34a');
   svg.innerHTML = `
-    <line x1="20" y1="45" x2="80" y2="45" stroke="${wc}" stroke-width="2"/>
-    <rect x="80"  y="20" width="110" height="50" rx="8" fill="none" stroke="${lc}" stroke-width="2.5"/>
-    <text x="135" y="41" text-anchor="middle" font-size="13" fill="${lc}" font-weight="700" font-family="Space Mono,monospace">M₁</text>
-    <text x="135" y="60" text-anchor="middle" font-size="11" fill="${tc('#94a3b8','#64748b')}" font-family="Noto Sans JP,sans-serif">ブロック1</text>
-    <line x1="190" y1="45" x2="250" y2="45" stroke="${wc}" stroke-width="2"/>
-    <rect x="250" y="20" width="110" height="50" rx="8" fill="none" stroke="${lc}" stroke-width="2.5"/>
-    <text x="305" y="41" text-anchor="middle" font-size="13" fill="${lc}" font-weight="700" font-family="Space Mono,monospace">M₂</text>
-    <text x="305" y="60" text-anchor="middle" font-size="11" fill="${tc('#94a3b8','#64748b')}" font-family="Noto Sans JP,sans-serif">ブロック2</text>
-    <line x1="360" y1="45" x2="420" y2="45" stroke="${wc}" stroke-width="2"/>
-    <rect x="420" y="20" width="110" height="50" rx="8" fill="none" stroke="${lc}" stroke-width="2.5"/>
-    <text x="475" y="41" text-anchor="middle" font-size="13" fill="${lc}" font-weight="700" font-family="Space Mono,monospace">M₃</text>
-    <text x="475" y="60" text-anchor="middle" font-size="11" fill="${tc('#94a3b8','#64748b')}" font-family="Noto Sans JP,sans-serif">ブロック3</text>
-    <line x1="530" y1="45" x2="560" y2="45" stroke="${wc}" stroke-width="2"/>
-    <text x="575" y="15" text-anchor="middle" font-size="11" fill="${gn}" font-family="Noto Sans JP,sans-serif">合成</text>
-    <rect x="540" y="20" width="130" height="50" rx="8" fill="${tc('rgba(0,212,255,0.08)','rgba(2,132,199,0.08)')}" stroke="${gn}" stroke-width="2.5"/>
-    <text x="605" y="41" text-anchor="middle" font-size="13" fill="${gn}" font-weight="700" font-family="Space Mono,monospace">M₁×M₂×M₃</text>
-    <text x="605" y="60" text-anchor="middle" font-size="11" fill="${gn}" font-family="Noto Sans JP,sans-serif">M_total</text>
-    <text x="10" y="49" font-size="12" fill="${wc}" font-family="Space Mono,monospace">→</text>
-    <text x="672" y="49" font-size="12" fill="${wc}" font-family="Space Mono,monospace">→</text>`;
+    <!-- input arrow -->
+    <line x1="8" y1="45" x2="48" y2="45" stroke="${wc}" stroke-width="2"/>
+    <polygon points="48,40 58,45 48,50" fill="${wc}"/>
+    <!-- M1 block -->
+    <rect x="58" y="17" width="100" height="56" rx="8" fill="none" stroke="${lc}" stroke-width="2.5"/>
+    <text x="108" y="40" text-anchor="middle" font-size="15" fill="${lc}" font-weight="700" font-family="Space Mono,monospace">M₁</text>
+    <text x="108" y="60" text-anchor="middle" font-size="11" fill="${wc}" font-family="Noto Sans JP,sans-serif">ブロック1</text>
+    <!-- × -->
+    <text x="173" y="51" text-anchor="middle" font-size="20" fill="${wc}" font-weight="700" font-family="Space Mono,monospace">×</text>
+    <!-- M2 block -->
+    <rect x="188" y="17" width="100" height="56" rx="8" fill="none" stroke="${lc}" stroke-width="2.5"/>
+    <text x="238" y="40" text-anchor="middle" font-size="15" fill="${lc}" font-weight="700" font-family="Space Mono,monospace">M₂</text>
+    <text x="238" y="60" text-anchor="middle" font-size="11" fill="${wc}" font-family="Noto Sans JP,sans-serif">ブロック2</text>
+    <!-- × -->
+    <text x="303" y="51" text-anchor="middle" font-size="20" fill="${wc}" font-weight="700" font-family="Space Mono,monospace">×</text>
+    <!-- M3 block -->
+    <rect x="318" y="17" width="100" height="56" rx="8" fill="none" stroke="${lc}" stroke-width="2.5"/>
+    <text x="368" y="40" text-anchor="middle" font-size="15" fill="${lc}" font-weight="700" font-family="Space Mono,monospace">M₃</text>
+    <text x="368" y="60" text-anchor="middle" font-size="11" fill="${wc}" font-family="Noto Sans JP,sans-serif">ブロック3</text>
+    <!-- = -->
+    <text x="433" y="52" text-anchor="middle" font-size="22" fill="${gn}" font-weight="700" font-family="Space Mono,monospace">=</text>
+    <!-- M_total block -->
+    <rect x="450" y="12" width="140" height="66" rx="8" fill="${tc('rgba(34,197,94,0.10)','rgba(22,163,74,0.10)')}" stroke="${gn}" stroke-width="2.5"/>
+    <text x="520" y="37" text-anchor="middle" font-size="14" fill="${gn}" font-weight="700" font-family="Space Mono,monospace">M_total</text>
+    <text x="520" y="58" text-anchor="middle" font-size="11" fill="${gn}" font-family="Noto Sans JP,sans-serif">合成 ABCD 行列</text>
+    <!-- output arrow -->
+    <line x1="590" y1="45" x2="630" y2="45" stroke="${gn}" stroke-width="2"/>
+    <polygon points="630,40 640,45 630,50" fill="${gn}"/>
+  `;
 }
 
 function drawConceptSVG() {
