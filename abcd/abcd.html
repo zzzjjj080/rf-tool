@@ -768,117 +768,115 @@ h1 {
       </div>
     </div>
 
-    <div class="three-col">
-      <!-- Block 1 -->
-      <div class="card">
-        <div class="card-title">ブロック 1</div>
-        <div class="form-group">
-          <label>タイプ</label>
-          <select id="b1-type" onchange="updateS2()">
-            <option value="series-L" selected>直列 L（インダクタ）</option>
-            <option value="series-R">直列 R（抵抗）</option>
-            <option value="series-C">直列 C（キャパシタ）</option>
-            <option value="shunt-R">並列 R</option>
-            <option value="shunt-C">並列 C</option>
-            <option value="thru">スルー（接続なし）</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>値</label>
-          <div class="slider-row">
-            <input type="range" id="b1-val" min="1" max="500" value="100" oninput="updateS2()">
-            <span class="slider-val" id="b1-val-lbl">100 nH</span>
-          </div>
-        </div>
-        <div class="cblock" style="margin-top:10px;text-align:left;">
-          <div class="cblock-label">M₁</div>
-          <div class="mat-mini" id="b1-matrix"></div>
-        </div>
-      </div>
-      <!-- Block 2 -->
-      <div class="card">
-        <div class="card-title">ブロック 2</div>
-        <div class="form-group">
-          <label>タイプ</label>
-          <select id="b2-type" onchange="updateS2()">
-            <option value="series-L">直列 L（インダクタ）</option>
-            <option value="series-R">直列 R（抵抗）</option>
-            <option value="series-C">直列 C（キャパシタ）</option>
-            <option value="shunt-R">並列 R</option>
-            <option value="shunt-C" selected>並列 C（シャント容量）</option>
-            <option value="thru">スルー（接続なし）</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>値</label>
-          <div class="slider-row">
-            <input type="range" id="b2-val" min="1" max="500" value="100" oninput="updateS2()">
-            <span class="slider-val" id="b2-val-lbl">100 pF</span>
-          </div>
-        </div>
-        <div class="cblock" style="margin-top:10px;text-align:left;">
-          <div class="cblock-label">M₂</div>
-          <div class="mat-mini" id="b2-matrix"></div>
-        </div>
-      </div>
-      <!-- Block 3 -->
-      <div class="card">
-        <div class="card-title">ブロック 3</div>
-        <div class="form-group">
-          <label>タイプ</label>
-          <select id="b3-type" onchange="updateS2()">
-            <option value="series-L">直列 L（インダクタ）</option>
-            <option value="series-R" selected>直列 R（抵抗）</option>
-            <option value="series-C">直列 C（キャパシタ）</option>
-            <option value="shunt-R">並列 R</option>
-            <option value="shunt-C">並列 C</option>
-            <option value="thru">スルー（接続なし）</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>値</label>
-          <div class="slider-row">
-            <input type="range" id="b3-val" min="1" max="200" value="50" oninput="updateS2()">
-            <span class="slider-val" id="b3-val-lbl">50 Ω</span>
-          </div>
-        </div>
-        <div class="cblock" style="margin-top:10px;text-align:left;">
-          <div class="cblock-label">M₃</div>
-          <div class="mat-mini" id="b3-matrix"></div>
-        </div>
-      </div>
-    </div>
+    <div class="card" style="padding:18px;">
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:14px;letter-spacing:0.3px;">🔗 3ブロック直列合成</div>
 
-    <!-- Cascade visualization -->
-    <div class="card">
-      <div class="card-title">🔗 直列合成結果（行列積）</div>
-      <div class="cascade-vis">
-        <div class="cblock">
-          <div class="cblock-label">M₁</div>
-          <div class="mat-mini" id="cv-b1-vals"></div>
+      <!-- Three block sub-sections -->
+      <div class="three-col" style="gap:14px;">
+
+        <!-- Block 1 -->
+        <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px;">
+          <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px;font-family:'Noto Sans JP',sans-serif;">ブロック 1</div>
+          <div class="form-group">
+            <label>タイプ</label>
+            <select id="b1-type" onchange="updateS2()">
+              <option value="series-L" selected>直列 L（インダクタ）</option>
+              <option value="series-R">直列 R（抵抗）</option>
+              <option value="series-C">直列 C（キャパシタ）</option>
+              <option value="shunt-R">並列 R</option>
+              <option value="shunt-C">並列 C</option>
+              <option value="thru">スルー（接続なし）</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>値</label>
+            <div class="slider-row">
+              <input type="range" id="b1-val" min="1" max="500" value="100" oninput="updateS2()">
+              <span class="slider-val" id="b1-val-lbl">100 nH</span>
+            </div>
+          </div>
+          <svg id="b1-svg" viewBox="0 0 160 50" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:50px;display:block;margin:8px 0;"></svg>
+          <div class="cblock" style="margin-top:6px;text-align:left;">
+            <div class="cblock-label">M₁</div>
+            <div class="mat-mini" id="b1-matrix"></div>
+          </div>
         </div>
-        <div class="cascade-op">×</div>
-        <div class="cblock">
-          <div class="cblock-label">M₂</div>
-          <div class="mat-mini" id="cv-b2-vals"></div>
+
+        <!-- Block 2 -->
+        <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px;">
+          <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px;font-family:'Noto Sans JP',sans-serif;">ブロック 2</div>
+          <div class="form-group">
+            <label>タイプ</label>
+            <select id="b2-type" onchange="updateS2()">
+              <option value="series-L">直列 L（インダクタ）</option>
+              <option value="series-R">直列 R（抵抗）</option>
+              <option value="series-C">直列 C（キャパシタ）</option>
+              <option value="shunt-R">並列 R</option>
+              <option value="shunt-C" selected>並列 C（シャント容量）</option>
+              <option value="thru">スルー（接続なし）</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>値</label>
+            <div class="slider-row">
+              <input type="range" id="b2-val" min="1" max="500" value="100" oninput="updateS2()">
+              <span class="slider-val" id="b2-val-lbl">100 pF</span>
+            </div>
+          </div>
+          <svg id="b2-svg" viewBox="0 0 160 50" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:50px;display:block;margin:8px 0;"></svg>
+          <div class="cblock" style="margin-top:6px;text-align:left;">
+            <div class="cblock-label">M₂</div>
+            <div class="mat-mini" id="b2-matrix"></div>
+          </div>
         </div>
-        <div class="cascade-op">×</div>
-        <div class="cblock">
-          <div class="cblock-label">M₃</div>
-          <div class="mat-mini" id="cv-b3-vals"></div>
+
+        <!-- Block 3 -->
+        <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px;">
+          <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px;font-family:'Noto Sans JP',sans-serif;">ブロック 3</div>
+          <div class="form-group">
+            <label>タイプ</label>
+            <select id="b3-type" onchange="updateS2()">
+              <option value="series-L">直列 L（インダクタ）</option>
+              <option value="series-R" selected>直列 R（抵抗）</option>
+              <option value="series-C">直列 C（キャパシタ）</option>
+              <option value="shunt-R">並列 R</option>
+              <option value="shunt-C">並列 C</option>
+              <option value="thru">スルー（接続なし）</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>値</label>
+            <div class="slider-row">
+              <input type="range" id="b3-val" min="1" max="200" value="50" oninput="updateS2()">
+              <span class="slider-val" id="b3-val-lbl">50 Ω</span>
+            </div>
+          </div>
+          <svg id="b3-svg" viewBox="0 0 160 50" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:50px;display:block;margin:8px 0;"></svg>
+          <div class="cblock" style="margin-top:6px;text-align:left;">
+            <div class="cblock-label">M₃</div>
+            <div class="mat-mini" id="b3-matrix"></div>
+          </div>
         </div>
-        <div class="cascade-op">=</div>
-        <div class="cblock combined">
-          <div class="cblock-label" style="color:var(--accent);">M_total（合成）</div>
-          <div class="mat-mini" id="cv-total-vals"></div>
+
+      </div><!-- end three-col -->
+
+      <!-- Equation + Result -->
+      <div style="margin-top:18px;padding-top:16px;border-top:2px solid var(--border);">
+        <div style="font-size:13px;font-weight:700;color:var(--text-dim);margin-bottom:14px;font-family:'Space Mono',monospace;letter-spacing:0.5px;">M₁ × M₂ × M₃ =</div>
+        <div style="display:flex;align-items:flex-start;gap:18px;flex-wrap:wrap;">
+          <div class="cblock combined" style="min-width:150px;">
+            <div class="cblock-label" style="color:var(--accent);">M_TOTAL（合成）</div>
+            <div class="mat-mini" id="cv-total-vals"></div>
+          </div>
+          <div class="callout" style="flex:1;min-width:200px;margin:0;">
+            <div class="callout-title">合成回路の S パラメータ（Z₀ = 50 Ω）</div>
+            <div id="s2-s-result"></div>
+          </div>
         </div>
       </div>
-      <div class="callout" style="margin-top:14px;">
-        <div class="callout-title">合成回路の S パラメータ（Z₀ = 50 Ω）</div>
-        <div id="s2-s-result"></div>
-      </div>
-      <!-- Shared frequency slider at bottom -->
-      <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border);">
+
+      <!-- Shared frequency slider -->
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);">
         <div class="form-group" style="margin-bottom:0;">
           <label>共通周波数 f <span style="font-size:11px;color:var(--text-dim);font-weight:400;">（L・C のリアクタンスに影響）</span></label>
           <div class="slider-row">
@@ -2454,6 +2452,75 @@ function updateS1() {
   drawS1SVG(s1mode, elem);
 }
 
+// Draw compact circuit diagram for each cascade block
+function drawBlockSVG(svgId, btype) {
+  const svg = document.getElementById(svgId);
+  if (!svg) return;
+  const lc = tc('#60a5fa','#0284c7');
+  const wc = tc('#94a3b8','#64748b');
+
+  if (btype === 'thru') {
+    svg.setAttribute('viewBox', '0 0 160 50');
+    svg.style.height = '50px';
+    svg.innerHTML = `
+      <line x1="10" y1="25" x2="150" y2="25" stroke="${lc}" stroke-width="2.5"/>
+      <circle cx="10" cy="25" r="4" fill="${lc}"/>
+      <circle cx="150" cy="25" r="4" fill="${lc}"/>
+      <text x="80" y="44" text-anchor="middle" font-size="10" fill="${wc}" font-family="Noto Sans JP,sans-serif">スルー（透過）</text>`;
+    return;
+  }
+
+  const isShunt = btype.startsWith('shunt');
+  const elemType = btype.split('-')[1].toUpperCase();
+
+  if (!isShunt) {
+    svg.setAttribute('viewBox', '0 0 160 52');
+    svg.style.height = '52px';
+    let inner = '';
+    if (elemType === 'L') {
+      inner = svgInductor(45, 26, 115, lc);
+    } else if (elemType === 'R') {
+      inner = svgResistor(45, 26, 115, lc);
+    } else {
+      // C: two vertical plates
+      inner = `<line x1="45" y1="26" x2="74" y2="26" stroke="${lc}" stroke-width="2.5"/>
+               <line x1="74" y1="10" x2="74" y2="42" stroke="${lc}" stroke-width="3"/>
+               <line x1="86" y1="10" x2="86" y2="42" stroke="${lc}" stroke-width="3"/>
+               <line x1="86" y1="26" x2="115" y2="26" stroke="${lc}" stroke-width="2.5"/>`;
+    }
+    svg.innerHTML = `
+      <line x1="10" y1="26" x2="45" y2="26" stroke="${wc}" stroke-width="2.5"/>
+      ${inner}
+      <line x1="115" y1="26" x2="150" y2="26" stroke="${wc}" stroke-width="2.5"/>
+      <circle cx="10" cy="26" r="4" fill="${lc}"/>
+      <circle cx="150" cy="26" r="4" fill="${lc}"/>`;
+  } else {
+    svg.setAttribute('viewBox', '0 0 160 68');
+    svg.style.height = '68px';
+    const cx = 80;
+    let sym = '';
+    let symBottom = 0;
+    if (elemType === 'R') {
+      sym = `<rect x="${cx-15}" y="35" width="30" height="20" rx="4" fill="none" stroke="${lc}" stroke-width="2"/>
+             <text x="${cx}" y="50" text-anchor="middle" font-size="12" fill="${lc}" font-family="Space Mono,monospace">R</text>`;
+      symBottom = 55;
+    } else {
+      sym = `<line x1="${cx-13}" y1="37" x2="${cx+13}" y2="37" stroke="${lc}" stroke-width="3"/>
+             <line x1="${cx-13}" y1="46" x2="${cx+13}" y2="46" stroke="${lc}" stroke-width="3"/>`;
+      symBottom = 50;
+    }
+    svg.innerHTML = `
+      <line x1="10" y1="22" x2="150" y2="22" stroke="${wc}" stroke-width="2.5"/>
+      <line x1="${cx}" y1="22" x2="${cx}" y2="35" stroke="${wc}" stroke-width="2"/>
+      ${sym}
+      <line x1="${cx}" y1="${symBottom}" x2="${cx}" y2="60" stroke="${wc}" stroke-width="2"/>
+      <line x1="${cx-12}" y1="60" x2="${cx+12}" y2="60" stroke="${wc}" stroke-width="2.5"/>
+      <line x1="${cx-8}"  y1="64" x2="${cx+8}"  y2="64" stroke="${wc}" stroke-width="1.8"/>
+      <circle cx="10" cy="22" r="4" fill="${lc}"/>
+      <circle cx="150" cy="22" r="4" fill="${lc}"/>`;
+  }
+}
+
 // ════════════════════════════════════════════════════════════════
 // STEP 2
 // ════════════════════════════════════════════════════════════════
@@ -2469,14 +2536,12 @@ function updateS2() {
     document.getElementById(`b${i}-val-lbl`).textContent = blockSliderLabel(btype, val);
     const M = blockToAbcd(btype, val, freq);
     document.getElementById(`b${i}-matrix`).innerHTML = matrixMini(M);
+    drawBlockSVG(`b${i}-svg`, btype);
     return M;
   });
 
   const Mtotal = mMul(mMul(blocks[0], blocks[1]), blocks[2]);
 
-  [1, 2, 3].forEach((n, idx) => {
-    document.getElementById(`cv-b${n}-vals`).innerHTML = matrixMini(blocks[idx]);
-  });
   document.getElementById('cv-total-vals').innerHTML = matrixMini(Mtotal);
 
   const [[, ], [S21]] = abcdToS(Mtotal, 50);
