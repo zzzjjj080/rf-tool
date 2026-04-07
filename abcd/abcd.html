@@ -154,7 +154,7 @@ h1 {
 .mat-cell.c { color: var(--green);   background: color-mix(in srgb, var(--green)   8%, transparent); }
 .mat-cell.d { color: var(--accent2); background: color-mix(in srgb, var(--accent2) 8%, transparent); }
 /* mini matrix for cascade blocks */
-.mat-mini { font-family: 'Space Mono', monospace; font-size: 12px; line-height: 1.8; }
+.mat-mini { font-family: 'Space Mono', monospace; font-size: 15px; line-height: 2.0; }
 .mat-mini .a { color: var(--accent); }
 .mat-mini .b { color: var(--gold); }
 .mat-mini .c { color: var(--green); }
@@ -225,10 +225,10 @@ h1 {
 .cascade-vis { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 16px 0; }
 .cblock {
   background: var(--panel2); border: 2px solid var(--border);
-  border-radius: 8px; padding: 12px 16px; text-align: center; min-width: 100px;
+  border-radius: 8px; padding: 14px 20px; text-align: center; min-width: 110px;
 }
 .cblock.combined { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--panel)); }
-.cblock-label { font-size: 12px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
+.cblock-label { font-size: 13px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; margin-bottom: 10px; letter-spacing: 0.5px; }
 .cascade-op { font-family: 'Space Mono', monospace; font-size: 24px; color: var(--text-dim); font-weight: 700; }
 
 /* ── Smith chart ── */
@@ -280,7 +280,7 @@ h1 {
       <span class="step-num">2</span>ABCD行列と変換
     </button>
     <button class="step-btn" onclick="showStep(3)">
-      <span class="step-num">3</span>カスケード接続
+      <span class="step-num">3</span>直列接続
     </button>
     <button class="step-btn" onclick="showStep(4)">
       <span class="step-num">4</span>De-embedding体験
@@ -547,7 +547,7 @@ h1 {
         S パラメータで合成しようとすると非常に複雑な式（シグナルフロウグラフ）が必要になります。
       </div>
       <div class="info-box" style="margin-top:10px;">
-        <strong>ABCD 行列の利点：</strong>直列（カスケード）接続のとき、
+        <strong>ABCD 行列の利点：</strong>直列接続のとき、
         ABCD 行列は単純な <strong>行列の積 M_total = M₁ × M₂ × M₃ × …</strong> で合成できます。<br>
         もちろん S パラメータと ABCD 行列は完全に相互変換できるので、
         VNA で測定した S パラメータも ABCD に変換して使えます。
@@ -742,10 +742,10 @@ h1 {
   <div class="step-panel" id="step3">
 
     <div class="step-intro">
-      <div class="step-intro-title">⛓ カスケード接続とは？ — なぜ行列の積で合成できるのか</div>
+      <div class="step-intro-title">⛓ 直列接続とは？ — なぜ行列の積で合成できるのか</div>
       <div class="step-intro-body">
         <p>
-          複数の 2ポート回路ブロックを <strong>直列（カスケード）につないだとき、合成 ABCD 行列は各ブロックの行列積</strong> で求まります。
+          複数の 2ポート回路ブロックを <strong>直列につないだとき、合成 ABCD 行列は各ブロックの行列積</strong> で求まります。
         </p>
         <p style="text-align:center;font-family:'Space Mono',monospace;font-size:14px;margin:12px 0;">
           M_total = M₁ × M₂ × M₃ × …
@@ -763,7 +763,7 @@ h1 {
 
     <!-- Signal flow concept diagram -->
     <div class="card">
-      <div class="card-title">🔗 信号の流れとカスケード合成</div>
+      <div class="card-title">🔗 信号の流れと直列合成</div>
       <div class="diagram-wrap">
         <svg id="s2-flow-svg" viewBox="0 0 700 90" xmlns="http://www.w3.org/2000/svg"></svg>
       </div>
@@ -864,7 +864,7 @@ h1 {
 
     <!-- Cascade visualization -->
     <div class="card">
-      <div class="card-title">🔗 カスケード演算結果</div>
+      <div class="card-title">🔗 直列合成結果（行列積）</div>
       <div class="cascade-vis">
         <div class="cblock">
           <div class="cblock-label">M₁</div>
@@ -934,6 +934,12 @@ h1 {
             </div>
             <span class="mat-bracket">]</span>
           </div>
+        </div>
+        <!-- Port variable legend -->
+        <div style="display:flex;justify-content:center;flex-wrap:wrap;gap:6px 20px;margin:10px 0 4px;font-size:12px;color:var(--text-dim);font-family:'Noto Sans JP',sans-serif;">
+          <span><strong style="color:var(--text);">V₁, I₁</strong> = ポート1（入力側）の電圧・電流</span>
+          <span><strong style="color:var(--text);">V₂, I₂</strong> = ポート2（出力側）の電圧・電流</span>
+          <span>−I₂：出力電流の符号規約（流れ出る向きを正とする）</span>
         </div>
         <p>
           VNA が測定する <strong>S パラメータ</strong>（S11, S21 など）と ABCD 行列は完全に相互変換できます。
@@ -1409,9 +1415,20 @@ function matrixHTML(M) {
 // Mini matrix for cascade blocks
 function matrixMini(M) {
   const [[A, B], [Cm, D]] = M;
+  const fn = v => {
+    const a = Math.abs(v);
+    if (a < 1e-5) return '0';
+    if (a >= 100) return v.toFixed(1);
+    if (a >= 10)  return v.toFixed(2);
+    return v.toFixed(3);
+  };
   const f = c => {
-    if (Math.abs(c.im) < 1e-5) return c.re.toFixed(2);
-    return c.re.toFixed(2) + (c.im >= 0 ? '+j' : '−j') + Math.abs(c.im).toFixed(2);
+    const reZ = Math.abs(c.re) < 1e-5;
+    const imZ = Math.abs(c.im) < 1e-5;
+    if (imZ && reZ) return '0';
+    if (imZ) return fn(c.re);
+    if (reZ) return (c.im >= 0 ? 'j' : '−j') + fn(Math.abs(c.im));
+    return fn(c.re) + (c.im >= 0 ? '+j' : '−j') + fn(Math.abs(c.im));
   };
   return `<span class="a">${f(A)}</span> &nbsp; <span class="b">${f(B)}</span><br><span class="c">${f(Cm)}</span> &nbsp; <span class="d">${f(D)}</span>`;
 }
