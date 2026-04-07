@@ -367,26 +367,26 @@ h1 {
       <!-- Load mode -->
       <div id="s0-load-panel">
         <div class="info-box">
-          負荷インピーダンス Z_L を変えると S₁₁（反射係数 Γ）がどう変わるか確認してください。
-          Z_L = Z₀ = 50 Ω のとき S₁₁ = 0（完全整合）になります。
+          スミスチャート上の点を<strong>ドラッグ</strong>するか、スライダーで負荷 Z_L を変えてみてください。
+          Z_L = Z₀ = 50 Ω のとき S₁₁ = 0（完全整合・チャート中心）になります。
         </div>
         <div class="two-col">
           <div>
             <div class="form-group">
               <label>負荷抵抗 R_L（実部）</label>
-              <div class="slider-row">
+              <div class="slider-row" style="max-width:260px;">
                 <input type="range" id="s0-rl" min="0" max="500" value="50" oninput="updateS0()">
                 <span class="slider-val" id="s0-rl-val">50 Ω</span>
               </div>
-              <div class="hint">R_L = 50 Ω = Z₀ で完全整合（S₁₁ = 0）。0 Ω = 短絡、∞ Ω = 開放で全反射になります。</div>
+              <div class="hint">0 Ω = 短絡（全反射）、50 Ω = 整合（S₁₁=0）、∞ = 開放（全反射）</div>
             </div>
             <div class="form-group">
               <label>負荷リアクタンス X_L（虚部）</label>
-              <div class="slider-row">
+              <div class="slider-row" style="max-width:260px;">
                 <input type="range" id="s0-xl" min="-300" max="300" value="0" oninput="updateS0()">
                 <span class="slider-val" id="s0-xl-val">0 Ω</span>
               </div>
-              <div class="hint">X_L ≠ 0 → 誘導性（正）または容量性（負）の負荷。スミスチャート上で上下に動きます。</div>
+              <div class="hint">X_L &gt; 0 → 誘導性（チャート上半分）、X_L &lt; 0 → 容量性（下半分）</div>
             </div>
             <div class="result-row" id="s0-load-results"></div>
             <div class="callout" id="s0-load-callout" style="margin-top:14px;"></div>
@@ -408,9 +408,19 @@ h1 {
             </div>
           </div>
           <div>
-            <canvas id="smith-canvas-s0" width="760" height="760" style="width:100%;max-width:380px;height:auto;display:block;margin:0 auto;border-radius:8px;"></canvas>
-            <div class="hint" style="text-align:center;margin-top:8px;">スミスチャート上の S₁₁（Γ）の位置</div>
+            <canvas id="smith-canvas-s0" width="760" height="760"
+              style="width:100%;max-width:380px;height:auto;display:block;margin:0 auto;border-radius:8px;cursor:crosshair;touch-action:none;"></canvas>
+            <div class="hint" style="text-align:center;margin-top:6px;">
+              🖱 ドラッグして S₁₁ を動かせます　|　距離 = |S₁₁|（大きさ）　角度 = ∠S₁₁（位相）
+            </div>
           </div>
+        </div>
+        <!-- Frequency sweep note -->
+        <div class="callout" style="margin-top:18px;border-left-color:var(--text-dim);">
+          <div class="callout-title" style="color:var(--text-dim);">📝 おまけ：実際の測定は「周波数スイープ」</div>
+          VNA（ネットワークアナライザー）では周波数を少しずつ変えながら S パラメータを連続測定します。
+          すると周波数ごとに異なる S₁₁ の値が得られ、スミスチャート上に <strong>軌跡（トレース）</strong> として描かれます。
+          このデモは「<strong>ある1つの周波数でのスナップショット</strong>」として S₁₁ を理解するためのものです。
         </div>
       </div>
 
@@ -1547,22 +1557,118 @@ function drawSmithS0(canvasId, ptMain) {
   ctx.beginPath(); ctx.arc(cx, cy, 2.5, 0, Math.PI * 2); ctx.fill();
 
   if (ptMain && cAbs(ptMain) <= 1.05) {
+    const mag = cAbs(ptMain);
+    const ph  = cArg(ptMain);  // radians, 0=right, CCW positive
     const x = cx + ptMain.re * r;
     const y = cy - ptMain.im * r;
     const col = dark ? '#00d4ff' : '#0284c7';
-    ctx.strokeStyle = col + '55';
+
+    // ── Magnitude circle (dashed, shows |S₁₁| contour) ──
+    if (mag > 0.02) {
+      ctx.setLineDash([3, 3]);
+      ctx.strokeStyle = col + '44';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, mag * r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // ── Phase arc (small arc from 0° to current phase) ──
+    if (mag > 0.08) {
+      const arcR = Math.min(r * 0.22, mag * r * 0.55);
+      const startAngle = 0;        // 0° = real-positive axis (rightward in canvas = -y direction)
+      const endAngle   = -ph;      // canvas Y is flipped
+      const ccw        = ph > 0;   // CCW in math = CW in canvas
+      ctx.strokeStyle = dark ? '#fbbf24aa' : '#d97706aa';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([2, 3]);
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, arcR, startAngle, endAngle, ccw);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // Phase label
+      const midAngle = ph / 2;
+      const lx = cx + (arcR + 10) * Math.cos(-midAngle);
+      const ly = cy + (arcR + 10) * Math.sin(-midAngle);
+      ctx.fillStyle = dark ? '#fbbf24' : '#d97706';
+      ctx.font = `${Math.round(CSS * 0.028)}px Space Mono, monospace`;
+      ctx.textAlign = lx > cx ? 'left' : 'right';
+      ctx.fillText((ph * 180 / Math.PI).toFixed(0) + '°', lx + (lx > cx ? 2 : -2), ly);
+    }
+
+    // ── Radial line from center to point ──
+    ctx.strokeStyle = col + '66';
     ctx.setLineDash([4, 4]); ctx.lineWidth = 1.2;
     ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(x, y); ctx.stroke();
     ctx.setLineDash([]);
+
+    // ── Main dot ──
     ctx.beginPath(); ctx.arc(x, y, 10, 0, Math.PI * 2);
     ctx.fillStyle = col; ctx.fill();
     ctx.strokeStyle = dark ? '#1a2235' : '#fff'; ctx.lineWidth = 2.5; ctx.stroke();
+
+    // ── Magnitude label near dot ──
     ctx.fillStyle = col;
-    ctx.font = `bold ${Math.round(CSS * 0.04)}px Space Mono, monospace`;
+    ctx.font = `bold ${Math.round(CSS * 0.038)}px Space Mono, monospace`;
     ctx.textAlign = x > cx ? 'left' : 'right';
-    ctx.fillText('S₁₁', x + (x > cx ? 14 : -14), y - 10);
+    ctx.fillText('S₁₁', x + (x > cx ? 14 : -14), y - 12);
+    ctx.font = `${Math.round(CSS * 0.03)}px Space Mono, monospace`;
+    ctx.fillText(mag.toFixed(3), x + (x > cx ? 14 : -14), y + 4);
   }
 }
+
+// ── Smith chart drag: smith-canvas-s0 ──────────────────────────
+(function () {
+  let dragging = false;
+
+  function getGamma(canvas, clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    const CSS = 380, cx = CSS / 2, cy = CSS / 2, r = CSS * 0.43;
+    const sx = CSS / rect.width, sy = CSS / rect.height;
+    let re = ((clientX - rect.left) * sx - cx) / r;
+    let im = -(((clientY - rect.top) * sy - cy)) / r;
+    const m = Math.sqrt(re * re + im * im);
+    if (m > 0.97) { re = re / m * 0.97; im = im / m * 0.97; }
+    return { re, im };
+  }
+
+  function applyGamma(gamma) {
+    // ZL = Z0 * (1+Γ) / (1-Γ)
+    const Z0 = 50;
+    const num = cAdd(C0(1), gamma);
+    const den = cSub(C0(1), gamma);
+    if (Math.sqrt(den.re * den.re + den.im * den.im) < 0.02) return;
+    const ZL = cMul(C0(Z0), cDiv(num, den));
+    document.getElementById('s0-rl').value = Math.max(0, Math.min(500, Math.round(ZL.re)));
+    document.getElementById('s0-xl').value = Math.max(-300, Math.min(300, Math.round(ZL.im)));
+    updateS0();
+  }
+
+  window.initSmithDrag = function () {
+    const cv = document.getElementById('smith-canvas-s0');
+    if (!cv) return;
+    cv.addEventListener('mousedown', e => {
+      dragging = true;
+      applyGamma(getGamma(cv, e.clientX, e.clientY));
+    });
+    cv.addEventListener('mousemove', e => {
+      if (dragging) applyGamma(getGamma(cv, e.clientX, e.clientY));
+    });
+    cv.addEventListener('mouseup',   () => { dragging = false; });
+    cv.addEventListener('mouseleave',() => { dragging = false; });
+    cv.addEventListener('touchstart', e => {
+      e.preventDefault(); dragging = true;
+      applyGamma(getGamma(cv, e.touches[0].clientX, e.touches[0].clientY));
+    }, { passive: false });
+    cv.addEventListener('touchmove', e => {
+      e.preventDefault();
+      if (dragging) applyGamma(getGamma(cv, e.touches[0].clientX, e.touches[0].clientY));
+    }, { passive: false });
+    cv.addEventListener('touchend', () => { dragging = false; });
+  };
+})();
 
 function drawS0Diagrams() {
   const lc = tc('#60a5fa','#0284c7');
@@ -1949,6 +2055,7 @@ function toggleTheme() {
 // Init
 // ════════════════════════════════════════════════════════════════
 window.addEventListener('load', () => {
+  initSmithDrag();
   updateS0();
   updateS1();
   updateS2();
