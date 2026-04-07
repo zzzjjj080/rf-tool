@@ -113,6 +113,21 @@ footer a:hover{text-decoration:underline}
 [data-theme="dark"] .local-ctrl{border-color:rgba(0,212,255,.25)}
 .local-ctrl-header{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;display:flex;align-items:center;gap:6px}
 .local-ctrl-header::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block}
+/* FIR section */
+.fir-ctrl{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+.fir-custom-coeffs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px}
+.fir-coeff-input{width:58px;background:var(--panel2);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:12px;padding:4px 6px;border-radius:6px;text-align:center}
+.fir-coeff-input:focus{outline:none;border-color:var(--accent2)}
+.fir-btn{padding:8px 18px;border-radius:8px;border:1.5px solid var(--accent);background:var(--panel);color:var(--accent);font-family:'Space Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;box-shadow:0 1px 4px var(--shadow)}
+.fir-btn:hover{background:var(--accent);color:var(--panel)}
+.fir-btn.orange{border-color:var(--accent2);color:var(--accent2)}
+.fir-btn.orange:hover{background:var(--accent2);color:var(--panel)}
+.fir-step-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.fir-step-info{font-family:'Space Mono',monospace;font-size:11px;color:var(--text-dim)}
+.fir-calc{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-top:10px;font-family:'Space Mono',monospace;font-size:11px;line-height:2.1;color:var(--text);overflow-x:auto;white-space:nowrap}
+.fir-calc .fh{color:var(--accent2);font-weight:700}
+.fir-calc .fx{color:var(--accent);font-weight:700}
+.fir-calc .fr{color:var(--gold);font-weight:700}
 </style>
 </head>
 <body>
@@ -418,9 +433,64 @@ footer a:hover{text-decoration:underline}
     </div>
   </section>
 
-  <!-- ⑨ 実例：オーディオフィルター -->
+  <!-- ⑨ FIR フィルターの実装 -->
   <section class="explain-section">
-    <h3>⑨ 実例：オーディオフィルター</h3>
+    <h3>⑨ FIR フィルターの実装（Direct Form I）</h3>
+    <p class="explain-text">
+      <span class="hl">FIR（有限インパルス応答）フィルター</span>は、シフトレジスタと係数の積和演算（MAC）で実現されるシンプルなデジタルフィルターです。<br>
+      各ステップで新しいサンプルが入力され、レジスタ値が右にシフト、各係数との積を総和して出力 y[n] を得ます。<br>
+      <span class="hl2">FPGA / DSP / マイコン</span>に直接マッピングでき、<span class="hl3">線形位相特性</span>が得られる点が特徴です。
+    </p>
+
+    <div class="local-ctrl">
+      <div class="local-ctrl-header">係数プリセット / 入力信号</div>
+      <div class="fir-ctrl">
+        <div class="select-group">
+          <label>係数プリセット</label>
+          <select id="firPreset" onchange="onFIRPreset()">
+            <option value="moving_avg">移動平均（LPF）</option>
+            <option value="diff">差分（HPF）</option>
+            <option value="triangle">三角窓（LPF）</option>
+            <option value="custom">カスタム</option>
+          </select>
+        </div>
+        <div class="select-group">
+          <label>入力信号</label>
+          <select id="firInputSeq" onchange="onFIRInputSeq()">
+            <option value="impulse">インパルス（1, 0, 0, 0…）</option>
+            <option value="step">ステップ（1, 1, 1, 1…）</option>
+          </select>
+        </div>
+      </div>
+      <div id="firCustomCoeffs" class="fir-custom-coeffs" style="display:none">
+        <span style="font-family:'Space Mono',monospace;font-size:10px;color:var(--accent2);letter-spacing:1px">h[] =</span>
+        <input type="number" id="firCoeff0" class="fir-coeff-input" value="1"   step="0.1" oninput="onFIRCustomCoeff()">
+        <input type="number" id="firCoeff1" class="fir-coeff-input" value="0"   step="0.1" oninput="onFIRCustomCoeff()">
+        <input type="number" id="firCoeff2" class="fir-coeff-input" value="0"   step="0.1" oninput="onFIRCustomCoeff()">
+        <input type="number" id="firCoeff3" class="fir-coeff-input" value="0"   step="0.1" oninput="onFIRCustomCoeff()">
+        <input type="number" id="firCoeff4" class="fir-coeff-input" value="0"   step="0.1" oninput="onFIRCustomCoeff()">
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><div class="dot"></div>FIR Direct Form I — シフトレジスタ構造（5タップ）</div>
+      <canvas id="cvFIR" height="228"></canvas>
+    </div>
+
+    <div class="fir-step-row">
+      <button class="fir-btn" id="firStepBtn" onclick="firStep()">次のサンプルを入力 →</button>
+      <button class="fir-btn orange" onclick="firReset()">リセット</button>
+      <span class="fir-step-info" id="firStepInfo">ステップ: 0 &nbsp;|&nbsp; 次の入力: 1.0（インパルス）</span>
+    </div>
+
+    <div id="firCalcDisplay" class="fir-calc">
+      <span style="color:var(--text-dim)">「次のサンプルを入力」を押すとアニメーション開始</span>
+    </div>
+  </section>
+
+  <!-- ⑩ 実例：オーディオフィルター -->
+  <section class="explain-section">
+    <h3>⑩ 実例：オーディオフィルター</h3>
     <p class="explain-text">
       オーディオでよく使われる <span class="hl">LPF</span>：高周波ノイズ（ハム音・量子化ノイズ）の除去に使います。<br>
       人間の可聴域は約 <span class="hl2">20 Hz ～ 20 kHz</span>。カットオフ 20 kHz の LPF で可聴域外のノイズを除去します。<br>
@@ -1252,6 +1322,319 @@ function drawAudio() {
   if (lb) lb.textContent = `${typeLabels[filterType]} 出力（フィルター後）`;
 }
 
+// ─── FIR Implementation ───────────────────────────────────────────────────
+const FIR_PRESETS = {
+  moving_avg: [0.2,  0.2,  0.2,  0.2,  0.2],
+  diff:       [1,   -1,    0,    0,    0  ],
+  triangle:   [0.1,  0.2,  0.4,  0.2,  0.1],
+  custom:     [1,    0,    0,    0,    0  ],
+};
+
+const firSt = {
+  reg: [0, 0, 0, 0, 0],   // shift registers x[n]..x[n-4]
+  h:   [0.2, 0.2, 0.2, 0.2, 0.2],
+  inputSeq: 'impulse',
+  n: 0,       // steps taken
+  anim: 0,    // 0=idle 1=shift 2=multiply 3=sum
+  pending: 0, // value entering during anim=1
+  yOut: 0,
+};
+
+function firNextInput() {
+  return (firSt.inputSeq === 'impulse') ? (firSt.n === 0 ? 1 : 0) : 1;
+}
+
+function firUpdateStepInfo() {
+  const el = document.getElementById('firStepInfo');
+  if (!el) return;
+  const next = firNextInput();
+  const seqLabel = firSt.inputSeq === 'impulse' ? 'インパルス' : 'ステップ';
+  el.textContent = `ステップ: ${firSt.n}  |  次の入力: ${next.toFixed(1)}（${seqLabel}）`;
+}
+
+function firReset() {
+  firSt.reg = [0, 0, 0, 0, 0];
+  firSt.n = 0;
+  firSt.anim = 0;
+  firSt.yOut = 0;
+  drawFIR();
+  const el = document.getElementById('firCalcDisplay');
+  if (el) el.innerHTML = '<span style="color:var(--text-dim)">「次のサンプルを入力」を押すとアニメーション開始</span>';
+  firUpdateStepInfo();
+}
+
+function firStep() {
+  if (firSt.anim !== 0) return;
+  const xNew = firNextInput();
+  firSt.pending = xNew;
+  firSt.anim = 1;
+  drawFIR();
+
+  setTimeout(() => {
+    for (let i = 4; i > 0; i--) firSt.reg[i] = firSt.reg[i - 1];
+    firSt.reg[0] = xNew;
+    firSt.n++;
+    firSt.yOut = firSt.h.reduce((s, hi, i) => s + hi * firSt.reg[i], 0);
+    firSt.anim = 2;
+    drawFIR();
+    updateFIRCalc();
+    firUpdateStepInfo();
+
+    setTimeout(() => {
+      firSt.anim = 3;
+      drawFIR();
+      setTimeout(() => { firSt.anim = 0; drawFIR(); }, 700);
+    }, 700);
+  }, 380);
+}
+
+function onFIRPreset() {
+  const v = document.getElementById('firPreset').value;
+  firSt.h = [...FIR_PRESETS[v]];
+  const cc = document.getElementById('firCustomCoeffs');
+  if (cc) cc.style.display = v === 'custom' ? 'flex' : 'none';
+  for (let i = 0; i < 5; i++) {
+    const el = document.getElementById('firCoeff' + i);
+    if (el) el.value = firSt.h[i];
+  }
+  firReset();
+}
+
+function onFIRCustomCoeff() {
+  for (let i = 0; i < 5; i++) {
+    const v = parseFloat(document.getElementById('firCoeff' + i).value);
+    firSt.h[i] = isNaN(v) ? 0 : v;
+  }
+  drawFIR();
+  updateFIRCalc();
+}
+
+function onFIRInputSeq() {
+  firSt.inputSeq = document.getElementById('firInputSeq').value;
+  firReset();
+}
+
+function updateFIRCalc() {
+  const el = document.getElementById('firCalcDisplay');
+  if (!el) return;
+  const h = firSt.h, x = firSt.reg, y = firSt.yOut;
+  const line1 = 'y[n] = ' + h.map((hi, i) => `h[${i}]×x[n${i > 0 ? '-' + i : ''}]`).join(' + ');
+  const line2 = '     = ' + h.map((hi, i) =>
+    `<span class="fh">${hi >= 0 ? hi.toFixed(3) : '(' + hi.toFixed(3) + ')'}</span>` +
+    `×<span class="fx">${x[i].toFixed(3)}</span>`
+  ).join(' + ');
+  const line3 = `     = <span class="fr">${y.toFixed(4)}</span>`;
+  el.innerHTML = `<div>${line1}</div><div>${line2}</div><div>${line3}</div>`;
+}
+
+// ── FIR canvas helpers ────────────────────────────────────────────────────
+function firArrow(ctx, x, y, dir, color) {
+  const s = 5;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  if (dir === 'right') {
+    ctx.moveTo(x, y); ctx.lineTo(x - s, y - s * 0.6); ctx.lineTo(x - s, y + s * 0.6);
+  } else { // down
+    ctx.moveTo(x, y); ctx.lineTo(x - s * 0.6, y - s); ctx.lineTo(x + s * 0.6, y - s);
+  }
+  ctx.closePath(); ctx.fill();
+}
+
+function firRRect(ctx, x, y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function drawFIR() {
+  const cv = document.getElementById('cvFIR');
+  if (!cv) return;
+  const {dpr, w, h} = initCanvas(cv);
+  const ctx = getCtx(cv, dpr);
+  const C = getColors();
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = C.panel2;
+  ctx.fillRect(0, 0, w, h);
+
+  const cReg    = dark ? '#0c2640' : '#dbeafe';
+  const cRegBrd = dark ? '#00d4ff' : '#0284c7';
+  const cMul    = dark ? '#200e00' : '#fff3e0';
+  const cMulBrd = dark ? '#ff6b35' : '#ea580c';
+  const cHigh   = C.gold;
+
+  const TAPS = 5;
+  const boxW = Math.min(60, Math.floor((w - 80) / TAPS - 12));
+  const boxH = 30;
+  const mulR = Math.min(15, Math.floor(boxW * 0.28));
+  const leftM = 44, rightM = 12;
+  const xStep = (w - leftM - rightM - boxW) / (TAPS - 1);
+  const cxs = Array.from({length: TAPS}, (_, i) => leftM + boxW / 2 + i * xStep);
+
+  // Fixed Y layout
+  const regTop = 22, regBot = regTop + boxH, regMid = regTop + boxH / 2;
+  const idxLabelY  = regBot + 13;
+  const mulCy      = regBot + 56;
+  const mulBot     = mulCy + mulR;
+  const coeffLblY  = mulBot + 14;
+  const prodLblY   = coeffLblY + 12;
+  const busY       = prodLblY + 18;
+  const adderR     = 12;
+  const outLineEnd = busY + adderR + 24;
+  const outLblY    = outLineEnd + 14;
+
+  const anim = firSt.anim;
+  const isShift = anim === 1, isMul = anim === 2, isSum = anim === 3;
+
+  // ── Input arrow from left ──────────────────────────────────────────────
+  {
+    const arrowX = cxs[0] - boxW / 2 - 2;
+    ctx.strokeStyle = isShift ? cHigh : C.text;
+    ctx.lineWidth = isShift ? 2 : 1.5;
+    ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(8, regMid); ctx.lineTo(arrowX, regMid); ctx.stroke();
+    firArrow(ctx, arrowX, regMid, 'right', isShift ? cHigh : C.text);
+    ctx.fillStyle = isShift ? cHigh : C.text;
+    ctx.font = `bold 11px Space Mono`;
+    ctx.textAlign = 'center';
+    // Knockout background behind text
+    const inLabel = isShift ? firSt.pending.toFixed(1) : 'x[n]';
+    const inLblX = (8 + arrowX) / 2;
+    const inLblW = ctx.measureText(inLabel).width + 6;
+    ctx.fillStyle = C.panel2;
+    ctx.fillRect(inLblX - inLblW / 2, regMid - 14, inLblW, 13);
+    ctx.fillStyle = isShift ? cHigh : C.text;
+    ctx.fillText(inLabel, inLblX, regMid - 4);
+  }
+
+  // ── z⁻¹ arrows between register boxes ────────────────────────────────
+  for (let i = 0; i < TAPS - 1; i++) {
+    const x1 = cxs[i] + boxW / 2, x2 = cxs[i + 1] - boxW / 2 - 2;
+    const midX = (x1 + x2) / 2;
+    ctx.strokeStyle = isShift ? cHigh : C.border;
+    ctx.lineWidth = isShift ? 2 : 1;
+    ctx.beginPath(); ctx.moveTo(x1, regMid); ctx.lineTo(x2, regMid); ctx.stroke();
+    firArrow(ctx, x2, regMid, 'right', isShift ? cHigh : C.border);
+    // Knockout + label
+    ctx.font = `bold 9px Space Mono`;
+    const zLabel = 'z\u207B\u00B9';
+    const zW = ctx.measureText(zLabel).width + 4;
+    ctx.fillStyle = C.panel2;
+    ctx.fillRect(midX - zW / 2, regMid - 15, zW, 12);
+    ctx.fillStyle = isShift ? cHigh : C.accent;
+    ctx.textAlign = 'center';
+    ctx.fillText(zLabel, midX, regMid - 5);
+  }
+
+  // ── Per-tap: register box, connector, multiplier, labels, bus line ────
+  for (let i = 0; i < TAPS; i++) {
+    const cx = cxs[i], bx = cx - boxW / 2;
+
+    // Register box
+    const isIncoming = isShift && i === 0;
+    ctx.fillStyle = isIncoming ? (dark ? '#002a4a' : '#bfdbfe') : cReg;
+    ctx.strokeStyle = isIncoming ? cHigh : cRegBrd;
+    ctx.lineWidth = isIncoming ? 2.5 : 1.5;
+    firRRect(ctx, bx, regTop, boxW, boxH, 5);
+    ctx.fill(); ctx.stroke();
+
+    // Value inside box
+    ctx.fillStyle = isIncoming ? cHigh : C.text;
+    ctx.font = `bold ${boxW < 46 ? 10 : 12}px Space Mono`;
+    ctx.textAlign = 'center';
+    ctx.fillText(firSt.reg[i].toFixed(2), cx, regTop + boxH / 2 + 4);
+
+    // Index label below box (with panel2 knockout)
+    const idxLabel = i === 0 ? 'x[n]' : `x[n-${i}]`;
+    ctx.font = '9px Space Mono';
+    const idxW = ctx.measureText(idxLabel).width + 4;
+    ctx.fillStyle = C.panel2;
+    ctx.fillRect(cx - idxW / 2, idxLabelY - 10, idxW, 12);
+    ctx.fillStyle = C.textDim;
+    ctx.textAlign = 'center';
+    ctx.fillText(idxLabel, cx, idxLabelY);
+
+    // Connector line: box → multiplier (full length, behind labels)
+    ctx.strokeStyle = isMul ? C.accent2 : C.textDim;
+    ctx.lineWidth = isMul ? 1.5 : 1;
+    ctx.beginPath(); ctx.moveTo(cx, regBot); ctx.lineTo(cx, mulCy - mulR - 2); ctx.stroke();
+    firArrow(ctx, cx, mulCy - mulR - 2, 'down', isMul ? C.accent2 : C.textDim);
+
+    // Multiplier circle
+    ctx.fillStyle = isMul ? (dark ? '#280d00' : '#fff3e0') : cMul;
+    ctx.strokeStyle = isMul ? C.accent2 : cMulBrd;
+    ctx.lineWidth = isMul ? 2.5 : 1.5;
+    ctx.beginPath(); ctx.arc(cx, mulCy, mulR, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = C.accent2;
+    ctx.font = `bold ${mulR < 13 ? 10 : 12}px Space Mono`;
+    ctx.textAlign = 'center';
+    ctx.fillText('\u00D7', cx, mulCy + 4);
+
+    // Coefficient label (knockout)
+    const cLabel = `h[${i}]=${firSt.h[i].toFixed(2)}`;
+    ctx.font = '9px Space Mono';
+    const cLabelW = ctx.measureText(cLabel).width + 4;
+    ctx.fillStyle = C.panel2;
+    ctx.fillRect(cx - cLabelW / 2, coeffLblY - 10, cLabelW, 12);
+    ctx.fillStyle = isMul ? C.accent2 : C.textDim;
+    ctx.textAlign = 'center';
+    ctx.fillText(cLabel, cx, coeffLblY);
+
+    // Product label (knockout, only when mul or sum)
+    const pLabel = (isMul || isSum) ? `=${(firSt.h[i] * firSt.reg[i]).toFixed(3)}` : '';
+    if (pLabel) {
+      ctx.font = 'bold 9px Space Mono';
+      const pW = ctx.measureText(pLabel).width + 4;
+      ctx.fillStyle = C.panel2;
+      ctx.fillRect(cx - pW / 2, prodLblY - 10, pW, 12);
+      ctx.fillStyle = cHigh;
+      ctx.textAlign = 'center';
+      ctx.fillText(pLabel, cx, prodLblY);
+    }
+
+    // Connector line: multiplier bottom → bus
+    ctx.strokeStyle = (isMul || isSum) ? cHigh : C.textDim;
+    ctx.lineWidth = 1;
+    const busConnStart = (isMul || isSum) ? prodLblY + 3 : coeffLblY + 3;
+    ctx.beginPath(); ctx.moveTo(cx, busConnStart); ctx.lineTo(cx, busY); ctx.stroke();
+  }
+
+  // ── Horizontal sum bus ────────────────────────────────────────────────
+  ctx.strokeStyle = (isMul || isSum) ? cHigh : C.border;
+  ctx.lineWidth = (isMul || isSum) ? 2 : 1.5;
+  ctx.beginPath(); ctx.moveTo(cxs[0], busY); ctx.lineTo(cxs[TAPS - 1], busY); ctx.stroke();
+
+  // ── Adder (Σ) at center ───────────────────────────────────────────────
+  const sumCx = (cxs[0] + cxs[TAPS - 1]) / 2;
+  ctx.fillStyle = isSum ? (dark ? '#2a1e00' : '#fffbeb') : (dark ? '#141520' : '#f8fafc');
+  ctx.strokeStyle = isSum ? cHigh : C.border;
+  ctx.lineWidth = isSum ? 2.5 : 1.5;
+  ctx.beginPath(); ctx.arc(sumCx, busY, adderR, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = isSum ? cHigh : C.textDim;
+  ctx.font = 'bold 14px Space Mono';
+  ctx.textAlign = 'center';
+  ctx.fillText('\u03A3', sumCx, busY + 5);
+
+  // ── Output line ───────────────────────────────────────────────────────
+  ctx.strokeStyle = isSum ? cHigh : C.textDim;
+  ctx.lineWidth = isSum ? 2 : 1;
+  ctx.beginPath(); ctx.moveTo(sumCx, busY + adderR); ctx.lineTo(sumCx, outLineEnd); ctx.stroke();
+  if (isSum) firArrow(ctx, sumCx, outLineEnd, 'down', cHigh);
+
+  // ── y[n] label ────────────────────────────────────────────────────────
+  const outLabel = isSum ? `y[n] = ${firSt.yOut.toFixed(4)}` : 'y[n]';
+  ctx.font = 'bold 12px Space Mono';
+  ctx.fillStyle = isSum ? cHigh : C.text;
+  ctx.textAlign = 'center';
+  ctx.fillText(outLabel, sumCx, outLblY);
+}
+
 // ─── Results update ───────────────────────────────────────────────────────
 function updateResults() {
   const {filterType, cutoff, order, centerFreq, bandwidth} = state;
@@ -1368,11 +1751,13 @@ function drawAll() {
   drawHPF();
   drawBPF();
   drawImpulse();
+  drawFIR();
   drawAudio();
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────
 updateResults();
+firUpdateStepInfo();
 
 // Resize handler for subsequent window resizes
 let resizeTimer;
