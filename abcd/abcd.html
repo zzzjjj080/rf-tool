@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ABCD行列 &amp; De-embedding 入門 — RF Tool</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+JP:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+/* ── Light mode ── */
+:root {
+  --bg:        #f0f4f8;
+  --panel:     #ffffff;
+  --panel2:    #f1f5f9;
+  --border:    #cbd5e1;
+  --accent:    #0284c7;
+  --accent2:   #ea580c;
+  --text:      #1e293b;
+  --text-dim:  #64748b;
+  --gold:      #d97706;
+  --green:     #16a34a;
+  --red:       #dc2626;
+  --shadow:    rgba(0,0,0,0.07);
+  --grid-line: rgba(100,116,139,0.08);
+}
+/* ── Dark mode ── */
+[data-theme="dark"] {
+  --bg:        #0a0e1a;
+  --panel:     #111827;
+  --panel2:    #1a2235;
+  --border:    #1e3a5f;
+  --accent:    #00d4ff;
+  --accent2:   #ff6b35;
+  --text:      #e2e8f0;
+  --text-dim:  #64748b;
+  --gold:      #fbbf24;
+  --green:     #22c55e;
+  --red:       #f87171;
+  --shadow:    rgba(0,0,0,0.3);
+  --grid-line: rgba(0,212,255,0.03);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'Noto Sans JP', sans-serif;
+  min-height: 100vh; overflow-x: hidden;
+  transition: background 0.3s, color 0.3s;
+}
+body::before {
+  content: ''; position: fixed; inset: 0;
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 40px 40px; pointer-events: none; z-index: 0;
+}
+.container { position: relative; z-index: 1; max-width: 1140px; margin: 0 auto; padding: 20px 16px 48px; }
+
+/* ── Page header ── */
+header { text-align: center; margin-bottom: 24px; padding: 20px 0 16px; border-bottom: 1px solid var(--border); }
+.header-tag { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; margin-bottom: 6px; opacity: 0.8; }
+h1 {
+  font-family: 'Space Mono', monospace; font-size: clamp(18px, 4vw, 30px);
+  font-weight: 700; letter-spacing: -1px;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--text) 55%, var(--accent2) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.subtitle { font-size: 11px; color: var(--text-dim); margin-top: 5px; font-family: 'Space Mono', monospace; letter-spacing: 1px; }
+
+/* ── Step navigation ── */
+.steps-nav {
+  display: flex; gap: 0; margin-bottom: 24px;
+  border-radius: 10px; overflow: hidden; border: 1px solid var(--border);
+  box-shadow: 0 2px 8px var(--shadow);
+}
+.step-btn {
+  flex: 1; padding: 12px 8px; background: var(--panel); border: none; cursor: pointer;
+  font-family: 'Noto Sans JP', sans-serif; font-size: 12px; font-weight: 600;
+  color: var(--text-dim); border-right: 1px solid var(--border);
+  transition: all 0.2s; text-align: center; line-height: 1.4;
+}
+.step-btn:last-child { border-right: none; }
+.step-btn:hover { background: var(--panel2); color: var(--text); }
+.step-btn.active { background: var(--accent); color: #fff; }
+.step-num { display: block; font-family: 'Space Mono', monospace; font-size: 18px; font-weight: 700; margin-bottom: 3px; }
+
+.step-panel { display: none; }
+.step-panel.active { display: block; }
+
+/* ── Cards ── */
+.card {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 10px; padding: 20px; margin-bottom: 16px;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+.card-title {
+  font-size: 15px; font-weight: 700; color: var(--accent);
+  margin-bottom: 14px; padding-bottom: 10px; border-bottom: 2px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+}
+
+/* ── Layout ── */
+.two-col   { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+/* ── Form controls ── */
+.form-group { margin-bottom: 14px; }
+.form-group label {
+  display: block; font-size: 11px; font-weight: 600; color: var(--text-dim);
+  margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.form-group select {
+  width: 100%; padding: 8px 10px; background: var(--panel2);
+  border: 1px solid var(--border); border-radius: 6px;
+  color: var(--text); font-family: 'Noto Sans JP', sans-serif; font-size: 13px;
+}
+.slider-row { display: flex; align-items: center; gap: 10px; }
+.slider-row input[type="range"] { flex: 1; accent-color: var(--accent); }
+.slider-val { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--accent); min-width: 76px; text-align: right; }
+
+/* ── Matrix display ── */
+.matrix-html table { border-collapse: collapse; margin: 6px 0; }
+.matrix-html td { padding: 3px 12px; }
+
+/* ── Info & formula boxes ── */
+.info-box {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border-left: 3px solid var(--accent); border-radius: 4px;
+  padding: 10px 14px; font-size: 12px; color: var(--text);
+  margin: 12px 0; line-height: 1.7;
+}
+.formula-box {
+  background: var(--panel2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px; font-family: 'Space Mono', monospace;
+  font-size: 11px; line-height: 2.1; margin: 10px 0;
+}
+.formula-box .f-label { color: var(--text-dim); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; display: block; }
+
+/* ── Meaning grid ── */
+.meaning-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.meaning-item { background: var(--panel2); border-radius: 6px; padding: 10px 12px; border: 1px solid var(--border); }
+.meaning-item .sym { font-family: 'Space Mono', monospace; font-size: 18px; font-weight: 700; color: var(--gold); }
+.meaning-item .def { font-size: 12px; color: var(--text-dim); margin-top: 4px; line-height: 1.5; }
+
+/* ── Result chips ── */
+.result-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.result-chip {
+  background: var(--panel2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 14px; text-align: center; min-width: 100px;
+}
+.result-chip .rc-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.result-chip .rc-val { font-family: 'Space Mono', monospace; font-size: 14px; font-weight: 700; color: var(--accent); }
+.result-chip .rc-sub { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+.result-chip.hi { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--panel)); }
+
+/* ── Inner tabs ── */
+.inner-tabs { display: flex; gap: 0; margin-bottom: 14px; border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
+.inner-tab {
+  flex: 1; padding: 8px 10px; background: var(--panel2); border: none; cursor: pointer;
+  font-family: 'Noto Sans JP', sans-serif; font-size: 12px; color: var(--text-dim);
+  border-right: 1px solid var(--border); transition: all 0.2s;
+}
+.inner-tab:last-child { border-right: none; }
+.inner-tab.active { background: var(--accent); color: #fff; font-weight: 600; }
+
+/* ── Cascade visualization ── */
+.cascade-vis { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 14px 0; }
+.cblock {
+  background: var(--panel2); border: 2px solid var(--border);
+  border-radius: 8px; padding: 10px 14px; text-align: center; min-width: 90px;
+}
+.cblock.combined { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--panel)); }
+.cblock-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px; }
+.cblock-vals { font-family: 'Space Mono', monospace; font-size: 11px; line-height: 1.7; }
+.cascade-op { font-family: 'Space Mono', monospace; font-size: 20px; color: var(--text-dim); }
+
+/* ── Smith chart ── */
+#smith-canvas { display: block; margin: 0 auto; border-radius: 8px; width: 100%; max-width: 360px; height: auto; }
+
+/* ── S-param result grid ── */
+.s-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }
+
+/* ── Table ── */
+.de-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.de-table th { text-align: left; padding: 6px 8px; color: var(--text-dim); font-size: 11px; border-bottom: 1px solid var(--border); font-weight: 600; }
+.de-table td { padding: 7px 8px; border-bottom: 1px solid var(--border); }
+
+@media (max-width: 720px) {
+  .two-col   { grid-template-columns: 1fr; }
+  .three-col { grid-template-columns: 1fr; }
+  .meaning-grid { grid-template-columns: 1fr; }
+  .steps-nav { flex-wrap: wrap; }
+  .step-btn { min-width: 50%; border-bottom: 1px solid var(--border); }
+}
+</style>
+</head>
+<body>
+<script>var RF_ACTIVE_TAB = 'abcd';</script>
+<script src="../nav.js"></script>
+
+<div class="container">
+
+  <!-- Page header -->
+  <header>
+    <div class="header-tag">RF Tool — Lesson 15</div>
+    <h1>ABCD行列 &amp; De-embedding 入門</h1>
+    <div class="subtitle">Cascade Matrix · S↔ABCD Conversion · De-embedding Principle</div>
+  </header>
+
+  <!-- Step navigation -->
+  <nav class="steps-nav">
+    <button class="step-btn active" onclick="showStep(1)">
+      <span class="step-num">1</span>ABCD行列とは？
+    </button>
+    <button class="step-btn" onclick="showStep(2)">
+      <span class="step-num">2</span>カスケード接続
+    </button>
+    <button class="step-btn" onclick="showStep(3)">
+      <span class="step-num">3</span>S↔ABCD変換
+    </button>
+    <button class="step-btn" onclick="showStep(4)">
+      <span class="step-num">4</span>De-embedding体験
+    </button>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════════════════
+       STEP 1 : ABCD行列とは？
+  ═══════════════════════════════════════════════════════ -->
+  <div class="step-panel active" id="step1">
+    <div class="two-col">
+
+      <!-- Left: controls -->
+      <div>
+        <div class="card">
+          <div class="card-title">🔲 素子タイプ</div>
+          <div class="inner-tabs">
+            <button class="inner-tab active" onclick="setS1Mode('series')">直列インピーダンス</button>
+            <button class="inner-tab" onclick="setS1Mode('shunt')">並列アドミタンス</button>
+          </div>
+          <div class="form-group">
+            <label>素子構成</label>
+            <select id="s1-elem" onchange="updateS1()">
+              <option value="R">抵抗 R のみ</option>
+              <option value="L">インダクタ L のみ</option>
+              <option value="C">キャパシタ C のみ</option>
+              <option value="RL">R + L（直列）</option>
+              <option value="RC">R + C（直列）</option>
+              <option value="RLC" selected>R + L + C（直列）</option>
+            </select>
+          </div>
+          <div class="form-group" id="r-group">
+            <label>抵抗 R</label>
+            <div class="slider-row">
+              <input type="range" id="s1-R" min="0" max="200" value="10" oninput="updateS1()">
+              <span class="slider-val" id="s1-R-val">10 Ω</span>
+            </div>
+          </div>
+          <div class="form-group" id="l-group">
+            <label>インダクタンス L</label>
+            <div class="slider-row">
+              <input type="range" id="s1-L" min="1" max="500" value="100" oninput="updateS1()">
+              <span class="slider-val" id="s1-L-val">100 nH</span>
+            </div>
+          </div>
+          <div class="form-group" id="c-group">
+            <label>キャパシタンス C</label>
+            <div class="slider-row">
+              <input type="range" id="s1-C" min="1" max="500" value="100" oninput="updateS1()">
+              <span class="slider-val" id="s1-C-val">100 pF</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>周波数 f</label>
+            <div class="slider-row">
+              <input type="range" id="s1-freq" min="1" max="1000" value="13" oninput="updateS1()">
+              <span class="slider-val" id="s1-freq-val">13 MHz</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: results -->
+      <div>
+        <div class="card">
+          <div class="card-title">📐 回路図</div>
+          <svg id="s1-svg" viewBox="0 0 280 110" style="width:100%;display:block;" xmlns="http://www.w3.org/2000/svg"></svg>
+        </div>
+        <div class="card">
+          <div class="card-title">🔢 ABCD 行列</div>
+          <div id="s1-matrix-display" class="matrix-html">—</div>
+          <div class="result-row" id="s1-results"></div>
+          <div id="s1-explanation" class="info-box" style="margin-top:14px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABCD element meanings -->
+    <div class="card">
+      <div class="card-title">📖 ABCD 各要素の意味</div>
+      <div class="meaning-grid">
+        <div class="meaning-item">
+          <div class="sym">A</div>
+          <div class="def">出力端短絡時の電圧比（V₁/V₂）。A=1 なら電圧変換なし（直列素子のみ）。単位なし。</div>
+        </div>
+        <div class="meaning-item">
+          <div class="sym">B</div>
+          <div class="def">出力端短絡時の転送インピーダンス（V₁/I₂）。B=0 なら直列成分ゼロ（並列素子のみ）。単位：Ω。</div>
+        </div>
+        <div class="meaning-item">
+          <div class="sym">C</div>
+          <div class="def">出力端開放時の転送アドミタンス（I₁/V₂）。C=0 なら並列成分ゼロ（直列素子のみ）。単位：S。</div>
+        </div>
+        <div class="meaning-item">
+          <div class="sym">D</div>
+          <div class="def">出力端開放時の電流比（I₁/I₂）。D=1 なら電流変換なし（並列素子のみ）。単位なし。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       STEP 2 : カスケード接続
+  ═══════════════════════════════════════════════════════ -->
+  <div class="step-panel" id="step2">
+    <div class="card">
+      <div class="card-title">⛓ カスケード接続 — 行列の積</div>
+      <div class="info-box">
+        2ポート回路を直列につないだとき、合成ABCD行列は各ブロックの行列積になります：<br>
+        <strong>M<sub>total</sub> = M<sub>1</sub> × M<sub>2</sub> × M<sub>3</sub></strong><br>
+        これがSパラメータにはない「カスケードの強み」です。
+      </div>
+    </div>
+
+    <div class="three-col">
+      <!-- Block 1 -->
+      <div class="card">
+        <div class="card-title">ブロック 1</div>
+        <div class="form-group">
+          <label>タイプ</label>
+          <select id="b1-type" onchange="updateS2()">
+            <option value="series-L" selected>直列 L</option>
+            <option value="series-R">直列 R</option>
+            <option value="series-C">直列 C</option>
+            <option value="shunt-R">並列 R</option>
+            <option value="shunt-C">並列 C</option>
+            <option value="thru">スルー（通過）</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>値</label>
+          <div class="slider-row">
+            <input type="range" id="b1-val" min="1" max="500" value="100" oninput="updateS2()">
+            <span class="slider-val" id="b1-val-lbl">100 nH</span>
+          </div>
+        </div>
+        <div id="b1-matrix" class="cblock-vals" style="margin-top:8px;font-size:11px;color:var(--text-dim);"></div>
+      </div>
+      <!-- Block 2 -->
+      <div class="card">
+        <div class="card-title">ブロック 2</div>
+        <div class="form-group">
+          <label>タイプ</label>
+          <select id="b2-type" onchange="updateS2()">
+            <option value="series-L">直列 L</option>
+            <option value="series-R">直列 R</option>
+            <option value="series-C">直列 C</option>
+            <option value="shunt-R">並列 R</option>
+            <option value="shunt-C" selected>並列 C</option>
+            <option value="thru">スルー（通過）</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>値</label>
+          <div class="slider-row">
+            <input type="range" id="b2-val" min="1" max="500" value="100" oninput="updateS2()">
+            <span class="slider-val" id="b2-val-lbl">100 pF</span>
+          </div>
+        </div>
+        <div id="b2-matrix" class="cblock-vals" style="margin-top:8px;font-size:11px;color:var(--text-dim);"></div>
+      </div>
+      <!-- Block 3 -->
+      <div class="card">
+        <div class="card-title">ブロック 3</div>
+        <div class="form-group">
+          <label>タイプ</label>
+          <select id="b3-type" onchange="updateS2()">
+            <option value="series-L">直列 L</option>
+            <option value="series-R" selected>直列 R</option>
+            <option value="series-C">直列 C</option>
+            <option value="shunt-R">並列 R</option>
+            <option value="shunt-C">並列 C</option>
+            <option value="thru">スルー（通過）</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>値</label>
+          <div class="slider-row">
+            <input type="range" id="b3-val" min="1" max="200" value="50" oninput="updateS2()">
+            <span class="slider-val" id="b3-val-lbl">50 Ω</span>
+          </div>
+        </div>
+        <div id="b3-matrix" class="cblock-vals" style="margin-top:8px;font-size:11px;color:var(--text-dim);"></div>
+      </div>
+    </div>
+
+    <!-- Shared frequency -->
+    <div class="card">
+      <div class="form-group" style="margin-bottom:0;">
+        <label>共通周波数 f</label>
+        <div class="slider-row">
+          <input type="range" id="s2-freq" min="1" max="1000" value="13" oninput="updateS2()">
+          <span class="slider-val" id="s2-freq-val">13 MHz</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cascade visualization -->
+    <div class="card">
+      <div class="card-title">🔗 カスケード演算</div>
+      <div class="cascade-vis">
+        <div class="cblock">
+          <div class="cblock-label">M₁</div>
+          <div class="cblock-vals" id="cv-b1-vals"></div>
+        </div>
+        <div class="cascade-op">×</div>
+        <div class="cblock">
+          <div class="cblock-label">M₂</div>
+          <div class="cblock-vals" id="cv-b2-vals"></div>
+        </div>
+        <div class="cascade-op">×</div>
+        <div class="cblock">
+          <div class="cblock-label">M₃</div>
+          <div class="cblock-vals" id="cv-b3-vals"></div>
+        </div>
+        <div class="cascade-op">=</div>
+        <div class="cblock combined">
+          <div class="cblock-label" style="color:var(--accent);">M_total</div>
+          <div class="cblock-vals" id="cv-total-vals"></div>
+        </div>
+      </div>
+      <div id="s2-s-result" style="margin-top:14px;"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       STEP 3 : S↔ABCD 変換
+  ═══════════════════════════════════════════════════════ -->
+  <div class="step-panel" id="step3">
+    <div class="two-col">
+      <!-- Left -->
+      <div>
+        <div class="card">
+          <div class="card-title">🎛 回路設定</div>
+          <div class="form-group">
+            <label>回路タイプ</label>
+            <select id="s3-type" onchange="updateS3()">
+              <option value="series-R">直列 R のみ</option>
+              <option value="series-L">直列 L のみ</option>
+              <option value="series-C">直列 C のみ</option>
+              <option value="shunt-R">並列 R のみ</option>
+              <option value="shunt-C">並列 C のみ</option>
+              <option value="lc-lowpass" selected>LC ローパス（L直列 + C並列）</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>値 1（L または R）</label>
+            <div class="slider-row">
+              <input type="range" id="s3-v1" min="1" max="500" value="100" oninput="updateS3()">
+              <span class="slider-val" id="s3-v1-val">100 nH</span>
+            </div>
+          </div>
+          <div class="form-group" id="s3-v2-group">
+            <label>値 2（C）</label>
+            <div class="slider-row">
+              <input type="range" id="s3-v2" min="1" max="500" value="100" oninput="updateS3()">
+              <span class="slider-val" id="s3-v2-val">100 pF</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>周波数 f</label>
+            <div class="slider-row">
+              <input type="range" id="s3-freq" min="1" max="1000" value="13" oninput="updateS3()">
+              <span class="slider-val" id="s3-freq-val">13 MHz</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>基準インピーダンス Z₀</label>
+            <select id="s3-z0" onchange="updateS3()" style="width:100%;padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;">
+              <option value="50" selected>50 Ω（標準）</option>
+              <option value="75">75 Ω（ケーブルTV）</option>
+              <option value="300">300 Ω（アンテナ）</option>
+            </select>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">📝 変換式</div>
+          <div class="formula-box">
+            <span class="f-label">ABCD → S（Z₀ 基準）</span>
+            denom = A + B/Z₀ + C·Z₀ + D<br>
+            S₁₁ = (A + B/Z₀ − C·Z₀ − D) / denom<br>
+            S₂₁ = 2 / denom<br>
+            S₁₂ = 2·(AD − BC) / denom<br>
+            S₂₂ = (−A + B/Z₀ − C·Z₀ + D) / denom
+          </div>
+          <div class="formula-box">
+            <span class="f-label">S → ABCD（Z₀ 基準）</span>
+            A = [(1+S₁₁)(1−S₂₂) + S₁₂S₂₁] / 2S₂₁<br>
+            B = Z₀·[(1+S₁₁)(1+S₂₂) − S₁₂S₂₁] / 2S₂₁<br>
+            C = [(1−S₁₁)(1−S₂₂) − S₁₂S₂₁] / (2S₂₁·Z₀)<br>
+            D = [(1−S₁₁)(1+S₂₂) + S₁₂S₂₁] / 2S₂₁
+          </div>
+        </div>
+      </div>
+      <!-- Right -->
+      <div>
+        <div class="card">
+          <div class="card-title">🔢 ABCD パラメータ</div>
+          <div id="s3-abcd-display" class="matrix-html"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">📡 S パラメータ（Z₀基準）</div>
+          <div id="s3-s-display" class="s-grid"></div>
+          <div id="s3-db-display" style="margin-top:12px;font-size:12px;color:var(--text-dim);"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       STEP 4 : De-embedding 体験
+  ═══════════════════════════════════════════════════════ -->
+  <div class="step-panel" id="step4">
+    <div class="info-box" style="margin-bottom:16px;">
+      <strong>De-embeddingとは？</strong><br>
+      実測値には「治具（ケーブル・コネクタ・基板パターン）」の影響が含まれています。
+      治具のABCD行列で逆算することで、DUT（被測定物）の真の特性を取り出す技術です。<br>
+      <strong>測定値 M = FA × DUT × FB &nbsp;→&nbsp; DUT = FA⁻¹ × M × FB⁻¹</strong><br>
+      これはVIセンサー補正の原理でもあります。ケーブルや配線のインダクタンス・容量を除去することで、
+      プラズマ負荷の真のインピーダンスが得られます。
+    </div>
+
+    <div class="two-col">
+      <!-- Left: inputs -->
+      <div>
+        <div class="card">
+          <div class="card-title">📊 測定値（治具込み）</div>
+          <div class="info-box" style="margin-top:0;">S₁₂ = S₂₁、S₂₂ = S₁₁ と仮定します（単純化）</div>
+          <div class="form-group">
+            <label>|S₁₁| 反射係数の大きさ（0〜1）</label>
+            <div class="slider-row">
+              <input type="range" id="meas-s11m" min="0" max="99" value="40" oninput="updateS4()">
+              <span class="slider-val" id="meas-s11m-val">0.40</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>∠S₁₁ 反射係数の位相（°）</label>
+            <div class="slider-row">
+              <input type="range" id="meas-s11p" min="-180" max="180" value="-120" oninput="updateS4()">
+              <span class="slider-val" id="meas-s11p-val">−120°</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>|S₂₁| 透過係数の大きさ（0〜1）</label>
+            <div class="slider-row">
+              <input type="range" id="meas-s21m" min="1" max="99" value="85" oninput="updateS4()">
+              <span class="slider-val" id="meas-s21m-val">0.85</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>∠S₂₁ 透過係数の位相（°）</label>
+            <div class="slider-row">
+              <input type="range" id="meas-s21p" min="-180" max="180" value="-30" oninput="updateS4()">
+              <span class="slider-val" id="meas-s21p-val">−30°</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🔧 治具設定</div>
+          <div class="form-group">
+            <label>治具 A（ポート1側）タイプ</label>
+            <select id="fix-a-type" onchange="updateS4()">
+              <option value="series-L" selected>直列 L（ケーブルインダクタンス）</option>
+              <option value="series-R">直列 R（ケーブル抵抗）</option>
+              <option value="shunt-C">並列 C（配線容量）</option>
+              <option value="thru">スルー（治具なし）</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>治具 A 値</label>
+            <div class="slider-row">
+              <input type="range" id="fix-a-val" min="1" max="300" value="50" oninput="updateS4()">
+              <span class="slider-val" id="fix-a-val-lbl">50 nH</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>治具 B（ポート2側）タイプ</label>
+            <select id="fix-b-type" onchange="updateS4()">
+              <option value="series-L" selected>直列 L</option>
+              <option value="series-R">直列 R</option>
+              <option value="shunt-C">並列 C</option>
+              <option value="thru">スルー（治具なし）</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>治具 B 値</label>
+            <div class="slider-row">
+              <input type="range" id="fix-b-val" min="1" max="300" value="50" oninput="updateS4()">
+              <span class="slider-val" id="fix-b-val-lbl">50 nH</span>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label>周波数 f</label>
+            <div class="slider-row">
+              <input type="range" id="s4-freq" min="1" max="1000" value="13" oninput="updateS4()">
+              <span class="slider-val" id="s4-freq-val">13 MHz</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: output -->
+      <div>
+        <div class="card">
+          <div class="card-title">🎯 De-embedding 結果比較</div>
+          <table class="de-table">
+            <thead>
+              <tr>
+                <th>パラメータ</th>
+                <th style="color:var(--accent);text-align:center;">補正前（測定値）</th>
+                <th style="color:var(--accent2);text-align:center;">補正後（DUT真値）</th>
+              </tr>
+            </thead>
+            <tbody id="s4-table-body"></tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🗺 スミスチャート — S₁₁ 補正前後</div>
+          <canvas id="smith-canvas" width="720" height="720" style="width:100%;max-width:360px;height:auto;display:block;margin:0 auto;border-radius:8px;"></canvas>
+          <div style="display:flex;gap:20px;justify-content:center;margin-top:10px;font-size:12px;flex-wrap:wrap;">
+            <span style="display:flex;align-items:center;gap:5px;">
+              <span style="width:12px;height:12px;border-radius:50%;background:var(--accent);display:inline-block;"></span>
+              補正前（測定値）M
+            </span>
+            <span style="display:flex;align-items:center;gap:5px;">
+              <span style="width:12px;height:12px;border-radius:50%;background:var(--accent2);display:inline-block;"></span>
+              補正後（DUT）D
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+'use strict';
+
+// ════════════════════════════════════════════════════════════════
+// Complex number arithmetic
+// ════════════════════════════════════════════════════════════════
+const C0   = (re, im = 0) => ({ re, im });
+const cAdd = (a, b) => C0(a.re + b.re, a.im + b.im);
+const cSub = (a, b) => C0(a.re - b.re, a.im - b.im);
+const cMul = (a, b) => C0(a.re * b.re - a.im * b.im, a.re * b.im + a.im * b.re);
+const cDiv = (a, b) => {
+  const d = b.re * b.re + b.im * b.im;
+  return C0((a.re * b.re + a.im * b.im) / d, (a.im * b.re - a.re * b.im) / d);
+};
+const cAbs = a => Math.sqrt(a.re * a.re + a.im * a.im);
+const cArg = a => Math.atan2(a.im, a.re);
+const cNeg = a => C0(-a.re, -a.im);
+const cInv = a => cDiv(C0(1), a);
+const cPolar = (r, th) => C0(r * Math.cos(th), r * Math.sin(th));
+
+function fmtC(c, d = 3) {
+  const re = +c.re.toFixed(d);
+  const im = +c.im.toFixed(d);
+  if (Math.abs(c.im) < 5e-4) return `${re}`;
+  const sign = c.im < 0 ? '−' : '+';
+  return `${re} ${sign} j${Math.abs(im)}`;
+}
+
+// ════════════════════════════════════════════════════════════════
+// 2×2 complex matrix  [[a,b],[c,d]]
+// ════════════════════════════════════════════════════════════════
+const mI = () => [[C0(1), C0(0)], [C0(0), C0(1)]];
+
+function mMul(A, B) {
+  return [
+    [cAdd(cMul(A[0][0], B[0][0]), cMul(A[0][1], B[1][0])),
+     cAdd(cMul(A[0][0], B[0][1]), cMul(A[0][1], B[1][1]))],
+    [cAdd(cMul(A[1][0], B[0][0]), cMul(A[1][1], B[1][0])),
+     cAdd(cMul(A[1][0], B[0][1]), cMul(A[1][1], B[1][1]))]
+  ];
+}
+
+function mInv(M) {
+  const [[a, b], [c, d]] = M;
+  const det = cSub(cMul(a, d), cMul(b, c));
+  return [
+    [cDiv(d, det), cDiv(cNeg(b), det)],
+    [cDiv(cNeg(c), det), cDiv(a, det)]
+  ];
+}
+
+// ════════════════════════════════════════════════════════════════
+// Circuit element → ABCD matrix
+// ════════════════════════════════════════════════════════════════
+function abcdSeries(Z) { return [[C0(1), Z], [C0(0), C0(1)]]; }
+function abcdShunt(Y)  { return [[C0(1), C0(0)], [Y, C0(1)]]; }
+
+function blockToAbcd(btype, val, freqHz) {
+  const w = 2 * Math.PI * freqHz;
+  switch (btype) {
+    case 'series-R': return abcdSeries(C0(val));
+    case 'series-L': return abcdSeries(C0(0, w * val * 1e-9));
+    case 'series-C': return abcdSeries(C0(0, -1 / (w * val * 1e-12)));
+    case 'shunt-R':  return abcdShunt(cInv(C0(val)));
+    case 'shunt-C':  return abcdShunt(C0(0, w * val * 1e-12));
+    case 'thru':     return mI();
+    default:         return mI();
+  }
+}
+
+// For Step 1 (mixed R+L+C)
+function mixedToAbcd(elem, R, L, C, freqHz, mode) {
+  const w = 2 * Math.PI * freqHz;
+  let Zre = 0, Zim = 0;
+  if (elem.includes('R')) Zre += R;
+  if (elem.includes('L')) Zim += w * L * 1e-9;
+  if (elem.includes('C')) Zim -= 1 / (w * C * 1e-12);
+  const Z = C0(Zre, Zim);
+  return mode === 'series' ? abcdSeries(Z) : abcdShunt(cInv(Z));
+}
+
+// ════════════════════════════════════════════════════════════════
+// ABCD ↔ S conversions  (ref impedance Z0)
+// ════════════════════════════════════════════════════════════════
+function abcdToS(M, Z0) {
+  const [[A, B], [Cm, D]] = M;
+  const z = C0(Z0);
+  const denom = cAdd(cAdd(cAdd(A, cDiv(B, z)), cMul(Cm, z)), D);
+  const S11 = cDiv(cSub(cAdd(A, cDiv(B, z)), cAdd(cMul(Cm, z), D)), denom);
+  const S21 = cDiv(C0(2), denom);
+  const det  = cSub(cMul(A, D), cMul(B, Cm));
+  const S12  = cDiv(cMul(C0(2), det), denom);
+  const S22  = cDiv(cSub(cAdd(D, cDiv(B, z)), cAdd(A, cMul(Cm, z))), denom);
+  return [[S11, S12], [S21, S22]];
+}
+
+function sToAbcd(S, Z0) {
+  const [[S11, S12], [S21, S22]] = S;
+  const z = C0(Z0);
+  const two_S21 = cMul(C0(2), S21);
+  const A  = cDiv(cAdd(cMul(cAdd(C0(1), S11), cSub(C0(1), S22)),  cMul(S12, S21)), two_S21);
+  const B  = cDiv(cMul(z, cSub(cMul(cAdd(C0(1), S11), cAdd(C0(1), S22)), cMul(S12, S21))), two_S21);
+  const Cm = cDiv(cSub(cMul(cSub(C0(1), S11), cSub(C0(1), S22)),  cMul(S12, S21)), cMul(two_S21, z));
+  const D  = cDiv(cAdd(cMul(cSub(C0(1), S11), cAdd(C0(1), S22)),  cMul(S12, S21)), two_S21);
+  return [[A, B], [Cm, D]];
+}
+
+// ════════════════════════════════════════════════════════════════
+// HTML helpers
+// ════════════════════════════════════════════════════════════════
+function matrixHTML(M) {
+  const [[A, B], [Cm, D]] = M;
+  return `<table style="border-collapse:collapse;margin:6px 0;font-family:'Space Mono',monospace;font-size:13px;">
+    <tr>
+      <td rowspan="2" style="font-size:32px;font-weight:100;color:var(--text);padding:0 4px;vertical-align:middle;">[</td>
+      <td style="padding:3px 14px;color:var(--accent);">A = ${fmtC(A)}</td>
+      <td style="padding:3px 14px;color:var(--gold);">B = ${fmtC(B)} Ω</td>
+      <td rowspan="2" style="font-size:32px;font-weight:100;color:var(--text);padding:0 4px;vertical-align:middle;">]</td>
+    </tr>
+    <tr>
+      <td style="padding:3px 14px;color:var(--green);">C = ${fmtC(Cm)} S</td>
+      <td style="padding:3px 14px;color:var(--accent2);">D = ${fmtC(D)}</td>
+    </tr>
+  </table>`;
+}
+
+function matrixMini(M) {
+  const [[A, B], [Cm, D]] = M;
+  const f = c => {
+    const re = c.re.toFixed(2);
+    if (Math.abs(c.im) < 1e-5) return re;
+    return re + (c.im >= 0 ? '+j' : '−j') + Math.abs(c.im).toFixed(2);
+  };
+  return `<span style="color:var(--accent)">${f(A)}</span>  <span style="color:var(--gold)">${f(B)}</span><br>` +
+         `<span style="color:var(--green)">${f(Cm)}</span>  <span style="color:var(--accent2)">${f(D)}</span>`;
+}
+
+function chipHTML(label, val, sub, hi) {
+  return `<div class="result-chip${hi ? ' hi' : ''}">
+    <div class="rc-label">${label}</div>
+    <div class="rc-val">${val}</div>
+    <div class="rc-sub">${sub}</div>
+  </div>`;
+}
+
+function blockSliderLabel(btype, val) {
+  if (btype === 'thru') return '—';
+  if (btype === 'series-R' || btype === 'shunt-R') return val + ' Ω';
+  if (btype === 'series-L') return val + ' nH';
+  return val + ' pF';
+}
+
+// ════════════════════════════════════════════════════════════════
+// STEP 1
+// ════════════════════════════════════════════════════════════════
+let s1mode = 'series';
+
+function setS1Mode(mode) {
+  s1mode = mode;
+  document.querySelectorAll('.inner-tab').forEach((b, i) => {
+    b.classList.toggle('active', (i === 0 && mode === 'series') || (i === 1 && mode === 'shunt'));
+  });
+  updateS1();
+}
+
+function updateS1() {
+  const elem  = document.getElementById('s1-elem').value;
+  const R     = parseFloat(document.getElementById('s1-R').value);
+  const L     = parseFloat(document.getElementById('s1-L').value);
+  const C     = parseFloat(document.getElementById('s1-C').value);
+  const fMHz  = parseFloat(document.getElementById('s1-freq').value);
+  const freq  = fMHz * 1e6;
+  const w     = 2 * Math.PI * freq;
+
+  document.getElementById('s1-R-val').textContent   = R + ' Ω';
+  document.getElementById('s1-L-val').textContent   = L + ' nH';
+  document.getElementById('s1-C-val').textContent   = C + ' pF';
+  document.getElementById('s1-freq-val').textContent = fMHz + ' MHz';
+
+  const hasR = elem.includes('R');
+  const hasL = elem.includes('L');
+  const hasC = elem.includes('C');
+  document.getElementById('r-group').style.display = hasR ? '' : 'none';
+  document.getElementById('l-group').style.display = hasL ? '' : 'none';
+  document.getElementById('c-group').style.display = hasC ? '' : 'none';
+
+  let Zre = 0, Zim = 0;
+  if (hasR) Zre += R;
+  if (hasL) Zim += w * L * 1e-9;
+  if (hasC) Zim -= 1 / (w * C * 1e-12);
+  const Z = C0(Zre, Zim);
+
+  const M = s1mode === 'series' ? abcdSeries(Z) : abcdShunt(cInv(Z));
+  document.getElementById('s1-matrix-display').innerHTML = matrixHTML(M);
+
+  const [[S11, S12], [S21, S22]] = abcdToS(M, 50);
+  document.getElementById('s1-results').innerHTML =
+    chipHTML('|S₁₁|', cAbs(S11).toFixed(3), '反射', true) +
+    chipHTML('∠S₁₁', (cArg(S11) * 180 / Math.PI).toFixed(1) + '°', '', false) +
+    chipHTML('|S₂₁|', cAbs(S21).toFixed(3), '透過', false) +
+    chipHTML('∠S₂₁', (cArg(S21) * 180 / Math.PI).toFixed(1) + '°', '', false);
+
+  // Explanation text
+  let expHtml;
+  if (s1mode === 'series') {
+    expHtml = `直列インピーダンス <strong>Z = ${Zre.toFixed(2)} + j${Zim.toFixed(2)} Ω</strong><br>
+行列は <strong>[1, Z ; 0, 1]</strong>。A=D=1（電圧・電流変換なし）、C=0（並列成分ゼロ）、B=Z（直列降下）。`;
+  } else {
+    const Y = cInv(Z);
+    expHtml = `並列アドミタンス <strong>Y = ${Y.re.toFixed(4)} + j${Y.im.toFixed(4)} S</strong><br>
+行列は <strong>[1, 0 ; Y, 1]</strong>。A=D=1、B=0（直列成分ゼロ）、C=Y（並列分流）。`;
+  }
+  document.getElementById('s1-explanation').innerHTML = expHtml;
+
+  drawS1SVG(s1mode, elem);
+}
+
+function drawS1SVG(mode, elemType) {
+  const svg   = document.getElementById('s1-svg');
+  const dark  = document.documentElement.dataset.theme === 'dark';
+  const tc    = dark ? '#94a3b8' : '#64748b';
+  const ac    = dark ? '#00d4ff' : '#0284c7';
+  const tx    = dark ? '#e2e8f0' : '#1e293b';
+  const lbl   = {R:'R',L:'jωL',C:'1/jωC',RL:'R+jωL',RC:'R+1/jωC',RLC:'Z(ω)'}[elemType] || 'Z';
+
+  if (mode === 'series') {
+    svg.setAttribute('viewBox', '0 0 280 80');
+    svg.innerHTML = `
+      <line x1="10" y1="40" x2="75" y2="40" stroke="${tc}" stroke-width="2"/>
+      <rect x="75" y="26" width="130" height="28" rx="5" fill="none" stroke="${ac}" stroke-width="2"/>
+      <text x="140" y="45" text-anchor="middle" font-size="13" fill="${ac}" font-family="Space Mono,monospace">${lbl}</text>
+      <line x1="205" y1="40" x2="270" y2="40" stroke="${tc}" stroke-width="2"/>
+      <circle cx="10"  cy="40" r="4" fill="${ac}"/><text x="10"  y="20" text-anchor="middle" font-size="11" fill="${tx}" font-family="Noto Sans JP">P1</text>
+      <circle cx="270" cy="40" r="4" fill="${ac}"/><text x="270" y="20" text-anchor="middle" font-size="11" fill="${tx}" font-family="Noto Sans JP">P2</text>`;
+  } else {
+    svg.setAttribute('viewBox', '0 0 280 110');
+    svg.innerHTML = `
+      <line x1="10"  y1="35" x2="270" y2="35" stroke="${tc}" stroke-width="2"/>
+      <line x1="140" y1="35" x2="140" y2="55" stroke="${tc}" stroke-width="2"/>
+      <rect x="95"  y="55" width="90" height="26" rx="5" fill="none" stroke="${ac}" stroke-width="2"/>
+      <text x="140" y="73" text-anchor="middle" font-size="13" fill="${ac}" font-family="Space Mono,monospace">${lbl}</text>
+      <line x1="115" y1="81"  x2="165" y2="81"  stroke="${tc}" stroke-width="2"/>
+      <line x1="122" y1="87"  x2="158" y2="87"  stroke="${tc}" stroke-width="1.5"/>
+      <line x1="130" y1="93"  x2="150" y2="93"  stroke="${tc}" stroke-width="1"/>
+      <circle cx="10"  cy="35" r="4" fill="${ac}"/><text x="10"  y="18" text-anchor="middle" font-size="11" fill="${tx}" font-family="Noto Sans JP">P1</text>
+      <circle cx="270" cy="35" r="4" fill="${ac}"/><text x="270" y="18" text-anchor="middle" font-size="11" fill="${tx}" font-family="Noto Sans JP">P2</text>`;
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// STEP 2
+// ════════════════════════════════════════════════════════════════
+function updateS2() {
+  const fMHz = parseFloat(document.getElementById('s2-freq').value);
+  const freq = fMHz * 1e6;
+  document.getElementById('s2-freq-val').textContent = fMHz + ' MHz';
+
+  const blocks = [1, 2, 3].map(i => {
+    const btype = document.getElementById(`b${i}-type`).value;
+    const val   = parseFloat(document.getElementById(`b${i}-val`).value);
+    const el    = document.getElementById(`b${i}-val`);
+    el.disabled = (btype === 'thru');
+    document.getElementById(`b${i}-val-lbl`).textContent = blockSliderLabel(btype, val);
+    const M = blockToAbcd(btype, val, freq);
+    document.getElementById(`b${i}-matrix`).innerHTML = matrixMini(M);
+    return M;
+  });
+
+  const M12    = mMul(blocks[0], blocks[1]);
+  const Mtotal = mMul(M12, blocks[2]);
+
+  [1, 2, 3].forEach((n, idx) => {
+    document.getElementById(`cv-b${n}-vals`).innerHTML = matrixMini(blocks[idx]);
+  });
+  document.getElementById('cv-total-vals').innerHTML = matrixMini(Mtotal);
+
+  // Show S21 of total
+  const [[, ], [S21]] = abcdToS(Mtotal, 50);
+  const dB = 20 * Math.log10(cAbs(S21));
+  document.getElementById('s2-s-result').innerHTML =
+    `<div style="font-size:12px;color:var(--text-dim);">合成回路の S₂₁ &nbsp;→&nbsp;
+    <strong style="color:var(--accent);font-family:monospace">${cAbs(S21).toFixed(3)}</strong>
+    （<strong style="color:var(--accent2);font-family:monospace">${dB.toFixed(1)} dB</strong>）
+    &nbsp;位相 <strong style="font-family:monospace;color:var(--gold)">${(cArg(S21)*180/Math.PI).toFixed(1)}°</strong></div>`;
+}
+
+// ════════════════════════════════════════════════════════════════
+// STEP 3
+// ════════════════════════════════════════════════════════════════
+function updateS3() {
+  const type  = document.getElementById('s3-type').value;
+  const v1    = parseFloat(document.getElementById('s3-v1').value);
+  const v2    = parseFloat(document.getElementById('s3-v2').value);
+  const fMHz  = parseFloat(document.getElementById('s3-freq').value);
+  const freq  = fMHz * 1e6;
+  const Z0    = parseFloat(document.getElementById('s3-z0').value);
+
+  document.getElementById('s3-freq-val').textContent = fMHz + ' MHz';
+
+  const needV2 = (type === 'lc-lowpass');
+  document.getElementById('s3-v2-group').style.display = needV2 ? '' : 'none';
+
+  let M;
+  switch (type) {
+    case 'series-R': document.getElementById('s3-v1-val').textContent = v1 + ' Ω';  M = blockToAbcd('series-R', v1, freq); break;
+    case 'series-L': document.getElementById('s3-v1-val').textContent = v1 + ' nH'; M = blockToAbcd('series-L', v1, freq); break;
+    case 'series-C': document.getElementById('s3-v1-val').textContent = v1 + ' pF'; M = blockToAbcd('series-C', v1, freq); break;
+    case 'shunt-R':  document.getElementById('s3-v1-val').textContent = v1 + ' Ω';  M = blockToAbcd('shunt-R', v1, freq);  break;
+    case 'shunt-C':  document.getElementById('s3-v1-val').textContent = v1 + ' pF'; M = blockToAbcd('shunt-C', v1, freq);  break;
+    case 'lc-lowpass':
+      document.getElementById('s3-v1-val').textContent = v1 + ' nH';
+      document.getElementById('s3-v2-val').textContent = v2 + ' pF';
+      M = mMul(blockToAbcd('series-L', v1, freq), blockToAbcd('shunt-C', v2, freq));
+      break;
+    default: M = mI();
+  }
+
+  document.getElementById('s3-abcd-display').innerHTML = matrixHTML(M);
+
+  const [[S11, S12], [S21, S22]] = abcdToS(M, Z0);
+  document.getElementById('s3-s-display').innerHTML =
+    chipHTML('S₁₁', cAbs(S11).toFixed(3), (cArg(S11)*180/Math.PI).toFixed(1)+'°', true) +
+    chipHTML('S₂₁', cAbs(S21).toFixed(3), (cArg(S21)*180/Math.PI).toFixed(1)+'°', false) +
+    chipHTML('S₁₂', cAbs(S12).toFixed(3), (cArg(S12)*180/Math.PI).toFixed(1)+'°', false) +
+    chipHTML('S₂₂', cAbs(S22).toFixed(3), (cArg(S22)*180/Math.PI).toFixed(1)+'°', true);
+
+  document.getElementById('s3-db-display').innerHTML =
+    `S₂₁ = <strong style="color:var(--accent);font-family:monospace">${(20*Math.log10(cAbs(S21))).toFixed(2)} dB</strong>
+    &ensp;|&ensp; S₁₁ = <strong style="color:var(--accent2);font-family:monospace">${(20*Math.log10(Math.max(1e-9,cAbs(S11)))).toFixed(2)} dB</strong>`;
+}
+
+// ════════════════════════════════════════════════════════════════
+// STEP 4 — De-embedding
+// ════════════════════════════════════════════════════════════════
+function updateS4() {
+  const s11m = parseFloat(document.getElementById('meas-s11m').value) / 100;
+  const s11p = parseFloat(document.getElementById('meas-s11p').value) * Math.PI / 180;
+  const s21m = parseFloat(document.getElementById('meas-s21m').value) / 100;
+  const s21p = parseFloat(document.getElementById('meas-s21p').value) * Math.PI / 180;
+  const fMHz = parseFloat(document.getElementById('s4-freq').value);
+  const freq = fMHz * 1e6;
+
+  document.getElementById('meas-s11m-val').textContent  = s11m.toFixed(2);
+  document.getElementById('meas-s11p-val').textContent  = parseFloat(document.getElementById('meas-s11p').value) + '°';
+  document.getElementById('meas-s21m-val').textContent  = s21m.toFixed(2);
+  document.getElementById('meas-s21p-val').textContent  = parseFloat(document.getElementById('meas-s21p').value) + '°';
+  document.getElementById('s4-freq-val').textContent    = fMHz + ' MHz';
+
+  const faType = document.getElementById('fix-a-type').value;
+  const faVal  = parseFloat(document.getElementById('fix-a-val').value);
+  document.getElementById('fix-a-val').disabled = (faType === 'thru');
+  document.getElementById('fix-a-val-lbl').textContent = blockSliderLabel(faType, faVal);
+
+  const fbType = document.getElementById('fix-b-type').value;
+  const fbVal  = parseFloat(document.getElementById('fix-b-val').value);
+  document.getElementById('fix-b-val').disabled = (fbType === 'thru');
+  document.getElementById('fix-b-val-lbl').textContent = blockSliderLabel(fbType, fbVal);
+
+  // Measured S-matrix (S12=S21, S22=S11 assumption)
+  const S11m = cPolar(s11m, s11p);
+  const S21m = cPolar(s21m, s21p);
+  const Smeas = [[S11m, S21m], [S21m, S11m]];
+
+  // Convert to ABCD
+  const Mmeas = sToAbcd(Smeas, 50);
+
+  // Fixture ABCD matrices
+  const FA = blockToAbcd(faType, faVal, freq);
+  const FB = blockToAbcd(fbType, fbVal, freq);
+
+  // De-embed:  DUT = FA^-1 × Mmeas × FB^-1
+  const Mdut = mMul(mMul(mInv(FA), Mmeas), mInv(FB));
+
+  // DUT → S-params
+  const [[S11d, S12d], [S21d, S22d]] = abcdToS(Mdut, 50);
+
+  // Table
+  const rows = [
+    ['|S₁₁|',   s11m.toFixed(3),                       cAbs(S11d).toFixed(3)],
+    ['∠S₁₁ (°)', (s11p*180/Math.PI).toFixed(1),        (cArg(S11d)*180/Math.PI).toFixed(1)],
+    ['|S₂₁|',   s21m.toFixed(3),                       cAbs(S21d).toFixed(3)],
+    ['∠S₂₁ (°)', (s21p*180/Math.PI).toFixed(1),        (cArg(S21d)*180/Math.PI).toFixed(1)],
+    ['S₁₁ [dB]', (20*Math.log10(Math.max(1e-9,s11m))).toFixed(1),
+                  (20*Math.log10(Math.max(1e-9,cAbs(S11d)))).toFixed(1)],
+    ['S₂₁ [dB]', (20*Math.log10(s21m)).toFixed(1),
+                  (20*Math.log10(Math.max(1e-9,cAbs(S21d)))).toFixed(1)],
+  ];
+  document.getElementById('s4-table-body').innerHTML = rows.map(([p, before, after]) =>
+    `<tr><td style="font-size:12px;">${p}</td>
+     <td style="text-align:center;font-family:monospace;color:var(--accent);">${before}</td>
+     <td style="text-align:center;font-family:monospace;color:var(--accent2);">${after}</td></tr>`
+  ).join('');
+
+  // Draw Smith chart
+  drawSmith(S11m, S11d);
+}
+
+// ════════════════════════════════════════════════════════════════
+// Smith Chart (Canvas)
+// ════════════════════════════════════════════════════════════════
+function drawSmith(ptBefore, ptAfter) {
+  const canvas = document.getElementById('smith-canvas');
+  const dpr    = window.devicePixelRatio || 1;
+  const CSS    = 360;
+  canvas.width  = CSS * dpr;
+  canvas.height = CSS * dpr;
+  canvas.style.width  = CSS + 'px';
+  canvas.style.height = CSS + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const dark  = document.documentElement.dataset.theme === 'dark';
+  const cx = CSS / 2, cy = CSS / 2, r = CSS * 0.43;
+
+  // Background fill
+  ctx.fillStyle = dark ? '#1a2235' : '#f8fafc';
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+
+  // Grid: resistance circles  (center in Γ: r_L/(1+r_L), radius 1/(1+r_L))
+  ctx.strokeStyle = dark ? 'rgba(100,116,139,0.28)' : 'rgba(100,116,139,0.22)';
+  ctx.lineWidth = 0.8;
+  for (const rL of [0, 0.2, 0.5, 1, 2, 5]) {
+    const cc = rL / (1 + rL);
+    const rc = 1  / (1 + rL);
+    ctx.beginPath(); ctx.arc(cx + cc * r, cy, rc * r, 0, Math.PI * 2); ctx.stroke();
+  }
+
+  // Grid: reactance circles  (center (1, 1/xL), radius |1/xL|)
+  for (const xL of [0.2, 0.5, 1, 2, 5, -0.2, -0.5, -1, -2, -5]) {
+    const cc = 1 / xL;
+    const rc = Math.abs(1 / xL);
+    ctx.beginPath(); ctx.arc(cx + r, cy - cc * r, rc * r, 0, Math.PI * 2); ctx.stroke();
+  }
+
+  // Real axis
+  ctx.strokeStyle = dark ? 'rgba(148,163,184,0.45)' : 'rgba(71,85,105,0.4)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(cx - r, cy); ctx.lineTo(cx + r, cy); ctx.stroke();
+
+  // Outer rim
+  ctx.strokeStyle = dark ? '#334155' : '#94a3b8';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+
+  // Resistance labels along real axis
+  ctx.fillStyle = dark ? '#475569' : '#94a3b8';
+  ctx.font = `${Math.round(CSS * 0.026)}px Space Mono, monospace`;
+  ctx.textAlign = 'center';
+  for (const [rL, lbl] of [[0,'0'],[0.5,'0.5'],[1,'1'],[2,'2'],[5,'5']]) {
+    const px = cx + (rL / (1 + rL) - 1 / (1 + rL)) * r + r / (1 + rL);
+    ctx.fillText(lbl, px, cy - 5);
+  }
+
+  // Center dot
+  ctx.fillStyle = dark ? '#475569' : '#94a3b8';
+  ctx.beginPath(); ctx.arc(cx, cy, 2.5, 0, Math.PI * 2); ctx.fill();
+
+  // Plot a point (Γ in unit circle)
+  function plotPt(S11, color, lbl) {
+    const x = cx + S11.re * r;
+    const y = cy - S11.im * r;
+    if (cAbs(S11) > 1.01) return; // outside chart
+    // Line from center
+    ctx.strokeStyle = color + '60';
+    ctx.setLineDash([4, 4]);
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(x, y); ctx.stroke();
+    ctx.setLineDash([]);
+    // Dot
+    ctx.beginPath(); ctx.arc(x, y, 8, 0, Math.PI * 2);
+    ctx.fillStyle = color; ctx.fill();
+    ctx.strokeStyle = dark ? '#1a2235' : '#ffffff';
+    ctx.lineWidth = 2; ctx.stroke();
+    // Label
+    ctx.fillStyle = color;
+    ctx.font = `bold ${Math.round(CSS * 0.036)}px Space Mono, monospace`;
+    ctx.textAlign = x > cx ? 'left' : 'right';
+    ctx.fillText(lbl, x + (x > cx ? 11 : -11), y - 8);
+  }
+
+  const ac  = dark ? '#00d4ff' : '#0284c7';
+  const ac2 = dark ? '#ff6b35' : '#ea580c';
+  plotPt(ptBefore, ac,  'M');
+  plotPt(ptAfter,  ac2, 'D');
+}
+
+// ════════════════════════════════════════════════════════════════
+// Step navigation
+// ════════════════════════════════════════════════════════════════
+function showStep(n) {
+  document.querySelectorAll('.step-panel').forEach((p, i) => p.classList.toggle('active', i + 1 === n));
+  document.querySelectorAll('.step-btn').forEach((b, i) => b.classList.toggle('active', i + 1 === n));
+  if (n === 4) setTimeout(() => { updateS4(); }, 80);
+}
+
+// ════════════════════════════════════════════════════════════════
+// Dark mode hook (called by nav.js via toggleTheme)
+// ════════════════════════════════════════════════════════════════
+function toggleTheme() {
+  const html  = document.documentElement;
+  const isDark = html.dataset.theme === 'dark';
+  html.dataset.theme = isDark ? 'light' : 'dark';
+  const btn = document.getElementById('rf-nav-dark');
+  if (btn) btn.textContent = isDark ? '🌙 ダーク' : '☀️ ライト';
+  // Redraw theme-sensitive elements
+  updateS1();
+  if (document.getElementById('step4').classList.contains('active')) drawSmith(
+    cPolar(parseFloat(document.getElementById('meas-s11m').value)/100,
+           parseFloat(document.getElementById('meas-s11p').value)*Math.PI/180),
+    cPolar(0, 0) // placeholder — full updateS4 is cheaper
+  );
+  if (document.getElementById('step4').classList.contains('active')) updateS4();
+}
+
+// ════════════════════════════════════════════════════════════════
+// Init
+// ════════════════════════════════════════════════════════════════
+window.addEventListener('load', () => {
+  updateS1();
+  updateS2();
+  updateS3();
+  updateS4();
+});
+</script>
+</body>
+</html>

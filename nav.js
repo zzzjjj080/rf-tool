@@ -33,6 +33,7 @@
     { id: 'pa',       label: '⑫ パワーアンプ',      href: baseUrl + 'power-amp-simulator/power_amp_simulator.html' },
     { id: 'pll',      label: '⑬ PLL',              href: baseUrl + 'pll-simulator/pll_simulator.html' },
     { id: 'matching', label: '⑭ 負荷変動',          href: baseUrl + 'matching/index.html', featured: true },
+    { id: 'abcd',     label: '⑮ ABCD',             href: baseUrl + 'abcd/abcd.html' },
   ];
 
   /* ── CSS — index.html の header/.tab-btn と完全一致させる ── */
