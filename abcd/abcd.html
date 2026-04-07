@@ -418,9 +418,76 @@ h1 {
         <!-- Frequency sweep note -->
         <div class="callout" style="margin-top:18px;border-left-color:var(--text-dim);">
           <div class="callout-title" style="color:var(--text-dim);">📝 おまけ：実際の測定は「周波数スイープ」</div>
-          VNA（ネットワークアナライザー）では周波数を少しずつ変えながら S パラメータを連続測定します。
-          すると周波数ごとに異なる S₁₁ の値が得られ、スミスチャート上に <strong>軌跡（トレース）</strong> として描かれます。
-          このデモは「<strong>ある1つの周波数でのスナップショット</strong>」として S₁₁ を理解するためのものです。
+          <p style="margin-bottom:12px;">
+            VNA（ネットワークアナライザー）では周波数を少しずつ変えながら S パラメータを連続測定します。
+            すると周波数ごとに異なる S₁₁ の値が得られ、スミスチャート上に <strong>軌跡（トレース）</strong> として描かれます。
+            <strong>このデモは1行分（ある1周波数でのスナップショット）に相当</strong>します。
+          </p>
+
+          <!-- Sample VNA data table -->
+          <div style="font-size:12px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">
+            VNA 出力データの例（50 Ω 抵抗＋100 nH インダクタ負荷）
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="de-table" style="font-size:13px;min-width:480px;">
+              <thead>
+                <tr>
+                  <th>周波数</th>
+                  <th style="text-align:center;">Z_L（負荷）</th>
+                  <th style="text-align:center;">|S₁₁|</th>
+                  <th style="text-align:center;">∠S₁₁</th>
+                  <th style="text-align:center;">S₁₁ [dB]</th>
+                  <th style="text-align:center;">スミスチャート上の位置</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="font-family:monospace;font-weight:700;color:var(--text-dim);">1 MHz</td>
+                  <td style="text-align:center;font-family:monospace;">50+j0.6 Ω</td>
+                  <td style="text-align:center;font-family:monospace;color:var(--green);">0.006</td>
+                  <td style="text-align:center;font-family:monospace;">90°</td>
+                  <td style="text-align:center;font-family:monospace;color:var(--green);">−44 dB</td>
+                  <td style="text-align:center;font-size:12px;color:var(--text-dim);">中心付近（ほぼ整合）</td>
+                </tr>
+                <tr>
+                  <td style="font-family:monospace;font-weight:700;color:var(--text-dim);">10 MHz</td>
+                  <td style="text-align:center;font-family:monospace;">50+j6 Ω</td>
+                  <td style="text-align:center;font-family:monospace;color:var(--green);">0.063</td>
+                  <td style="text-align:center;font-family:monospace;">86°</td>
+                  <td style="text-align:center;font-family:monospace;color:var(--green);">−24 dB</td>
+                  <td style="text-align:center;font-size:12px;color:var(--text-dim);">中心から少し上</td>
+                </tr>
+                <tr style="background:color-mix(in srgb, var(--accent) 10%, var(--panel));outline:2px solid var(--accent);outline-offset:-1px;">
+                  <td style="font-family:monospace;font-weight:700;color:var(--accent);">50 MHz ← いま</td>
+                  <td style="text-align:center;font-family:monospace;">50+j31 Ω</td>
+                  <td style="text-align:center;font-family:monospace;color:var(--accent);font-weight:700;">0.300</td>
+                  <td style="text-align:center;font-family:monospace;">73°</td>
+                  <td style="text-align:center;font-family:monospace;color:var(--accent);font-weight:700;">−10 dB</td>
+                  <td style="text-align:center;font-size:12px;color:var(--accent);font-weight:700;">👈 R=50, X=31 で再現できる</td>
+                </tr>
+                <tr>
+                  <td style="font-family:monospace;font-weight:700;color:var(--text-dim);">100 MHz</td>
+                  <td style="text-align:center;font-family:monospace;">50+j63 Ω</td>
+                  <td style="text-align:center;font-family:monospace;color:var(--gold);">0.531</td>
+                  <td style="text-align:center;font-family:monospace;">58°</td>
+                  <td style="text-align:center;font-family:monospace;color:var(--gold);">−5.5 dB</td>
+                  <td style="text-align:center;font-size:12px;color:var(--text-dim);">上半分・外寄り</td>
+                </tr>
+                <tr>
+                  <td style="font-family:monospace;font-weight:700;color:var(--text-dim);">500 MHz</td>
+                  <td style="text-align:center;font-family:monospace;">50+j314 Ω</td>
+                  <td style="text-align:center;font-family:monospace;color:var(--red);">0.953</td>
+                  <td style="text-align:center;font-family:monospace;">18°</td>
+                  <td style="text-align:center;font-family:monospace;color:var(--red);">−0.4 dB</td>
+                  <td style="text-align:center;font-size:12px;color:var(--text-dim);">外周付近（ほぼ全反射）</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="margin-top:10px;font-size:12px;color:var(--text-dim);line-height:1.7;">
+            周波数が上がるほど L のリアクタンス（jωL）が大きくなり、|S₁₁| が増加（反射が増える）。
+            5点の軌跡をスミスチャートにつなぐと、<strong>外周方向へ弧を描くトレース</strong>が得られます。
+          </div>
         </div>
       </div>
 
