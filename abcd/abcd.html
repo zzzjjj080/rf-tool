@@ -283,7 +283,10 @@ h1 {
       <span class="step-num">3</span>直列接続
     </button>
     <button class="step-btn" onclick="showStep(4)">
-      <span class="step-num">4</span>De-embedding体験
+      <span class="step-num">4</span>De-embedding
+    </button>
+    <button class="step-btn" onclick="showStep(5)">
+      <span class="step-num">5</span>VIセンサー応用
     </button>
   </nav>
 
@@ -1122,21 +1125,29 @@ h1 {
   </div>
 
   <!-- ═══════════════════════════════════════════════════════════
-       STEP 5 : De-embedding 体験
+       STEP 4 : De-embedding
   ═══════════════════════════════════════════════════════════ -->
   <div class="step-panel" id="step5">
 
     <div class="step-intro">
-      <div class="step-intro-title">🔬 De-embedding（脱埋め込み）とは？</div>
+      <div class="step-intro-title">🔬 直列接続の応用 — De-embedding（脱埋め込み）</div>
       <div class="step-intro-body">
         <ul>
-          <li>実際の測定では <strong>DUT</strong>（被測定物）の前後にケーブル・コネクタ・基板などの<strong>治具（fixture）</strong>が入る</li>
-          <li>VNA が測定するのは「DUT + 治具込み」の特性 — DUT 単体の値ではない</li>
-          <li style="font-family:'Space Mono',monospace;font-size:12px;list-style:none;padding-left:0;margin:4px 0 4px 1.5em;">VNA ── [治具A（FA）] ── [DUT] ── [治具B（FB）] ── VNA<br>&nbsp;&nbsp;測定値 M = FA × DUT × FB</li>
-          <li>治具の ABCD 行列が既知なら、<strong>逆行列演算</strong>で DUT を取り出せる</li>
-          <li style="font-family:'Space Mono',monospace;font-size:13px;list-style:none;padding-left:0;margin:4px 0 4px 1.5em;">DUT = FA⁻¹ × M × FB⁻¹</li>
-          <li><strong>VI センサーのインピーダンス補正</strong>も同じ原理 — ケーブルや CT・電圧プローブの影響を除去して、プラズマ負荷の真のインピーダンスを計算する</li>
+          <li><strong>Step 3 の復習：</strong>部品を直列接続すると行列の積になる — M_total = M₁ × M₂ × M₃</li>
+          <li>実際の測定では、DUT の前後に<strong>治具（ケーブル・コネクタ・基板など）</strong>が挟まる</li>
+          <li>VNA が計測するのは「治具 A ＋ DUT ＋ 治具 B」の合成特性であり、DUT 単体の値ではない：
+            <div style="font-family:'Roboto Mono',monospace;font-size:13px;margin:6px 0 6px 1.2em;color:var(--text);">M（測定値） = FA × DUT × FB</div>
+          </li>
+          <li>治具の ABCD 行列が既知なら、<strong>逆行列をかけるだけ</strong>で DUT を取り出せる：
+            <div style="font-family:'Roboto Mono',monospace;font-size:13px;margin:6px 0 6px 1.2em;color:var(--text);">DUT = FA⁻¹ × M × FB⁻¹</div>
+          </li>
         </ul>
+        <div class="callout" style="margin-top:10px;">
+          <div class="callout-title">💡 "De-embedding" という言葉の意味</div>
+          <strong>Embedding（埋め込み）</strong>＝ DUT が治具の中に埋め込まれた状態で測定されること。<br>
+          <strong>De-embedding（脱埋め込み）</strong>＝ その治具の影響を数学的に取り除く（"de-" = 除去）操作。<br>
+          難しそうな名前だが、やっていることは Step 3 の <em>逆向きの行列積</em> にすぎない。
+        </div>
       </div>
     </div>
 
@@ -1273,6 +1284,37 @@ h1 {
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       STEP 5 : VI センサー応用（プレースホルダー）
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="step-panel" id="step6">
+
+    <div class="step-intro">
+      <div class="step-intro-title">⚡ VIセンサー応用 — プラズマ負荷のインピーダンス計測</div>
+      <div class="step-intro-body">
+        <ul>
+          <li><strong>VIセンサー</strong>とは、RFラインに挿入して電圧・電流を同時計測するプローブ。半導体プロセス装置（プラズマエッチング等）の負荷インピーダンスをリアルタイムで監視するために使われる</li>
+          <li>VIセンサー自体にもケーブル・CT・電圧プローブなどの<strong>寄生素子</strong>が存在し、測定値には治具の影響が含まれる</li>
+          <li>Step 4 の de-embedding を VIセンサーに適用することで、センサー自身の寄生を除去し、<strong>プラズマ（DUT）の真のインピーダンス</strong>を得られる</li>
+          <li>具体的な応用例・シミュレーターはこのページに追加予定</li>
+        </ul>
+        <div class="callout" style="margin-top:10px;">
+          <div class="callout-title">🚧 このステップは現在開発中です</div>
+          VIセンサー回路モデル・キャリブレーション手順・プラズマ等価回路との接続など、詳細コンテンツを順次追加していく予定です。
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="text-align:center;padding:48px 24px;">
+      <div style="font-size:48px;margin-bottom:16px;">🔧</div>
+      <div style="font-size:18px;font-weight:700;color:var(--text-dim);margin-bottom:8px;">コンテンツ準備中</div>
+      <div style="font-size:14px;color:var(--text-dim);max-width:400px;margin:0 auto;">
+        VIセンサーの等価回路・de-embedding キャリブレーション・プラズマ負荷シミュレーターをここに実装します。
+      </div>
+    </div>
+
   </div>
 
 </div><!-- /container -->
@@ -2744,8 +2786,8 @@ function drawSmith(ptBefore, ptAfter) {
 // ════════════════════════════════════════════════════════════════
 // Step navigation
 // ════════════════════════════════════════════════════════════════
-// Step order: 1=step1(Sパラメータ), 2=step4(ABCD行列と変換), 3=step3(カスケード), 4=step5(De-embed)
-const STEP_ID_ORDER = ['step1', 'step4', 'step3', 'step5'];
+// Step order: 1=step1(Sパラメータ), 2=step4(ABCD行列と変換), 3=step3(直列接続), 4=step5(De-embedding), 5=step6(VIセンサー)
+const STEP_ID_ORDER = ['step1', 'step4', 'step3', 'step5', 'step6'];
 function showStep(n) {
   STEP_ID_ORDER.forEach((id, i) => {
     const p = document.getElementById(id);
@@ -2753,7 +2795,7 @@ function showStep(n) {
   });
   document.querySelectorAll('.step-btn').forEach((b, i) => b.classList.toggle('active', i + 1 === n));
   if (n === 1) setTimeout(() => { updateS0(); drawSweepSmith(); drawSweepSParam(); }, 50);
-  if (n === 3) setTimeout(drawFlowSVG, 50); // カスケード接続
+  if (n === 3) setTimeout(drawFlowSVG, 50); // 直列接続
   if (n === 4) setTimeout(() => { updateS4(); drawConceptSVG(); }, 80);
 }
 
