@@ -1316,7 +1316,7 @@ h1 {
     <div class="card">
       <div class="card-title">🔗 測定系の構成図</div>
       <div class="diagram-wrap">
-        <svg id="s4-concept-svg" viewBox="0 0 700 80" xmlns="http://www.w3.org/2000/svg"></svg>
+        <svg id="s4-concept-svg" viewBox="0 0 700 118" xmlns="http://www.w3.org/2000/svg"></svg>
       </div>
     </div>
 
@@ -1840,31 +1840,46 @@ function drawFlowSVG() {
 function drawConceptSVG() {
   const svg = document.getElementById('s4-concept-svg');
   if (!svg) return;
-  const lc = tc('#60a5fa','#0284c7');
-  const ac2= tc('#ff6b35','#ea580c');
-  const gn = tc('#22c55e','#16a34a');
-  const wc = tc('#94a3b8','#64748b');
-  const tx = tc('#e2e8f0','#1e293b');
+  const lc  = tc('#60a5fa','#0284c7');
+  const ac2 = tc('#ff6b35','#ea580c');
+  const gn  = tc('#22c55e','#16a34a');
+  const wc  = tc('#94a3b8','#64748b');
+  const gd  = tc('#fbbf24','#d97706');
+  const gbg = tc('rgba(34,197,94,0.07)','rgba(22,163,74,0.10)');
+  // layout: VNA1(50-130) → F_jig(175-300) → DUT(345-480) → VNA2(525-610)
   svg.innerHTML = `
-    <rect x="10"  y="15" width="90"  height="50" rx="8" fill="none" stroke="${lc}" stroke-width="2"/>
-    <text x="55"  y="37" text-anchor="middle" font-size="12" fill="${lc}" font-weight="700" font-family="Space Mono,monospace">VNA</text>
-    <text x="55"  y="55" text-anchor="middle" font-size="11" fill="${wc}" font-family="Noto Sans JP,sans-serif">測定器</text>
-    <line x1="100" y1="40" x2="150" y2="40" stroke="${wc}" stroke-width="2"/>
-    <rect x="150" y="15" width="110" height="50" rx="8" fill="none" stroke="${ac2}" stroke-width="2"/>
-    <text x="205" y="37" text-anchor="middle" font-size="13" fill="${ac2}" font-weight="700" font-family="Space Mono,monospace">FA</text>
-    <text x="205" y="56" text-anchor="middle" font-size="11" fill="${wc}" font-family="Noto Sans JP,sans-serif">治具A（前段）</text>
-    <line x1="260" y1="40" x2="310" y2="40" stroke="${wc}" stroke-width="2"/>
-    <rect x="310" y="12" width="110" height="56" rx="8" fill="${tc('rgba(0,212,255,0.08)','rgba(2,132,199,0.08)')}" stroke="${gn}" stroke-width="2.5"/>
-    <text x="365" y="37" text-anchor="middle" font-size="13" fill="${gn}" font-weight="700" font-family="Space Mono,monospace">DUT</text>
-    <text x="365" y="56" text-anchor="middle" font-size="11" fill="${gn}" font-family="Noto Sans JP,sans-serif">被測定物（真値）</text>
-    <line x1="420" y1="40" x2="470" y2="40" stroke="${wc}" stroke-width="2"/>
-    <rect x="470" y="15" width="110" height="50" rx="8" fill="none" stroke="${ac2}" stroke-width="2"/>
-    <text x="525" y="37" text-anchor="middle" font-size="13" fill="${ac2}" font-weight="700" font-family="Space Mono,monospace">FB</text>
-    <text x="525" y="56" text-anchor="middle" font-size="11" fill="${wc}" font-family="Noto Sans JP,sans-serif">治具B（後段）</text>
-    <line x1="580" y1="40" x2="630" y2="40" stroke="${wc}" stroke-width="2"/>
-    <rect x="630" y="15" width="60" height="50" rx="8" fill="none" stroke="${lc}" stroke-width="2"/>
-    <text x="660" y="44" text-anchor="middle" font-size="12" fill="${lc}" font-weight="700" font-family="Space Mono,monospace">VNA</text>
-    <text x="365" y="78" text-anchor="middle" font-size="11" fill="${tc('#fbbf24','#d97706')}" font-family="Noto Sans JP,sans-serif" font-weight="700">測定値 M = FA × DUT × FB　→　DUT = FA⁻¹ × M × FB⁻¹</text>`;
+    <!-- VNA Port1 -->
+    <rect x="50" y="18" width="80" height="46" rx="8" fill="none" stroke="${lc}" stroke-width="2"/>
+    <text x="90" y="38" text-anchor="middle" font-size="12" fill="${lc}" font-weight="700" font-family="Space Mono,monospace">VNA</text>
+    <text x="90" y="55" text-anchor="middle" font-size="10" fill="${wc}" font-family="Noto Sans JP,sans-serif">Port 1</text>
+    <!-- Arrow VNA1 → F_jig -->
+    <line x1="130" y1="41" x2="170" y2="41" stroke="${wc}" stroke-width="1.8"/>
+    <polygon points="170,36 178,41 170,46" fill="${wc}"/>
+    <!-- F_jig -->
+    <rect x="178" y="16" width="122" height="50" rx="8" fill="none" stroke="${ac2}" stroke-width="2"/>
+    <text x="239" y="37" text-anchor="middle" font-size="13" fill="${ac2}" font-weight="700" font-family="Space Mono,monospace">F_jig</text>
+    <text x="239" y="55" text-anchor="middle" font-size="10" fill="${wc}" font-family="Noto Sans JP,sans-serif">治具（ケーブル・コネクタ等）</text>
+    <!-- Arrow F_jig → DUT -->
+    <line x1="300" y1="41" x2="340" y2="41" stroke="${wc}" stroke-width="1.8"/>
+    <polygon points="340,36 348,41 340,46" fill="${wc}"/>
+    <!-- DUT -->
+    <rect x="348" y="13" width="132" height="56" rx="8" fill="${gbg}" stroke="${gn}" stroke-width="2.5"/>
+    <text x="414" y="37" text-anchor="middle" font-size="13" fill="${gn}" font-weight="700" font-family="Space Mono,monospace">DUT</text>
+    <text x="414" y="55" text-anchor="middle" font-size="10" fill="${gn}" font-family="Noto Sans JP,sans-serif">被測定物（真値）</text>
+    <!-- Arrow DUT → VNA2 -->
+    <line x1="480" y1="41" x2="520" y2="41" stroke="${wc}" stroke-width="1.8"/>
+    <polygon points="520,36 528,41 520,46" fill="${wc}"/>
+    <!-- VNA Port2 -->
+    <rect x="528" y="18" width="80" height="46" rx="8" fill="none" stroke="${lc}" stroke-width="2"/>
+    <text x="568" y="38" text-anchor="middle" font-size="12" fill="${lc}" font-weight="700" font-family="Space Mono,monospace">VNA</text>
+    <text x="568" y="55" text-anchor="middle" font-size="10" fill="${wc}" font-family="Noto Sans JP,sans-serif">Port 2</text>
+    <!-- F_meas brace: spans F_jig(178) + DUT(480) -->
+    <line x1="178" y1="73" x2="480" y2="73" stroke="${gd}" stroke-width="1.5" stroke-dasharray="5,3"/>
+    <line x1="178" y1="66" x2="178" y2="73" stroke="${gd}" stroke-width="1.5"/>
+    <line x1="480" y1="66" x2="480" y2="73" stroke="${gd}" stroke-width="1.5"/>
+    <text x="329" y="86" text-anchor="middle" font-size="11" fill="${gd}" font-weight="700" font-family="Noto Sans JP,sans-serif">← VNA が計測する F_meas →</text>
+    <!-- De-embedding formula -->
+    <text x="329" y="109" text-anchor="middle" font-size="12" fill="${gd}" font-weight="700" font-family="Space Mono,monospace">F_dut = F_jig⁻¹ × F_meas</text>`;
 }
 
 // ════════════════════════════════════════════════════════════════
