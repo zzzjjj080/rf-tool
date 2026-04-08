@@ -130,6 +130,10 @@ footer a:hover{text-decoration:underline}
 .fir-sig-btn:hover{border-color:var(--accent);color:var(--accent)}
 .fir-sig-btn.active{border-color:#00d4ff;color:#00d4ff;background:rgba(0,212,255,.1);font-weight:700}
 [data-theme="light"] .fir-sig-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(2,132,199,.1)}
+.fir-tap-btn{padding:5px 13px;border-radius:6px;border:1.5px solid var(--border);background:var(--panel2);color:var(--text-dim);font-family:'Space Mono',monospace;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s}
+.fir-tap-btn:hover{border-color:var(--accent);color:var(--accent)}
+.fir-tap-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(2,132,199,.12)}
+[data-theme="dark"] .fir-tap-btn.active{background:rgba(0,212,255,.1)}
 </style>
 </head>
 <body>
@@ -445,27 +449,32 @@ footer a:hover{text-decoration:underline}
       ▶ ステップ実行ボタンで 1 サンプルずつ進め、レジスタ・計算式・グラフの変化を追ってみましょう。
     </p>
 
-    <!-- Preset selector + custom coefficients -->
+    <!-- Tap count + Preset selector + custom coefficients -->
     <div class="local-ctrl">
-      <div class="local-ctrl-header">係数プリセット</div>
-      <div class="fir-ctrl">
+      <div class="local-ctrl-header">タップ数 / 係数プリセット</div>
+      <div class="fir-ctrl" style="gap:18px">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <span style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim)">タップ数 N</span>
+          <div style="display:flex;gap:5px" id="firTapBtns">
+            <button class="fir-tap-btn" data-n="5"  onclick="setFirTaps(5)">5</button>
+            <button class="fir-tap-btn active" data-n="10" onclick="setFirTaps(10)">10</button>
+            <button class="fir-tap-btn" data-n="20" onclick="setFirTaps(20)">20</button>
+            <button class="fir-tap-btn" data-n="50" onclick="setFirTaps(50)">50</button>
+          </div>
+        </div>
         <div class="select-group">
-          <label>プリセット</label>
+          <label>プリセット（N タップ分の係数を自動生成）</label>
           <select id="firPreset" onchange="onFIRPreset()">
-            <option value="avg">移動平均（LPF）　h=[0.2×5]</option>
-            <option value="diff">差分（HPF）　h=[0.5, -0.5, 0…]</option>
-            <option value="tri">三角窓（LPF）　h=[0.1,0.2,0.4,0.2,0.1]</option>
+            <option value="avg">移動平均（LPF）— h[k] = 1/N</option>
+            <option value="diff">差分 HPF — h[0]=0.5, h[1]=-0.5</option>
+            <option value="tri">三角窓 LPF — 中央最大・線形テーパー</option>
             <option value="custom">カスタム（直接入力）</option>
           </select>
         </div>
       </div>
       <div id="firCustomCoeffs" class="fir-custom-coeffs" style="display:none">
         <span style="font-family:'Space Mono',monospace;font-size:10px;color:var(--accent2);letter-spacing:1px">h[] =</span>
-        <input type="number" id="firCoeff0" class="fir-coeff-input" value="0.2" step="0.05" oninput="onFIRCustomCoeff()">
-        <input type="number" id="firCoeff1" class="fir-coeff-input" value="0.2" step="0.05" oninput="onFIRCustomCoeff()">
-        <input type="number" id="firCoeff2" class="fir-coeff-input" value="0.2" step="0.05" oninput="onFIRCustomCoeff()">
-        <input type="number" id="firCoeff3" class="fir-coeff-input" value="0.2" step="0.05" oninput="onFIRCustomCoeff()">
-        <input type="number" id="firCoeff4" class="fir-coeff-input" value="0.2" step="0.05" oninput="onFIRCustomCoeff()">
+        <div id="firCustomInputsWrap" style="display:flex;flex-wrap:wrap;gap:5px;align-items:center"></div>
       </div>
     </div>
 
@@ -492,7 +501,7 @@ footer a:hover{text-decoration:underline}
 
     <!-- Shift register block diagram (existing animation canvas) -->
     <div class="panel" style="margin-bottom:12px">
-      <div class="panel-header"><div class="dot"></div>FIR Direct Form I — シフトレジスタ構造（5タップ）</div>
+      <div class="panel-header"><div class="dot"></div>FIR Direct Form I — シフトレジスタ構造（<span id="firTapLabel">10</span>タップ）</div>
       <canvas id="cvFIR" height="228"></canvas>
     </div>
 
@@ -1353,19 +1362,37 @@ function drawAudio() {
 }
 
 // ─── FIR Implementation ───────────────────────────────────────────────────
-const FIR_PRESETS = {
-  avg:    [0.2,  0.2,  0.2,  0.2,  0.2],
-  diff:   [0.5, -0.5,  0.0,  0.0,  0.0],
-  tri:    [0.1,  0.2,  0.4,  0.2,  0.1],
-  custom: [0.2,  0.2,  0.2,  0.2,  0.2],
-};
+function genFirCoeffs(preset, N) {
+  if (preset === 'avg') {
+    return Array(N).fill(1 / N);
+  } else if (preset === 'diff') {
+    const c = Array(N).fill(0);
+    if (N >= 1) c[0] =  0.5;
+    if (N >= 2) c[1] = -0.5;
+    return c;
+  } else if (preset === 'tri') {
+    const c = Array(N).fill(0);
+    const half = (N - 1) / 2;
+    let sum = 0;
+    for (let i = 0; i < N; i++) { c[i] = 1 - Math.abs(i - half) / (half + 1); sum += c[i]; }
+    return c.map(v => v / sum);
+  }
+  // custom: return stored custom, padded/trimmed to N
+  const src = firSt ? firSt.customH : [];
+  const out = Array(N).fill(0);
+  for (let i = 0; i < N; i++) out[i] = i < src.length ? src[i] : 0;
+  return out;
+}
 
 const firSt = {
-  reg:     [0, 0, 0, 0, 0],
-  h:       [0.2, 0.2, 0.2, 0.2, 0.2],
+  numTaps: 10,
+  reg:     Array(10).fill(0),
+  h:       genFirCoeffs('avg', 10),
+  customH: Array(10).fill(0.1),
   sigType: 'dc',
   n:       0,
   anim:    0,
+  slideP:  0,
   pending: 0,
   yOut:    0,
   xHist:   [],
@@ -1391,10 +1418,29 @@ function setSigType(type) {
     b.classList.toggle('active', b.dataset.sig === type));
 }
 
+function setFirTaps(n) {
+  firSt.numTaps = n;
+  document.querySelectorAll('.fir-tap-btn').forEach(b =>
+    b.classList.toggle('active', +b.dataset.n === n));
+  const lbl = document.getElementById('firTapLabel');
+  if (lbl) lbl.textContent = n;
+  const preset = document.getElementById('firPreset').value;
+  if (preset === 'custom') {
+    firSt.customH = genFirCoeffs('avg', n); // reset custom to avg when N changes
+    firSt.h = [...firSt.customH];
+    rebuildCustomInputs();
+  } else {
+    firSt.h = genFirCoeffs(preset, n);
+  }
+  firReset();
+  drawFirImpulse();
+}
+
 function firReset() {
-  firSt.reg   = [0, 0, 0, 0, 0];
+  firSt.reg   = Array(firSt.numTaps).fill(0);
   firSt.n     = 0;
   firSt.anim  = 0;
+  firSt.slideP = 0;
   firSt.yOut  = 0;
   firSt.xHist = [];
   firSt.yHist = [];
@@ -1409,10 +1455,18 @@ function firStep() {
   const xNew = firGetSample(firSt.n, firSt.sigType);
   firSt.pending = xNew;
   firSt.anim = 1;
-  drawFIR();
+  firSt.slideP = 0;
 
-  setTimeout(() => {
-    for (let i = 4; i > 0; i--) firSt.reg[i] = firSt.reg[i - 1];
+  const SLIDE_DUR = 200;
+  const t0 = performance.now();
+  (function slideFrame(t) {
+    firSt.slideP = Math.min(1, (t - t0) / SLIDE_DUR);
+    drawFIR();
+    if (firSt.slideP < 1) { requestAnimationFrame(slideFrame); return; }
+
+    // Commit shift
+    const N = firSt.numTaps;
+    for (let i = N - 1; i > 0; i--) firSt.reg[i] = firSt.reg[i - 1];
     firSt.reg[0] = xNew;
     firSt.n++;
     firSt.yOut = firSt.h.reduce((s, hi, i) => s + hi * firSt.reg[i], 0);
@@ -1421,6 +1475,7 @@ function firStep() {
     if (firSt.xHist.length > 20) firSt.xHist.shift();
     if (firSt.yHist.length > 20) firSt.yHist.shift();
     firSt.anim = 2;
+    firSt.slideP = 0;
     drawFIR();
     updateFIRCalc();
     drawFirGraphs();
@@ -1428,30 +1483,55 @@ function firStep() {
     setTimeout(() => {
       firSt.anim = 3;
       drawFIR();
-      setTimeout(() => { firSt.anim = 0; drawFIR(); }, 700);
-    }, 700);
-  }, 380);
+      setTimeout(() => { firSt.anim = 0; drawFIR(); }, 220);
+    }, 220);
+  })(performance.now());
 }
 
 function onFIRPreset() {
   const v = document.getElementById('firPreset').value;
-  firSt.h = [...(FIR_PRESETS[v] || FIR_PRESETS.avg)];
   const cc = document.getElementById('firCustomCoeffs');
   if (cc) cc.style.display = v === 'custom' ? 'flex' : 'none';
-  for (let i = 0; i < 5; i++) {
-    const el = document.getElementById('firCoeff' + i);
-    if (el) el.value = firSt.h[i];
+  if (v === 'custom') {
+    rebuildCustomInputs();
+    firSt.h = [...firSt.customH];
+  } else {
+    firSt.h = genFirCoeffs(v, firSt.numTaps);
   }
   firReset();
   drawFirImpulse();
 }
 
-function onFIRCustomCoeff() {
-  for (let i = 0; i < 5; i++) {
-    const v = parseFloat(document.getElementById('firCoeff' + i).value);
-    firSt.h[i] = isNaN(v) ? 0 : v;
+function rebuildCustomInputs() {
+  const wrap = document.getElementById('firCustomInputsWrap');
+  if (!wrap) return;
+  const N = firSt.numTaps;
+  // Preserve existing custom values
+  if (firSt.customH.length !== N) firSt.customH = genFirCoeffs('avg', N);
+  wrap.innerHTML = '';
+  for (let i = 0; i < N; i++) {
+    const box = document.createElement('div');
+    box.style.cssText = 'display:flex;flex-direction:column;gap:2px;align-items:center';
+    const inp = document.createElement('input');
+    inp.type = 'number'; inp.step = '0.01'; inp.className = 'fir-coeff-input';
+    inp.value = firSt.customH[i].toFixed(3); inp.dataset.idx = i;
+    inp.addEventListener('input', onFIRCustomCoeff);
+    const lbl = document.createElement('span');
+    lbl.style.cssText = "font-family:'Space Mono',monospace;font-size:9px;color:var(--text-dim)";
+    lbl.textContent = `h[${i}]`;
+    box.append(inp, lbl); wrap.appendChild(box);
   }
-  FIR_PRESETS.custom = [...firSt.h];
+}
+
+function onFIRCustomCoeff() {
+  const wrap = document.getElementById('firCustomInputsWrap');
+  if (!wrap) return;
+  wrap.querySelectorAll('input').forEach(inp => {
+    const i = +inp.dataset.idx;
+    const v = parseFloat(inp.value);
+    firSt.customH[i] = isNaN(v) ? 0 : v;
+  });
+  firSt.h = [...firSt.customH];
   drawFIR();
   drawFirImpulse();
   updateFIRCalc();
@@ -1461,13 +1541,17 @@ function updateFIRCalc() {
   const el = document.getElementById('firCalcDisplay');
   if (!el) return;
   const h = firSt.h, x = firSt.reg, y = firSt.yOut;
-  const line1 = 'y[n] = ' + h.map((hi, i) => `h[${i}]×x[n${i > 0 ? '-' + i : ''}]`).join(' + ');
-  const line2 = '     = ' + h.map((hi, i) => {
+  const N = firSt.numTaps;
+  // Limit display to first 8 taps + "..." if more
+  const show = Math.min(N, 8);
+  const trunc = N > 8;
+  const line1 = 'y[n] = ' + h.slice(0, show).map((hi, i) => `h[${i}]×x[n${i > 0 ? '-' + i : ''}]`).join(' + ') + (trunc ? ' + …' : '');
+  const line2 = '     = ' + h.slice(0, show).map((hi, i) => {
     const hC = hi   >= 0 ? '#00d4ff' : '#ff6b35';
     const vC = x[i] >= 0 ? '#00d4ff' : '#ff6b35';
     return `<span style="color:${hC}">${hi.toFixed(2)}</span>` +
            `×<span style="color:${vC}">(${x[i].toFixed(2)})</span>`;
-  }).join(' + ');
+  }).join(' + ') + (trunc ? ' + …' : '');
   const rC = y >= 0 ? '#00d4ff' : '#ff6b35';
   const line3 = `     = <span style="color:${rC};font-weight:bold">${y.toFixed(4)}</span>`;
   el.innerHTML = `<code>${line1}<br>${line2}<br>${line3}</code>`;
@@ -1485,9 +1569,9 @@ function drawFirImpulse() {
   ctx.fillStyle = C.panel2; ctx.fillRect(0, 0, w, h);
 
   const mx = 44, my = 16, pw = w - mx - 16, ph = h - my - 32;
-  const N = 5;
+  const N = firSt.numTaps;
   const maxAbs = Math.max(0.5, ...firSt.h.map(Math.abs));
-  drawGrid(ctx, mx, my, pw, ph, N, 4, C);
+  drawGrid(ctx, mx, my, pw, ph, Math.min(N, 10), 4, C);
 
   const zy = my + ph * 0.5;
   ctx.strokeStyle = C.textDim; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
@@ -1495,19 +1579,23 @@ function drawFirImpulse() {
   ctx.setLineDash([]);
 
   const xStep = pw / N;
+  const dotR = N <= 10 ? 5 : N <= 20 ? 3 : 2;
+  const showLabel = N <= 20;
   for (let i = 0; i < N; i++) {
     const cx  = mx + (i + 0.5) * xStep;
     const val = firSt.h[i];
     const cy  = zy - (val / maxAbs) * (ph * 0.44);
     const col = val >= 0 ? '#00d4ff' : '#ff6b35';
-    ctx.strokeStyle = col; ctx.lineWidth = 2.5;
+    ctx.strokeStyle = col; ctx.lineWidth = N <= 20 ? 2 : 1.5;
     ctx.beginPath(); ctx.moveTo(cx, zy); ctx.lineTo(cx, cy); ctx.stroke();
     ctx.fillStyle = col;
-    ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI * 2); ctx.fill();
-    ctx.font = 'bold 10px Space Mono, monospace'; ctx.textAlign = 'center';
-    ctx.fillText(val.toFixed(2), cx, val >= 0 ? cy - 9 : cy + 17);
-    ctx.fillStyle = C.textDim; ctx.font = '9px Space Mono, monospace';
-    ctx.fillText('n=' + i, cx, my + ph + 22);
+    ctx.beginPath(); ctx.arc(cx, cy, dotR, 0, Math.PI * 2); ctx.fill();
+    if (showLabel) {
+      ctx.font = 'bold 10px Space Mono, monospace'; ctx.textAlign = 'center';
+      ctx.fillText(val.toFixed(2), cx, val >= 0 ? cy - 9 : cy + 17);
+      ctx.fillStyle = C.textDim; ctx.font = '9px Space Mono, monospace';
+      ctx.fillText('n=' + i, cx, my + ph + 22);
+    }
   }
   ctx.fillStyle = C.textDim; ctx.font = '9px Space Mono, monospace'; ctx.textAlign = 'right';
   ctx.fillText('+' + maxAbs.toFixed(1), mx - 4, my + 4);
@@ -1552,15 +1640,24 @@ function _drawFirGraph(cvId, data, colorFn) {
 
   const color = colorFn(C);
   const MAX = 20, stepX = pw / MAX;
-  for (let i = 0; i < data.length; i++) {
-    const xp  = mx + (MAX - data.length + i + 0.5) * stepX;
-    const val = Math.max(-1.5, Math.min(1.5, data[i]));
-    const cy  = zy - (val / 1.5) * (ph / 2) * 0.92;
-    ctx.strokeStyle = color; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(xp, zy); ctx.lineTo(xp, cy); ctx.stroke();
-    ctx.fillStyle = color;
-    ctx.beginPath(); ctx.arc(xp, cy, 3, 0, Math.PI * 2); ctx.fill();
-  }
+
+  // Point positions
+  const pts = data.map((v, i) => ({
+    x: mx + (MAX - data.length + i + 0.5) * stepX,
+    y: zy - (Math.max(-1.5, Math.min(1.5, v)) / 1.5) * (ph / 2) * 0.92,
+  }));
+
+  // Polyline
+  ctx.strokeStyle = color; ctx.lineWidth = 1.8; ctx.setLineDash([]);
+  ctx.beginPath();
+  pts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+  ctx.stroke();
+
+  // Circle markers
+  ctx.fillStyle = color;
+  pts.forEach(p => {
+    ctx.beginPath(); ctx.arc(p.x, p.y, 3.5, 0, Math.PI * 2); ctx.fill();
+  });
 
   // Current sample highlight line
   const lastX = mx + (MAX - 1 + 0.5) * stepX;
@@ -1610,179 +1707,190 @@ function drawFIR() {
   const dark = document.documentElement.getAttribute('data-theme') === 'dark';
 
   ctx.clearRect(0, 0, w, h);
-  ctx.fillStyle = C.panel2;
-  ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = C.panel2; ctx.fillRect(0, 0, w, h);
 
   const cReg    = dark ? '#0c2640' : '#dbeafe';
   const cRegBrd = dark ? '#00d4ff' : '#0284c7';
-  const cMul    = dark ? '#200e00' : '#fff3e0';
-  const cMulBrd = dark ? '#ff6b35' : '#ea580c';
+  const cTri    = dark ? '#1a0800' : '#fff3e0';
+  const cTriBrd = dark ? '#ff6b35' : '#ea580c';
   const cHigh   = C.gold;
 
-  const TAPS = 5;
-  const boxW = Math.min(60, Math.floor((w - 80) / TAPS - 12));
-  const boxH = 30;
-  const mulR = Math.min(15, Math.floor(boxW * 0.28));
-  const leftM = 44, rightM = 12;
-  const xStep = (w - leftM - rightM - boxW) / (TAPS - 1);
-  const cxs = Array.from({length: TAPS}, (_, i) => leftM + boxW / 2 + i * xStep);
+  const N = firSt.numTaps;
+  const showAll = N <= 10;
+  // If N>10: show 7 regular cells + "…" gap + last cell = 8 visual slots
+  const showCount = showAll ? N : 8;
+  function tapIdx(pos) { return (!showAll && pos === showCount - 1) ? N - 1 : pos; }
 
-  // Fixed Y layout
-  const regTop = 22, regBot = regTop + boxH, regMid = regTop + boxH / 2;
-  const idxLabelY  = regBot + 13;
-  const mulCy      = regBot + 56;
-  const mulBot     = mulCy + mulR;
-  const coeffLblY  = mulBot + 14;
-  const prodLblY   = coeffLblY + 12;
-  const busY       = prodLblY + 18;
-  const adderR     = 12;
-  const outLineEnd = busY + adderR + 24;
-  const outLblY    = outLineEnd + 14;
+  const leftM = 44, rightM = 70;
+  const boxW = Math.min(68, Math.floor((w - leftM - rightM) / showCount - 5));
+  const boxH = 30;
+  const xStep = (w - leftM - rightM - boxW) / Math.max(showCount - 1, 1);
+  const cxs = Array.from({length: showCount}, (_, i) => leftM + boxW / 2 + i * xStep);
+
+  // Y layout
+  const regTop = 14, regBot = regTop + boxH, regMid = regTop + boxH / 2;
+  const idxLabelY = regBot + 14;
+  const triW = Math.min(boxW * 0.88, 56);
+  const triH = triW * 0.65;
+  const mulCy = regBot + 50 + triH / 2;
+  const triTopY = mulCy - triH / 2;
+  const triBotY = mulCy + triH / 2;
+  const busY    = triBotY + 34;
+  const adderR  = 13;
+  const sumCx   = w - rightM / 2 + 2;
+  const sumCy   = busY;
 
   const anim = firSt.anim;
   const isShift = anim === 1, isMul = anim === 2, isSum = anim === 3;
+  const slideP = firSt.slideP || 0;
 
-  // ── Input arrow from left ──────────────────────────────────────────────
+  // ── Input arrow ──────────────────────────────────────────────────────
   {
     const arrowX = cxs[0] - boxW / 2 - 2;
     ctx.strokeStyle = isShift ? cHigh : C.text;
-    ctx.lineWidth = isShift ? 2 : 1.5;
-    ctx.setLineDash([]);
+    ctx.lineWidth = isShift ? 2 : 1.5; ctx.setLineDash([]);
     ctx.beginPath(); ctx.moveTo(8, regMid); ctx.lineTo(arrowX, regMid); ctx.stroke();
     firArrow(ctx, arrowX, regMid, 'right', isShift ? cHigh : C.text);
-    ctx.fillStyle = isShift ? cHigh : C.text;
-    ctx.font = `bold 11px Space Mono`;
-    ctx.textAlign = 'center';
-    // Knockout background behind text
-    const inLabel = isShift ? firSt.pending.toFixed(1) : 'x[n]';
+    const inLabel = isShift ? firSt.pending.toFixed(2) : 'x[n]';
     const inLblX = (8 + arrowX) / 2;
+    ctx.font = 'bold 11px Space Mono';
     const inLblW = ctx.measureText(inLabel).width + 6;
-    ctx.fillStyle = C.panel2;
-    ctx.fillRect(inLblX - inLblW / 2, regMid - 14, inLblW, 13);
-    ctx.fillStyle = isShift ? cHigh : C.text;
+    ctx.fillStyle = C.panel2; ctx.fillRect(inLblX - inLblW / 2, regMid - 14, inLblW, 13);
+    ctx.fillStyle = isShift ? cHigh : C.text; ctx.textAlign = 'center';
     ctx.fillText(inLabel, inLblX, regMid - 4);
   }
 
-  // ── z⁻¹ arrows between register boxes ────────────────────────────────
-  for (let i = 0; i < TAPS - 1; i++) {
-    const x1 = cxs[i] + boxW / 2, x2 = cxs[i + 1] - boxW / 2 - 2;
+  // ── z⁻¹ arrows between cells ─────────────────────────────────────────
+  for (let pos = 0; pos < showCount - 1; pos++) {
+    if (!showAll && pos === showCount - 2) continue; // skip gap before "…" last cell
+    const x1 = cxs[pos] + boxW / 2, x2 = cxs[pos + 1] - boxW / 2 - 2;
     const midX = (x1 + x2) / 2;
-    ctx.strokeStyle = isShift ? cHigh : C.border;
-    ctx.lineWidth = isShift ? 2 : 1;
+    ctx.strokeStyle = isShift ? cHigh : C.border; ctx.lineWidth = isShift ? 2 : 1;
     ctx.beginPath(); ctx.moveTo(x1, regMid); ctx.lineTo(x2, regMid); ctx.stroke();
     firArrow(ctx, x2, regMid, 'right', isShift ? cHigh : C.border);
-    // Knockout + label
-    ctx.font = `bold 9px Space Mono`;
-    const zLabel = 'z\u207B\u00B9';
-    const zW = ctx.measureText(zLabel).width + 4;
-    ctx.fillStyle = C.panel2;
-    ctx.fillRect(midX - zW / 2, regMid - 15, zW, 12);
-    ctx.fillStyle = isShift ? cHigh : C.accent;
-    ctx.textAlign = 'center';
+    ctx.font = 'bold 9px Space Mono';
+    const zLabel = 'z\u207B\u00B9', zW = ctx.measureText(zLabel).width + 4;
+    ctx.fillStyle = C.panel2; ctx.fillRect(midX - zW / 2, regMid - 15, zW, 12);
+    ctx.fillStyle = isShift ? cHigh : C.accent; ctx.textAlign = 'center';
     ctx.fillText(zLabel, midX, regMid - 5);
   }
 
-  // ── Per-tap: register box, connector, multiplier, labels, bus line ────
-  for (let i = 0; i < TAPS; i++) {
-    const cx = cxs[i], bx = cx - boxW / 2;
+  // ── Ellipsis for abbreviated view ─────────────────────────────────────
+  if (!showAll) {
+    const ex = (cxs[showCount - 2] + cxs[showCount - 1]) / 2;
+    ctx.fillStyle = C.textDim; ctx.font = 'bold 16px Space Mono'; ctx.textAlign = 'center';
+    ctx.fillText('…', ex, regMid + 5);
+  }
+
+  // ── Per-position: register + triangle multiplier ──────────────────────
+  for (let pos = 0; pos < showCount; pos++) {
+    const tap = tapIdx(pos);
+    const cx = cxs[pos], bx = cx - boxW / 2;
+
+    // Slide animation: each cell shows value sliding in from left
+    let displayVal = firSt.reg[tap];
+    let textOffX = 0;
+    if (isShift) {
+      const isLastAbbrev = !showAll && pos === showCount - 1;
+      if (!isLastAbbrev) {
+        if (pos === 0) {
+          displayVal = firSt.pending;
+          textOffX = (1 - slideP) * (8 - cx);
+        } else {
+          const prevTap = tapIdx(pos - 1);
+          displayVal = firSt.reg[prevTap];
+          textOffX = (1 - slideP) * (-xStep);
+        }
+      }
+    }
 
     // Register box
-    const isIncoming = isShift && i === 0;
+    const isIncoming = isShift && pos === 0;
     ctx.fillStyle = isIncoming ? (dark ? '#002a4a' : '#bfdbfe') : cReg;
     ctx.strokeStyle = isIncoming ? cHigh : cRegBrd;
     ctx.lineWidth = isIncoming ? 2.5 : 1.5;
-    firRRect(ctx, bx, regTop, boxW, boxH, 5);
-    ctx.fill(); ctx.stroke();
+    firRRect(ctx, bx, regTop, boxW, boxH, 5); ctx.fill(); ctx.stroke();
 
-    // Value inside box
+    // Value in box (clipped)
+    ctx.save();
+    ctx.beginPath(); ctx.rect(bx + 1, regTop + 1, boxW - 2, boxH - 2); ctx.clip();
     ctx.fillStyle = isIncoming ? cHigh : C.text;
-    ctx.font = `bold ${boxW < 46 ? 10 : 12}px Space Mono`;
-    ctx.textAlign = 'center';
-    ctx.fillText(firSt.reg[i].toFixed(2), cx, regTop + boxH / 2 + 4);
+    ctx.font = `bold ${boxW < 46 ? 10 : 12}px Space Mono`; ctx.textAlign = 'center';
+    ctx.fillText(displayVal.toFixed(2), cx + textOffX, regTop + boxH / 2 + 4);
+    ctx.restore();
 
-    // Index label below box (with panel2 knockout)
-    const idxLabel = i === 0 ? 'x[n]' : `x[n-${i}]`;
+    // Index label
+    const idxLabel = tap === 0 ? 'x[n]' : `x[n-${tap}]`;
     ctx.font = '9px Space Mono';
     const idxW = ctx.measureText(idxLabel).width + 4;
-    ctx.fillStyle = C.panel2;
-    ctx.fillRect(cx - idxW / 2, idxLabelY - 10, idxW, 12);
-    ctx.fillStyle = C.textDim;
-    ctx.textAlign = 'center';
+    ctx.fillStyle = C.panel2; ctx.fillRect(cx - idxW / 2, idxLabelY - 10, idxW, 12);
+    ctx.fillStyle = C.textDim; ctx.textAlign = 'center';
     ctx.fillText(idxLabel, cx, idxLabelY);
 
-    // Connector line: box → multiplier (full length, behind labels)
-    ctx.strokeStyle = isMul ? C.accent2 : C.textDim;
-    ctx.lineWidth = isMul ? 1.5 : 1;
-    ctx.beginPath(); ctx.moveTo(cx, regBot); ctx.lineTo(cx, mulCy - mulR - 2); ctx.stroke();
-    firArrow(ctx, cx, mulCy - mulR - 2, 'down', isMul ? C.accent2 : C.textDim);
+    // Connector: cell → triangle
+    ctx.strokeStyle = isMul ? C.accent2 : C.textDim; ctx.lineWidth = isMul ? 1.5 : 1;
+    ctx.beginPath(); ctx.moveTo(cx, regBot); ctx.lineTo(cx, triTopY - 2); ctx.stroke();
+    firArrow(ctx, cx, triTopY - 2, 'down', isMul ? C.accent2 : C.textDim);
 
-    // Multiplier circle
-    ctx.fillStyle = isMul ? (dark ? '#280d00' : '#fff3e0') : cMul;
-    ctx.strokeStyle = isMul ? C.accent2 : cMulBrd;
-    ctx.lineWidth = isMul ? 2.5 : 1.5;
-    ctx.beginPath(); ctx.arc(cx, mulCy, mulR, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = C.accent2;
-    ctx.font = `bold ${mulR < 13 ? 10 : 12}px Space Mono`;
-    ctx.textAlign = 'center';
-    ctx.fillText('\u00D7', cx, mulCy + 4);
+    // Right-pointing triangle multiplier
+    const tx = cx - triW / 2;
+    ctx.fillStyle = isMul ? (dark ? '#280d00' : '#fff3e0') : cTri;
+    ctx.strokeStyle = isMul ? C.accent2 : cTriBrd; ctx.lineWidth = isMul ? 2.5 : 1.5;
+    ctx.beginPath();
+    ctx.moveTo(tx,          triTopY);
+    ctx.lineTo(tx + triW,   mulCy);
+    ctx.lineTo(tx,          triBotY);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
 
-    // Coefficient label (knockout)
-    const cLabel = `h[${i}]=${firSt.h[i].toFixed(2)}`;
-    ctx.font = '9px Space Mono';
-    const cLabelW = ctx.measureText(cLabel).width + 4;
-    ctx.fillStyle = C.panel2;
-    ctx.fillRect(cx - cLabelW / 2, coeffLblY - 10, cLabelW, 12);
-    ctx.fillStyle = isMul ? C.accent2 : C.textDim;
-    ctx.textAlign = 'center';
-    ctx.fillText(cLabel, cx, coeffLblY);
+    // Coefficient value inside triangle (14px+)
+    const coeff = firSt.h[tap] !== undefined ? firSt.h[tap] : 0;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(tx, triTopY); ctx.lineTo(tx + triW, mulCy); ctx.lineTo(tx, triBotY);
+    ctx.closePath(); ctx.clip();
+    ctx.fillStyle = isMul ? C.accent2 : (dark ? '#ffb86c' : '#c2410c');
+    ctx.font = 'bold 14px Space Mono'; ctx.textAlign = 'center';
+    ctx.fillText(coeff.toFixed(3), cx - triW * 0.10, mulCy + 5);
+    ctx.restore();
 
-    // Product label (knockout, only when mul or sum)
-    const pLabel = (isMul || isSum) ? `=${(firSt.h[i] * firSt.reg[i]).toFixed(3)}` : '';
-    if (pLabel) {
+    // Product label
+    if (isMul || isSum) {
+      const pStr = `=${(coeff * firSt.reg[tap]).toFixed(3)}`;
+      const pY = triBotY + 20;
       ctx.font = 'bold 9px Space Mono';
-      const pW = ctx.measureText(pLabel).width + 4;
-      ctx.fillStyle = C.panel2;
-      ctx.fillRect(cx - pW / 2, prodLblY - 10, pW, 12);
-      ctx.fillStyle = cHigh;
-      ctx.textAlign = 'center';
-      ctx.fillText(pLabel, cx, prodLblY);
+      const pW = ctx.measureText(pStr).width + 4;
+      ctx.fillStyle = C.panel2; ctx.fillRect(cx - pW / 2, pY - 10, pW, 12);
+      ctx.fillStyle = cHigh; ctx.textAlign = 'center';
+      ctx.fillText(pStr, cx, pY);
     }
 
-    // Connector line: multiplier bottom → bus
-    ctx.strokeStyle = (isMul || isSum) ? cHigh : C.textDim;
-    ctx.lineWidth = 1;
-    const busConnStart = (isMul || isSum) ? prodLblY + 3 : coeffLblY + 3;
-    ctx.beginPath(); ctx.moveTo(cx, busConnStart); ctx.lineTo(cx, busY); ctx.stroke();
+    // Connector: triangle bottom → bus
+    const connTopY = (isMul || isSum) ? triBotY + 23 : triBotY + 3;
+    ctx.strokeStyle = (isMul || isSum) ? cHigh : C.textDim; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx, connTopY); ctx.lineTo(cx, busY); ctx.stroke();
   }
 
-  // ── Horizontal sum bus ────────────────────────────────────────────────
+  // ── Horizontal bus → adder ────────────────────────────────────────────
   ctx.strokeStyle = (isMul || isSum) ? cHigh : C.border;
   ctx.lineWidth = (isMul || isSum) ? 2 : 1.5;
-  ctx.beginPath(); ctx.moveTo(cxs[0], busY); ctx.lineTo(cxs[TAPS - 1], busY); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cxs[0], busY); ctx.lineTo(sumCx - adderR, busY); ctx.stroke();
 
-  // ── Adder (Σ) at center ───────────────────────────────────────────────
-  const sumCx = (cxs[0] + cxs[TAPS - 1]) / 2;
+  // ── Adder (Σ) on right ────────────────────────────────────────────────
   ctx.fillStyle = isSum ? (dark ? '#2a1e00' : '#fffbeb') : (dark ? '#141520' : '#f8fafc');
-  ctx.strokeStyle = isSum ? cHigh : C.border;
-  ctx.lineWidth = isSum ? 2.5 : 1.5;
-  ctx.beginPath(); ctx.arc(sumCx, busY, adderR, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = isSum ? cHigh : C.textDim;
-  ctx.font = 'bold 14px Space Mono';
-  ctx.textAlign = 'center';
-  ctx.fillText('\u03A3', sumCx, busY + 5);
+  ctx.strokeStyle = isSum ? cHigh : C.accent; ctx.lineWidth = isSum ? 2.5 : 1.8;
+  ctx.beginPath(); ctx.arc(sumCx, sumCy, adderR, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = isSum ? cHigh : C.accent;
+  ctx.font = 'bold 15px Space Mono'; ctx.textAlign = 'center';
+  ctx.fillText('\u03A3', sumCx, sumCy + 5);
 
-  // ── Output line ───────────────────────────────────────────────────────
-  ctx.strokeStyle = isSum ? cHigh : C.textDim;
-  ctx.lineWidth = isSum ? 2 : 1;
-  ctx.beginPath(); ctx.moveTo(sumCx, busY + adderR); ctx.lineTo(sumCx, outLineEnd); ctx.stroke();
-  if (isSum) firArrow(ctx, sumCx, outLineEnd, 'down', cHigh);
-
-  // ── y[n] label ────────────────────────────────────────────────────────
-  const outLabel = isSum ? `y[n] = ${firSt.yOut.toFixed(4)}` : 'y[n]';
-  ctx.font = 'bold 12px Space Mono';
-  ctx.fillStyle = isSum ? cHigh : C.text;
-  ctx.textAlign = 'center';
-  ctx.fillText(outLabel, sumCx, outLblY);
+  // ── Output arrow + y[n] label ─────────────────────────────────────────
+  ctx.strokeStyle = isSum ? cHigh : C.textDim; ctx.lineWidth = isSum ? 2 : 1;
+  ctx.beginPath(); ctx.moveTo(sumCx + adderR, sumCy); ctx.lineTo(w - 10, sumCy); ctx.stroke();
+  if (isSum) firArrow(ctx, w - 10, sumCy, 'right', cHigh);
+  const outLabel = isSum ? `y[n]=${firSt.yOut.toFixed(3)}` : 'y[n]';
+  ctx.font = isSum ? 'bold 11px Space Mono' : 'bold 12px Space Mono';
+  ctx.fillStyle = isSum ? cHigh : C.text; ctx.textAlign = 'left';
+  ctx.fillText(outLabel, sumCx + adderR + 4, sumCy - 5);
 }
 
 // ─── Results update ───────────────────────────────────────────────────────
