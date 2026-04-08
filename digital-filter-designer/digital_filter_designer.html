@@ -117,17 +117,19 @@ footer a:hover{text-decoration:underline}
 .fir-ctrl{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
 .fir-custom-coeffs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px}
 .fir-coeff-input{width:58px;background:var(--panel2);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:12px;padding:4px 6px;border-radius:6px;text-align:center}
-.fir-coeff-input:focus{outline:none;border-color:var(--accent2)}
+.fir-coeff-input:focus{outline:none;border-color:var(--accent)}
 .fir-btn{padding:8px 18px;border-radius:8px;border:1.5px solid var(--accent);background:var(--panel);color:var(--accent);font-family:'Space Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;box-shadow:0 1px 4px var(--shadow)}
 .fir-btn:hover{background:var(--accent);color:var(--panel)}
 .fir-btn.orange{border-color:var(--accent2);color:var(--accent2)}
 .fir-btn.orange:hover{background:var(--accent2);color:var(--panel)}
 .fir-step-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
-.fir-step-info{font-family:'Space Mono',monospace;font-size:11px;color:var(--text-dim)}
-.fir-calc{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-top:10px;font-family:'Space Mono',monospace;font-size:11px;line-height:2.1;color:var(--text);overflow-x:auto;white-space:nowrap}
-.fir-calc .fh{color:var(--accent2);font-weight:700}
-.fir-calc .fx{color:var(--accent);font-weight:700}
-.fir-calc .fr{color:var(--gold);font-weight:700}
+.fir-calc{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-top:10px;font-family:'Space Mono',monospace;font-size:11px;line-height:2.1;color:var(--text);overflow-x:auto}
+.fir-sig-label{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--accent2);margin:12px 0 7px}
+.fir-sig-btns{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}
+.fir-sig-btn{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--panel2);color:var(--text-dim);font-family:'Space Mono',monospace;font-size:10px;cursor:pointer;transition:all .2s;white-space:nowrap}
+.fir-sig-btn:hover{border-color:var(--accent);color:var(--accent)}
+.fir-sig-btn.active{border-color:#00d4ff;color:#00d4ff;background:rgba(0,212,255,.1);font-weight:700}
+[data-theme="light"] .fir-sig-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(2,132,199,.1)}
 </style>
 </head>
 <body>
@@ -439,52 +441,80 @@ footer a:hover{text-decoration:underline}
     <p class="explain-text">
       <span class="hl">FIR（有限インパルス応答）フィルター</span>は、シフトレジスタと係数の積和演算（MAC）で実現されるシンプルなデジタルフィルターです。<br>
       各ステップで新しいサンプルが入力され、レジスタ値が右にシフト、各係数との積を総和して出力 y[n] を得ます。<br>
-      <span class="hl2">FPGA / DSP / マイコン</span>に直接マッピングでき、<span class="hl3">線形位相特性</span>が得られる点が特徴です。
+      <span class="hl2">FPGA / DSP / マイコン</span>に直接マッピングでき、<span class="hl3">線形位相特性</span>が得られる点が特徴です。<br>
+      ▶ ステップ実行ボタンで 1 サンプルずつ進め、レジスタ・計算式・グラフの変化を追ってみましょう。
     </p>
 
+    <!-- Preset selector + custom coefficients -->
     <div class="local-ctrl">
-      <div class="local-ctrl-header">係数プリセット / 入力信号</div>
+      <div class="local-ctrl-header">係数プリセット</div>
       <div class="fir-ctrl">
         <div class="select-group">
-          <label>係数プリセット</label>
+          <label>プリセット</label>
           <select id="firPreset" onchange="onFIRPreset()">
-            <option value="moving_avg">移動平均（LPF）</option>
-            <option value="diff">差分（HPF）</option>
-            <option value="triangle">三角窓（LPF）</option>
-            <option value="custom">カスタム</option>
-          </select>
-        </div>
-        <div class="select-group">
-          <label>入力信号</label>
-          <select id="firInputSeq" onchange="onFIRInputSeq()">
-            <option value="impulse">インパルス（1, 0, 0, 0…）</option>
-            <option value="step">ステップ（1, 1, 1, 1…）</option>
+            <option value="avg">移動平均（LPF）　h=[0.2×5]</option>
+            <option value="diff">差分（HPF）　h=[0.5, -0.5, 0…]</option>
+            <option value="tri">三角窓（LPF）　h=[0.1,0.2,0.4,0.2,0.1]</option>
+            <option value="custom">カスタム（直接入力）</option>
           </select>
         </div>
       </div>
       <div id="firCustomCoeffs" class="fir-custom-coeffs" style="display:none">
         <span style="font-family:'Space Mono',monospace;font-size:10px;color:var(--accent2);letter-spacing:1px">h[] =</span>
-        <input type="number" id="firCoeff0" class="fir-coeff-input" value="1"   step="0.1" oninput="onFIRCustomCoeff()">
-        <input type="number" id="firCoeff1" class="fir-coeff-input" value="0"   step="0.1" oninput="onFIRCustomCoeff()">
-        <input type="number" id="firCoeff2" class="fir-coeff-input" value="0"   step="0.1" oninput="onFIRCustomCoeff()">
-        <input type="number" id="firCoeff3" class="fir-coeff-input" value="0"   step="0.1" oninput="onFIRCustomCoeff()">
-        <input type="number" id="firCoeff4" class="fir-coeff-input" value="0"   step="0.1" oninput="onFIRCustomCoeff()">
+        <input type="number" id="firCoeff0" class="fir-coeff-input" value="0.2" step="0.05" oninput="onFIRCustomCoeff()">
+        <input type="number" id="firCoeff1" class="fir-coeff-input" value="0.2" step="0.05" oninput="onFIRCustomCoeff()">
+        <input type="number" id="firCoeff2" class="fir-coeff-input" value="0.2" step="0.05" oninput="onFIRCustomCoeff()">
+        <input type="number" id="firCoeff3" class="fir-coeff-input" value="0.2" step="0.05" oninput="onFIRCustomCoeff()">
+        <input type="number" id="firCoeff4" class="fir-coeff-input" value="0.2" step="0.05" oninput="onFIRCustomCoeff()">
       </div>
     </div>
 
-    <div class="panel">
+    <!-- Impulse response stem plot -->
+    <div class="panel" style="margin-bottom:12px">
+      <div class="panel-header"><div class="dot dot-purple"></div>インパルス応答 h[n]（係数のステムプロット）</div>
+      <canvas id="cvFirImpulse" height="130"></canvas>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-swatch" style="background:#00d4ff"></div><span>正の係数</span></div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#ff6b35"></div><span>負の係数</span></div>
+      </div>
+    </div>
+
+    <!-- Input signal buttons -->
+    <div class="fir-sig-label">入力信号の種類</div>
+    <div class="fir-sig-btns">
+      <button class="fir-sig-btn active" data-sig="dc"    onclick="setSigType('dc')">直流（DC）</button>
+      <button class="fir-sig-btn"        data-sig="pulse" onclick="setSigType('pulse')">単発パルス</button>
+      <button class="fir-sig-btn"        data-sig="rect"  onclick="setSigType('rect')">矩形波パルス列</button>
+      <button class="fir-sig-btn"        data-sig="sin"   onclick="setSigType('sin')">正弦波</button>
+      <button class="fir-sig-btn"        data-sig="sinon" onclick="setSigType('sinon')">正弦波 ON/OFF</button>
+      <button class="fir-sig-btn"        data-sig="rand"  onclick="setSigType('rand')">ランダム</button>
+    </div>
+
+    <!-- Shift register block diagram (existing animation canvas) -->
+    <div class="panel" style="margin-bottom:12px">
       <div class="panel-header"><div class="dot"></div>FIR Direct Form I — シフトレジスタ構造（5タップ）</div>
       <canvas id="cvFIR" height="228"></canvas>
     </div>
 
+    <!-- Step / Reset buttons -->
     <div class="fir-step-row">
-      <button class="fir-btn" id="firStepBtn" onclick="firStep()">次のサンプルを入力 →</button>
-      <button class="fir-btn orange" onclick="firReset()">リセット</button>
-      <span class="fir-step-info" id="firStepInfo">ステップ: 0 &nbsp;|&nbsp; 次の入力: 1.0（インパルス）</span>
+      <button class="fir-btn" id="firStepBtn" onclick="firStep()">▶ ステップ実行（次のサンプル入力）</button>
+      <button class="fir-btn orange" onclick="firReset()">↺ リセット</button>
     </div>
 
+    <!-- Calculation equation display -->
     <div id="firCalcDisplay" class="fir-calc">
-      <span style="color:var(--text-dim)">「次のサンプルを入力」を押すとアニメーション開始</span>
+      <span style="color:var(--text-dim)">— ステップ実行すると計算式が表示されます —</span>
+    </div>
+
+    <!-- Input / Output graphs -->
+    <div class="panel" style="margin-bottom:8px">
+      <div class="panel-header"><div class="dot"></div>入力信号 x[n]（直近 20 サンプル）</div>
+      <canvas id="cvFirIn" height="110"></canvas>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><div class="dot dot-orange"></div>出力信号 y[n]（直近 20 サンプル）</div>
+      <canvas id="cvFirOut" height="110"></canvas>
     </div>
   </section>
 
@@ -1324,48 +1354,59 @@ function drawAudio() {
 
 // ─── FIR Implementation ───────────────────────────────────────────────────
 const FIR_PRESETS = {
-  moving_avg: [0.2,  0.2,  0.2,  0.2,  0.2],
-  diff:       [1,   -1,    0,    0,    0  ],
-  triangle:   [0.1,  0.2,  0.4,  0.2,  0.1],
-  custom:     [1,    0,    0,    0,    0  ],
+  avg:    [0.2,  0.2,  0.2,  0.2,  0.2],
+  diff:   [0.5, -0.5,  0.0,  0.0,  0.0],
+  tri:    [0.1,  0.2,  0.4,  0.2,  0.1],
+  custom: [0.2,  0.2,  0.2,  0.2,  0.2],
 };
 
 const firSt = {
-  reg: [0, 0, 0, 0, 0],   // shift registers x[n]..x[n-4]
-  h:   [0.2, 0.2, 0.2, 0.2, 0.2],
-  inputSeq: 'impulse',
-  n: 0,       // steps taken
-  anim: 0,    // 0=idle 1=shift 2=multiply 3=sum
-  pending: 0, // value entering during anim=1
-  yOut: 0,
+  reg:     [0, 0, 0, 0, 0],
+  h:       [0.2, 0.2, 0.2, 0.2, 0.2],
+  sigType: 'dc',
+  n:       0,
+  anim:    0,
+  pending: 0,
+  yOut:    0,
+  xHist:   [],
+  yHist:   [],
 };
 
-function firNextInput() {
-  return (firSt.inputSeq === 'impulse') ? (firSt.n === 0 ? 1 : 0) : 1;
+function firGetSample(n, type) {
+  switch (type) {
+    case 'dc':    return 1.0;
+    case 'pulse': return n === 0 ? 1.0 : 0.0;
+    case 'rect':  return (Math.floor(n / 4) % 2 === 0) ? 1.0 : 0.0;
+    case 'sin':   return Math.sin(2 * Math.PI * 0.1 * n);
+    case 'sinon': return (Math.floor(n / 8) % 2 === 0) ? Math.sin(2 * Math.PI * 0.1 * n) : 0.0;
+    case 'rand':  return Math.random() * 2 - 1;
+    default:      return 0;
+  }
 }
 
-function firUpdateStepInfo() {
-  const el = document.getElementById('firStepInfo');
-  if (!el) return;
-  const next = firNextInput();
-  const seqLabel = firSt.inputSeq === 'impulse' ? 'インパルス' : 'ステップ';
-  el.textContent = `ステップ: ${firSt.n}  |  次の入力: ${next.toFixed(1)}（${seqLabel}）`;
+function setSigType(type) {
+  firSt.sigType = type;
+  if (type === 'pulse') firReset();
+  document.querySelectorAll('.fir-sig-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.sig === type));
 }
 
 function firReset() {
-  firSt.reg = [0, 0, 0, 0, 0];
-  firSt.n = 0;
-  firSt.anim = 0;
-  firSt.yOut = 0;
+  firSt.reg   = [0, 0, 0, 0, 0];
+  firSt.n     = 0;
+  firSt.anim  = 0;
+  firSt.yOut  = 0;
+  firSt.xHist = [];
+  firSt.yHist = [];
   drawFIR();
+  drawFirGraphs();
   const el = document.getElementById('firCalcDisplay');
-  if (el) el.innerHTML = '<span style="color:var(--text-dim)">「次のサンプルを入力」を押すとアニメーション開始</span>';
-  firUpdateStepInfo();
+  if (el) el.innerHTML = '<span style="color:var(--text-dim)">— ステップ実行すると計算式が表示されます —</span>';
 }
 
 function firStep() {
   if (firSt.anim !== 0) return;
-  const xNew = firNextInput();
+  const xNew = firGetSample(firSt.n, firSt.sigType);
   firSt.pending = xNew;
   firSt.anim = 1;
   drawFIR();
@@ -1375,10 +1416,14 @@ function firStep() {
     firSt.reg[0] = xNew;
     firSt.n++;
     firSt.yOut = firSt.h.reduce((s, hi, i) => s + hi * firSt.reg[i], 0);
+    firSt.xHist.push(xNew);
+    firSt.yHist.push(firSt.yOut);
+    if (firSt.xHist.length > 20) firSt.xHist.shift();
+    if (firSt.yHist.length > 20) firSt.yHist.shift();
     firSt.anim = 2;
     drawFIR();
     updateFIRCalc();
-    firUpdateStepInfo();
+    drawFirGraphs();
 
     setTimeout(() => {
       firSt.anim = 3;
@@ -1390,7 +1435,7 @@ function firStep() {
 
 function onFIRPreset() {
   const v = document.getElementById('firPreset').value;
-  firSt.h = [...FIR_PRESETS[v]];
+  firSt.h = [...(FIR_PRESETS[v] || FIR_PRESETS.avg)];
   const cc = document.getElementById('firCustomCoeffs');
   if (cc) cc.style.display = v === 'custom' ? 'flex' : 'none';
   for (let i = 0; i < 5; i++) {
@@ -1398,6 +1443,7 @@ function onFIRPreset() {
     if (el) el.value = firSt.h[i];
   }
   firReset();
+  drawFirImpulse();
 }
 
 function onFIRCustomCoeff() {
@@ -1405,13 +1451,10 @@ function onFIRCustomCoeff() {
     const v = parseFloat(document.getElementById('firCoeff' + i).value);
     firSt.h[i] = isNaN(v) ? 0 : v;
   }
+  FIR_PRESETS.custom = [...firSt.h];
   drawFIR();
+  drawFirImpulse();
   updateFIRCalc();
-}
-
-function onFIRInputSeq() {
-  firSt.inputSeq = document.getElementById('firInputSeq').value;
-  firReset();
 }
 
 function updateFIRCalc() {
@@ -1419,12 +1462,119 @@ function updateFIRCalc() {
   if (!el) return;
   const h = firSt.h, x = firSt.reg, y = firSt.yOut;
   const line1 = 'y[n] = ' + h.map((hi, i) => `h[${i}]×x[n${i > 0 ? '-' + i : ''}]`).join(' + ');
-  const line2 = '     = ' + h.map((hi, i) =>
-    `<span class="fh">${hi >= 0 ? hi.toFixed(3) : '(' + hi.toFixed(3) + ')'}</span>` +
-    `×<span class="fx">${x[i].toFixed(3)}</span>`
-  ).join(' + ');
-  const line3 = `     = <span class="fr">${y.toFixed(4)}</span>`;
-  el.innerHTML = `<div>${line1}</div><div>${line2}</div><div>${line3}</div>`;
+  const line2 = '     = ' + h.map((hi, i) => {
+    const hC = hi   >= 0 ? '#00d4ff' : '#ff6b35';
+    const vC = x[i] >= 0 ? '#00d4ff' : '#ff6b35';
+    return `<span style="color:${hC}">${hi.toFixed(2)}</span>` +
+           `×<span style="color:${vC}">(${x[i].toFixed(2)})</span>`;
+  }).join(' + ');
+  const rC = y >= 0 ? '#00d4ff' : '#ff6b35';
+  const line3 = `     = <span style="color:${rC};font-weight:bold">${y.toFixed(4)}</span>`;
+  el.innerHTML = `<code>${line1}<br>${line2}<br>${line3}</code>`;
+}
+
+// ── Impulse response stem plot ─────────────────────────────────────────────
+function drawFirImpulse() {
+  const cv = document.getElementById('cvFirImpulse');
+  if (!cv) return;
+  const {dpr, w, h} = initCanvas(cv);
+  const ctx = getCtx(cv, dpr);
+  const C = getColors();
+
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = C.panel2; ctx.fillRect(0, 0, w, h);
+
+  const mx = 44, my = 16, pw = w - mx - 16, ph = h - my - 32;
+  const N = 5;
+  const maxAbs = Math.max(0.5, ...firSt.h.map(Math.abs));
+  drawGrid(ctx, mx, my, pw, ph, N, 4, C);
+
+  const zy = my + ph * 0.5;
+  ctx.strokeStyle = C.textDim; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(mx, zy); ctx.lineTo(mx + pw, zy); ctx.stroke();
+  ctx.setLineDash([]);
+
+  const xStep = pw / N;
+  for (let i = 0; i < N; i++) {
+    const cx  = mx + (i + 0.5) * xStep;
+    const val = firSt.h[i];
+    const cy  = zy - (val / maxAbs) * (ph * 0.44);
+    const col = val >= 0 ? '#00d4ff' : '#ff6b35';
+    ctx.strokeStyle = col; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(cx, zy); ctx.lineTo(cx, cy); ctx.stroke();
+    ctx.fillStyle = col;
+    ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.font = 'bold 10px Space Mono, monospace'; ctx.textAlign = 'center';
+    ctx.fillText(val.toFixed(2), cx, val >= 0 ? cy - 9 : cy + 17);
+    ctx.fillStyle = C.textDim; ctx.font = '9px Space Mono, monospace';
+    ctx.fillText('n=' + i, cx, my + ph + 22);
+  }
+  ctx.fillStyle = C.textDim; ctx.font = '9px Space Mono, monospace'; ctx.textAlign = 'right';
+  ctx.fillText('+' + maxAbs.toFixed(1), mx - 4, my + 4);
+  ctx.fillText('0',                      mx - 4, zy + 4);
+  ctx.fillText('-' + maxAbs.toFixed(1), mx - 4, my + ph + 4);
+}
+
+// ── Input / Output signal graphs ───────────────────────────────────────────
+function drawFirGraphs() {
+  _drawFirGraph('cvFirIn',  firSt.xHist, C => C.accent);
+  _drawFirGraph('cvFirOut', firSt.yHist, C => C.accent2);
+}
+
+function _drawFirGraph(cvId, data, colorFn) {
+  const cv = document.getElementById(cvId);
+  if (!cv) return;
+  const {dpr, w, h} = initCanvas(cv);
+  const ctx = getCtx(cv, dpr);
+  const C = getColors();
+
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = C.panel2; ctx.fillRect(0, 0, w, h);
+
+  const mx = 38, my = 10, pw = w - mx - 12, ph = h - my - 26;
+  drawGrid(ctx, mx, my, pw, ph, 10, 4, C);
+
+  const zy = my + ph / 2;
+  ctx.strokeStyle = C.textDim; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(mx, zy); ctx.lineTo(mx + pw, zy); ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = C.textDim; ctx.font = '9px Space Mono, monospace'; ctx.textAlign = 'right';
+  ctx.fillText('+1', mx - 3, my + 4);
+  ctx.fillText('0',  mx - 3, zy + 4);
+  ctx.fillText('-1', mx - 3, my + ph + 4);
+
+  if (data.length === 0) {
+    ctx.fillStyle = C.textDim; ctx.font = '11px Space Mono, monospace'; ctx.textAlign = 'center';
+    ctx.fillText('— ステップ実行してください —', w / 2, h / 2 + 4);
+    return;
+  }
+
+  const color = colorFn(C);
+  const MAX = 20, stepX = pw / MAX;
+  for (let i = 0; i < data.length; i++) {
+    const xp  = mx + (MAX - data.length + i + 0.5) * stepX;
+    const val = Math.max(-1.5, Math.min(1.5, data[i]));
+    const cy  = zy - (val / 1.5) * (ph / 2) * 0.92;
+    ctx.strokeStyle = color; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(xp, zy); ctx.lineTo(xp, cy); ctx.stroke();
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.arc(xp, cy, 3, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // Current sample highlight line
+  const lastX = mx + (MAX - 1 + 0.5) * stepX;
+  ctx.strokeStyle = C.gold; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]);
+  ctx.beginPath(); ctx.moveTo(lastX, my); ctx.lineTo(lastX, my + ph); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // X-axis sample index labels
+  const startN = Math.max(0, firSt.n - data.length);
+  ctx.fillStyle = C.textDim; ctx.font = '9px Space Mono, monospace'; ctx.textAlign = 'center';
+  for (let i = 0; i < data.length; i += 4) {
+    const xp = mx + (MAX - data.length + i + 0.5) * stepX;
+    ctx.fillText(startN + i, xp, my + ph + 17);
+  }
 }
 
 // ── FIR canvas helpers ────────────────────────────────────────────────────
@@ -1752,12 +1902,15 @@ function drawAll() {
   drawBPF();
   drawImpulse();
   drawFIR();
+  drawFirImpulse();
+  drawFirGraphs();
   drawAudio();
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────
 updateResults();
-firUpdateStepInfo();
+drawFirImpulse();
+drawFirGraphs();
 
 // Resize handler for subsequent window resizes
 let resizeTimer;
