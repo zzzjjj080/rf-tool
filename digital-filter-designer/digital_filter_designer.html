@@ -517,14 +517,14 @@ footer a:hover{text-decoration:underline}
       <span style="color:var(--text-dim)">— ステップ実行すると計算式が表示されます —</span>
     </div>
 
-    <!-- Input / Output graphs -->
-    <div class="panel" style="margin-bottom:8px">
-      <div class="panel-header"><div class="dot"></div>入力信号 x[n]（直近 20 サンプル）</div>
-      <canvas id="cvFirIn" height="110"></canvas>
-    </div>
+    <!-- Input / Output combined graph -->
     <div class="panel">
-      <div class="panel-header"><div class="dot dot-orange"></div>出力信号 y[n]（直近 20 サンプル）</div>
-      <canvas id="cvFirOut" height="110"></canvas>
+      <div class="panel-header"><div class="dot"></div>入力 x[n] / 出力 y[n]（直近 20 サンプル）</div>
+      <canvas id="cvFirInOut" height="140"></canvas>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-swatch" style="background:var(--accent)"></div><span>入力 x[n]</span></div>
+        <div class="legend-item"><div class="legend-swatch" style="background:var(--accent2)"></div><span>出力 y[n]</span></div>
+      </div>
     </div>
   </section>
 
@@ -1394,16 +1394,23 @@ const firSt = {
   yHist:         [],
 };
 
+const FIR_SCALE = 100; // input amplitude
+
 function firGetSample(n, type) {
   switch (type) {
-    case 'dc':    return 1.0;
-    case 'pulse': return n === 0 ? 1.0 : 0.0;
-    case 'rect':  return (Math.floor(n / 4) % 2 === 0) ? 1.0 : 0.0;
-    case 'sin':   return Math.sin(2 * Math.PI * 0.1 * n);
-    case 'sinon': return (Math.floor(n / 8) % 2 === 0) ? Math.sin(2 * Math.PI * 0.1 * n) : 0.0;
-    case 'rand':  return Math.random() * 2 - 1;
+    case 'dc':    return FIR_SCALE;
+    case 'pulse': return n === 0 ? FIR_SCALE : 0;
+    case 'rect':  return (Math.floor(n / 4) % 2 === 0) ? FIR_SCALE : 0;
+    case 'sin':   return Math.round(FIR_SCALE * Math.sin(2 * Math.PI * 0.1 * n));
+    case 'sinon': return (Math.floor(n / 8) % 2 === 0) ? Math.round(FIR_SCALE * Math.sin(2 * Math.PI * 0.1 * n)) : 0;
+    case 'rand':  return Math.round((Math.random() * 2 - 1) * FIR_SCALE);
     default:      return 0;
   }
+}
+
+// Smart number formatter: integer if whole, else 2dp
+function firFmt(v) {
+  return Number.isInteger(v) || Math.abs(v) >= 9.5 ? String(Math.round(v)) : v.toFixed(2);
 }
 
 function setSigType(type) {
@@ -1584,14 +1591,9 @@ function drawFirImpulse() {
   ctx.fillText('-' + maxAbs.toFixed(2), mx - 4, my + ph + 4);
 }
 
-// ── Input / Output signal graphs ───────────────────────────────────────────
+// ── Input / Output signal graphs (combined) ────────────────────────────────
 function drawFirGraphs() {
-  _drawFirGraph('cvFirIn',  firSt.xHist, C => C.accent);
-  _drawFirGraph('cvFirOut', firSt.yHist, C => C.accent2);
-}
-
-function _drawFirGraph(cvId, data, colorFn) {
-  const cv = document.getElementById(cvId);
+  const cv = document.getElementById('cvFirInOut');
   if (!cv) return;
   const {dpr, w, h} = initCanvas(cv);
   const ctx = getCtx(cv, dpr);
@@ -1600,7 +1602,7 @@ function _drawFirGraph(cvId, data, colorFn) {
   ctx.clearRect(0, 0, w, h);
   ctx.fillStyle = C.panel2; ctx.fillRect(0, 0, w, h);
 
-  const mx = 38, my = 10, pw = w - mx - 12, ph = h - my - 26;
+  const mx = 42, my = 10, pw = w - mx - 12, ph = h - my - 26;
   drawGrid(ctx, mx, my, pw, ph, 10, 4, C);
 
   const zy = my + ph / 2;
@@ -1608,52 +1610,56 @@ function _drawFirGraph(cvId, data, colorFn) {
   ctx.beginPath(); ctx.moveTo(mx, zy); ctx.lineTo(mx + pw, zy); ctx.stroke();
   ctx.setLineDash([]);
 
+  const FIR_MAX = 100;
   ctx.fillStyle = C.textDim; ctx.font = '9px Space Mono, monospace'; ctx.textAlign = 'right';
-  ctx.fillText('+1', mx - 3, my + 4);
-  ctx.fillText('0',  mx - 3, zy + 4);
-  ctx.fillText('-1', mx - 3, my + ph + 4);
+  ctx.fillText('+100', mx - 3, my + 4);
+  ctx.fillText('0',    mx - 3, zy + 4);
+  ctx.fillText('-100', mx - 3, my + ph + 4);
 
-  if (data.length === 0) {
+  const isEmpty = firSt.xHist.length === 0 && firSt.yHist.length === 0;
+  if (isEmpty) {
     ctx.fillStyle = C.textDim; ctx.font = '11px Space Mono, monospace'; ctx.textAlign = 'center';
     ctx.fillText('— ステップ実行してください —', w / 2, h / 2 + 4);
     return;
   }
 
-  const color = colorFn(C);
   const MAX = 20, stepX = pw / MAX;
+  const toY = v => zy - (Math.max(-FIR_MAX, Math.min(FIR_MAX, v)) / FIR_MAX) * (ph / 2) * 0.92;
 
-  // Precompute pixel positions
-  const pts = data.map((val, i) => ({
-    x: mx + (MAX - data.length + i + 0.5) * stepX,
-    y: zy - (Math.max(-1.5, Math.min(1.5, val)) / 1.5) * (ph / 2) * 0.92,
-  }));
+  function drawLine(data, color) {
+    if (data.length === 0) return;
+    const pts = data.map((val, i) => ({
+      x: mx + (MAX - data.length + i + 0.5) * stepX,
+      y: toY(val),
+    }));
+    ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.setLineDash([]);
+    ctx.beginPath();
+    pts.forEach((pt, i) => i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y));
+    ctx.stroke();
+    pts.forEach(pt => {
+      ctx.strokeStyle = color; ctx.lineWidth = 1; ctx.globalAlpha = 0.3;
+      ctx.beginPath(); ctx.moveTo(pt.x, zy); ctx.lineTo(pt.x, pt.y); ctx.stroke();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = color;
+      ctx.beginPath(); ctx.arc(pt.x, pt.y, 3, 0, Math.PI * 2); ctx.fill();
+    });
+  }
 
-  // Polyline
-  ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.setLineDash([]);
-  ctx.beginPath();
-  pts.forEach((pt, i) => i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y));
-  ctx.stroke();
+  drawLine(firSt.xHist, C.accent);
+  drawLine(firSt.yHist, C.accent2);
 
-  // Stem lines + circle markers
-  pts.forEach(pt => {
-    ctx.strokeStyle = color; ctx.lineWidth = 1; ctx.globalAlpha = 0.35;
-    ctx.beginPath(); ctx.moveTo(pt.x, zy); ctx.lineTo(pt.x, pt.y); ctx.stroke();
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = color;
-    ctx.beginPath(); ctx.arc(pt.x, pt.y, 3, 0, Math.PI * 2); ctx.fill();
-  });
-
-  // Current sample highlight line
+  // Current sample highlight
   const lastX = mx + (MAX - 1 + 0.5) * stepX;
   ctx.strokeStyle = C.gold; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]);
   ctx.beginPath(); ctx.moveTo(lastX, my); ctx.lineTo(lastX, my + ph); ctx.stroke();
   ctx.setLineDash([]);
 
-  // X-axis sample index labels
-  const startN = Math.max(0, firSt.n - data.length);
+  // X-axis labels
+  const longerLen = Math.max(firSt.xHist.length, firSt.yHist.length);
+  const startN = Math.max(0, firSt.n - longerLen);
   ctx.fillStyle = C.textDim; ctx.font = '9px Space Mono, monospace'; ctx.textAlign = 'center';
-  for (let i = 0; i < data.length; i += 4) {
-    const xp = mx + (MAX - data.length + i + 0.5) * stepX;
+  for (let i = 0; i < longerLen; i += 4) {
+    const xp = mx + (MAX - longerLen + i + 0.5) * stepX;
     ctx.fillText(startN + i, xp, my + ph + 17);
   }
 }
@@ -1687,8 +1693,8 @@ function drawFIR() {
   if (!cv) return;
   const N = firSt.N;
 
-  // Dynamic canvas height
-  const neededH = Math.max(220, 22 + 28 + (N <= 10 ? 14 : 10) + 34 + 22 + 20 + 12 + 28 + 14);
+  // Generous fixed height
+  const neededH = 300;
   cv.dataset.origH = String(neededH);
 
   const {dpr, w, h} = initCanvas(cv);
@@ -1705,7 +1711,7 @@ function drawFIR() {
   const cTriBrd = dark ? '#ff6b35' : '#ea580c';
   const cHigh   = C.gold;
 
-  const leftM = 44, rightM = 16;
+  const leftM = 44, rightM = 28;
   const boxW  = Math.max(18, Math.min(60, Math.floor((w - leftM - rightM) / N - 6)));
   const boxH  = 28;
   const regTop = 22, regBot = regTop + boxH, regMid = regTop + boxH / 2;
@@ -1713,26 +1719,25 @@ function drawFIR() {
   const xStep = N > 1 ? (w - leftM - rightM - boxW) / (N - 1) : 0;
   const cxs   = Array.from({length: N}, (_, i) => leftM + boxW / 2 + i * xStep);
 
-  // Triangle (right-pointing) dimensions — flat LEFT edge at cx, tip at cx+mulW
-  // Cap at boxW*0.48 to ensure adderX stays within canvas (adderX = w-rightM-boxW/2+mulW)
-  const mulW   = Math.min(Math.floor(boxW * 0.48), Math.floor(xStep * 0.44), 28, Math.max(4, Math.floor(xStep * 0.42)));
-  const mulH   = Math.max(14, Math.min(32, boxW * 0.75));
-  const showIdx = boxW >= 28;
-  const idxGap  = showIdx ? 12 : 2;
-  const mulTopY = regBot + idxGap + 4;
-  const mulBotY = mulTopY + mulH;
-  const mulMidY = mulTopY + mulH / 2;
+  // Downward triangle ▽ — flat top, bottom point
+  const showIdx  = boxW >= 28;
+  const idxGap   = showIdx ? 14 : 4;
+  const triW     = Math.max(20, Math.min(boxW, Math.floor(xStep * 0.80)));
+  const triH     = Math.max(32, Math.min(50, boxW * 0.85));
+  const triTopY  = regBot + idxGap;
+  const triBotY  = triTopY + triH;
+  const triMidY  = triTopY + triH * 0.42;  // slightly above center for text
 
-  // Bus & adder — adder at rightmost tip (cxs[N-1] + mulW)
+  // Bus & adder — adder at right edge
   const adderR     = 11;
-  const busY       = mulBotY + 16;
-  const adderX     = cxs[N - 1] + mulW;
-  const outLineEnd = busY + adderR + 20;
+  const busY       = triBotY + 26;          // room for product label
+  const adderX     = w - rightM - adderR;
+  const outLineEnd = busY + adderR + 24;
   const outLblY    = outLineEnd + 13;
 
   const anim    = firSt.anim;
   const isShift = anim === 1, isMul = anim === 2, isSum = anim === 3;
-  const p       = firSt.slideProgress; // 0→1 during isShift
+  const p       = firSt.slideProgress;
 
   // ── Input arrow from left ────────────────────────────────────────────
   {
@@ -1741,13 +1746,13 @@ function drawFIR() {
     ctx.lineWidth = isShift ? 2 : 1.5; ctx.setLineDash([]);
     ctx.beginPath(); ctx.moveTo(8, regMid); ctx.lineTo(arrowX, regMid); ctx.stroke();
     firArrow(ctx, arrowX, regMid, 'right', isShift ? cHigh : C.text);
-    const inLabel = isShift ? firSt.pending.toFixed(2) : 'x[n]';
+    const inLabel = isShift ? firFmt(firSt.pending) : 'x[n]';
     const inLblX  = (8 + arrowX) / 2;
     ctx.font = 'bold 11px Space Mono';
     ctx.textAlign = 'center';
     const inLblW = ctx.measureText(inLabel).width + 6;
     ctx.fillStyle = C.panel2; ctx.fillRect(inLblX - inLblW / 2, regMid - 14, inLblW, 13);
-    ctx.fillStyle = isShift ? cHigh : C.text; ctx.textAlign = 'center';
+    ctx.fillStyle = isShift ? cHigh : C.text;
     ctx.fillText(inLabel, inLblX, regMid - 4);
   }
 
@@ -1775,13 +1780,25 @@ function drawFIR() {
   for (let i = 0; i < N; i++) {
     const cx = cxs[i], bx = cx - boxW / 2;
     const isIncoming = isShift && i === 0;
+    const regVal = firSt.reg[i];
 
-    // Register box
-    ctx.fillStyle   = isIncoming ? (dark ? '#002a4a' : '#bfdbfe') : cReg;
+    // Register box fill — color intensity based on value magnitude
+    const valT = Math.min(1, Math.abs(regVal) / 100);
+    firRRect(ctx, bx, regTop, boxW, boxH, 5);
+    ctx.fillStyle = isIncoming ? (dark ? '#002a4a' : '#bfdbfe') : cReg;
+    ctx.fill();
+    if (!isIncoming && valT > 0.04) {
+      ctx.save();
+      ctx.globalAlpha = valT * 0.6;
+      firRRect(ctx, bx, regTop, boxW, boxH, 5);
+      ctx.fillStyle = regVal >= 0 ? C.accent : C.gold;
+      ctx.fill();
+      ctx.restore();
+    }
     ctx.strokeStyle = isIncoming ? cHigh : cRegBrd;
     ctx.lineWidth   = isIncoming ? 2.5 : 1.5;
     firRRect(ctx, bx, regTop, boxW, boxH, 5);
-    ctx.fill(); ctx.stroke();
+    ctx.stroke();
 
     // Value inside box — slide animation with clip
     ctx.save();
@@ -1791,21 +1808,19 @@ function drawFIR() {
     ctx.textAlign = 'center';
     const valY = regTop + boxH / 2 + 4;
     if (isShift) {
-      // Incoming slides in from left (0→center)
       const inVal = i === 0 ? firSt.pending : (firSt.prevReg[i - 1] || 0);
-      const inX   = bx - boxW / 2 + p * (boxW);  // starts left of box, ends at center
+      const inX   = bx - boxW / 2 + p * boxW;
       ctx.fillStyle = cHigh;
-      ctx.fillText(inVal.toFixed(2), inX + boxW / 2, valY);
-      // Outgoing slides out to right (center→right-gone), fading
+      ctx.fillText(firFmt(inVal), inX + boxW / 2, valY);
       const outVal = firSt.prevReg[i] || 0;
       const outX   = cx + p * boxW;
       ctx.globalAlpha = 1 - p;
       ctx.fillStyle   = C.text;
-      ctx.fillText(outVal.toFixed(2), outX, valY);
+      ctx.fillText(firFmt(outVal), outX, valY);
       ctx.globalAlpha = 1;
     } else {
       ctx.fillStyle = isIncoming ? cHigh : C.text;
-      ctx.fillText(firSt.reg[i].toFixed(2), cx, valY);
+      ctx.fillText(firFmt(regVal), cx, valY);
     }
     ctx.restore();
 
@@ -1818,65 +1833,66 @@ function drawFIR() {
       ctx.fillText(idxLabel, cx, regBot + 10);
     }
 
-    // Wire: register bottom → triangle top-left corner (at cx, mulTopY)
+    // Wire: register bottom → triangle top center
     ctx.strokeStyle = isMul ? C.accent2 : C.textDim;
     ctx.lineWidth   = isMul ? 1.5 : 1;
-    const wireTop = showIdx ? regBot + 12 : regBot + 2;
-    ctx.beginPath(); ctx.moveTo(cx, wireTop); ctx.lineTo(cx, mulTopY); ctx.stroke();
-    if (!isShift) firArrow(ctx, cx, mulTopY + 1, 'down', isMul ? C.accent2 : C.textDim);
+    const wireTopY = showIdx ? regBot + 12 : regBot + 2;
+    ctx.beginPath(); ctx.moveTo(cx, wireTopY); ctx.lineTo(cx, triTopY); ctx.stroke();
+    if (!isShift) firArrow(ctx, cx, triTopY + 1, 'down', isMul ? C.accent2 : C.textDim);
 
-    // Right-pointing triangle (multiplier)
-    const tipX = cx + mulW;
+    // Downward triangle ▽ (flat top, bottom point)
     ctx.fillStyle   = isMul ? (dark ? '#280d00' : '#fff3e0') : cTri;
     ctx.strokeStyle = isMul ? C.accent2 : cTriBrd;
     ctx.lineWidth   = isMul ? 2.5 : 1.5;
     ctx.beginPath();
-    ctx.moveTo(cx, mulTopY);
-    ctx.lineTo(cx, mulBotY);
-    ctx.lineTo(tipX, mulMidY);
+    ctx.moveTo(cx - triW / 2, triTopY);
+    ctx.lineTo(cx + triW / 2, triTopY);
+    ctx.lineTo(cx,            triBotY);
     ctx.closePath();
     ctx.fill(); ctx.stroke();
 
-    // Coefficient text inside triangle (14px+ when space allows)
+    // Coefficient text inside triangle
     const coeffVal  = firSt.h[i];
-    const innerW    = mulW * 0.7;
-    const coeffFont = Math.max(9, Math.min(14, innerW * 0.55));
-    if (mulW >= 14 && mulH >= 12) {
-      const coeffTxt = coeffVal.toFixed(mulW >= 22 ? 2 : 1);
+    const coeffFont = Math.max(10, Math.min(15, triW * 0.23));
+    if (triW >= 16 && triH >= 18) {
+      const coeffTxt = Math.abs(coeffVal) < 10 ? coeffVal.toFixed(2) : String(Math.round(coeffVal));
       ctx.font = `bold ${coeffFont}px Space Mono`;
       ctx.textAlign = 'center';
       ctx.fillStyle = isMul ? C.accent2 : cTriBrd;
-      ctx.fillText(coeffTxt, cx + mulW * 0.32, mulMidY + coeffFont * 0.38);
+      ctx.fillText(coeffTxt, cx, triMidY + coeffFont * 0.38);
     }
 
-    // h[i] label below triangle (small)
-    if (showIdx && mulH >= 18) {
+    // h[i] label above triangle (left edge)
+    if (showIdx && triH >= 22) {
       ctx.font = '8px Space Mono';
-      ctx.textAlign = 'center';
+      ctx.textAlign = 'left';
       ctx.fillStyle = isMul ? C.accent2 : C.textDim;
-      ctx.fillText(`h[${i}]`, cx + mulW * 0.28, mulBotY + 10);
+      ctx.fillText(`h[${i}]`, cx - triW / 2 + 2, triTopY - 2);
     }
 
-    // Product label (show when mul or sum phase)
-    if ((isMul || isSum) && mulH >= 14) {
-      const prod = (firSt.h[i] * firSt.reg[i]).toFixed(3);
-      ctx.font = `bold 8px Space Mono`;
-      ctx.textAlign = 'center';
-      ctx.fillStyle = cHigh;
-      ctx.fillText(`=${prod}`, cx + mulW * 0.28, mulBotY + (showIdx ? 20 : 11));
-    }
-
-    // Wire: from triangle tip down to bus
+    // Wire: triangle bottom point → bus
     ctx.strokeStyle = (isMul || isSum) ? cHigh : C.textDim;
     ctx.lineWidth   = 1;
-    ctx.beginPath(); ctx.moveTo(tipX, mulMidY); ctx.lineTo(tipX, busY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, triBotY); ctx.lineTo(cx, busY); ctx.stroke();
+
+    // Product label — centered on wire between triangle and bus (with bg to avoid overlap)
+    if ((isMul || isSum) && triH >= 14) {
+      const prodTxt = `=${firFmt(firSt.h[i] * firSt.reg[i])}`;
+      const lblY    = triBotY + (busY - triBotY) * 0.52;
+      ctx.font = `bold 9px Space Mono`;
+      ctx.textAlign = 'center';
+      const tw = ctx.measureText(prodTxt).width + 5;
+      ctx.fillStyle = C.panel2;
+      ctx.fillRect(cx - tw / 2, lblY - 9, tw, 11);
+      ctx.fillStyle = cHigh;
+      ctx.fillText(prodTxt, cx, lblY);
+    }
   }
 
-  // ── Horizontal bus (all tips → adder at right) ────────────────────────
-  const busLeft = cxs[0] + mulW;
+  // ── Horizontal bus (all taps → adder) ────────────────────────────────
   ctx.strokeStyle = (isMul || isSum) ? cHigh : C.border;
   ctx.lineWidth   = (isMul || isSum) ? 2 : 1.5;
-  ctx.beginPath(); ctx.moveTo(busLeft, busY); ctx.lineTo(adderX, busY); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cxs[0], busY); ctx.lineTo(adderX, busY); ctx.stroke();
 
   // ── Adder (Σ) at right end ────────────────────────────────────────────
   ctx.fillStyle   = isSum ? (dark ? '#2a1e00' : '#fffbeb') : (dark ? '#141520' : '#f8fafc');
@@ -1894,7 +1910,7 @@ function drawFIR() {
   ctx.beginPath(); ctx.moveTo(adderX, busY + adderR); ctx.lineTo(adderX, outLineEnd); ctx.stroke();
   if (isSum) firArrow(ctx, adderX, outLineEnd, 'down', cHigh);
 
-  const outLabel = isSum ? `y[n]=${firSt.yOut.toFixed(3)}` : 'y[n]';
+  const outLabel = isSum ? `y[n]=${firFmt(firSt.yOut)}` : 'y[n]';
   ctx.font = 'bold 12px Space Mono';
   ctx.fillStyle = isSum ? cHigh : C.text;
   ctx.textAlign = 'center';
