@@ -1318,6 +1318,11 @@ h1 {
       <div class="diagram-wrap">
         <svg id="s4-concept-svg" viewBox="0 0 700 118" xmlns="http://www.w3.org/2000/svg"></svg>
       </div>
+      <div class="hint" style="margin-top:10px;">
+        ※ 実際の測定では治具が<strong>前後 2 個</strong>付くことが多い（例: ケーブル＋コネクタ）。<br>
+        その場合の一般式: F_meas = F_jigA × F_dut × F_jigB　→　F_dut = F_jigA⁻¹ × F_meas × F_jigB⁻¹<br>
+        このツールは前段 1 個の簡略ケースを扱う。
+      </div>
     </div>
 
     <!-- Row 1: F_meas input + Jig preset selection -->
@@ -1846,40 +1851,44 @@ function drawConceptSVG() {
   const wc  = tc('#94a3b8','#64748b');
   const gd  = tc('#fbbf24','#d97706');
   const gbg = tc('rgba(34,197,94,0.07)','rgba(22,163,74,0.10)');
-  // layout: VNA1(50-130) → F_jig(175-300) → DUT(345-480) → VNA2(525-610)
+  // layout (700px wide):
+  //   VNA1  x=55  w=80  right=135
+  //   F_jig x=177 w=158 right=335  ← 14CJK×10px=140px < 158px OK
+  //   DUT   x=375 w=135 right=510  ← 9CJK×10px=90px  < 135px OK
+  //   VNA2  x=550 w=80  right=630
   svg.innerHTML = `
     <!-- VNA Port1 -->
-    <rect x="50" y="18" width="80" height="46" rx="8" fill="none" stroke="${lc}" stroke-width="2"/>
-    <text x="90" y="38" text-anchor="middle" font-size="12" fill="${lc}" font-weight="700" font-family="Space Mono,monospace">VNA</text>
-    <text x="90" y="55" text-anchor="middle" font-size="10" fill="${wc}" font-family="Noto Sans JP,sans-serif">Port 1</text>
+    <rect x="55" y="18" width="80" height="46" rx="8" fill="none" stroke="${lc}" stroke-width="2"/>
+    <text x="95" y="38" text-anchor="middle" font-size="12" fill="${lc}" font-weight="700" font-family="Space Mono,monospace">VNA</text>
+    <text x="95" y="55" text-anchor="middle" font-size="10" fill="${wc}" font-family="Noto Sans JP,sans-serif">Port 1</text>
     <!-- Arrow VNA1 → F_jig -->
-    <line x1="130" y1="41" x2="170" y2="41" stroke="${wc}" stroke-width="1.8"/>
-    <polygon points="170,36 178,41 170,46" fill="${wc}"/>
-    <!-- F_jig -->
-    <rect x="178" y="16" width="122" height="50" rx="8" fill="none" stroke="${ac2}" stroke-width="2"/>
-    <text x="239" y="37" text-anchor="middle" font-size="13" fill="${ac2}" font-weight="700" font-family="Space Mono,monospace">F_jig</text>
-    <text x="239" y="55" text-anchor="middle" font-size="10" fill="${wc}" font-family="Noto Sans JP,sans-serif">治具（ケーブル・コネクタ等）</text>
+    <line x1="135" y1="41" x2="171" y2="41" stroke="${wc}" stroke-width="1.8"/>
+    <polygon points="171,36 178,41 171,46" fill="${wc}"/>
+    <!-- F_jig  center_x=256 -->
+    <rect x="177" y="16" width="158" height="50" rx="8" fill="none" stroke="${ac2}" stroke-width="2"/>
+    <text x="256" y="37" text-anchor="middle" font-size="13" fill="${ac2}" font-weight="700" font-family="Space Mono,monospace">F_jig</text>
+    <text x="256" y="55" text-anchor="middle" font-size="10" fill="${wc}" font-family="Noto Sans JP,sans-serif">治具（ケーブル・コネクタ等）</text>
     <!-- Arrow F_jig → DUT -->
-    <line x1="300" y1="41" x2="340" y2="41" stroke="${wc}" stroke-width="1.8"/>
-    <polygon points="340,36 348,41 340,46" fill="${wc}"/>
-    <!-- DUT -->
-    <rect x="348" y="13" width="132" height="56" rx="8" fill="${gbg}" stroke="${gn}" stroke-width="2.5"/>
-    <text x="414" y="37" text-anchor="middle" font-size="13" fill="${gn}" font-weight="700" font-family="Space Mono,monospace">DUT</text>
-    <text x="414" y="55" text-anchor="middle" font-size="10" fill="${gn}" font-family="Noto Sans JP,sans-serif">被測定物（真値）</text>
+    <line x1="335" y1="41" x2="369" y2="41" stroke="${wc}" stroke-width="1.8"/>
+    <polygon points="369,36 376,41 369,46" fill="${wc}"/>
+    <!-- DUT  center_x=442 -->
+    <rect x="375" y="13" width="135" height="56" rx="8" fill="${gbg}" stroke="${gn}" stroke-width="2.5"/>
+    <text x="442" y="37" text-anchor="middle" font-size="13" fill="${gn}" font-weight="700" font-family="Space Mono,monospace">DUT</text>
+    <text x="442" y="55" text-anchor="middle" font-size="10" fill="${gn}" font-family="Noto Sans JP,sans-serif">被測定物（真値）</text>
     <!-- Arrow DUT → VNA2 -->
-    <line x1="480" y1="41" x2="520" y2="41" stroke="${wc}" stroke-width="1.8"/>
-    <polygon points="520,36 528,41 520,46" fill="${wc}"/>
+    <line x1="510" y1="41" x2="544" y2="41" stroke="${wc}" stroke-width="1.8"/>
+    <polygon points="544,36 551,41 544,46" fill="${wc}"/>
     <!-- VNA Port2 -->
-    <rect x="528" y="18" width="80" height="46" rx="8" fill="none" stroke="${lc}" stroke-width="2"/>
-    <text x="568" y="38" text-anchor="middle" font-size="12" fill="${lc}" font-weight="700" font-family="Space Mono,monospace">VNA</text>
-    <text x="568" y="55" text-anchor="middle" font-size="10" fill="${wc}" font-family="Noto Sans JP,sans-serif">Port 2</text>
-    <!-- F_meas brace: spans F_jig(178) + DUT(480) -->
-    <line x1="178" y1="73" x2="480" y2="73" stroke="${gd}" stroke-width="1.5" stroke-dasharray="5,3"/>
-    <line x1="178" y1="66" x2="178" y2="73" stroke="${gd}" stroke-width="1.5"/>
-    <line x1="480" y1="66" x2="480" y2="73" stroke="${gd}" stroke-width="1.5"/>
-    <text x="329" y="86" text-anchor="middle" font-size="11" fill="${gd}" font-weight="700" font-family="Noto Sans JP,sans-serif">← VNA が計測する F_meas →</text>
+    <rect x="550" y="18" width="80" height="46" rx="8" fill="none" stroke="${lc}" stroke-width="2"/>
+    <text x="590" y="38" text-anchor="middle" font-size="12" fill="${lc}" font-weight="700" font-family="Space Mono,monospace">VNA</text>
+    <text x="590" y="55" text-anchor="middle" font-size="10" fill="${wc}" font-family="Noto Sans JP,sans-serif">Port 2</text>
+    <!-- F_meas brace: spans F_jig(177) to DUT right(510) -->
+    <line x1="177" y1="73" x2="510" y2="73" stroke="${gd}" stroke-width="1.5" stroke-dasharray="5,3"/>
+    <line x1="177" y1="66" x2="177" y2="73" stroke="${gd}" stroke-width="1.5"/>
+    <line x1="510" y1="66" x2="510" y2="73" stroke="${gd}" stroke-width="1.5"/>
+    <text x="344" y="86" text-anchor="middle" font-size="11" fill="${gd}" font-weight="700" font-family="Noto Sans JP,sans-serif">← VNA が計測する F_meas →</text>
     <!-- De-embedding formula -->
-    <text x="329" y="109" text-anchor="middle" font-size="12" fill="${gd}" font-weight="700" font-family="Space Mono,monospace">F_dut = F_jig⁻¹ × F_meas</text>`;
+    <text x="344" y="109" text-anchor="middle" font-size="12" fill="${gd}" font-weight="700" font-family="Space Mono,monospace">F_dut = F_jig⁻¹ × F_meas</text>`;
 }
 
 // ════════════════════════════════════════════════════════════════
