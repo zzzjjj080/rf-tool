@@ -197,17 +197,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
     </div>
   </div>
 
-  <div class="card">
-    <div class="card-title">フーリエ変換</div>
-    <div class="formula">
-      <span class="cb">X</span>(<span class="cb">f</span>)
-      <span style="color:var(--text2)"> = </span>
-      <span class="int">∫</span>&thinsp;<span class="cr">x</span>(<span class="cr">t</span>)<span style="color:var(--text2)">·</span><span class="ct">e<sup style="font-size:9px">−j2π<span class="cb">f</span><span class="cr">t</span></sup></span><span style="color:var(--text2)"> dt</span>
-    </div>
-    <div class="fml-note">
-      周波数 <span class="cb">f</span> ごとに波形 <span class="cr">x(t)</span> を複素螺旋 <span class="ct">e<sup style="font-size:8px">−j2πft</sup></span> に掛けて積分 ＝ 巻きつけて重心（<span class="ca">●</span>）を取る。重心が原点から遠いほど <span class="cb">|X(f)|</span> が大きく、スペクトルのピークになる。
-    </div>
-  </div>
 </div>
 
 <!-- Main area -->
@@ -241,8 +230,16 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
         <canvas id="cvs"></canvas>
       </div>
       <div class="panel">
-        <div class="panel-label" id="plt">複素平面トレース  Re(X) – Im(X)</div>
-        <canvas id="cvp" style="width:100%;height:140px;display:block"></canvas>
+        <div class="panel-label">フーリエ変換</div>
+        <div class="formula">
+          <span class="cb">X</span>(<span class="cb">f</span>)
+          <span style="color:var(--text2)"> = </span>
+          <span class="int">∫</span>&thinsp;<span class="cr">x</span>(<span class="cr">t</span>)<span style="color:var(--text2)">·</span><span class="ct">e<sup style="font-size:9px">−j2π<span class="cb">f</span><span class="cr">t</span></sup></span><span style="color:var(--text2)"> dt</span>
+        </div>
+        <div class="fml-note">
+          周波数 <span class="cb">f</span> ごとに波形 <span class="cr">x(t)</span> を複素螺旋 <span class="ct">e<sup style="font-size:8px">−j2πft</sup></span> に掛けて積分 ＝ 巻きつけて重心（<span class="ca">●</span>）を取る。重心が原点から遠いほど <span class="cb">|X(f)|</span> が大きく、スペクトルのピークになる。
+        </div>
+        <canvas id="cvp" style="display:none"></canvas>
       </div>
     </div>
   </div>
