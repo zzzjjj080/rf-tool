@@ -1330,9 +1330,9 @@ h1 {
 
       <!-- F_meas input card -->
       <div class="card">
-        <div class="card-title">📊 計測値 [F_meas] の入力</div>
+        <div class="card-title">📊 ジグ＋DUT の計測値 [F_meas]</div>
         <div class="info-box" style="margin-top:0;">
-          VNA で取得した F 行列（ABCD 行列）の 4 要素を入力してください。<br>
+          VNA で計測した<strong>全体（治具＋DUT）</strong>の ABCD 行列を入力。<br>
           デフォルトは<strong>単位行列</strong>（整合・無損失の理想状態）。
         </div>
         <div class="fmeas-grid">
@@ -1395,7 +1395,7 @@ h1 {
         </div>
         <div class="form-group" style="margin-top:16px;margin-bottom:0;">
           <label>周波数 f（ジグ行列計算用）</label>
-          <div class="slider-row">
+          <div class="slider-row" style="max-width:260px;">
             <input type="range" id="s4-freq" min="1" max="1000" value="13" oninput="updateS4()">
             <span class="slider-val" id="s4-freq-val">13 MHz</span>
           </div>
@@ -1404,7 +1404,7 @@ h1 {
 
       <!-- Jig preset selection card -->
       <div class="card">
-        <div class="card-title">🔧 計測ジグの選択</div>
+        <div class="card-title">🔧 ジグの F 行列 [F_jig]</div>
         <div class="jig-preset-grid">
           <div class="jig-card" data-jig="coax" onclick="selectJig('coax')">
             <div class="jig-card-icon">
@@ -1463,13 +1463,13 @@ h1 {
       <div class="card-title">📐 De-embedding の計算ステップ</div>
       <div class="calc-steps-grid">
         <div class="calc-step">
-          <div class="calc-step-header">① 計測値 [F_meas]</div>
+          <div class="calc-step-header">① ジグ＋DUT の計測値 [F_meas]</div>
           <div class="hint" style="margin-bottom:8px;">入力した ABCD 行列をそのまま使用。</div>
           <div id="s4-step1-body"></div>
         </div>
         <div class="calc-step">
-          <div class="calc-step-header">② 選択ジグ [F_jig]</div>
-          <div class="hint" style="margin-bottom:8px;">プリセットとパラメータから計算した治具の F 行列。</div>
+          <div class="calc-step-header">② ジグの F 行列 [F_jig]</div>
+          <div class="hint" style="margin-bottom:8px;">種類とパラメータから計算した治具の F 行列。</div>
           <div id="s4-step2-body"></div>
         </div>
         <div class="calc-step">
@@ -2973,7 +2973,7 @@ function renderJigParams() {
     paramsEl.innerHTML = jig.params.map(p => `
       <div class="form-group" style="margin-top:12px;margin-bottom:0;">
         <label>${p.label}</label>
-        <div class="slider-row">
+        <div class="slider-row" style="max-width:260px;">
           <input type="range" id="${p.id}" min="${p.min}" max="${p.max}" value="${p.def}" oninput="updateS4()">
           <span class="slider-val" id="${p.id}-lbl">${p.fmt(p.def)}</span>
         </div>
