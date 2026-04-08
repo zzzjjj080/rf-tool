@@ -147,6 +147,25 @@ body.dark .cap-spin-val { background: #0b1220; }
 }
 .lock-btn.locked { background: var(--accent); color: #fff; border-color: var(--accent2); }
 
+.explain-section { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; margin-bottom: 16px; }
+.explain-section h3 { font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 2px; color: var(--accent); text-transform: uppercase; margin-bottom: 10px; }
+.explain-text { font-size: 13px; line-height: 1.9; color: var(--text); margin-bottom: 12px; }
+.explain-text .hl  { color: var(--primary); font-weight: 700; }
+.explain-text .hl2 { color: var(--accent);  font-weight: 700; }
+.explain-text .hl3 { color: var(--gold);    font-weight: 700; }
+.explain-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
+.explain-card { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.explain-card-head { font-family: 'Space Mono', monospace; font-size: 10px; font-weight: 700; letter-spacing: 1px; padding: 8px 14px; text-transform: uppercase; }
+.explain-card-head.blue  { background: rgba(26,111,168,.08); color: var(--primary); border-bottom: 1px solid rgba(26,111,168,.2); }
+.explain-card-head.orange{ background: rgba(230,126,34,.08); color: var(--accent);  border-bottom: 1px solid rgba(230,126,34,.2); }
+.explain-card-head.gold  { background: rgba(217,119,6,.10);  color: var(--gold);    border-bottom: 1px solid rgba(217,119,6,.2);  }
+body.dark .explain-card-head.blue  { background: rgba(96,165,250,.08); border-bottom-color: rgba(96,165,250,.2); }
+body.dark .explain-card-head.orange{ background: rgba(251,146,60,.08); border-bottom-color: rgba(251,146,60,.2); }
+body.dark .explain-card-head.gold  { background: rgba(251,191,36,.08); border-bottom-color: rgba(251,191,36,.2); }
+.explain-card-body { padding: 10px 14px; font-size: 12px; line-height: 1.8; color: var(--text); }
+.explain-card-body .hl  { color: var(--primary); font-weight: 700; font-family: 'Space Mono', monospace; }
+.explain-card-body .hl2 { color: var(--accent);  font-weight: 700; }
+
 @media (max-width: 560px) {
   .chart-panel { width: 100%; }
   .controls-panel { min-width: 100%; }
@@ -166,6 +185,48 @@ body.dark .cap-spin-val { background: #0b1220; }
     <div class="header-tag">RF-TOOL / MATCHING</div>
     <h1>負荷変動シミュレーター</h1>
   </header>
+
+  <section class="explain-section">
+    <h3>なぜ「負荷を変える」のか？</h3>
+    <p class="explain-text">
+      アンプ・送信機・アンテナ給電回路など、あらゆる<span class="hl">高周波回路</span>は出力端の
+      <span class="hl2">負荷インピーダンス</span>によって動作が変わります。
+      開発・評価の現場では<span class="hl3">可変ダミーロード（チューナー）</span>を使って
+      意図的に負荷を動かし、「どんな負荷でも壊れないか」「どの負荷で最高性能が出るか」を検証します。
+      RFパワーアンプ・プラズマ電源・医療用RF装置・EMCテストなど、
+      幅広い業界で日常的に行われる試験手法です。
+    </p>
+    <div class="explain-cards">
+      <div class="explain-card">
+        <div class="explain-card-head blue">① 可変ダミーロード</div>
+        <div class="explain-card-body">
+          ケーブル長で<span class="hl">位相</span>を回し、
+          <span class="hl">C1（並列）</span>と<span class="hl">C2（直列）</span>の2つのバリキャップ・トリマで
+          スミスチャート上の目標インピーダンスへ近づけます。
+          実際のATU（Automatic Tuning Unit）と同じ構成です。
+        </div>
+      </div>
+      <div class="explain-card">
+        <div class="explain-card-head orange">② 実現可能エリアの可視化</div>
+        <div class="explain-card-body">
+          C1・C2の<span class="hl2">範囲スライダー</span>を動かすと、
+          その組み合わせで到達できる負荷インピーダンスの
+          <span class="hl2">エリア（塗り領域）</span>がスミスチャート上にリアルタイム表示されます。
+          「この部品スペックで目標に届くか？」が一目で分かります。
+        </div>
+      </div>
+      <div class="explain-card">
+        <div class="explain-card-head gold">③ クリックで逆算</div>
+        <div class="explain-card-body">
+          スミスチャート上の任意の点を<span class="hl">クリック</span>すると、
+          その負荷を実現するおおよその
+          <span class="hl">C1・C2設定値</span>を自動で逆算して表示します。
+          実機調整の<span class="hl">目安値</span>として活用できます。
+        </div>
+      </div>
+    </div>
+  </section>
+
   <div class="main-layout">
 
     <!-- ===== Smith Chart Panel ===== -->
