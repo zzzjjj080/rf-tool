@@ -1302,8 +1302,12 @@ h1 {
         <div class="callout" style="margin-top:10px;">
           <div class="callout-title">💡 逆行列とは？</div>
           行列 F に対して F⁻¹ × F = 単位行列 I になるものを<strong>逆行列</strong>という。<br>
-          2×2 行列では <strong>det = AD − BC</strong> を使って解析的に求められる：
-          F⁻¹ = 1/det × [[D, −B], [−C, A]]
+          2×2 行列では<strong>行列式（det, determinant）</strong>を計算することで、逆行列を解析的に求められる：<br>
+          <span style="font-family:'Roboto Mono',monospace;font-size:13px;display:block;margin:6px 0 2px 1em;">
+            det = AD − BC　← 行列 [[A,B],[C,D]] から求まるスカラー値<br>
+            F⁻¹ = (1/det) × [[D, −B], [−C, A]]
+          </span>
+          <span class="hint" style="display:block;margin-top:4px;">det = 0 のとき逆行列は存在しない（特異行列）。パッシブ回路の ABCD 行列では det = 1 が保証されるため、常に de-embedding が可能。</span>
         </div>
       </div>
     </div>
@@ -1398,11 +1402,26 @@ h1 {
         <div class="card-title">🔧 計測ジグの選択</div>
         <div class="jig-preset-grid">
           <div class="jig-card" data-jig="coax" onclick="selectJig('coax')">
-            <div class="jig-card-icon">📡</div>
+            <div class="jig-card-icon">
+              <!-- 同軸ケーブル断面図: 外部導体→誘電体→中心導体 -->
+              <svg width="26" height="26" viewBox="0 0 26 26" style="display:block;margin:0 auto;">
+                <circle cx="13" cy="13" r="11" fill="#666"/>
+                <circle cx="13" cy="13" r="7"  fill="#d0d0d0"/>
+                <circle cx="13" cy="13" r="2.8" fill="#c8a000"/>
+              </svg>
+            </div>
             <div class="jig-card-name">同軸ケーブル<br><small>伝送線路</small></div>
           </div>
           <div class="jig-card active" data-jig="series_l" onclick="selectJig('series_l')">
-            <div class="jig-card-icon">🔗</div>
+            <div class="jig-card-icon">
+              <!-- コネクタ: 金属円柱ボディ＋中心ピン -->
+              <svg width="26" height="26" viewBox="0 0 26 26" style="display:block;margin:0 auto;">
+                <rect x="5" y="9" width="16" height="10" fill="#999"/>
+                <ellipse cx="13" cy="9"  rx="8" ry="3" fill="#bbb"/>
+                <ellipse cx="13" cy="19" rx="8" ry="3" fill="#777"/>
+                <circle  cx="13" cy="14" r="2.5" fill="#c8a000"/>
+              </svg>
+            </div>
             <div class="jig-card-name">コネクタ<br><small>直列 L</small></div>
           </div>
           <div class="jig-card" data-jig="pcb" onclick="selectJig('pcb')">
@@ -1410,7 +1429,18 @@ h1 {
             <div class="jig-card-name">PCBパターン<br><small>短い伝送路</small></div>
           </div>
           <div class="jig-card" data-jig="shunt_c" onclick="selectJig('shunt_c')">
-            <div class="jig-card-icon">⚡</div>
+            <div class="jig-card-icon">
+              <!-- コンデンサ記号（シャント接続＋アース） -->
+              <svg width="26" height="26" viewBox="0 0 26 26" style="display:block;margin:0 auto;">
+                <line x1="13" y1="2"  x2="13" y2="10" stroke="#888" stroke-width="1.8"/>
+                <line x1="4"  y1="10" x2="22" y2="10" stroke="#888" stroke-width="2.5" stroke-linecap="round"/>
+                <line x1="4"  y1="15" x2="22" y2="15" stroke="#888" stroke-width="2.5" stroke-linecap="round"/>
+                <line x1="13" y1="15" x2="13" y2="19" stroke="#888" stroke-width="1.8"/>
+                <line x1="7"  y1="19" x2="19" y2="19" stroke="#888" stroke-width="2"/>
+                <line x1="9"  y1="22" x2="17" y2="22" stroke="#888" stroke-width="1.5"/>
+                <line x1="11" y1="25" x2="15" y2="25" stroke="#888" stroke-width="1"/>
+              </svg>
+            </div>
             <div class="jig-card-name">シャントC<br><small>寄生容量</small></div>
           </div>
           <div class="jig-card" data-jig="thru" onclick="selectJig('thru')">

@@ -135,10 +135,6 @@ footer a:hover{text-decoration:underline}
 .fir-sig-btn:hover{border-color:var(--accent);color:var(--accent)}
 .fir-sig-btn.active{border-color:#00d4ff;color:#00d4ff;background:rgba(0,212,255,.1);font-weight:700}
 [data-theme="light"] .fir-sig-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(2,132,199,.1)}
-.fir-tap-btn{padding:5px 13px;border-radius:6px;border:1.5px solid var(--border);background:var(--panel2);color:var(--text-dim);font-family:'Space Mono',monospace;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s}
-.fir-tap-btn:hover{border-color:var(--accent);color:var(--accent)}
-.fir-tap-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(2,132,199,.12)}
-[data-theme="dark"] .fir-tap-btn.active{background:rgba(0,212,255,.1)}
 </style>
 </head>
 <body>
@@ -475,15 +471,6 @@ footer a:hover{text-decoration:underline}
             <option value="tri">三角窓（LPF）</option>
             <option value="custom">カスタム（直接入力）</option>
           </select>
-        </div>
-        <div class="select-group">
-          <label>タップ数</label>
-          <div class="fir-tap-btns">
-            <button class="fir-tap-btn" onclick="setFirTaps(5)">5</button>
-            <button class="fir-tap-btn active" onclick="setFirTaps(10)">10</button>
-            <button class="fir-tap-btn" onclick="setFirTaps(20)">20</button>
-            <button class="fir-tap-btn" onclick="setFirTaps(50)">50</button>
-          </div>
         </div>
       </div>
       <div id="firCustomCoeffs" class="fir-custom-coeffs" style="display:none">
@@ -1426,24 +1413,6 @@ function setSigType(type) {
     b.classList.toggle('active', b.dataset.sig === type));
 }
 
-function setFirTaps(n) {
-  firSt.numTaps = n;
-  document.querySelectorAll('.fir-tap-btn').forEach(b =>
-    b.classList.toggle('active', +b.dataset.n === n));
-  const lbl = document.getElementById('firTapLabel');
-  if (lbl) lbl.textContent = n;
-  const preset = document.getElementById('firPreset').value;
-  if (preset === 'custom') {
-    firSt.customH = genFirCoeffs('avg', n); // reset custom to avg when N changes
-    firSt.h = [...firSt.customH];
-    rebuildCustomInputs();
-  } else {
-    firSt.h = genFirCoeffs(preset, n);
-  }
-  firReset();
-  drawFirImpulse();
-}
-
 function firReset() {
   const N = firSt.N;
   firSt.reg     = Array(N).fill(0);
@@ -1462,22 +1431,22 @@ function firReset() {
 
 function firStep() {
   if (firSt.anim !== 0) return;
-  const N   = firSt.N;
+  const N    = firSt.N;
   const xNew = firGetSample(firSt.n, firSt.sigType);
-  firSt.pending  = xNew;
-  firSt.prevReg  = [...firSt.reg];
-  firSt.anim     = 1;
+  firSt.pending      = xNew;
+  firSt.prevReg      = [...firSt.reg];
+  firSt.anim         = 1;
   firSt.slideProgress = 0;
 
-  const SLIDE_MS = 160;
-  const t0 = performance.now();
-
-  function animSlide(t) {
-    firSt.slideProgress = Math.min(1, (t - t0) / SLIDE_MS);
+  // Slide animation: step progress in ~10 frames over 160 ms using setTimeout
+  const SLIDE_MS = 160, STEPS = 10, interval = SLIDE_MS / STEPS;
+  let step = 0;
+  const slideTimer = setInterval(() => {
+    step++;
+    firSt.slideProgress = Math.min(1, step / STEPS);
     drawFIR();
-    if (firSt.slideProgress < 1) {
-      requestAnimationFrame(animSlide);
-    } else {
+    if (step >= STEPS) {
+      clearInterval(slideTimer);
       // commit shift
       for (let i = N - 1; i > 0; i--) firSt.reg[i] = firSt.reg[i - 1];
       firSt.reg[0] = xNew;
@@ -1488,17 +1457,13 @@ function firStep() {
       if (firSt.xHist.length > 20) firSt.xHist.shift();
       if (firSt.yHist.length > 20) firSt.yHist.shift();
       firSt.anim = 2;
-      drawFIR();
-      updateFIRCalc();
-      drawFirGraphs();
+      drawFIR(); updateFIRCalc(); drawFirGraphs();
       setTimeout(() => {
-        firSt.anim = 3;
-        drawFIR();
-        setTimeout(() => { firSt.anim = 0; drawFIR(); }, 280);
-      }, 280);
+        firSt.anim = 3; drawFIR();
+        setTimeout(() => { firSt.anim = 0; drawFIR(); }, 250);
+      }, 250);
     }
-  }
-  requestAnimationFrame(animSlide);
+  }, interval);
 }
 
 function setFirTaps(N) {
@@ -1567,7 +1532,7 @@ function updateFIRCalc() {
     const vC = x[i] >= 0 ? '#00d4ff' : '#ff6b35';
     return `<span style="color:${hC}">${hi.toFixed(2)}</span>` +
            `×<span style="color:${vC}">(${x[i].toFixed(2)})</span>`;
-  }).join(' + ') + (trunc ? ' + …' : '');
+  }).join(' + ');
   const rC = y >= 0 ? '#00d4ff' : '#ff6b35';
   const line3 = `     = <span style="color:${rC};font-weight:bold">${y.toFixed(4)}</span>`;
   el.innerHTML = `<code>${line1}<br>${line2}<br>${line3}</code>`;
@@ -1862,8 +1827,8 @@ function drawFIR() {
 
     // Right-pointing triangle (multiplier)
     const tipX = cx + mulW;
-    ctx.fillStyle   = isMul ? (dark ? '#280d00' : '#fff3e0') : cMul;
-    ctx.strokeStyle = isMul ? C.accent2 : cMulBrd;
+    ctx.fillStyle   = isMul ? (dark ? '#280d00' : '#fff3e0') : cTri;
+    ctx.strokeStyle = isMul ? C.accent2 : cTriBrd;
     ctx.lineWidth   = isMul ? 2.5 : 1.5;
     ctx.beginPath();
     ctx.moveTo(cx, mulTopY);
@@ -1880,7 +1845,7 @@ function drawFIR() {
       const coeffTxt = coeffVal.toFixed(mulW >= 22 ? 2 : 1);
       ctx.font = `bold ${coeffFont}px Space Mono`;
       ctx.textAlign = 'center';
-      ctx.fillStyle = isMul ? C.accent2 : cMulBrd;
+      ctx.fillStyle = isMul ? C.accent2 : cTriBrd;
       ctx.fillText(coeffTxt, cx + mulW * 0.32, mulMidY + coeffFont * 0.38);
     }
 
