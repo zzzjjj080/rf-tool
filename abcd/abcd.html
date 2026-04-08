@@ -329,7 +329,8 @@ h1 {
 .mat-display {
   display: inline-flex;
   align-items: center;
-  font-family: 'Space Mono', monospace;
+  font-family: 'Roboto Mono', 'Courier New', monospace;
+  font-variant-numeric: normal;
   font-size: 12px;
   margin: 4px 0;
 }
@@ -354,7 +355,8 @@ h1 {
 .mc-c { color: var(--green);   background: color-mix(in srgb, var(--green)   8%, transparent); }
 .mc-d { color: var(--accent2); background: color-mix(in srgb, var(--accent2) 8%, transparent); }
 .det-formula {
-  font-family: 'Space Mono', monospace;
+  font-family: 'Roboto Mono', 'Courier New', monospace;
+  font-variant-numeric: normal;
   font-size: 11px;
   color: var(--text-dim);
   background: var(--panel);
@@ -365,12 +367,18 @@ h1 {
   line-height: 1.8;
   word-break: break-all;
 }
-.mul-hint {
-  font-family: 'Space Mono', monospace;
-  font-size: 11px;
-  color: var(--text-dim);
-  line-height: 1.8;
+.mul-mat-equation {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
   margin-bottom: 8px;
+}
+.mul-mat-op {
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--text-dim);
+  line-height: 1;
 }
 
 /* ── F_meas input grid ── */
@@ -1473,7 +1481,7 @@ h1 {
           <div id="s4-step2-body"></div>
         </div>
         <div class="calc-step">
-          <div class="calc-step-header">③ 逆行列 [F_jig]⁻¹</div>
+          <div class="calc-step-header">③ F_jig の逆行列 [F_jig]⁻¹</div>
           <div id="s4-step3-body"></div>
         </div>
         <div class="calc-step highlight-step">
@@ -2986,11 +2994,10 @@ function renderJigParams() {
 function fmtCm(c) {
   const fn = v => {
     const a = Math.abs(v);
-    if (a < 5e-9) return '0';
-    if (a >= 1000) return v.toFixed(1);
-    if (a >= 100)  return v.toFixed(2);
-    if (a >= 10)   return v.toFixed(3);
-    if (a >= 0.1)  return v.toFixed(4);
+    if (a < 5e-9)  return '0';
+    if (a >= 100)  return v.toFixed(1);
+    if (a >= 1)    return v.toFixed(2);
+    if (a >= 0.01) return v.toFixed(3);
     return v.toExponential(2);
   };
   const re = Math.abs(c.re) < 5e-9 ? 0 : c.re;
@@ -3066,17 +3073,15 @@ function updateS4() {
     <div class="hint" style="margin-bottom:6px;">F⁻¹ = (1/det) × [[D, −B], [−C, A]]</div>
     ${renderMat(Fjig_inv)}`;
 
-  // Step 4: multiply breakdown + result
-  const [[fi_a,fi_b],[fi_c,fi_d]] = Fjig_inv;
-  const [[fm_a,fm_b],[fm_c,fm_d]] = Fmeas;
+  // Step 4: visual matrix equation  [F_jig]⁻¹ × [F_meas] = [F_dut]
   document.getElementById('s4-step4-body').innerHTML = `
-    <div class="mul-hint">
-      DUT_A = F⁻¹_A·M_A + F⁻¹_B·M_C<br>
-      DUT_B = F⁻¹_A·M_B + F⁻¹_B·M_D<br>
-      DUT_C = F⁻¹_C·M_A + F⁻¹_D·M_C<br>
-      DUT_D = F⁻¹_C·M_B + F⁻¹_D·M_D
-    </div>
-    ${renderMat(Fdut)}`;
+    <div class="mul-mat-equation">
+      ${renderMat(Fjig_inv)}
+      <span class="mul-mat-op">×</span>
+      ${renderMat(Fmeas)}
+      <span class="mul-mat-op">=</span>
+      ${renderMat(Fdut)}
+    </div>`;
 
   // Smith + table
   const Smeas = abcdToS(Fmeas, 50);
