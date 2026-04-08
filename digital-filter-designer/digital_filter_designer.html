@@ -459,8 +459,7 @@ footer a:hover{text-decoration:underline}
           <div style="display:flex;gap:5px" id="firTapBtns">
             <button class="fir-tap-btn" data-n="5"  onclick="setFirTaps(5)">5</button>
             <button class="fir-tap-btn active" data-n="10" onclick="setFirTaps(10)">10</button>
-            <button class="fir-tap-btn" data-n="20" onclick="setFirTaps(20)">20</button>
-            <button class="fir-tap-btn" data-n="50" onclick="setFirTaps(50)">50</button>
+            <button class="fir-tap-btn" data-n="15" onclick="setFirTaps(15)">15</button>
           </div>
         </div>
         <div class="select-group">
@@ -510,11 +509,6 @@ footer a:hover{text-decoration:underline}
     <div class="fir-step-row">
       <button class="fir-btn" id="firStepBtn" onclick="firStep()">▶ ステップ実行（次のサンプル入力）</button>
       <button class="fir-btn orange" onclick="firReset()">↺ リセット</button>
-    </div>
-
-    <!-- Calculation equation display -->
-    <div id="firCalcDisplay" class="fir-calc">
-      <span style="color:var(--text-dim)">— ステップ実行すると計算式が表示されます —</span>
     </div>
 
     <!-- Input / Output combined graph -->
@@ -1445,8 +1439,8 @@ function firStep() {
   firSt.anim         = 1;
   firSt.slideProgress = 0;
 
-  // Slide animation: step progress in ~10 frames over 160 ms using setTimeout
-  const SLIDE_MS = 160, STEPS = 10, interval = SLIDE_MS / STEPS;
+  // Slide animation: step progress in ~10 frames over 280 ms using setTimeout
+  const SLIDE_MS = 280, STEPS = 10, interval = SLIDE_MS / STEPS;
   let step = 0;
   const slideTimer = setInterval(() => {
     step++;
@@ -1464,7 +1458,7 @@ function firStep() {
       if (firSt.xHist.length > 20) firSt.xHist.shift();
       if (firSt.yHist.length > 20) firSt.yHist.shift();
       firSt.anim = 2;
-      drawFIR(); updateFIRCalc(); drawFirGraphs();
+      drawFIR(); drawFirGraphs();
       setTimeout(() => {
         firSt.anim = 3; drawFIR();
         setTimeout(() => { firSt.anim = 0; drawFIR(); }, 250);
@@ -1513,6 +1507,9 @@ function onFIRPreset() {
   const cc = document.getElementById('firCustomCoeffs');
   if (cc) cc.style.display = v === 'custom' ? 'flex' : 'none';
   if (v === 'custom') buildCustomCoeffInputs(N);
+  // Auto-select the input signal that best shows this filter's effect
+  const bestSig = { avg: 'rect', diff: 'rect', tri: 'sin', custom: firSt.sigType };
+  setSigType(bestSig[v] || 'rect');
   firReset();
   drawFirImpulse();
 }
@@ -1526,7 +1523,6 @@ function onFIRCustomCoeff() {
   });
   drawFIR();
   drawFirImpulse();
-  updateFIRCalc();
 }
 
 function updateFIRCalc() {
@@ -1558,7 +1554,11 @@ function drawFirImpulse() {
 
   const mx = 44, my = 16, pw = w - mx - 16, ph = h - my - 32;
   const N = firSt.N;
-  const maxAbs = Math.max(0.5, ...firSt.h.slice(0, N).map(Math.abs));
+  const rawMax = Math.max(1e-9, ...firSt.h.slice(0, N).map(Math.abs));
+  // Round up to a clean number for axis labels
+  const maxAbs = rawMax <= 0.15 ? Math.ceil(rawMax * 100) / 100
+               : rawMax <= 1    ? Math.ceil(rawMax * 10) / 10
+               : Math.ceil(rawMax);
   drawGrid(ctx, mx, my, pw, ph, Math.min(N, 20), 4, C);
 
   const zy = my + ph * 0.5;
@@ -1721,7 +1721,7 @@ function drawFIR() {
 
   // Downward triangle ▽ — flat top, bottom point
   const showIdx  = boxW >= 28;
-  const idxGap   = showIdx ? 14 : 4;
+  const idxGap   = showIdx ? 22 : 6;
   const triW     = Math.max(20, Math.min(boxW, Math.floor(xStep * 0.80)));
   const triH     = Math.max(32, Math.min(50, boxW * 0.85));
   const triTopY  = regBot + idxGap;
@@ -1860,14 +1860,6 @@ function drawFIR() {
       ctx.textAlign = 'center';
       ctx.fillStyle = isMul ? C.accent2 : cTriBrd;
       ctx.fillText(coeffTxt, cx, triMidY + coeffFont * 0.38);
-    }
-
-    // h[i] label above triangle (left edge)
-    if (showIdx && triH >= 22) {
-      ctx.font = '8px Space Mono';
-      ctx.textAlign = 'left';
-      ctx.fillStyle = isMul ? C.accent2 : C.textDim;
-      ctx.fillText(`h[${i}]`, cx - triW / 2 + 2, triTopY - 2);
     }
 
     // Wire: triangle bottom point → bus
