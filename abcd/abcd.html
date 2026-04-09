@@ -1524,31 +1524,342 @@ h1 {
   </div>
 
   <!-- ═══════════════════════════════════════════════════════════
-       STEP 5 : VI センサー応用（プレースホルダー）
+       STEP 5 : VI センサー de-embedding — OSL法
   ═══════════════════════════════════════════════════════════ -->
   <div class="step-panel" id="step6">
 
     <div class="step-intro">
-      <div class="step-intro-title">⚡ VIセンサー応用 — RF負荷のインピーダンス計測</div>
+      <div class="step-intro-title">⚡ VIセンサー de-embedding — OSL 法によるインピーダンス補正</div>
       <div class="step-intro-body">
         <ul>
-          <li><strong>VIセンサー</strong>とは、RFラインに挿入して電圧・電流を同時計測するプローブ。高電力RF装置全般において負荷インピーダンスをリアルタイムで監視するために広く活用されている</li>
-          <li>VIセンサー自体にもケーブル・CT・電圧プローブなどの<strong>寄生素子</strong>が存在し、測定値には治具の影響が含まれる</li>
-          <li>Step 4 の de-embedding を VIセンサーに適用することで、センサー自身の寄生を除去し、<strong>DUT の真のインピーダンス</strong>を得られる</li>
-          <li>RF電力計測が必要なあらゆる用途（産業用加熱・医療RF・通信試験など）に同じ手法が適用できる</li>
+          <li><strong>Step 4 の応用：</strong>「治具の逆行列で DUT を取り出す」発想を、VIセンサーを用いたインピーダンス計測にそのまま適用する</li>
+          <li>VIセンサーは RF ラインに挿入する <strong>4 ポートネットワーク</strong>。主信号パス（Port 1 → Port 2）を大電力が通過し、内部カプラー / CT が V・I をサンプリングして Port 3・Port 4 に出力する</li>
+          <li>センサー本体の寄生素子・位相遅延が測定誤差を生む。<strong>OSL キャリブレーション</strong>（Open / Short / Load の 3 標準器測定）で誤差パラメーターを同定し、ABCD（F）行列の逆行列で補正する</li>
         </ul>
-        <div class="callout" style="margin-top:10px;">
-          <div class="callout-title">🚧 このステップは現在開発中です</div>
-          VIセンサー回路モデル・キャリブレーション手順・各種RF負荷等価回路との接続など、詳細コンテンツを順次追加していく予定です。
+      </div>
+    </div>
+
+    <!-- ── Card 1: 4 ポート構造図 ── -->
+    <div class="card">
+      <div class="card-title">🔌 VIセンサーの構造 — 4 ポートネットワーク</div>
+      <div class="diagram-wrap">
+        <svg viewBox="0 0 700 278" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
+          <defs>
+            <marker id="s5v-arr" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+              <polygon points="0 0, 9 3.5, 0 7" fill="#0284c7"/>
+            </marker>
+            <marker id="s5v-dim" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+              <polygon points="0 0, 9 3.5, 0 7" fill="#94a3b8"/>
+            </marker>
+          </defs>
+          <!-- OSL bracket (top) -->
+          <line x1="220" y1="48" x2="614" y2="48" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="4,3"/>
+          <line x1="220" y1="44" x2="220" y2="53" stroke="#16a34a" stroke-width="1.5"/>
+          <line x1="614" y1="44" x2="614" y2="53" stroke="#16a34a" stroke-width="1.5"/>
+          <text x="417" y="38" text-anchor="middle" font-family="'Noto Sans JP',sans-serif" font-size="11" font-weight="700" fill="#16a34a">OSL 標準器はここ（Port 2）に接続</text>
+          <!-- VI sensor box -->
+          <rect x="220" y="82" width="260" height="104" rx="8" fill="none" stroke="#0284c7" stroke-width="2.5"/>
+          <text x="350" y="130" text-anchor="middle" font-family="'Noto Sans JP',sans-serif" font-size="14" font-weight="700" fill="#0284c7">VIセンサー本体</text>
+          <text x="350" y="149" text-anchor="middle" font-family="'Roboto Mono',monospace" font-size="11" fill="#64748b">4-Port Network</text>
+          <!-- Port 1 (left, RF in) -->
+          <line x1="50" y1="134" x2="216" y2="134" stroke="#0284c7" stroke-width="2.5" marker-end="url(#s5v-arr)"/>
+          <text x="50" y="118" text-anchor="middle" font-family="'Roboto Mono',monospace" font-size="12" font-weight="700" fill="#1e293b">Port 1</text>
+          <text x="50" y="156" text-anchor="middle" font-family="'Noto Sans JP',sans-serif" font-size="11" fill="#64748b">RF 入力</text>
+          <!-- Port 2 (right, RF out) + load -->
+          <line x1="480" y1="134" x2="558" y2="134" stroke="#0284c7" stroke-width="2.5" marker-end="url(#s5v-arr)"/>
+          <rect x="560" y="116" width="52" height="36" rx="5" fill="none" stroke="#ea580c" stroke-width="2"/>
+          <text x="586" y="138" text-anchor="middle" font-family="'Roboto Mono',monospace" font-size="13" font-weight="700" fill="#ea580c">Z_L</text>
+          <text x="521" y="118" text-anchor="middle" font-family="'Roboto Mono',monospace" font-size="12" font-weight="700" fill="#1e293b">Port 2</text>
+          <text x="521" y="156" text-anchor="middle" font-family="'Noto Sans JP',sans-serif" font-size="11" fill="#64748b">RF 出力</text>
+          <text x="586" y="166" text-anchor="middle" font-family="'Noto Sans JP',sans-serif" font-size="11" fill="#64748b">ロード</text>
+          <!-- Port 3 (V, bottom-left) -->
+          <line x1="290" y1="186" x2="290" y2="236" stroke="#94a3b8" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#s5v-dim)"/>
+          <text x="290" y="254" text-anchor="middle" font-family="'Roboto Mono',monospace" font-size="12" font-weight="700" fill="#1e293b">Port 3</text>
+          <text x="290" y="270" text-anchor="middle" font-family="'Noto Sans JP',sans-serif" font-size="11" fill="#64748b">V 出力</text>
+          <text x="206" y="216" text-anchor="end" font-family="'Roboto Mono',monospace" font-size="10" fill="#94a3b8">〜−63 dB</text>
+          <!-- Port 4 (I, bottom-right) -->
+          <line x1="410" y1="186" x2="410" y2="236" stroke="#94a3b8" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#s5v-dim)"/>
+          <text x="410" y="254" text-anchor="middle" font-family="'Roboto Mono',monospace" font-size="12" font-weight="700" fill="#1e293b">Port 4</text>
+          <text x="410" y="270" text-anchor="middle" font-family="'Noto Sans JP',sans-serif" font-size="11" fill="#64748b">I 出力</text>
+          <text x="494" y="216" text-anchor="start" font-family="'Roboto Mono',monospace" font-size="10" fill="#94a3b8">〜−63 dB</text>
+        </svg>
+      </div>
+      <div class="hint" style="margin-top:8px;">
+        Port 1 → Port 2 が<strong>主信号パス（大電力）</strong>。Port 3・Port 4 は内部カプラー / CT でサンプリングされた V・I 信号（破線）で通常〜−63 dB まで減衰。<br>
+        OSL キャリブレーションは Port 2 に標準器を接続して行うため、Port 3・Port 4 は直接使用しない。
+      </div>
+    </div>
+
+    <!-- ── Card 2: Step 4 との対応 ── -->
+    <div class="card">
+      <div class="card-title">🔗 Step 4 と同じ発想 — 「治具」＝ VIセンサー本体</div>
+      <div class="diagram-wrap">
+        <svg viewBox="0 0 700 172" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
+          <defs>
+            <marker id="s5c-bl" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+              <polygon points="0 0, 9 3.5, 0 7" fill="#0284c7"/>
+            </marker>
+            <marker id="s5c-gn" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+              <polygon points="0 0, 9 3.5, 0 7" fill="#16a34a"/>
+            </marker>
+          </defs>
+          <!-- Row 1: Step 4 -->
+          <text x="8" y="35" font-family="'Space Mono',monospace" font-size="11" font-weight="700" fill="#0284c7">Step 4</text>
+          <rect x="58" y="20" width="58" height="28" rx="4" fill="none" stroke="#64748b" stroke-width="1.5"/>
+          <text x="87" y="38" text-anchor="middle" font-family="'Noto Sans JP',sans-serif" font-size="11" fill="#1e293b">RF 源</text>
+          <line x1="116" y1="34" x2="146" y2="34" stroke="#0284c7" stroke-width="1.8" marker-end="url(#s5c-bl)"/>
+          <rect x="148" y="20" width="108" height="28" rx="4" fill="none" stroke="#d97706" stroke-width="2"/>
+          <text x="202" y="35" text-anchor="middle" font-family="'Noto Sans JP',sans-serif" font-size="11" font-weight="700" fill="#d97706">治具（F_jig）</text>
+          <text x="202" y="46" text-anchor="middle" font-family="'Roboto Mono',monospace" font-size="9" fill="#64748b">ケーブル等</text>
+          <line x1="256" y1="34" x2="286" y2="34" stroke="#0284c7" stroke-width="1.8" marker-end="url(#s5c-bl)"/>
+          <rect x="288" y="20" width="108" height="28" rx="4" fill="none" stroke="#ea580c" stroke-width="2"/>
+          <text x="342" y="35" text-anchor="middle" font-family="'Noto Sans JP',sans-serif" font-size="11" font-weight="700" fill="#ea580c">DUT（F_dut）</text>
+          <text x="342" y="46" text-anchor="middle" font-family="'Roboto Mono',monospace" font-size="9" fill="#64748b">測定対象</text>
+          <line x1="396" y1="34" x2="426" y2="34" stroke="#0284c7" stroke-width="1.8" marker-end="url(#s5c-bl)"/>
+          <rect x="428" y="20" width="52" height="28" rx="4" fill="none" stroke="#64748b" stroke-width="1.5"/>
+          <text x="454" y="38" text-anchor="middle" font-family="'Noto Sans JP',sans-serif" font-size="11" fill="#1e293b">終端</text>
+          <text x="494" y="30" font-family="'Roboto Mono',monospace" font-size="10" fill="#1e293b">→ F_dut = F_jig⁻¹ × F_meas</text>
+          <!-- Divider -->
+          <line x1="8" y1="72" x2="692" y2="72" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4,3"/>
+          <!-- Row 2: Step 5 -->
+          <text x="8" y="107" font-family="'Space Mono',monospace" font-size="11" font-weight="700" fill="#16a34a">Step 5</text>
+          <rect x="58" y="92" width="58" height="28" rx="4" fill="none" stroke="#64748b" stroke-width="1.5"/>
+          <text x="87" y="110" text-anchor="middle" font-family="'Noto Sans JP',sans-serif" font-size="11" fill="#1e293b">RF 源</text>
+          <line x1="116" y1="106" x2="146" y2="106" stroke="#16a34a" stroke-width="1.8" marker-end="url(#s5c-gn)"/>
+          <rect x="148" y="92" width="132" height="28" rx="4" fill="none" stroke="#d97706" stroke-width="2"/>
+          <text x="214" y="107" text-anchor="middle" font-family="'Noto Sans JP',sans-serif" font-size="11" font-weight="700" fill="#d97706">VIセンサー（F_sensor）</text>
+          <text x="214" y="118" text-anchor="middle" font-family="'Roboto Mono',monospace" font-size="9" fill="#64748b">←「治具」に相当</text>
+          <line x1="280" y1="106" x2="310" y2="106" stroke="#16a34a" stroke-width="1.8" marker-end="url(#s5c-gn)"/>
+          <rect x="312" y="92" width="108" height="28" rx="4" fill="none" stroke="#ea580c" stroke-width="2"/>
+          <text x="366" y="107" text-anchor="middle" font-family="'Noto Sans JP',sans-serif" font-size="11" font-weight="700" fill="#ea580c">ロード Z_L</text>
+          <text x="366" y="118" text-anchor="middle" font-family="'Roboto Mono',monospace" font-size="9" fill="#64748b">←「DUT」に相当</text>
+          <text x="434" y="102" font-family="'Roboto Mono',monospace" font-size="10" fill="#1e293b">→ Γ_true（真のインピーダンス）</text>
+          <text x="434" y="118" font-family="'Roboto Mono',monospace" font-size="10" fill="#64748b">   = F_sensor⁻¹ を適用して取得</text>
+          <!-- Dashed vertical connections showing correspondence -->
+          <line x1="202" y1="50" x2="214" y2="90" stroke="#d97706" stroke-width="1" stroke-dasharray="3,2"/>
+          <line x1="342" y1="50" x2="366" y2="90" stroke="#ea580c" stroke-width="1" stroke-dasharray="3,2"/>
+          <text x="202" y="72" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#d97706">↕</text>
+          <text x="342" y="72" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#ea580c">↕</text>
+        </svg>
+      </div>
+      <div class="callout" style="margin-top:12px;">
+        <div class="callout-title">💡 対応関係まとめ</div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:6px;">
+          <thead><tr style="border-bottom:1px solid var(--border);">
+            <th style="padding:5px 8px;text-align:left;color:var(--text-dim);font-weight:600;">Step 4（一般）</th>
+            <th style="padding:5px 8px;text-align:left;color:var(--text-dim);font-weight:600;">Step 5（VIセンサー）</th>
+          </tr></thead>
+          <tbody>
+            <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;">治具 F_jig</td><td style="padding:5px 8px;">VIセンサー本体 F_sensor</td></tr>
+            <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;">DUT F_dut</td><td style="padding:5px 8px;">ロード Z_L（測定したいインピーダンス）</td></tr>
+            <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;">F_jig を VNA 測定 / モデル化</td><td style="padding:5px 8px;">F_sensor を <strong>OSL 法</strong> で同定</td></tr>
+            <tr><td style="padding:5px 8px;">F_dut = F_jig⁻¹ × F_meas</td><td style="padding:5px 8px;">Γ_true = F_sensor⁻¹ を Γ_meas に適用</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Card 2b: なぜ直接 2 ポート計測ではなく OSL を使うのか ── -->
+    <div class="card" style="border-left:5px solid var(--gold);">
+      <div class="card-title" style="color:var(--gold);">❓ 「Step 4 と同じ方法では測れないのか？」— OSL を使う理由</div>
+      <div class="step-intro-body" style="margin-bottom:12px;">
+        <p>Step 4 と同様に「VIセンサーを VNA で 2 ポート計測して F_sensor を直接取得する」ことは、<strong>原理的には可能</strong>。しかし実際には 2 つの理由から OSL が用いられる。</p>
+      </div>
+      <div class="two-col" style="gap:14px;">
+        <div style="background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;">
+          <div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:8px;">理由① Port 2 に VNA を繋げられない</div>
+          <div style="font-size:13px;line-height:1.8;">
+            Step 4 では VNA を<strong>両端（Port 1・Port 2）</strong>に接続して S21 を直接計測する。<br>
+            VIセンサーでは Port 2 はロード（負荷）の接続口であり、装置に組み込まれているため VNA ケーブルを差し込む構造になっていない。<br><br>
+            OSL では Port 2 に <strong>小型の標準器（Open/Short/Load）を差し込む</strong>だけで計測が完結するため、現場での実運用に適している。
+          </div>
+        </div>
+        <div style="background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;">
+          <div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:8px;">理由② OSL は数学的に等価、しかも 1 ポートで済む</div>
+          <div style="font-size:13px;line-height:1.8;">
+            VIセンサーが相反な受動 2 ポートであれば、OSL の 3 測定は 2 ポート S パラメーター全体と同等の情報を持つ。<br><br>
+            <table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:6px;">
+              <tr style="border-bottom:1px solid var(--border);">
+                <td style="padding:4px 6px;color:var(--text-dim);">2 ポート直接計測</td>
+                <td style="padding:4px 6px;">S11・S21・S12・S22 の 4 成分 → <strong>VNA 2 ポート必要</strong></td>
+              </tr>
+              <tr>
+                <td style="padding:4px 6px;color:var(--text-dim);">OSL（1 ポート側のみ）</td>
+                <td style="padding:4px 6px;">O/S/L の 3 測定 → 連立 3 方程式 → <strong>VNA 1 ポートで完結</strong></td>
+              </tr>
+            </table>
+            <div style="margin-top:8px;font-size:11px;color:var(--text-dim);">※ 結果として得られる F_sensor（E_D・E_S・E_R）は 2 ポート計測と等価な補正係数を与える。</div>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="card" style="text-align:center;padding:48px 24px;">
-      <div style="font-size:48px;margin-bottom:16px;">🔧</div>
-      <div style="font-size:18px;font-weight:700;color:var(--text-dim);margin-bottom:8px;">コンテンツ準備中</div>
-      <div style="font-size:14px;color:var(--text-dim);max-width:400px;margin:0 auto;">
-        VIセンサーの等価回路・de-embedding キャリブレーション・RF負荷シミュレーターをここに実装します。
+    <!-- ── Card 3: OSL 法とは ── -->
+    <div class="card">
+      <div class="card-title">📏 OSL キャリブレーション — 3 標準器で誤差を同定する</div>
+      <div class="step-intro-body" style="margin-bottom:16px;">
+        <p>VIセンサーのインピーダンス測定誤差は <strong>3 つの誤差項（E_D・E_S・E_R）</strong> で表現できる（1 ポート誤差モデル）。未知数が 3 つなので、既知のインピーダンスを持つ <strong>3 種類の標準器</strong> を Port 2 に順番に接続して測定し、連立方程式を解く。</p>
+      </div>
+      <div class="diagram-wrap">
+        <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
+          <defs>
+            <marker id="s5o-arr" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+              <polygon points="0 0, 9 3.5, 0 7" fill="#0284c7"/>
+            </marker>
+          </defs>
+          <!-- Row 1: Open -->
+          <text x="8" y="46" font-family="'Roboto Mono',monospace" font-size="12" font-weight="700" fill="#16a34a">① Open</text>
+          <rect x="74" y="30" width="62" height="28" rx="4" fill="none" stroke="#64748b" stroke-width="1.5"/>
+          <text x="105" y="48" text-anchor="middle" font-family="'Noto Sans JP',sans-serif" font-size="10" fill="#1e293b">VNA / RF源</text>
+          <line x1="136" y1="44" x2="164" y2="44" stroke="#0284c7" stroke-width="2" marker-end="url(#s5o-arr)"/>
+          <rect x="166" y="30" width="102" height="28" rx="4" fill="none" stroke="#d97706" stroke-width="1.8"/>
+          <text x="217" y="48" text-anchor="middle" font-family="'Noto Sans JP',sans-serif" font-size="10" font-weight="700" fill="#d97706">VIセンサー</text>
+          <line x1="268" y1="44" x2="296" y2="44" stroke="#0284c7" stroke-width="2" marker-end="url(#s5o-arr)"/>
+          <line x1="298" y1="33" x2="298" y2="55" stroke="#16a34a" stroke-width="3"/>
+          <text x="310" y="42" font-family="'Roboto Mono',monospace" font-size="12" font-weight="700" fill="#16a34a">Open</text>
+          <text x="310" y="57" font-family="'Roboto Mono',monospace" font-size="10" fill="#64748b">Γ_true = +1</text>
+          <text x="430" y="42" font-family="'Noto Sans JP',sans-serif" font-size="11" fill="#1e293b">→ 計測値：</text>
+          <text x="504" y="42" font-family="'Roboto Mono',monospace" font-size="12" font-weight="700" fill="#16a34a">Γ_O</text>
+          <text x="430" y="57" font-family="'Roboto Mono',monospace" font-size="10" fill="#64748b">（真値は +1 と既知）</text>
+          <!-- Row 2: Short -->
+          <text x="8" y="118" font-family="'Roboto Mono',monospace" font-size="12" font-weight="700" fill="#ea580c">② Short</text>
+          <rect x="74" y="102" width="62" height="28" rx="4" fill="none" stroke="#64748b" stroke-width="1.5"/>
+          <text x="105" y="120" text-anchor="middle" font-family="'Noto Sans JP',sans-serif" font-size="10" fill="#1e293b">VNA / RF源</text>
+          <line x1="136" y1="116" x2="164" y2="116" stroke="#0284c7" stroke-width="2" marker-end="url(#s5o-arr)"/>
+          <rect x="166" y="102" width="102" height="28" rx="4" fill="none" stroke="#d97706" stroke-width="1.8"/>
+          <text x="217" y="120" text-anchor="middle" font-family="'Noto Sans JP',sans-serif" font-size="10" font-weight="700" fill="#d97706">VIセンサー</text>
+          <line x1="268" y1="116" x2="296" y2="116" stroke="#0284c7" stroke-width="2" marker-end="url(#s5o-arr)"/>
+          <line x1="298" y1="105" x2="298" y2="127" stroke="#ea580c" stroke-width="3"/>
+          <line x1="291" y1="127" x2="305" y2="127" stroke="#ea580c" stroke-width="3"/>
+          <text x="310" y="114" font-family="'Roboto Mono',monospace" font-size="12" font-weight="700" fill="#ea580c">Short</text>
+          <text x="310" y="129" font-family="'Roboto Mono',monospace" font-size="10" fill="#64748b">Γ_true = −1</text>
+          <text x="430" y="114" font-family="'Noto Sans JP',sans-serif" font-size="11" fill="#1e293b">→ 計測値：</text>
+          <text x="504" y="114" font-family="'Roboto Mono',monospace" font-size="12" font-weight="700" fill="#ea580c">Γ_S</text>
+          <text x="430" y="129" font-family="'Roboto Mono',monospace" font-size="10" fill="#64748b">（真値は −1 と既知）</text>
+          <!-- Row 3: Load -->
+          <text x="8" y="190" font-family="'Roboto Mono',monospace" font-size="12" font-weight="700" fill="#0284c7">③ Load</text>
+          <rect x="74" y="174" width="62" height="28" rx="4" fill="none" stroke="#64748b" stroke-width="1.5"/>
+          <text x="105" y="192" text-anchor="middle" font-family="'Noto Sans JP',sans-serif" font-size="10" fill="#1e293b">VNA / RF源</text>
+          <line x1="136" y1="188" x2="164" y2="188" stroke="#0284c7" stroke-width="2" marker-end="url(#s5o-arr)"/>
+          <rect x="166" y="174" width="102" height="28" rx="4" fill="none" stroke="#d97706" stroke-width="1.8"/>
+          <text x="217" y="192" text-anchor="middle" font-family="'Noto Sans JP',sans-serif" font-size="10" font-weight="700" fill="#d97706">VIセンサー</text>
+          <line x1="268" y1="188" x2="296" y2="188" stroke="#0284c7" stroke-width="2" marker-end="url(#s5o-arr)"/>
+          <rect x="298" y="176" width="34" height="22" rx="3" fill="none" stroke="#0284c7" stroke-width="2"/>
+          <text x="315" y="191" text-anchor="middle" font-family="'Roboto Mono',monospace" font-size="9" fill="#0284c7">50Ω</text>
+          <text x="342" y="186" font-family="'Roboto Mono',monospace" font-size="12" font-weight="700" fill="#0284c7">Load</text>
+          <text x="342" y="201" font-family="'Roboto Mono',monospace" font-size="10" fill="#64748b">Γ_true = 0</text>
+          <text x="430" y="186" font-family="'Noto Sans JP',sans-serif" font-size="11" fill="#1e293b">→ 計測値：</text>
+          <text x="504" y="186" font-family="'Roboto Mono',monospace" font-size="12" font-weight="700" fill="#0284c7">Γ_L</text>
+          <text x="430" y="201" font-family="'Roboto Mono',monospace" font-size="10" fill="#64748b">（真値は 0 と既知）</text>
+        </svg>
+      </div>
+      <div class="hint" style="margin-top:10px;">
+        ※ Open・Short・Load の標準器は、それぞれ反射係数（Γ）の真値が <strong>+1 / −1 / 0</strong> と既知の器具。VNA 校正キットとして市販されているほか、自作することもある。
+      </div>
+    </div>
+
+    <!-- ── Card 4: 3 項誤差モデルと連立方程式 ── -->
+    <div class="card">
+      <div class="card-title">🧮 3 項誤差モデルと連立方程式</div>
+      <div class="step-intro-body">
+        <p>VIセンサーの 1 ポート誤差モデルは、測定値 Γ_meas と真値 Γ_true の間の<strong>バイリニア変換</strong>として書ける：</p>
+      </div>
+      <div style="background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:14px 18px;margin:12px 0;font-family:'Roboto Mono',monospace;font-size:13px;line-height:2;">
+        <div style="color:var(--accent);font-weight:700;">Γ_meas = E_D  +  E_R × Γ_true / (1 − E_S × Γ_true)</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">
+          E_D：方向性誤差（Directivity）— 反射がゼロのとき残る漏れ信号<br>
+          E_S：ソースマッチ誤差（Source Match）— 送信端のインピーダンス不整合<br>
+          E_R：反射追跡誤差（Reflection Tracking）— 送受信パスの振幅・位相のばらつき
+        </div>
+      </div>
+      <div class="step-intro-body" style="margin-bottom:10px;">
+        <p>3 標準器を代入すると 3 本の方程式が得られる：</p>
+      </div>
+      <div style="background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:14px 18px;margin:0 0 12px;font-family:'Roboto Mono',monospace;font-size:12px;line-height:2.2;">
+        <span style="color:#16a34a;font-weight:700;">Γ_O</span> = E_D + E_R / (1 − E_S)　　<span style="color:var(--text-dim);">…① Open  (Γ_true = +1)</span><br>
+        <span style="color:#ea580c;font-weight:700;">Γ_S</span> = E_D − E_R / (1 + E_S)　　<span style="color:var(--text-dim);">…② Short (Γ_true = −1)</span><br>
+        <span style="color:#0284c7;font-weight:700;">Γ_L</span> = E_D　　　　　　　　　　　<span style="color:var(--text-dim);">…③ Load  (Γ_true =  0)</span>
+      </div>
+      <div class="step-intro-body" style="margin-bottom:10px;"><p>③ から E_D が直接求まり、残りを代入して解くと：</p></div>
+      <div style="background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:14px 18px;font-family:'Roboto Mono',monospace;font-size:12px;line-height:2.4;">
+        E_D  = <span style="color:#0284c7;font-weight:700;">Γ_L</span><br>
+        <span style="color:var(--text-dim);font-size:11px;">Γ'_O = Γ_O − E_D，　Γ'_S = Γ_S − E_D　（E_D 補正済み値）</span><br>
+        E_S  = (Γ'_O + Γ'_S) / (Γ'_O − Γ'_S)<br>
+        E_R  = Γ'_O × (1 − E_S)
+      </div>
+      <div class="callout" style="margin-top:14px;">
+        <div class="callout-title">📌 E_D・E_S・E_R はすべて複素数</div>
+        振幅だけでなく<strong>位相誤差も含む</strong>。FPGA で扱う際は実部・虚部をそれぞれ保持し、複素演算で補正することで、位相を正確に補正できる。
+      </div>
+    </div>
+
+    <!-- ── Card 5: F パラメーターへの変換と補正 ── -->
+    <div class="card">
+      <div class="card-title">⚙️ F パラメーターへの変換と FPGA 補正</div>
+      <div class="step-intro-body" style="margin-bottom:14px;">
+        <p>求めた E_D・E_S・E_R は、VIセンサーを表す<strong>誤差ボックス（2 ポートネットワーク）</strong>の S パラメーターと等価。Step 2 で学んだ S → F（ABCD）変換を使って F 行列に変換し、FPGA で逆行列を適用する。</p>
+      </div>
+
+      <div class="two-col" style="gap:14px;margin-bottom:14px;">
+        <div style="background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;">
+          <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:8px;">① 誤差ボックスの S 行列</div>
+          <div style="font-family:'Roboto Mono',monospace;font-size:12px;line-height:2;">
+            S₁₁ = E_D<br>
+            S₂₂ = E_S<br>
+            S₂₁ = S₁₂ = √(E_R)　<span style="color:var(--text-dim);font-size:10px;">（相反性を仮定）</span>
+          </div>
+        </div>
+        <div style="background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;">
+          <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:8px;">② S → F 変換（Step 2 と同様）</div>
+          <div style="font-family:'Roboto Mono',monospace;font-size:12px;line-height:2;">
+            A = (1 + S₁₁)(1 − S₂₂) / (2S₂₁) + …<br>
+            → 詳細は Step 2 の変換式を参照<br>
+            → F_sensor = [[A, B], [C, D]]
+          </div>
+        </div>
+      </div>
+
+      <div style="background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:14px 18px;font-family:'Roboto Mono',monospace;font-size:13px;line-height:2.2;">
+        <div style="color:var(--text-dim);font-size:11px;margin-bottom:4px;">③ FPGA での補正（Step 4 と同じ逆行列操作）：</div>
+        <div style="color:var(--accent);font-weight:700;">Γ_true = 逆行列 F_sensor⁻¹ を Γ_meas に適用</div>
+        <div style="margin-top:6px;font-size:11px;color:var(--text-dim);">
+          ※ 1 ポート測定なので行列積ではなく、等価なスカラー補正式：<br>
+          　Γ_true = (Γ_meas − E_D) / (E_R + E_S × (Γ_meas − E_D))
+        </div>
+      </div>
+      <div class="hint" style="margin-top:10px;">
+        FPGA 上では複素乗算・除算を固定小数点で実装。キャリブレーション係数（E_D・E_S・E_R）はあらかじめ不揮発メモリに保存し、動作中にリアルタイム補正をかける。
+      </div>
+    </div>
+
+    <!-- ── Card 6: おまけ ── -->
+    <div class="card" style="border-left:5px solid var(--green);">
+      <div class="card-title" style="color:var(--green);">💡 おまけ — V・I ポートの個別測定は不要？</div>
+      <div class="step-intro-body">
+        <p>「VIセンサーなのに、なぜ V ポート（Port 3）と I ポート（Port 4）を個別にキャリブレーションしないのか？」という疑問が自然に浮かぶ。結論を先に述べると：</p>
+      </div>
+      <div class="callout" style="margin:12px 0;border-left-color:var(--green);">
+        <div class="callout-title" style="color:var(--green);">インピーダンス計測のみ行う場合 → Port 3・Port 4 の個別測定は不要</div>
+        OSL 法（Port 1 ↔ Port 2 の測定）だけで、インピーダンス（Z = V/I）を正確に補正できる。
+      </div>
+      <div class="step-intro-body">
+        <p><strong>なぜか？</strong><br>
+        インピーダンスは V と I の<em>比</em>（Z = V / I）で決まる。OSL 補正は反射係数 Γ = (Z − Z₀) / (Z + Z₀) を補正するもので、本質的に V/I の比だけを対象にしている。</p>
+        <p>V の絶対値スケールが何 V で、I の絶対値スケールが何 A かは、比 Z にキャンセルされるため、Port 3・Port 4 の結合係数（〜−63 dB）を個別に測らなくてもよい。</p>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:12px;">
+        <thead><tr style="background:var(--panel2);">
+          <th style="padding:6px 10px;text-align:left;border:1px solid var(--border);">測定したい量</th>
+          <th style="padding:6px 10px;text-align:center;border:1px solid var(--border);">OSL（Port 1↔2）</th>
+          <th style="padding:6px 10px;text-align:center;border:1px solid var(--border);">Port 3・Port 4 個別測定</th>
+        </tr></thead>
+        <tbody>
+          <tr><td style="padding:6px 10px;border:1px solid var(--border);">インピーダンス Z（または Γ）</td><td style="padding:6px 10px;text-align:center;border:1px solid var(--border);color:var(--green);font-weight:700;">✅ 十分</td><td style="padding:6px 10px;text-align:center;border:1px solid var(--border);color:var(--text-dim);">不要</td></tr>
+          <tr><td style="padding:6px 10px;border:1px solid var(--border);">RF 電力 P（= V × I × cos θ）</td><td style="padding:6px 10px;text-align:center;border:1px solid var(--border);color:var(--text-dim);">不足</td><td style="padding:6px 10px;text-align:center;border:1px solid var(--border);color:var(--accent);font-weight:700;">必要</td></tr>
+        </tbody>
+      </table>
+      <div class="hint" style="margin-top:10px;">
+        電力計測が必要な場合は、VIセンサーの Port 3 → S₃₁(f)、Port 4 → S₄₁(f) を VNA で個別に測定してキャリブレーションする手法が別途必要になる。多くの RF システムでは電力計測を<strong>方向性結合器＋専用パワーメーター</strong>で行い、VIセンサーはインピーダンス専用として役割分担することが一般的。
       </div>
     </div>
 
