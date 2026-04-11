@@ -31,12 +31,12 @@ h1{font-family:'Space Mono',monospace;font-size:clamp(20px,5vw,34px);font-weight
 .back-link{position:absolute;top:20px;left:0;text-decoration:none;padding:7px 14px;border-radius:20px;border:1.5px solid var(--accent);background:var(--panel);color:var(--accent);font-family:'Space Mono',monospace;font-size:11px;font-weight:700;transition:all .2s;box-shadow:0 1px 4px var(--shadow);display:inline-flex;align-items:center;gap:4px}
 .back-link:hover{opacity:.8}
 
-/* Explain cards */
+/* Window function explain cards */
 .explain-section{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:14px;box-shadow:0 1px 4px var(--shadow)}
-.explain-section h3{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--accent2);text-transform:uppercase;margin-bottom:10px}
-.explain-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:8px}
+.explain-section h3{font-size:11px;letter-spacing:1px;color:var(--accent2);font-weight:700;margin-bottom:10px;font-family:'Noto Sans JP',sans-serif}
+.explain-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:8px}
 .explain-card{background:var(--panel2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
-.ec-head{font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1px;padding:7px 12px;text-transform:uppercase}
+.ec-head{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.5px;padding:8px 13px}
 .ec-head.a{background:rgba(2,132,199,.1);color:var(--accent);border-bottom:1px solid rgba(2,132,199,.2)}
 .ec-head.g{background:rgba(22,163,74,.1);color:var(--green);border-bottom:1px solid rgba(22,163,74,.2)}
 .ec-head.o{background:rgba(217,119,6,.12);color:var(--gold);border-bottom:1px solid rgba(217,119,6,.2)}
@@ -49,8 +49,8 @@ h1{font-family:'Space Mono',monospace;font-size:clamp(20px,5vw,34px);font-weight
 [data-theme="dark"] .ec-head.r{background:rgba(248,113,113,.08);border-bottom-color:rgba(248,113,113,.2)}
 [data-theme="dark"] .ec-head.p{background:rgba(167,139,250,.08);border-bottom-color:rgba(167,139,250,.2)}
 [data-theme="dark"] .ec-head.t{background:rgba(255,107,53,.08);border-bottom-color:rgba(255,107,53,.2)}
-.ec-body{padding:8px 12px;font-size:11px;line-height:1.85;color:var(--text)}
-.ec-body .spec{font-family:'Space Mono',monospace;font-size:10px;color:var(--accent2);font-weight:700}
+.ec-body{padding:9px 13px;font-size:12.5px;line-height:1.8;color:var(--text);font-family:'Noto Sans JP',sans-serif}
+.ec-body .spec{font-family:'Space Mono',monospace;font-size:11px;color:var(--accent2);font-weight:700}
 
 /* Panel */
 .panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 4px var(--shadow);margin-bottom:14px}
@@ -70,29 +70,47 @@ canvas{display:block;width:100%}
 .param-section{padding:12px 18px 16px}
 .param-section+.param-section{border-top:1px solid var(--border)}
 .param-row{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end}
-.ig{display:flex;flex-direction:column;gap:5px;flex:1;min-width:130px}
-.ig label{font-size:10px;letter-spacing:2px;font-family:'Space Mono',monospace;text-transform:uppercase;color:var(--accent)}
+.ig{display:flex;flex-direction:column;gap:5px}
+.ig label{font-size:10px;letter-spacing:1.5px;font-family:'Space Mono',monospace;text-transform:uppercase;color:var(--accent)}
 .sg{display:flex;flex-direction:column;gap:4px}
-.sg label{font-size:10px;letter-spacing:2px;font-family:'Space Mono',monospace;text-transform:uppercase;color:var(--accent2)}
-select{background:var(--panel2);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:12px;padding:6px 10px;border-radius:6px;cursor:pointer;outline:none;transition:border-color .2s}
+.sg label{font-size:10px;letter-spacing:1.5px;font-family:'Space Mono',monospace;text-transform:uppercase;color:var(--accent2)}
+select{background:var(--panel2);border:1px solid var(--border);color:var(--text);font-family:'Noto Sans JP',sans-serif;font-size:13px;padding:6px 10px;border-radius:6px;cursor:pointer;outline:none;transition:border-color .2s}
 select:focus{border-color:var(--accent)}
 input[type="range"]{-webkit-appearance:none;width:100%;height:4px;background:var(--border);border-radius:2px;outline:none;cursor:pointer}
 input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;box-shadow:0 1px 4px var(--shadow)}
 .irow{display:flex;align-items:center;gap:8px}
-.ival{font-family:'Space Mono',monospace;font-size:15px;color:var(--gold);min-width:90px;text-align:right;font-weight:700;white-space:nowrap}
+.ival{font-family:'Space Mono',monospace;font-size:14px;color:var(--gold);min-width:88px;text-align:right;font-weight:700;white-space:nowrap}
 .kaiser-g{display:none}
 .kaiser-g.vis{display:flex}
+/* fs number input */
+.fs-input{width:72px;font-family:'Space Mono',monospace;font-size:14px;font-weight:700;color:var(--gold);background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:5px 8px;outline:none;transition:border-color .2s;-moz-appearance:textfield}
+.fs-input::-webkit-outer-spin-button,.fs-input::-webkit-inner-spin-button{-webkit-appearance:none}
+.fs-input:focus{border-color:var(--accent)}
+.unit-label{font-family:'Space Mono',monospace;font-size:12px;color:var(--text-dim)}
 
-/* Result cards */
+/* Result cards (clickable) */
 .result-section{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:14px;box-shadow:0 1px 4px var(--shadow)}
 .res-label{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-bottom:12px}
-.result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
-.rc{background:var(--panel2);border:2px solid var(--border);border-radius:10px;padding:12px;text-align:center}
-.rc .rl{font-size:9px;letter-spacing:2px;color:var(--text-dim);font-family:'Space Mono',monospace;text-transform:uppercase;margin-bottom:5px}
-.rc .rv{font-family:'Space Mono',monospace;font-size:clamp(12px,1.8vw,15px);font-weight:700;color:var(--accent)}
+.result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.rc{background:var(--panel2);border:2px solid var(--border);border-radius:10px;padding:11px 12px;text-align:center;cursor:pointer;transition:border-color .15s,transform .1s;user-select:none}
+.rc:hover{border-color:var(--accent);transform:translateY(-1px)}
+.rc:active{transform:translateY(0)}
+.rc .rl{font-size:9px;letter-spacing:1.5px;color:var(--text-dim);font-family:'Space Mono',monospace;text-transform:uppercase;margin-bottom:5px}
+.rc .rv{font-family:'Space Mono',monospace;font-size:clamp(11px,1.6vw,14px);font-weight:700;color:var(--accent)}
+.rc .hint{font-size:9px;color:var(--text-dim);margin-top:3px;font-family:'Noto Sans JP',sans-serif}
 .rv.o{color:var(--accent2)}
 .rv.g{color:var(--green)}
 .rv.gold{color:var(--gold)}
+
+/* Info popup */
+.popup-overlay{display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.55);align-items:center;justify-content:center}
+.popup-overlay.open{display:flex}
+.popup-box{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px 22px;max-width:500px;width:92%;box-shadow:0 8px 32px rgba(0,0,0,0.35);position:relative}
+.popup-title{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;font-weight:700;margin-bottom:10px;padding-right:24px}
+.popup-close{position:absolute;top:14px;right:16px;background:none;border:none;color:var(--text-dim);font-size:20px;cursor:pointer;line-height:1;padding:0}
+.popup-close:hover{color:var(--text)}
+.popup-body{font-size:13px;line-height:1.9;color:var(--text)}
+.popup-formula{margin-top:12px;background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'Space Mono',monospace;font-size:12px;color:var(--gold);line-height:1.8}
 
 /* Graph grid */
 .graph-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
@@ -104,19 +122,31 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
 .ls{width:18px;height:3px;border-radius:1px}
 .ld{width:18px;border-top:2px dashed}
 
-/* Coefficient table */
-.coeff-wrap{max-height:280px;overflow-y:auto;padding:12px 16px}
-.ctable{width:100%;border-collapse:collapse;font-family:'Space Mono',monospace;font-size:12px}
-.ctable th{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);padding:4px 8px;text-align:left;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--panel);z-index:1}
-.ctable td{padding:4px 8px;border-bottom:1px solid var(--border);color:var(--text)}
+/* Coefficient table — compact */
+.coeff-wrap{overflow-y:auto;max-height:220px;padding:0}
+.ctable{width:100%;border-collapse:collapse;font-family:'Space Mono',monospace;font-size:11.5px}
+.ctable th{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);padding:5px 12px;text-align:left;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--panel);z-index:1}
+.ctable th:last-child{text-align:right}
+.ctable td{padding:3px 12px;border-bottom:1px solid var(--border);color:var(--text)}
 .ctable td:last-child{text-align:right;color:var(--gold);font-weight:700}
 .ctable tr:hover td{background:var(--panel2)}
 .ctable tr.center td{color:var(--accent);font-weight:700}
 .ctable tr.center td:last-child{color:var(--accent2)}
-.sym{font-size:10px;color:var(--green)}
+.coeff-note{font-size:11px;color:var(--text-dim);padding:6px 12px;background:var(--panel2);border-top:1px solid var(--border);font-family:'Noto Sans JP',sans-serif}
 </style>
 </head>
 <body>
+
+<!-- Info popup -->
+<div class="popup-overlay" id="popupOverlay" onclick="closePopup(event)">
+  <div class="popup-box">
+    <div class="popup-title" id="popupTitle"></div>
+    <button class="popup-close" onclick="document.getElementById('popupOverlay').classList.remove('open')">×</button>
+    <div class="popup-body" id="popupBody"></div>
+    <div class="popup-formula" id="popupFormula" style="display:none"></div>
+  </div>
+</div>
+
 <div class="container">
   <header>
     <a class="back-link" href="../index.html">← BACK</a>
@@ -126,7 +156,7 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
     <button class="theme-toggle" onclick="toggleTheme()">◐ THEME</button>
   </header>
 
-  <!-- Window function cards -->
+  <!-- Window function info cards -->
   <div class="explain-section">
     <h3>窓関数の特性比較</h3>
     <div class="explain-cards">
@@ -135,7 +165,7 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
         <div class="ec-body">
           最も狭いメインローブ。<br>
           <span class="spec">SL: −13 dB</span><br>
-          遷移帯域: 0.9/N × fs<br>
+          遷移帯: 0.9/N × fs<br>
           ギブス現象が顕著
         </div>
       </div>
@@ -144,7 +174,7 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
         <div class="ec-body">
           三角窓。単純な構成。<br>
           <span class="spec">SL: −26 dB</span><br>
-          遷移帯域: 2.0/N × fs<br>
+          遷移帯: 2.0/N × fs<br>
           Rectangularの改善版
         </div>
       </div>
@@ -153,7 +183,7 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
         <div class="ec-body">
           バランスのとれた特性。<br>
           <span class="spec">SL: −31 dB</span><br>
-          遷移帯域: 3.1/N × fs<br>
+          遷移帯: 3.1/N × fs<br>
           汎用的に使いやすい
         </div>
       </div>
@@ -162,7 +192,7 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
         <div class="ec-body">
           最もよく使われる窓関数。<br>
           <span class="spec">SL: −41 dB</span><br>
-          遷移帯域: 3.3/N × fs<br>
+          遷移帯: 3.3/N × fs<br>
           音声・通信用途に最適
         </div>
       </div>
@@ -171,16 +201,16 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
         <div class="ec-body">
           高い阻止域減衰量。<br>
           <span class="spec">SL: −58 dB</span><br>
-          遷移帯域: 5.5/N × fs<br>
-          タップ数が増える
+          遷移帯: 5.5/N × fs<br>
+          タップ数が多くなる
         </div>
       </div>
       <div class="explain-card">
         <div class="ec-head p">Kaiser (β)</div>
         <div class="ec-body">
           βで特性をトレードオフ調整。<br>
-          <span class="spec">β=4: ≈−57 dB</span><br>
-          β大 → 高減衰・広遷移帯域<br>
+          <span class="spec">β=4: ≈ −57 dB</span><br>
+          β大 → 高減衰・広遷移帯<br>
           設計の自由度が最高
         </div>
       </div>
@@ -196,27 +226,24 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
     <div class="param-sections">
       <div class="param-section">
         <div class="param-row">
-          <div class="sg">
-            <label>サンプリング周波数 fs</label>
-            <select id="selFs" onchange="onFsChange()">
-              <option value="1">1 MHz</option>
-              <option value="2">2 MHz</option>
-              <option value="10">10 MHz</option>
-              <option value="27.12">27.12 MHz</option>
-              <option value="40">40 MHz</option>
-              <option value="80" selected>80 MHz</option>
-              <option value="100">100 MHz</option>
-              <option value="200">200 MHz</option>
-            </select>
+          <!-- fs direct input -->
+          <div class="ig" style="flex:0 0 auto">
+            <label>fs</label>
+            <div class="irow">
+              <input type="number" id="inpFs" class="fs-input" value="80" min="0.01" max="100000" step="any" onchange="onFsChange()" onblur="onFsChange()">
+              <span class="unit-label">MHz</span>
+            </div>
           </div>
-          <div class="ig">
-            <label>タップ数 N（奇数・Type I）</label>
+          <!-- N slider — short -->
+          <div class="ig" style="flex:0 0 auto;width:clamp(150px,20%,220px)">
+            <label>タップ数 N（奇数）</label>
             <div class="irow">
               <input type="range" id="rngN" min="3" max="31" step="2" value="15" oninput="onNChange()">
               <span class="ival" id="valN">N = 15</span>
             </div>
           </div>
-          <div class="sg">
+          <!-- window select -->
+          <div class="sg" style="flex:0 0 auto">
             <label>窓関数</label>
             <select id="selWin" onchange="onWinChange()">
               <option value="rectangular">Rectangular</option>
@@ -227,7 +254,8 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
               <option value="kaiser">Kaiser</option>
             </select>
           </div>
-          <div class="ig kaiser-g" id="kaiserGroup">
+          <!-- Kaiser β — shown only when Kaiser selected -->
+          <div class="ig kaiser-g" id="kaiserGroup" style="flex:0 0 auto;width:clamp(140px,18%,200px)">
             <label>Kaiser β</label>
             <div class="irow">
               <input type="range" id="rngBeta" min="0" max="10" step="0.1" value="5" oninput="onBetaChange()">
@@ -238,7 +266,8 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
       </div>
       <div class="param-section">
         <div class="param-row">
-          <div class="ig" style="flex:3">
+          <!-- fc slider — short -->
+          <div class="ig" style="flex:0 0 auto;width:clamp(180px,28%,280px)">
             <label>カットオフ周波数 fc</label>
             <div class="irow">
               <input type="range" id="rngFc" min="2" max="98" step="1" value="50" oninput="onFcChange()">
@@ -250,33 +279,39 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
     </div>
   </div>
 
-  <!-- Result cards -->
+  <!-- Result cards (click for explanation) -->
   <div class="result-section">
-    <div class="res-label">計算結果</div>
+    <div class="res-label">計算結果 — カードをクリックで説明</div>
     <div class="result-grid">
-      <div class="rc">
+      <div class="rc" onclick="showInfo('fc')">
         <div class="rl">カットオフ fc</div>
         <div class="rv o" id="resFC">—</div>
+        <div class="hint">tap for detail</div>
       </div>
-      <div class="rc">
+      <div class="rc" onclick="showInfo('N')">
         <div class="rl">タップ数 N</div>
         <div class="rv" id="resN">—</div>
+        <div class="hint">tap for detail</div>
       </div>
-      <div class="rc">
+      <div class="rc" onclick="showInfo('delay')">
         <div class="rl">グループ遅延</div>
         <div class="rv g" id="resDelay">—</div>
+        <div class="hint">tap for detail</div>
       </div>
-      <div class="rc">
-        <div class="rl">遷移帯域幅（推定）</div>
+      <div class="rc" onclick="showInfo('trans')">
+        <div class="rl">遷移帯域幅</div>
         <div class="rv gold" id="resTrans">—</div>
+        <div class="hint">tap for detail</div>
       </div>
-      <div class="rc">
-        <div class="rl">阻止域減衰量（推定）</div>
+      <div class="rc" onclick="showInfo('atten')">
+        <div class="rl">阻止域減衰量（実測）</div>
         <div class="rv" id="resAtten">—</div>
+        <div class="hint">tap for detail</div>
       </div>
-      <div class="rc">
-        <div class="rl">線形位相</div>
-        <div class="rv g">Type I ✓</div>
+      <div class="rc" onclick="showInfo('ripple')">
+        <div class="rl">通過域リップル</div>
+        <div class="rv g" id="resRipple">—</div>
+        <div class="hint">tap for detail</div>
       </div>
     </div>
   </div>
@@ -303,17 +338,18 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
     </div>
   </div>
 
-  <!-- Coefficient table -->
+  <!-- Coefficient table — compact, unique taps only -->
   <div class="panel">
-    <div class="panel-header"><div class="dot dot-o"></div>タップ係数 h[n]（線形位相対称）</div>
+    <div class="panel-header"><div class="dot dot-o"></div>タップ係数 h[n]（ユニーク係数のみ表示 — 線形位相対称）</div>
     <div class="coeff-wrap">
       <table class="ctable">
         <thead>
-          <tr><th>n</th><th>対称ペア</th><th>h[n]</th></tr>
+          <tr><th>n</th><th>h[n]</th></tr>
         </thead>
         <tbody id="coeffBody"></tbody>
       </table>
     </div>
+    <div class="coeff-note" id="coeffNote"></div>
   </div>
 </div>
 
@@ -323,7 +359,10 @@ let fsHz = 80e6;
 let N = 15;
 let winType = 'hamming';
 let beta = 5.0;
-let fcNorm = 0.25; // normalized 0~0.5
+let fcNorm = 0.25; // 0~0.5
+
+// Last computed results (for popup)
+let lastResults = {};
 
 // ===== FFT (Cooley-Tukey radix-2) =====
 function fft(re, im) {
@@ -384,7 +423,7 @@ function winVal(type, n, N, beta) {
   return 1;
 }
 
-// ===== FIR LPF design (windowed sinc method) =====
+// ===== FIR LPF design (windowed sinc) =====
 function designFIR(N, fcNorm, winType, beta) {
   const M = (N - 1) / 2;
   const h = new Float64Array(N);
@@ -410,10 +449,32 @@ function freqResponse(h) {
     const m = Math.sqrt(re[k]*re[k] + im[k]*im[k]);
     mag[k] = m > 1e-14 ? 20 * Math.log10(m) : -120;
   }
-  return mag; // index k → freq = k/NFFT * fsHz
+  return mag; // k → freq = k/NFFT * fsHz
 }
 
-// ===== Frequency formatter =====
+// ===== Compute ripple and stopband from magnitude =====
+function computeRippleStats(mag) {
+  const NFFT = mag.length * 2;
+  // Passband: 0 to fc * 0.85 (avoid transition region)
+  const pbEnd = Math.max(2, Math.floor(fcNorm * 0.85 * NFFT));
+  let pbMax = -Infinity, pbMin = Infinity;
+  for (let k = 1; k < pbEnd; k++) {
+    if (mag[k] > pbMax) pbMax = mag[k];
+    if (mag[k] < pbMin) pbMin = mag[k];
+  }
+  const pbRipple = pbEnd > 2 ? Math.abs(pbMax - pbMin) : 0;
+
+  // Stopband: fc * 1.15 to fs/2 (skip transition region)
+  const sbStart = Math.min(mag.length - 1, Math.ceil(fcNorm * 1.15 * NFFT));
+  let sbMax = -Infinity;
+  for (let k = sbStart; k < mag.length; k++) {
+    if (mag[k] > sbMax) sbMax = mag[k];
+  }
+  const sbAtten = sbStart < mag.length ? -sbMax : 0;
+  return { pbRipple, sbAtten };
+}
+
+// ===== Frequency formatters =====
 function fmtF(hz) {
   if (Math.abs(hz) >= 1e6) return (hz/1e6).toFixed(3) + ' MHz';
   if (Math.abs(hz) >= 1e3) return (hz/1e3).toFixed(2) + ' kHz';
@@ -421,18 +482,13 @@ function fmtF(hz) {
 }
 function fmtFAxis(hz) {
   if (hz === 0) return '0';
-  if (Math.abs(hz) >= 1e6) {
-    const v = hz / 1e6;
-    return v >= 10 ? v.toFixed(0) : v.toFixed(1);
-  }
+  if (Math.abs(hz) >= 1e6) { const v = hz/1e6; return v >= 10 ? v.toFixed(0) : v.toFixed(1); }
   if (Math.abs(hz) >= 1e3) return (hz/1e3).toFixed(0) + 'k';
   return hz.toFixed(0);
 }
-function fmtFUnit() {
-  return fsHz >= 1e6 ? 'MHz' : fsHz >= 1e3 ? 'kHz' : 'Hz';
-}
+function fmtFUnit() { return fsHz >= 1e6 ? 'MHz' : fsHz >= 1e3 ? 'kHz' : 'Hz'; }
 
-// ===== Canvas HiDPI setup (2-step pattern) =====
+// ===== Canvas HiDPI (2-step pattern) =====
 function initCanvas(c) {
   const dpr = window.devicePixelRatio || 1;
   c._lw = c.offsetWidth;
@@ -447,92 +503,65 @@ function getCtx(c) {
   return ctx;
 }
 
-// ===== Draw: Impulse response (stem plot) =====
+// ===== Draw: Impulse response =====
 function drawImpulse(h) {
   const c = document.getElementById('canvasImp');
   const W = c._lw, H = c._lh;
   const ctx = getCtx(c);
   const dark = document.documentElement.getAttribute('data-theme') === 'dark';
-
-  const BG      = dark ? '#111827' : '#ffffff';
-  const GRID    = dark ? 'rgba(0,212,255,0.06)' : 'rgba(100,116,139,0.09)';
-  const ZERO    = dark ? 'rgba(226,232,240,0.2)' : 'rgba(30,41,59,0.15)';
-  const TXT     = dark ? '#64748b' : '#64748b';
+  const BG = dark ? '#111827' : '#ffffff';
+  const GRID = dark ? 'rgba(0,212,255,0.06)' : 'rgba(100,116,139,0.09)';
+  const ZERO = dark ? 'rgba(226,232,240,0.2)' : 'rgba(30,41,59,0.15)';
+  const TXT = '#64748b';
   const BAR_POS = dark ? '#00d4ff' : '#0284c7';
   const BAR_NEG = dark ? '#ff6b35' : '#ea580c';
-  const CTR     = dark ? '#ff6b35' : '#ea580c';
-
+  const CTR = dark ? '#ff6b35' : '#ea580c';
   ctx.fillStyle = BG;
   ctx.fillRect(0, 0, W, H);
-
   const pad = { t: 22, r: 14, b: 36, l: 58 };
   const gW = W - pad.l - pad.r;
   const gH = H - pad.t - pad.b;
   const M = (h.length - 1) / 2;
-
   let maxAbs = 0;
   for (let i = 0; i < h.length; i++) maxAbs = Math.max(maxAbs, Math.abs(h[i]));
   if (maxAbs < 1e-14) maxAbs = 1;
   const yScale = (gH / 2) / (maxAbs * 1.18);
   const zy = pad.t + gH / 2;
-
-  // Horizontal grid
-  ctx.strokeStyle = GRID;
-  ctx.lineWidth = 1;
+  ctx.strokeStyle = GRID; ctx.lineWidth = 1;
   for (let i = 0; i <= 4; i++) {
     const y = pad.t + i * gH / 4;
     ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + gW, y); ctx.stroke();
   }
-
-  // Zero axis
-  ctx.strokeStyle = ZERO;
-  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = ZERO; ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.moveTo(pad.l, zy); ctx.lineTo(pad.l + gW, zy); ctx.stroke();
-
-  // Y axis labels
-  ctx.fillStyle = TXT;
-  ctx.font = '10px "Space Mono",monospace';
-  ctx.textAlign = 'right';
-  const yLabels = [maxAbs, maxAbs*0.5, 0, -maxAbs*0.5, -maxAbs];
-  yLabels.forEach((v, i) => {
-    const y = pad.t + i * gH / 4;
-    const txt = v === 0 ? '0' : v.toFixed(3);
-    ctx.fillText(txt, pad.l - 4, y + 3);
+  ctx.fillStyle = TXT; ctx.font = '10px "Space Mono",monospace'; ctx.textAlign = 'right';
+  [maxAbs, maxAbs*0.5, 0, -maxAbs*0.5, -maxAbs].forEach((v, i) => {
+    ctx.fillText(v === 0 ? '0' : v.toFixed(3), pad.l - 4, pad.t + i * gH / 4 + 3);
   });
-
-  // Center tap dashed line
+  // Center tap
   const cx = h.length > 1 ? pad.l + (M / (h.length - 1)) * gW : pad.l + gW / 2;
-  ctx.strokeStyle = CTR;
-  ctx.lineWidth = 1;
-  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = CTR; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
   ctx.beginPath(); ctx.moveTo(cx, pad.t); ctx.lineTo(cx, pad.t + gH); ctx.stroke();
   ctx.setLineDash([]);
-
-  // Stems and circles
+  // Stems
   const circR = Math.max(2.5, Math.min(5, gW / h.length * 0.3));
   const stemW = Math.max(1.5, Math.min(3, gW / h.length * 0.25));
   for (let n = 0; n < h.length; n++) {
     const x = h.length > 1 ? pad.l + (n / (h.length - 1)) * gW : pad.l + gW / 2;
     const y = zy - h[n] * yScale;
     const col = h[n] >= 0 ? BAR_POS : BAR_NEG;
-    ctx.strokeStyle = col;
-    ctx.lineWidth = stemW;
+    ctx.strokeStyle = col; ctx.lineWidth = stemW;
     ctx.beginPath(); ctx.moveTo(x, zy); ctx.lineTo(x, y); ctx.stroke();
     ctx.fillStyle = col;
     ctx.beginPath(); ctx.arc(x, y, circR, 0, 2*Math.PI); ctx.fill();
   }
-
-  // X axis labels
-  ctx.fillStyle = TXT;
-  ctx.font = '10px "Space Mono",monospace';
-  ctx.textAlign = 'center';
+  ctx.fillStyle = TXT; ctx.font = '10px "Space Mono",monospace'; ctx.textAlign = 'center';
   const step = Math.max(1, Math.floor(h.length / 8));
   for (let n = 0; n < h.length; n += step) {
     const x = h.length > 1 ? pad.l + (n / (h.length - 1)) * gW : pad.l + gW / 2;
     ctx.fillText(n, x, pad.t + gH + 16);
   }
-  ctx.textAlign = 'left';
-  ctx.fillText('n', pad.l + gW + 2, pad.t + gH + 16);
+  ctx.textAlign = 'left'; ctx.fillText('n', pad.l + gW + 2, pad.t + gH + 16);
 }
 
 // ===== Draw: Frequency response =====
@@ -541,136 +570,94 @@ function drawFreq(mag) {
   const W = c._lw, H = c._lh;
   const ctx = getCtx(c);
   const dark = document.documentElement.getAttribute('data-theme') === 'dark';
-
-  const BG    = dark ? '#111827' : '#ffffff';
-  const GRID  = dark ? 'rgba(0,212,255,0.06)' : 'rgba(100,116,139,0.09)';
-  const TXT   = dark ? '#64748b' : '#64748b';
-  const LINE  = dark ? '#22c55e' : '#16a34a';
-  const FILL  = dark ? 'rgba(34,197,94,0.06)' : 'rgba(22,163,74,0.05)';
-  const FC_L  = dark ? '#ff6b35' : '#ea580c';
-  const M3_L  = dark ? '#f87171' : '#dc2626';
-  const ZL    = dark ? 'rgba(226,232,240,0.25)' : 'rgba(30,41,59,0.2)';
-
-  ctx.fillStyle = BG;
-  ctx.fillRect(0, 0, W, H);
-
+  const BG = dark ? '#111827' : '#ffffff';
+  const GRID = dark ? 'rgba(0,212,255,0.06)' : 'rgba(100,116,139,0.09)';
+  const TXT = '#64748b';
+  const LINE = dark ? '#22c55e' : '#16a34a';
+  const FILL = dark ? 'rgba(34,197,94,0.06)' : 'rgba(22,163,74,0.05)';
+  const FC_L = dark ? '#ff6b35' : '#ea580c';
+  const M3_L = dark ? '#f87171' : '#dc2626';
+  const ZL = dark ? 'rgba(226,232,240,0.25)' : 'rgba(30,41,59,0.2)';
+  ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
   const pad = { t: 22, r: 14, b: 36, l: 46 };
   const gW = W - pad.l - pad.r;
   const gH = H - pad.t - pad.b;
   const NFFT = mag.length * 2;
-  const dbMin = -80, dbMax = 5;
-  const dbRange = dbMax - dbMin;
-
-  const f2x = f  => pad.l + (f / (fsHz/2)) * gW;
+  const dbMin = -80, dbMax = 5, dbRange = dbMax - dbMin;
+  const f2x = f => pad.l + (f / (fsHz/2)) * gW;
   const db2y = db => pad.t + (1 - (db - dbMin) / dbRange) * gH;
-
-  // Horizontal dB grid
+  // H-grid
   const dbTicks = [-80, -60, -40, -20, -3, 0];
-  ctx.lineWidth = 1;
   dbTicks.forEach(db => {
     ctx.strokeStyle = db === 0 ? ZL : GRID;
-    if (db === 0) ctx.lineWidth = 1.5;
-    const y = db2y(db);
-    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + gW, y); ctx.stroke();
-    ctx.lineWidth = 1;
+    ctx.lineWidth = db === 0 ? 1.5 : 1;
+    ctx.beginPath(); ctx.moveTo(pad.l, db2y(db)); ctx.lineTo(pad.l + gW, db2y(db)); ctx.stroke();
   });
-
-  // Vertical freq grid
-  const nFreqGrid = 5;
-  ctx.strokeStyle = GRID;
-  ctx.lineWidth = 1;
-  for (let i = 0; i <= nFreqGrid; i++) {
-    const x = pad.l + (i / nFreqGrid) * gW;
+  // V-grid
+  ctx.strokeStyle = GRID; ctx.lineWidth = 1;
+  for (let i = 0; i <= 5; i++) {
+    const x = pad.l + (i/5) * gW;
     ctx.beginPath(); ctx.moveTo(x, pad.t); ctx.lineTo(x, pad.t + gH); ctx.stroke();
   }
-
-  // -3 dB dashed line
-  ctx.strokeStyle = M3_L;
-  ctx.lineWidth = 1;
-  ctx.setLineDash([3, 5]);
+  // -3dB line
+  ctx.strokeStyle = M3_L; ctx.lineWidth = 1; ctx.setLineDash([3,5]);
   ctx.beginPath(); ctx.moveTo(pad.l, db2y(-3)); ctx.lineTo(pad.l + gW, db2y(-3)); ctx.stroke();
-
-  // fc dashed line
+  // fc line
   const fcHz = fcNorm * fsHz;
   const xfc = f2x(fcHz);
-  ctx.strokeStyle = FC_L;
-  ctx.lineWidth = 1.5;
-  ctx.setLineDash([6, 4]);
+  ctx.strokeStyle = FC_L; ctx.lineWidth = 1.5; ctx.setLineDash([6,4]);
   ctx.beginPath(); ctx.moveTo(xfc, pad.t); ctx.lineTo(xfc, pad.t + gH); ctx.stroke();
   ctx.setLineDash([]);
-
-  // Frequency response fill
-  ctx.fillStyle = FILL;
-  ctx.beginPath();
+  // Fill
+  ctx.fillStyle = FILL; ctx.beginPath();
   let first = true;
   for (let k = 0; k < mag.length; k++) {
-    const f  = k / NFFT * fsHz;
-    const db = Math.max(dbMin, Math.min(dbMax, mag[k]));
-    const x  = f2x(f);
-    const y  = db2y(db);
-    if (first) { ctx.moveTo(x, y); first = false; }
-    else ctx.lineTo(x, y);
+    const f = k / NFFT * fsHz;
+    const y = db2y(Math.max(dbMin, Math.min(dbMax, mag[k])));
+    if (first) { ctx.moveTo(f2x(f), y); first = false; } else ctx.lineTo(f2x(f), y);
   }
-  ctx.lineTo(pad.l + gW, pad.t + gH);
-  ctx.lineTo(pad.l, pad.t + gH);
-  ctx.closePath();
-  ctx.fill();
-
-  // Frequency response line
-  ctx.strokeStyle = LINE;
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  first = true;
+  ctx.lineTo(pad.l + gW, pad.t + gH); ctx.lineTo(pad.l, pad.t + gH); ctx.closePath(); ctx.fill();
+  // Line
+  ctx.strokeStyle = LINE; ctx.lineWidth = 2; ctx.beginPath(); first = true;
   for (let k = 0; k < mag.length; k++) {
-    const f  = k / NFFT * fsHz;
-    const db = Math.max(dbMin, Math.min(dbMax, mag[k]));
-    const x  = f2x(f);
-    const y  = db2y(db);
-    if (first) { ctx.moveTo(x, y); first = false; }
-    else ctx.lineTo(x, y);
+    const f = k / NFFT * fsHz;
+    const y = db2y(Math.max(dbMin, Math.min(dbMax, mag[k])));
+    if (first) { ctx.moveTo(f2x(f), y); first = false; } else ctx.lineTo(f2x(f), y);
   }
   ctx.stroke();
-
-  // Y axis labels
-  ctx.fillStyle = TXT;
-  ctx.font = '10px "Space Mono",monospace';
-  ctx.textAlign = 'right';
-  dbTicks.forEach(db => {
-    ctx.fillText(db + 'dB', pad.l - 3, db2y(db) + 3);
-  });
-
-  // X axis labels
+  // Y labels
+  ctx.fillStyle = TXT; ctx.font = '10px "Space Mono",monospace'; ctx.textAlign = 'right';
+  dbTicks.forEach(db => ctx.fillText(db + 'dB', pad.l - 3, db2y(db) + 3));
+  // X labels
   ctx.textAlign = 'center';
-  for (let i = 0; i <= nFreqGrid; i++) {
-    const f = (fsHz/2) * i / nFreqGrid;
-    const x = pad.l + (i / nFreqGrid) * gW;
-    ctx.fillText(fmtFAxis(f), x, pad.t + gH + 16);
+  for (let i = 0; i <= 5; i++) {
+    const f = (fsHz/2) * i / 5;
+    ctx.fillText(fmtFAxis(f), pad.l + (i/5)*gW, pad.t + gH + 16);
   }
-  ctx.textAlign = 'left';
-  ctx.fillText(fmtFUnit(), pad.l + gW + 2, pad.t + gH + 16);
-
+  ctx.textAlign = 'left'; ctx.fillText(fmtFUnit(), pad.l + gW + 2, pad.t + gH + 16);
   // fc label
-  ctx.fillStyle = FC_L;
-  ctx.font = '10px "Space Mono",monospace';
-  ctx.textAlign = 'center';
+  ctx.fillStyle = FC_L; ctx.font = '10px "Space Mono",monospace'; ctx.textAlign = 'center';
   ctx.fillText('fc', xfc, pad.t - 5);
 }
 
-// ===== Update coefficient table =====
+// ===== Update coefficient table (unique taps only) =====
 function updateTable(h) {
   const M = (h.length - 1) / 2;
   const tbody = document.getElementById('coeffBody');
   tbody.innerHTML = '';
-  for (let n = 0; n < h.length; n++) {
+  // Only show taps 0..M (symmetric: h[n] = h[N-1-n])
+  for (let n = 0; n <= M; n++) {
     const tr = document.createElement('tr');
     if (n === M) tr.classList.add('center');
-    const pair = n < M ? `<span class="sym">= h[${h.length-1-n}]</span>` : n === M ? '<span class="sym">中心タップ</span>' : '';
-    tr.innerHTML = `<td>${n}</td><td>${pair}</td><td>${h[n].toFixed(9)}</td>`;
+    tr.innerHTML = `<td>${n}</td><td>${h[n].toFixed(8)}</td>`;
     tbody.appendChild(tr);
   }
+  const M_int = Math.round(M);
+  document.getElementById('coeffNote').textContent =
+    `表示: n = 0 〜 ${M_int}（中心タップ）のユニーク係数のみ。h[n] = h[${h.length-1}-n] の対称構造（${h.length} タップ中 ${M_int+1} 個が独立）`;
 }
 
-// ===== Window specs table =====
+// ===== Window specs =====
 const WIN_SPEC = {
   rectangular: { sl: 21,  trans: 0.9  },
   bartlett:    { sl: 26,  trans: 2.0  },
@@ -681,57 +668,119 @@ const WIN_SPEC = {
 };
 
 // ===== Update result cards =====
-function updateResults(h) {
+function updateResults(h, mag) {
   const M = (h.length - 1) / 2;
   const fc = fcNorm * fsHz;
   const delayS = M / fsHz;
-
   const spec = WIN_SPEC[winType];
-  let attenStr, transStr;
 
+  // Attenuation / transition
+  let attenStr, transHz;
   if (winType === 'kaiser') {
-    // Approximate from β: A ≈ β / 0.1102 + 8.7 (valid for β>~2.75 i.e. A>50)
-    // For smaller β, use linear blend
     const approxA = beta < 0.5 ? 21 : Math.round(beta / 0.1102 + 8.7);
-    attenStr = '≈ −' + approxA + ' dB';
-    // Kaiser transition: (approxA - 8) / (2.285 * N) * fsHz
-    const tw = (approxA - 8) / (2.285 * h.length) * fsHz;
-    transStr = fmtF(tw);
+    attenStr = '≈ −' + approxA + ' dB (理論)';
+    transHz = (approxA - 8) / (2.285 * h.length) * fsHz;
   } else {
-    attenStr = '≈ −' + spec.sl + ' dB';
-    transStr = fmtF(spec.trans / h.length * fsHz);
+    attenStr = '≈ −' + spec.sl + ' dB (理論)';
+    transHz = spec.trans / h.length * fsHz;
   }
 
+  // Actual stopband attenuation and passband ripple from FFT
+  const { pbRipple, sbAtten } = computeRippleStats(mag);
+  const sbAttenStr = sbAtten > 0 ? '−' + sbAtten.toFixed(1) + ' dB' : '—';
+
   const delayStr = delayS >= 1e-6
-    ? (delayS * 1e6).toFixed(3) + ' μs'
-    : (delayS * 1e9).toFixed(2) + ' ns';
+    ? (delayS*1e6).toFixed(3) + ' μs'
+    : (delayS*1e9).toFixed(2) + ' ns';
 
   document.getElementById('resFC').textContent    = fmtF(fc);
   document.getElementById('resN').textContent     = h.length + ' タップ';
   document.getElementById('resDelay').textContent = delayStr;
-  document.getElementById('resTrans').textContent = transStr;
-  document.getElementById('resAtten').textContent = attenStr;
+  document.getElementById('resTrans').textContent = fmtF(transHz);
+  document.getElementById('resAtten').textContent = sbAttenStr;
+  document.getElementById('resRipple').textContent = pbRipple < 0.001 ? '< 0.001 dB' : pbRipple.toFixed(3) + ' dB';
+
+  // Store for popup
+  lastResults = {
+    fc, N: h.length, M, delayS, transHz,
+    sbAtten, pbRipple, winType, beta, fcNorm, fsHz
+  };
+}
+
+// ===== Info popup =====
+const INFO = {
+  fc: {
+    title: 'カットオフ周波数 fc',
+    body: '設定した理想LPFのカットオフ周波数です。窓掛けsinc法では、ここで指定した周波数が通過域と遮断域の境界（−6 dB 点）に対応します。実際の −3 dB 点は fc よりわずかに低い位置になります。',
+    formula: 'fc_norm = fc / fs\n（正規化周波数 0 ≦ fc_norm ≦ 0.5）'
+  },
+  N: {
+    title: 'タップ数 N',
+    body: 'FIRフィルターの係数（タップ）の個数です。Type I 線形位相フィルターでは奇数に限定され、対称構造 h[n] = h[N−1−n] を持ちます。タップ数を増やすほど遷移帯域が狭くなり、急峻な特性が得られます。',
+    formula: 'グループ遅延 = (N−1)/2 サンプル（一定）\n実時間遅延 = (N−1)/(2·fs)'
+  },
+  delay: {
+    title: 'グループ遅延',
+    body: '全周波数で一定の遅延（線形位相の特徴）です。入力信号の波形を歪めることなく遅延させます。タップ数が多いほど遅延時間が増加します。',
+    formula: 'τ_g = (N−1) / (2·fs)  [秒]\n= (N−1) / 2  [サンプル]'
+  },
+  trans: {
+    title: '遷移帯域幅（推定）',
+    body: '通過域と阻止域の間の遷移帯域の幅です。使用する窓関数の種類とタップ数で決まります。タップ数 N を増やすか、サイドローブの小さい窓関数を使うと狭くなります。この値は窓関数の理論値から推定しています。',
+    formula: 'Δf = K / N × fs\n（K: 窓関数定数 — Rectangular:0.9, Hamming:3.3, ...）'
+  },
+  atten: {
+    title: '阻止域減衰量（実測）',
+    body: 'FFTで計算した周波数応答から実際に計算した阻止域の最大振幅（ピークサイドローブレベル）です。fc × 1.15 以上の帯域での最大値を読み取っています。理論値と若干異なる場合があります。',
+    formula: 'A_stop = −max|H(f)| for f > fc × 1.15\n（FFT 2048点から計算）'
+  },
+  ripple: {
+    title: '通過域リップル',
+    body: '通過域（0 〜 fc × 0.85）内での振幅の最大−最小の差です。理想的には 0 dB ですが、窓関数の影響でわずかな誤差が生じます。Hammingウィンドウで数十 mdB 以下、Rectangularでは 0.7 dB 程度になります。',
+    formula: 'Ripple = max|H(f)| − min|H(f)|  for 0 < f < fc × 0.85\n（単位: dB、FFT 2048点から計算）'
+  }
+};
+
+function showInfo(key) {
+  const d = INFO[key];
+  if (!d) return;
+  document.getElementById('popupTitle').textContent = d.title;
+  document.getElementById('popupBody').textContent = d.body;
+  const fEl = document.getElementById('popupFormula');
+  if (d.formula) {
+    fEl.style.display = 'block';
+    fEl.textContent = d.formula;
+  } else {
+    fEl.style.display = 'none';
+  }
+  document.getElementById('popupOverlay').classList.add('open');
+}
+function closePopup(e) {
+  if (e.target === document.getElementById('popupOverlay')) {
+    document.getElementById('popupOverlay').classList.remove('open');
+  }
 }
 
 // ===== Main update =====
 function update() {
   const h   = designFIR(N, fcNorm, winType, beta);
   const mag = freqResponse(h);
-
   initCanvas(document.getElementById('canvasImp'));
   initCanvas(document.getElementById('canvasFreq'));
-
   drawImpulse(h);
   drawFreq(mag);
   updateTable(h);
-  updateResults(h);
+  updateResults(h, mag);
 }
 
 // ===== Event handlers =====
 function onFsChange() {
-  fsHz = parseFloat(document.getElementById('selFs').value) * 1e6;
-  document.getElementById('valFc').textContent = fmtF(fcNorm * fsHz);
-  update();
+  const v = parseFloat(document.getElementById('inpFs').value);
+  if (!isNaN(v) && v > 0) {
+    fsHz = v * 1e6;
+    document.getElementById('valFc').textContent = fmtF(fcNorm * fsHz);
+    update();
+  }
 }
 function onNChange() {
   N = parseInt(document.getElementById('rngN').value);
@@ -750,7 +799,7 @@ function onBetaChange() {
 }
 function onFcChange() {
   const pct = parseInt(document.getElementById('rngFc').value);
-  fcNorm = pct / 200; // slider 2~98 → 0.01~0.49
+  fcNorm = pct / 200; // 2~98 → 0.01~0.49
   document.getElementById('valFc').textContent = fmtF(fcNorm * fsHz);
   update();
 }
@@ -762,8 +811,7 @@ function toggleTheme() {
 
 // ===== Init =====
 window.addEventListener('load', () => {
-  // Default: fc = 20 MHz at fs = 80 MHz → fcNorm = 0.25 → slider = 50
-  fcNorm = 0.25;
+  fcNorm = 0.25; // 20 MHz at fs=80 MHz
   document.getElementById('rngFc').value = 50;
   document.getElementById('valFc').textContent = fmtF(fcNorm * fsHz);
   document.getElementById('valN').textContent = 'N = ' + N;
