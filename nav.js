@@ -127,11 +127,7 @@
   color: #fff !important;
   background: rgba(255,255,255,0.1);
 }
-.rftab.rftab-featured {
-  color: #fcd34d !important; background: rgba(251,191,36,0.12);
-  border-bottom-color: #f59e0b !important; font-weight: 700 !important;
-}
-.rftab.rftab-featured:hover { background: rgba(251,191,36,0.22); color: #fde68a !important; }
+.rftab.rftab-featured { font-weight: 700 !important; }
 .rftab.rftab-featured.rftab-active {
   color: #fff !important; font-weight: 700 !important;
   background: rgba(255,255,255,0.1);
