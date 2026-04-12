@@ -951,7 +951,7 @@
 <div class="card">
   <h2>A. 周波数ミキサー — サインウェーブの乗算による周波数変換</h2>
   <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">
-    ケンパロジック内で用いる IQ 検波前のダウンコンバート処理を数学的に解説します。
+    RF 信号処理でよく使われる、2つのサインウェーブを乗算したときの周波数成分を解説します。
   </p>
 
   <!-- 数式解説ブロック -->
@@ -1039,54 +1039,6 @@
   <!-- スペクトル図 -->
   <h3 style="margin-top:20px;">周波数スペクトル（乗算前後）</h3>
   <canvas id="m99_canvas" style="width:100%;max-width:720px;border:1px solid var(--border);border-radius:6px;display:block;margin-top:8px;"></canvas>
-
-  <!-- アルゴリズム全体フロー -->
-  <h3 style="margin-top:24px;">ケンパロジック — アルゴリズム全体フロー</h3>
-  <div style="overflow-x:auto;margin-top:10px;">
-    <svg viewBox="0 0 780 90" style="width:100%;max-width:780px;font-family:'Noto Sans JP','Segoe UI',sans-serif;display:block;">
-      <rect width="780" height="90" fill="#f7fafc" rx="8"/>
-      <defs>
-        <marker id="arr99" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-          <path d="M0,0 L8,3 L0,6Z" fill="#64748b"/>
-        </marker>
-      </defs>
-      <!-- ADC -->
-      <rect x="10" y="25" width="72" height="36" rx="5" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
-      <text x="46" y="45" text-anchor="middle" font-size="11" fill="#1e40af" font-weight="700">ADC</text>
-      <text x="46" y="56" text-anchor="middle" font-size="9" fill="#3b82f6">V / I 入力</text>
-      <line x1="82" y1="43" x2="98" y2="43" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr99)"/>
-      <!-- HPF -->
-      <rect x="98" y="25" width="72" height="36" rx="5" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
-      <text x="134" y="45" text-anchor="middle" font-size="11" fill="#3730a3" font-weight="700">HPF</text>
-      <text x="134" y="56" text-anchor="middle" font-size="9" fill="#6366f1">DC カット</text>
-      <line x1="170" y1="43" x2="186" y2="43" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr99)"/>
-      <!-- MIXER（ハイライト） -->
-      <rect x="186" y="25" width="90" height="36" rx="5" fill="#fef9c3" stroke="#ca8a04" stroke-width="2"/>
-      <text x="231" y="44" text-anchor="middle" font-size="11" fill="#78350f" font-weight="700">× ミキサー</text>
-      <text x="231" y="56" text-anchor="middle" font-size="9" fill="#ca8a04">× sin(2π·f<tspan font-size="8">LO</tspan>·t)</text>
-      <text x="231" y="16" text-anchor="middle" font-size="9" fill="#ca8a04" font-weight="700">← 今回の解説</text>
-      <line x1="276" y1="43" x2="292" y2="43" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr99)"/>
-      <!-- LPF1 -->
-      <rect x="292" y="25" width="80" height="36" rx="5" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
-      <text x="332" y="44" text-anchor="middle" font-size="11" fill="#14532d" font-weight="700">LPF</text>
-      <text x="332" y="56" text-anchor="middle" font-size="9" fill="#16a34a">和周波数カット</text>
-      <line x1="372" y1="43" x2="388" y2="43" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr99)"/>
-      <!-- CORDIC -->
-      <rect x="388" y="25" width="88" height="36" rx="5" fill="#fce7f3" stroke="#db2777" stroke-width="1.5"/>
-      <text x="432" y="44" text-anchor="middle" font-size="11" fill="#831843" font-weight="700">CORDIC</text>
-      <text x="432" y="56" text-anchor="middle" font-size="9" fill="#db2777">IQ 検波</text>
-      <line x1="476" y1="43" x2="492" y2="43" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr99)"/>
-      <!-- LPF2 -->
-      <rect x="492" y="25" width="72" height="36" rx="5" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
-      <text x="528" y="44" text-anchor="middle" font-size="11" fill="#14532d" font-weight="700">LPF</text>
-      <text x="528" y="56" text-anchor="middle" font-size="9" fill="#16a34a">平滑化</text>
-      <line x1="564" y1="43" x2="580" y2="43" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr99)"/>
-      <!-- 出力 -->
-      <rect x="580" y="25" width="116" height="36" rx="5" fill="#dbeafe" stroke="#1d4ed8" stroke-width="1.5"/>
-      <text x="638" y="44" text-anchor="middle" font-size="11" fill="#1e3a8a" font-weight="700">振幅・位相差</text>
-      <text x="638" y="56" text-anchor="middle" font-size="9" fill="#1d4ed8">→ インピーダンス</text>
-    </svg>
-  </div>
 
 </div><!-- end mixer card -->
 
