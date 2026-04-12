@@ -103,6 +103,17 @@ canvas{display:block;width:100%;border-radius:4px}
 
 /* warn note */
 .note{background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.25);border-radius:8px;padding:10px 14px;font-size:12.5px;color:var(--text);line-height:1.7;margin-top:10px}
+
+/* formula memo (collapsible) */
+details.fmemo{margin-top:14px;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+details.fmemo summary{padding:7px 12px;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--dim);cursor:pointer;background:var(--panel2);font-weight:700;user-select:none;list-style:none}
+details.fmemo summary::before{content:'▶ ';font-size:9px}
+details[open].fmemo summary::before{content:'▼ '}
+details.fmemo summary:hover{color:var(--text)}
+details.fmemo .fmemo-body{padding:12px 14px}
+
+/* IQ diagram */
+.iq-svg{width:100%;max-width:660px;display:block;margin:12px 0}
 </style>
 </head>
 <body>
@@ -124,64 +135,73 @@ canvas{display:block;width:100%;border-radius:4px}
 
   <p>ヒルベルト変換は、信号の<strong>全ての周波数成分に対して一様に 90° 位相シフト</strong>を加える変換です。振幅には一切触れず、位相だけを変えるため「理想的な 90° 移相器」とも呼ばれます。</p>
 
-  <div class="kpbox">
-    <strong>核心的な性質：</strong><br>
-    どんな周波数の成分も、振幅は変わらず、位相だけが正確に -90° シフトされる。<br>
-    これにより、元の信号 I と 90° ずれた信号 Q のペア（IQ 信号）を作れる。
+  <!-- 周波数特性（図を先に） -->
+  <div class="cv-wrap" style="margin-top:12px;">
+    <div style="font-size:10px;color:var(--dim);font-family:'Space Mono',monospace;margin-bottom:6px;letter-spacing:1px;">IDEAL FREQUENCY CHARACTERISTICS</div>
+    <canvas id="cv_ideal_freq" height="180"></canvas>
   </div>
 
-  <p style="margin-top:10px;">連続時間における定義（コーシー主値積分）：</p>
-  <div class="fbox"><div id="tex_def"></div></div>
-
-  <p style="margin-top:8px;">周波数領域では非常にシンプルに表現されます：</p>
-  <div class="fbox"><div id="tex_freq"></div></div>
-
-  <div class="tcol" style="margin-top:12px;">
-    <div class="rchip">
-      <div class="rl">正の周波数成分</div>
-      <div class="rv" style="color:var(--accent);">-90°</div>
-      <div class="ru">位相シフト</div>
-    </div>
-    <div class="rchip">
-      <div class="rl">負の周波数成分</div>
-      <div class="rv" style="color:var(--purple);">+90°</div>
-      <div class="ru">位相シフト</div>
-    </div>
+  <div class="tcol" style="margin-top:14px;">
     <div class="rchip">
       <div class="rl">全周波数の振幅</div>
-      <div class="rv" style="color:var(--green);">1</div>
-      <div class="ru">変化なし（All-pass）</div>
+      <div class="rv" style="color:var(--green);">1 (0 dB)</div>
+      <div class="ru">変化なし — All-pass</div>
+    </div>
+    <div class="rchip">
+      <div class="rl">正の周波数の位相</div>
+      <div class="rv" style="color:var(--accent);">-90°</div>
+      <div class="ru">一律に遅れる</div>
     </div>
     <div class="rchip">
       <div class="rl">DC 成分 (f = 0)</div>
       <div class="rv" style="color:var(--red);">0</div>
       <div class="ru">DC はカットされる</div>
     </div>
+    <div class="rchip">
+      <div class="rl">用途</div>
+      <div class="rv" style="color:var(--purple);font-size:14px;">IQ 検波</div>
+      <div class="ru">90°ずれた信号ペアを生成</div>
+    </div>
   </div>
+
+  <!-- 数式はおまけ -->
+  <details class="fmemo">
+    <summary>数式メモ（おまけ）</summary>
+    <div class="fmemo-body">
+      <p style="font-size:12px;color:var(--dim);margin-bottom:8px;">連続時間における定義（コーシー主値積分）：</p>
+      <div class="fbox"><div id="tex_def"></div></div>
+      <p style="font-size:12px;color:var(--dim);margin:10px 0 8px;">周波数領域での表現：</p>
+      <div class="fbox"><div id="tex_freq"></div></div>
+    </div>
+  </details>
 </div>
 
 <!-- ════════════════════════════════════════════
      Section 2: Impulse Response
 ════════════════════════════════════════════ -->
 <div class="card">
-  <div class="card-title ct-purple">02 <span class="badge bp">MATH</span> 離散インパルス応答</div>
+  <div class="card-title ct-purple">02 <span class="badge bp">IMPULSE</span> 離散インパルス応答</div>
 
-  <p>連続時間のインパルス応答は <span id="tex_cont_h" style="display:inline-block;vertical-align:middle;"></span> です。
-  これを離散化すると：</p>
+  <p>ヒルベルト変換のインパルス応答を離散化すると、特徴的なくし型パターンになります。</p>
 
-  <div class="fbox"><div id="tex_discrete_h"></div></div>
-
-  <p style="margin-top:10px;">これには重要な特徴があります：</p>
-  <ul style="margin:8px 0 0 18px;font-size:13px;line-height:1.9;">
-    <li><strong>n が奇数のときだけ非ゼロ</strong>（n が偶数 / n=0 はすべて 0）</li>
-    <li><strong>奇対称（反対称）</strong>：h[-n] = -h[n]（Type III FIR の性質）</li>
-    <li>理想応答は<strong>無限長</strong>なので、実装には切り捨て（FIR 近似）が必要</li>
-  </ul>
-
-  <div class="cv-wrap" style="margin-top:12px;">
-    <div style="font-size:10px;color:var(--dim);font-family:'Space Mono',monospace;margin-bottom:6px;letter-spacing:1px;">IDEAL IMPULSE RESPONSE — h[n] = 2/(πn) for odd n</div>
+  <div class="cv-wrap" style="margin-top:10px;">
+    <div style="font-size:10px;color:var(--dim);font-family:'Space Mono',monospace;margin-bottom:6px;letter-spacing:1px;">IDEAL IMPULSE RESPONSE h[n]</div>
     <canvas id="cv_impulse" height="160"></canvas>
   </div>
+
+  <ul style="margin:12px 0 0 18px;font-size:13px;line-height:1.9;">
+    <li><strong>n が奇数のときだけ非ゼロ</strong>（n が偶数・n=0 はすべて 0）→ くし型</li>
+    <li><strong>奇対称（反対称）</strong>：h[-n] = -h[n] → 正負が対称に分布</li>
+    <li>理想応答は<strong>無限長</strong>なので、実装には窓関数で切り捨てる FIR 近似が必要</li>
+  </ul>
+
+  <details class="fmemo">
+    <summary>数式メモ（おまけ）</summary>
+    <div class="fmemo-body">
+      <p style="font-size:12px;color:var(--dim);margin-bottom:8px;">連続時間は <span id="tex_cont_h" style="display:inline-block;vertical-align:middle;"></span>、離散化すると：</p>
+      <div class="fbox"><div id="tex_discrete_h"></div></div>
+    </div>
+  </details>
 </div>
 
 <!-- ════════════════════════════════════════════
@@ -190,20 +210,15 @@ canvas{display:block;width:100%;border-radius:4px}
 <div class="card">
   <div class="card-title ct-green">03 <span class="badge bg">FIR</span> FIR フィルターによる近似実装</div>
 
-  <p>理想インパルス応答を有限長に切り捨て、<strong>窓関数</strong>をかけることで FIR フィルターとして実装します。</p>
+  <p>理想インパルス応答を有限長に切り捨て、<strong>窓関数</strong>をかけることで FIR フィルターとして実装します。フィルター長 N（奇数）、中心 M = (N-1)/2。</p>
 
-  <div class="fbox"><div id="tex_fir_h"></div></div>
-
-  <p style="margin-top:10px;font-size:13px;">
-    <strong>Type III FIR</strong>（奇数長・反対称）を使います。フィルター長 N（奇数）、中心インデックス M = (N-1)/2 として：
-  </p>
-  <ul style="margin:8px 0 0 18px;font-size:13px;line-height:1.9;">
-    <li>n = M（中心）：h[M] = 0</li>
-    <li>(n - M) が偶数：h[n] = 0</li>
-    <li>(n - M) が奇数：<span id="tex_fir_coeff" style="display:inline-block;vertical-align:middle;"></span></li>
+  <ul style="margin:8px 0 10px 18px;font-size:13px;line-height:1.9;">
+    <li>中心（n=M）と偶数インデックスの係数はすべて <strong>0</strong></li>
+    <li>奇数インデックスの係数だけ非ゼロ（くし型）</li>
+    <li>窓関数で端を滑らかにテーパリングする</li>
   </ul>
 
-  <div class="note" style="margin-top:10px;">
+  <div class="note" style="margin-top:0;">
     <strong>窓関数の選び方：</strong> 矩形窓はサイドローブが大きく位相精度が悪い。
     Blackman 窓や Hanning 窓を使うと、通過帯域内の位相誤差が大幅に改善されます。
     通常は <strong>Blackman 窓</strong> がバランスよく使われます。
@@ -241,6 +256,15 @@ canvas{display:block;width:100%;border-radius:4px}
     <div style="font-size:10px;color:var(--dim);font-family:'Space Mono',monospace;margin-bottom:6px;letter-spacing:1px;">FREQUENCY RESPONSE — 上: 振幅 [dB]　下: 位相 [deg]　（理想 = 赤破線 -90°）</div>
     <canvas id="cv_freq" height="220"></canvas>
   </div>
+
+  <details class="fmemo">
+    <summary>数式メモ（おまけ）</summary>
+    <div class="fmemo-body">
+      <p style="font-size:12px;color:var(--dim);margin-bottom:8px;">FIR 係数の計算式：</p>
+      <div class="fbox"><div id="tex_fir_h"></div></div>
+      <p style="font-size:12px;color:var(--dim);margin:8px 0;">(n-M) が奇数のとき：<span id="tex_fir_coeff" style="display:inline-block;vertical-align:middle;"></span></p>
+    </div>
+  </details>
 </div>
 
 <!-- ════════════════════════════════════════════
@@ -249,54 +273,86 @@ canvas{display:block;width:100%;border-radius:4px}
 <div class="card">
   <div class="card-title ct-amber">04 <span class="badge bam">IQ</span> IQ 検波への応用とディレイ補償</div>
 
-  <p>ヒルベルトフィルターの出力（Q 成分）と、元の信号を遅延させた I 成分を組み合わせることで、振幅と位相を取り出せます。</p>
+  <p>振幅と位相を検波するには、<strong>元の信号</strong>と、それを<strong>90° ずらした信号</strong>の2つが必要です。<br>
+  この2つを組み合わせることで、任意の瞬間の振幅（信号の強さ）と位相（信号の進み具合）を計算できます。</p>
 
-  <!-- 信号フロー図 -->
-  <div style="margin:14px 0;overflow-x:auto;">
-    <div style="display:flex;flex-direction:column;gap:10px;min-width:500px;">
-      <!-- Q path -->
-      <div style="display:flex;align-items:center;gap:0;">
-        <div style="width:90px;font-size:11px;color:var(--dim);text-align:right;padding-right:8px;font-family:'Space Mono',monospace;">x[n] →</div>
-        <div class="dblock purple">Hilbert FIR<br><span style="font-size:9px;font-weight:400;">長さ N, 遅延 M</span></div>
-        <div class="darr">→</div>
-        <div class="dblock" style="border-color:var(--purple);color:var(--purple);">Q[n]<br><span style="font-size:9px;font-weight:400;">90° シフト成分</span></div>
-        <div class="darr">→</div>
-        <div class="dblock" style="border-color:var(--green);color:var(--green);min-width:120px;" rowspan="2">√(I²+Q²)<br>atan2(Q, I)</div>
-      </div>
-      <!-- I path -->
-      <div style="display:flex;align-items:center;gap:0;">
-        <div style="width:90px;font-size:11px;color:var(--dim);text-align:right;padding-right:8px;font-family:'Space Mono',monospace;">x[n] →</div>
-        <div class="dblock amber">遅延 M サンプル<br><span style="font-size:9px;font-weight:400;">z⁻ᴹ</span></div>
-        <div class="darr">→</div>
-        <div class="dblock" style="border-color:var(--amber);color:var(--amber);">I[n]<br><span style="font-size:9px;font-weight:400;">元の信号（遅延後）</span></div>
-        <div class="darr">→</div>
-        <div style="width:120px;"></div>
-      </div>
-      <!-- output -->
-      <div style="display:flex;align-items:center;gap:0;padding-left:90px;">
-        <div style="width:336px;"></div>
-        <div class="darr" style="padding-left:0;">→</div>
-        <div class="dblock green">振幅 A[n]<br>位相 φ[n]</div>
-      </div>
-    </div>
+  <p style="margin-top:6px;font-size:13px;color:var(--dim);">
+    慣例として「元の信号」を <strong>I（In-phase）</strong>、「90° ずれた信号」を <strong>Q（Quadrature）</strong> と呼びます。
+  </p>
+
+  <!-- 信号フロー SVG -->
+  <div style="overflow-x:auto;margin:14px 0;">
+    <svg class="iq-svg" viewBox="0 0 660 130" xmlns="http://www.w3.org/2000/svg"
+         style="font-family:'Noto Sans JP','Segoe UI',sans-serif;">
+      <defs>
+        <marker id="iq_arr" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto">
+          <path d="M0,0 L7,2.5 L0,5Z" fill="#64748b"/>
+        </marker>
+      </defs>
+
+      <!-- 入力ノード -->
+      <text x="8" y="42" font-size="12" font-weight="700" fill="#64748b" font-family="Space Mono,monospace">x[n]</text>
+      <!-- 分岐点 -->
+      <circle cx="60" cy="38" r="4" fill="#64748b"/>
+      <!-- 上ライン (Q path) -->
+      <line x1="60" y1="38" x2="60" y2="22" stroke="#64748b" stroke-width="1.5"/>
+      <line x1="60" y1="22" x2="130" y2="22" stroke="#64748b" stroke-width="1.5" marker-end="url(#iq_arr)"/>
+      <!-- 下ライン (I path) -->
+      <line x1="60" y1="38" x2="60" y2="100" stroke="#64748b" stroke-width="1.5"/>
+      <line x1="60" y1="100" x2="130" y2="100" stroke="#64748b" stroke-width="1.5" marker-end="url(#iq_arr)"/>
+      <!-- 入力ライン -->
+      <line x1="42" y1="38" x2="56" y2="38" stroke="#64748b" stroke-width="1.5"/>
+
+      <!-- Q path: Hilbert FIR -->
+      <rect x="130" y="8" width="130" height="30" rx="6" fill="none" stroke="#7c3aed" stroke-width="1.8"/>
+      <text x="195" y="25" text-anchor="middle" font-size="11" font-weight="700" fill="#7c3aed">Hilbert FIR</text>
+      <text x="195" y="36" text-anchor="middle" font-size="9" fill="#7c3aed">遅延 M サンプル発生</text>
+      <line x1="260" y1="22" x2="330" y2="22" stroke="#64748b" stroke-width="1.5" marker-end="url(#iq_arr)"/>
+
+      <!-- Q output -->
+      <rect x="330" y="8" width="110" height="30" rx="6" fill="none" stroke="#7c3aed" stroke-width="1.5"/>
+      <text x="385" y="25" text-anchor="middle" font-size="11" font-weight="700" fill="#7c3aed">Q （直交成分）</text>
+      <text x="385" y="36" text-anchor="middle" font-size="9" fill="#7c3aed">90° シフト済み</text>
+      <line x1="440" y1="22" x2="500" y2="22" stroke="#64748b" stroke-width="1.5"/>
+      <line x1="500" y1="22" x2="500" y2="60" stroke="#64748b" stroke-width="1.5" marker-end="url(#iq_arr)"/>
+
+      <!-- I path: Delay M -->
+      <rect x="130" y="84" width="130" height="30" rx="6" fill="none" stroke="#d97706" stroke-width="1.8"/>
+      <text x="195" y="101" text-anchor="middle" font-size="11" font-weight="700" fill="#d97706">遅延 M サンプル</text>
+      <text x="195" y="112" text-anchor="middle" font-size="9" fill="#d97706">Q と同じ遅延を揃える</text>
+      <line x1="260" y1="100" x2="330" y2="100" stroke="#64748b" stroke-width="1.5" marker-end="url(#iq_arr)"/>
+
+      <!-- I output -->
+      <rect x="330" y="84" width="110" height="30" rx="6" fill="none" stroke="#d97706" stroke-width="1.5"/>
+      <text x="385" y="101" text-anchor="middle" font-size="11" font-weight="700" fill="#d97706">I （同相成分）</text>
+      <text x="385" y="112" text-anchor="middle" font-size="9" fill="#d97706">元の信号（遅延後）</text>
+      <line x1="440" y1="100" x2="500" y2="100" stroke="#64748b" stroke-width="1.5"/>
+      <line x1="500" y1="100" x2="500" y2="80" stroke="#64748b" stroke-width="1.5" marker-end="url(#iq_arr)"/>
+
+      <!-- Calculator -->
+      <rect x="500" y="58" width="130" height="28" rx="6" fill="none" stroke="#059669" stroke-width="1.8"/>
+      <text x="565" y="73" text-anchor="middle" font-size="11" font-weight="700" fill="#059669">√(I²+Q²)  atan2(Q,I)</text>
+      <line x1="630" y1="72" x2="650" y2="72" stroke="#64748b" stroke-width="1.5" marker-end="url(#iq_arr)"/>
+      <text x="654" y="68" font-size="10" fill="#059669" font-weight="700">A[n]</text>
+      <text x="654" y="80" font-size="10" fill="#059669">φ[n]</text>
+    </svg>
   </div>
 
+  <!-- 遅延補償の説明 -->
   <div class="delay-box">
-    <strong style="color:var(--amber);">なぜ I パスにも遅延が必要か？</strong><br><br>
-    FIR フィルターは<strong>線形位相</strong>なので、出力は入力に対して必ず <strong>M = (N-1)/2 サンプルの遅延</strong>が生じます。<br>
-    Q[n] の「時刻 n 」は、実は入力 x の「時刻 n - M」の情報です。<br><br>
-    I パスをそのまま x[n] にしてしまうと、Q と I が異なる時刻の信号を参照することになり、振幅・位相の計算がズレます。<br>
-    I パスを <strong>同じ M サンプル遅延</strong>させることで、Q と I が同じ時刻の入力を参照するようになります。
+    <strong style="color:var(--amber);">なぜ元の信号（I）にも遅延が必要なのか？</strong><br><br>
+    FIR フィルターは線形位相フィルターなので、<strong>出力は入力より必ず M = (N-1)/2 サンプル遅れて</strong>出てきます。<br>
+    たとえば N=31 なら M=15 で、Q の出力は入力より 15 サンプル遅れています。<br><br>
+    ここで I（元の信号）を遅延なしのまま使うと、<br>
+    ・ I は「今の時刻の信号」<br>
+    ・ Q は「15 サンプル前の時刻の信号を変換したもの」<br>
+    となり、<strong>時刻がずれた I と Q を比較することになってしまいます</strong>。<br><br>
+    これを避けるため、I 側にも同じ M サンプルの遅延を入れます。<br>
+    こうすると <strong>I と Q が同じ時刻を参照</strong>するようになり、正しく振幅・位相を計算できます。
   </div>
 
-  <div class="fbox" style="margin-top:12px;text-align:left;padding:14px 18px;">
-    <div id="tex_iq_amp"></div>
-    <div style="margin-top:8px;"></div>
-    <div id="tex_iq_phase"></div>
-  </div>
-
-  <!-- インタラクティブ時間波形デモ -->
-  <div style="margin-top:14px;">
+  <!-- 時間波形デモ -->
+  <div style="margin-top:16px;">
     <div style="font-size:12px;font-weight:700;color:var(--dim);margin-bottom:8px;font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:1px;">時間波形デモ</div>
     <div class="ctrl-row">
       <div class="fg">
@@ -316,12 +372,24 @@ canvas{display:block;width:100%;border-radius:4px}
 
   <div class="cv-wrap" style="margin-top:10px;">
     <div style="font-size:10px;color:var(--dim);font-family:'Space Mono',monospace;margin-bottom:6px;letter-spacing:1px;">
-      TIME DOMAIN — <span style="color:#2563eb;">- 入力 x[n]（遅延補償後 I）</span>
-      <span style="color:#7c3aed;">- Q（90°シフト）</span>
-      <span style="color:#059669;">- 検波振幅 A[n]</span>
+      TIME DOMAIN —
+      <span style="color:#2563eb;">━ I（元の信号・遅延補償後）</span>
+      <span style="color:#7c3aed;">━ Q（90°シフト）</span>
+      <span style="color:#059669;">━ 検波振幅 A[n]</span>
     </div>
     <canvas id="cv_time" height="200"></canvas>
   </div>
+
+  <details class="fmemo">
+    <summary>数式メモ（おまけ）</summary>
+    <div class="fmemo-body">
+      <div class="fbox" style="text-align:left;padding:14px 18px;">
+        <div id="tex_iq_amp"></div>
+        <div style="margin-top:8px;"></div>
+        <div id="tex_iq_phase"></div>
+      </div>
+    </div>
+  </details>
 </div>
 
 <!-- ════════════════════════════════════════════
@@ -504,6 +572,99 @@ function initCV(id, h) {
 
 function isDark() { return document.documentElement.dataset.theme === 'dark'; }
 function color(light, dark) { return isDark() ? dark : light; }
+
+// ============================================
+// Draw: Ideal frequency response (static illustration)
+// ============================================
+function drawIdealFreqResp() {
+  const c = initCV('cv_ideal_freq', 180);
+  if (!c) return;
+  const {ctx, W, H} = c;
+  ctx.fillStyle = color('#f1f5f9','#1a2235');
+  ctx.fillRect(0,0,W,H);
+
+  const PAD_L=52, PAD_R=20, PAD_T=10;
+  const plotW = W-PAD_L-PAD_R;
+  const rowH = (H-PAD_T-16)/2;
+
+  // ---- Top: Magnitude ----
+  const m_top = PAD_T, m_bot = m_top+rowH;
+  // axis
+  ctx.strokeStyle = color('#cbd5e1','#1e3a5f'); ctx.lineWidth=0.8;
+  ctx.beginPath(); ctx.moveTo(PAD_L,m_bot); ctx.lineTo(PAD_L+plotW,m_bot); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(PAD_L,m_top+4); ctx.lineTo(PAD_L,m_bot); ctx.stroke();
+
+  // flat line at 0 dB (middle of top panel)
+  const m_y = m_top + rowH*0.2;
+  ctx.beginPath();
+  ctx.moveTo(PAD_L+2, m_y);
+  ctx.lineTo(PAD_L+plotW-2, m_y);
+  ctx.strokeStyle = color('#059669','#22c55e');
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  // labels
+  ctx.fillStyle = color('#059669','#22c55e');
+  ctx.font = 'bold 10px Space Mono,monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText('0 dB', PAD_L-4, m_y+4);
+  ctx.fillStyle = color('#1e293b','#e2e8f0');
+  ctx.font = '10px Space Mono,monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('振幅 |H(f)| = 1  (全周波数で flat — All-pass)', PAD_L+8, m_y-6);
+
+  // ---- Bottom: Phase ----
+  const p_top = m_bot+12, p_bot = p_top+rowH;
+  ctx.strokeStyle = color('#cbd5e1','#1e3a5f'); ctx.lineWidth=0.8;
+  ctx.beginPath(); ctx.moveTo(PAD_L,p_bot); ctx.lineTo(PAD_L+plotW,p_bot); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(PAD_L,p_top+4); ctx.lineTo(PAD_L,p_bot); ctx.stroke();
+
+  // 0° line (dashed)
+  const p_0y = p_top + rowH*0.1;
+  ctx.setLineDash([3,3]);
+  ctx.strokeStyle = color('#94a3b8','#374151'); ctx.lineWidth=0.8;
+  ctx.beginPath(); ctx.moveTo(PAD_L,p_0y); ctx.lineTo(PAD_L+plotW,p_0y); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = color('#94a3b8','#64748b');
+  ctx.font = '9px Space Mono,monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText('0°', PAD_L-4, p_0y+3);
+
+  // -90° flat line
+  const p_90y = p_top + rowH*0.65;
+  ctx.beginPath();
+  ctx.moveTo(PAD_L+2, p_90y);
+  ctx.lineTo(PAD_L+plotW-2, p_90y);
+  ctx.strokeStyle = color('#0284c7','#00d4ff');
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  ctx.fillStyle = color('#0284c7','#00d4ff');
+  ctx.font = 'bold 10px Space Mono,monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText('-90°', PAD_L-4, p_90y+4);
+  ctx.fillStyle = color('#1e293b','#e2e8f0');
+  ctx.font = '10px Space Mono,monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('位相 = -90°  (全周波数で一定)', PAD_L+8, p_90y-6);
+
+  // x axis label
+  ctx.fillStyle = color('#64748b','#64748b');
+  ctx.font = '9px Space Mono,monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('0', PAD_L, p_bot+11);
+  ctx.textAlign = 'right';
+  ctx.fillText('fs/2', PAD_L+plotW, p_bot+11);
+  ctx.textAlign = 'center';
+  ctx.fillText('周波数 →', PAD_L+plotW/2, p_bot+11);
+
+  // panel labels
+  ctx.font = 'bold 9px Space Mono,monospace';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = color('#94a3b8','#475569');
+  ctx.fillText('MAGNITUDE', PAD_L+2, m_top+12);
+  ctx.fillText('PHASE', PAD_L+2, p_top+12);
+}
 
 // ============================================
 // Draw: Ideal impulse response
@@ -829,10 +990,12 @@ function hv_update() {
 // Init
 // ============================================
 window.addEventListener('load', () => {
+  drawIdealFreqResp();
   drawImpulse();
   hv_update();
 });
 window.addEventListener('resize', () => {
+  drawIdealFreqResp();
   drawImpulse();
   hv_update();
 });
