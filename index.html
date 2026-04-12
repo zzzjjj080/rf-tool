@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RF計算ツール</title>
+<title>RFツール</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700&display=swap" rel="stylesheet">
@@ -28,14 +28,31 @@
   header { background: var(--primary); color: #fff; padding: 14px 24px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
   header h1 { font-size: 20px; font-weight: 700; letter-spacing: 0.5px; }
   header span { font-size: 12px; opacity: 0.8; }
-  .tabs { display: flex; flex-wrap: wrap; background: var(--primary-dark); overflow-x: auto; }
-  .tab-btn { padding: 8px 16px; color: rgba(255,255,255,0.75); border: none; background: none; cursor: pointer; font-size: 11px; font-family: 'Noto Sans JP', 'Segoe UI', sans-serif; white-space: nowrap; border-bottom: 3px solid transparent; transition: all 0.2s; }
+  /* ── ナビゲーションバー ── */
+  .nav-bar { background: var(--primary-dark); display: flex; flex-wrap: wrap; align-items: stretch; }
+  .tab-group { display: flex; flex-direction: column; border-right: 1px solid rgba(255,255,255,0.08); }
+  .tab-group:last-child { border-right: none; }
+  .tab-group-label {
+    font-size: 9px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
+    padding: 4px 10px 2px; white-space: nowrap;
+    font-family: 'Noto Sans JP', 'Segoe UI', sans-serif;
+  }
+  .tab-group-buttons { display: flex; flex-wrap: wrap; }
+  /* グループ別カラー */
+  .tg-rf    .tab-group-label { color: #60a5fa; border-bottom: 2px solid #2563eb; }
+  .tg-pwr   .tab-group-label { color: #fb923c; border-bottom: 2px solid #ea580c; }
+  .tg-dsp   .tab-group-label { color: #34d399; border-bottom: 2px solid #059669; }
+  .tg-ctrl  .tab-group-label { color: #c084fc; border-bottom: 2px solid #9333ea; }
+  .tg-rf    .tab-btn.active  { border-bottom-color: #60a5fa; }
+  .tg-pwr   .tab-btn.active  { border-bottom-color: #fb923c; }
+  .tg-dsp   .tab-btn.active  { border-bottom-color: #34d399; }
+  .tg-ctrl  .tab-btn.active  { border-bottom-color: #c084fc; }
+  /* タブボタン共通 */
+  .tab-btn { padding: 6px 14px; color: rgba(255,255,255,0.72); border: none; background: none; cursor: pointer; font-size: 11px; font-family: 'Noto Sans JP', 'Segoe UI', sans-serif; white-space: nowrap; border-bottom: 3px solid transparent; transition: all 0.2s; }
   .tab-btn:hover { color: #fff; background: rgba(255,255,255,0.08); }
   .tab-btn.active { color: #fff; border-bottom-color: var(--accent); background: rgba(255,255,255,0.1); }
   .tab-divider { display: none; }
-  .visualizer-btn { background: rgba(255,255,255,0.05); }
-  .tab-btn.featured { color: #fcd34d; background: rgba(251,191,36,0.12); border-bottom: 3px solid #f59e0b; font-weight: 700; }
-  .tab-btn.featured:hover { background: rgba(251,191,36,0.22); color: #fde68a; }
+  .tab-btn.featured { font-weight: 700; }
   .tab-btn.featured.active { color: #fff; font-weight: 700; background: rgba(255,255,255,0.1); border-bottom-color: var(--accent); }
   .container { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
   .tab-panel { display: none; }
@@ -176,7 +193,7 @@
     --border: #334155; --text: #e2e8f0; --muted: #94a3b8;
   }
   body.dark header { background: #1e3a5f; }
-  body.dark .tabs  { background: #172a45; }
+  body.dark .nav-bar { background: #172a45; }
   body.dark .tab-btn.active { background: rgba(255,255,255,0.08); }
   body.dark input[type="number"], body.dark input[type="text"], body.dark select {
     background: #0f172a; color: var(--text); border-color: var(--border);
@@ -206,29 +223,52 @@
 
 <header>
   <div>
-    <h1>RF計算ツール</h1>
+    <h1>RFツール</h1>
   </div>
   <button id="dark-toggle" onclick="toggleDark()">🌙 ダーク</button>
 </header>
 
-<div class="tabs">
-  <button class="tab-btn" onclick="switchTab('mod1')">① 方向性結合器</button>
-  <button class="tab-btn" onclick="switchTab('mod2')">② VIセンサー</button>
-  <button class="tab-btn featured active" onclick="switchTab('mod3')">③ スミスチャート解析</button>
-  <button class="tab-btn" onclick="switchTab('mod4')">④ 電力単位換算</button>
-  <button class="tab-btn" onclick="switchTab('mod5')">⑤ ケーブル損失補正</button>
-  <div class="tab-divider">📊 ビジュアライザー ▶</div>
-  <button class="tab-btn visualizer-btn" onclick="window.location.href='cordic-visualizer/cordic_visualizer.html'">⑥ CORDIC</button>
-  <button class="tab-btn visualizer-btn" onclick="window.location.href='adc-visualizer/adc_visualizer.html'">⑦ ADC</button>
-  <button class="tab-btn visualizer-btn" onclick="window.location.href='digital-filter-designer/digital_filter_designer.html'">⑧ フィルター</button>
-  <button class="tab-btn visualizer-btn" onclick="window.location.href='pid-visualizer/pid-visualizer.html'">⑨ PID制御</button>
-  <button class="tab-btn visualizer-btn featured" onclick="window.location.href='fft-visualizer/fft-visualizer.html'">⑩ FFT</button>
-  <button class="tab-btn visualizer-btn" onclick="window.location.href='network-analyzer-tutorial/network_analyzer_tutorial.html'">⑪ NA入門</button>
-  <button class="tab-btn visualizer-btn" onclick="window.location.href='power-amp-simulator/power_amp_simulator.html'">⑫ パワーアンプ</button>
-  <button class="tab-btn visualizer-btn" onclick="window.location.href='pll-simulator/pll_simulator.html'">⑬ PLL</button>
-  <button class="tab-btn visualizer-btn featured" onclick="window.location.href='matching/index.html'">⑭ 負荷変動</button>
-  <button class="tab-btn visualizer-btn" onclick="window.location.href='abcd/abcd.html'">⑮ ABCD</button>
-  <button class="tab-btn visualizer-btn" onclick="window.location.href='fir-designer/fir_designer.html'">⑯ FIR設計</button>
+<div class="nav-bar">
+  <!-- RF -->
+  <div class="tab-group tg-rf">
+    <div class="tab-group-label">RF計測・解析</div>
+    <div class="tab-group-buttons">
+      <button class="tab-btn" onclick="switchTab('mod1')">① 方向性結合器</button>
+      <button class="tab-btn" onclick="switchTab('mod2')">② VIセンサー</button>
+      <button class="tab-btn featured active" onclick="switchTab('mod3')">③ スミスチャート解析</button>
+      <button class="tab-btn visualizer-btn" onclick="window.location.href='network-analyzer-tutorial/network_analyzer_tutorial.html'">⑪ NA入門</button>
+      <button class="tab-btn visualizer-btn featured" onclick="window.location.href='matching/index.html'">⑭ 負荷変動</button>
+      <button class="tab-btn visualizer-btn" onclick="window.location.href='abcd/abcd.html'">⑮ ABCD</button>
+    </div>
+  </div>
+  <!-- 電力・伝送 -->
+  <div class="tab-group tg-pwr">
+    <div class="tab-group-label">電力・伝送</div>
+    <div class="tab-group-buttons">
+      <button class="tab-btn" onclick="switchTab('mod4')">④ 電力単位換算</button>
+      <button class="tab-btn" onclick="switchTab('mod5')">⑤ ケーブル損失補正</button>
+      <button class="tab-btn visualizer-btn" onclick="window.location.href='power-amp-simulator/power_amp_simulator.html'">⑫ パワーアンプ</button>
+    </div>
+  </div>
+  <!-- 信号処理 -->
+  <div class="tab-group tg-dsp">
+    <div class="tab-group-label">デジタル信号処理</div>
+    <div class="tab-group-buttons">
+      <button class="tab-btn visualizer-btn" onclick="window.location.href='cordic-visualizer/cordic_visualizer.html'">⑥ CORDIC</button>
+      <button class="tab-btn visualizer-btn" onclick="window.location.href='adc-visualizer/adc_visualizer.html'">⑦ ADC</button>
+      <button class="tab-btn visualizer-btn" onclick="window.location.href='digital-filter-designer/digital_filter_designer.html'">⑧ フィルター概要</button>
+      <button class="tab-btn visualizer-btn" onclick="window.location.href='fir-designer/fir_designer.html'">⑯ フィルター設計</button>
+      <button class="tab-btn visualizer-btn featured" onclick="window.location.href='fft-visualizer/fft-visualizer.html'">⑩ FFT</button>
+    </div>
+  </div>
+  <!-- 制御 -->
+  <div class="tab-group tg-ctrl">
+    <div class="tab-group-label">制御系</div>
+    <div class="tab-group-buttons">
+      <button class="tab-btn visualizer-btn" onclick="window.location.href='pid-visualizer/pid-visualizer.html'">⑨ PID制御</button>
+      <button class="tab-btn visualizer-btn" onclick="window.location.href='pll-simulator/pll_simulator.html'">⑬ PLL</button>
+    </div>
+  </div>
 </div>
 
 <div class="container">
