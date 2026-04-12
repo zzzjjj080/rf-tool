@@ -3,19 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>⑯ FIR フィルター設計</title>
+<title>⑯ デジタルフィルター設計</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+JP:wght@300;400;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#f0f4f8;--panel:#ffffff;--panel2:#f1f5f9;--border:#cbd5e1;
   --accent:#0284c7;--accent2:#ea580c;--text:#1e293b;--text-dim:#64748b;
   --gold:#d97706;--green:#16a34a;--red:#dc2626;--purple:#7c3aed;
+  --purple2:#6d28d9;--purple-bg:rgba(124,58,237,0.07);--purple-border:rgba(124,58,237,0.5);
   --shadow:rgba(0,0,0,0.07);--grid-line:rgba(100,116,139,0.08);
 }
 [data-theme="dark"]{
   --bg:#0a0e1a;--panel:#111827;--panel2:#1a2235;--border:#1e3a5f;
   --accent:#00d4ff;--accent2:#ff6b35;--text:#e2e8f0;--text-dim:#64748b;
   --gold:#fbbf24;--green:#22c55e;--red:#f87171;--purple:#a78bfa;
+  --purple2:#8b5cf6;--purple-bg:rgba(167,139,250,0.07);--purple-border:rgba(167,139,250,0.4);
   --shadow:rgba(0,0,0,0.3);--grid-line:rgba(0,212,255,0.03);
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -24,22 +26,33 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .container{position:relative;z-index:1;max-width:1140px;margin:0 auto;padding:20px 16px 40px}
 header{text-align:center;margin-bottom:20px;padding:20px 0 16px;border-bottom:1px solid var(--border);position:relative}
 .header-tag{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:4px;color:var(--accent);text-transform:uppercase;margin-bottom:6px;opacity:.8}
-h1{font-family:'Space Mono',monospace;font-size:clamp(20px,5vw,34px);font-weight:700;letter-spacing:-1px;background:linear-gradient(135deg,var(--accent) 0%,var(--text) 50%,var(--accent2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+h1{font-family:'Space Mono',monospace;font-size:clamp(18px,4.5vw,32px);font-weight:700;letter-spacing:-1px;background:linear-gradient(135deg,var(--accent) 0%,var(--text) 50%,var(--purple) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .subtitle{font-size:11px;color:var(--text-dim);margin-top:5px;font-family:'Space Mono',monospace;letter-spacing:1px}
 .theme-toggle{position:absolute;top:20px;right:0;padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:var(--panel);color:var(--text);cursor:pointer;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;transition:all .2s;box-shadow:0 1px 4px var(--shadow)}
 .theme-toggle:hover{border-color:var(--accent);color:var(--accent)}
 .back-link{position:absolute;top:20px;left:0;text-decoration:none;padding:7px 14px;border-radius:20px;border:1.5px solid var(--accent);background:var(--panel);color:var(--accent);font-family:'Space Mono',monospace;font-size:11px;font-weight:700;transition:all .2s;box-shadow:0 1px 4px var(--shadow);display:inline-flex;align-items:center;gap:4px}
 .back-link:hover{opacity:.8}
 
-/* FIR intro */
+/* Section divider */
+.sec-div{display:flex;align-items:center;gap:12px;margin:22px 0 16px}
+.sec-div-line{flex:1;height:1px;background:var(--border)}
+.sec-div-label{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;padding:5px 14px;border-radius:20px;white-space:nowrap;font-weight:700}
+.sec-div.fir .sec-div-label{color:var(--accent);background:rgba(2,132,199,.08);border:1px solid rgba(2,132,199,.3)}
+.sec-div.iir .sec-div-label{color:var(--purple);background:var(--purple-bg);border:1px solid var(--purple-border)}
+
+/* Intro comparison */
 .intro-section{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:14px;box-shadow:0 1px 4px var(--shadow)}
 .intro-title{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--accent2);text-transform:uppercase;margin-bottom:10px;font-weight:700}
-.intro-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-@media(max-width:600px){.intro-grid{grid-template-columns:1fr}}
-.intro-card{background:var(--panel2);border-radius:10px;padding:12px 14px}
-.intro-card-title{font-size:12px;font-weight:700;color:var(--accent);margin-bottom:6px}
-.intro-card-body{font-size:12.5px;line-height:1.85;color:var(--text)}
-.intro-card-body b{color:var(--accent2)}
+.cmp-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+@media(max-width:620px){.cmp-grid{grid-template-columns:1fr}}
+.cmp-card{background:var(--panel2);border-radius:10px;padding:12px 14px;border-top:3px solid transparent}
+.cmp-card.fir{border-top-color:var(--accent)}
+.cmp-card.iir{border-top-color:var(--purple)}
+.cmp-card-title{font-size:13px;font-weight:700;margin-bottom:7px}
+.cmp-card.fir .cmp-card-title{color:var(--accent)}
+.cmp-card.iir .cmp-card-title{color:var(--purple)}
+.cmp-card-body{font-size:12.5px;line-height:1.85;color:var(--text)}
+.cmp-card-body b{color:var(--accent2)}
 .intro-types{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
 .type-chip{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;text-align:center}
 .type-chip .tc-name{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:var(--accent)}
@@ -51,30 +64,40 @@ h1{font-family:'Space Mono',monospace;font-size:clamp(20px,5vw,34px);font-weight
 .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0}
 .dot-o{background:var(--accent2)!important}
 .dot-g{background:var(--green)!important}
+.dot-p{background:var(--purple)!important}
 canvas{display:block;width:100%}
 
 /* Settings zone */
 .zone{border-radius:12px;margin-bottom:14px;overflow:hidden;box-shadow:0 1px 4px var(--shadow)}
-.zone-settings{background:var(--panel);border:1.5px solid rgba(2,132,199,.6)}
-.zone-header{padding:8px 18px;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;display:flex;align-items:center;gap:8px;background:rgba(2,132,199,.08);border-bottom:1px solid rgba(2,132,199,.2);color:var(--accent)}
-[data-theme="dark"] .zone-settings{border-color:rgba(0,212,255,.4)}
-[data-theme="dark"] .zone-header{background:rgba(0,212,255,.08);border-bottom-color:rgba(0,212,255,.2)}
+.zone-fir{background:var(--panel);border:1.5px solid rgba(2,132,199,.6)}
+.zone-iir{background:var(--panel);border:1.5px solid var(--purple-border)}
+.zone-header{padding:8px 18px;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.zone-fir .zone-header{background:rgba(2,132,199,.08);border-bottom:1px solid rgba(2,132,199,.2);color:var(--accent)}
+.zone-iir .zone-header{background:var(--purple-bg);border-bottom:1px solid var(--purple-border);color:var(--purple)}
+[data-theme="dark"] .zone-fir{border-color:rgba(0,212,255,.4)}
+[data-theme="dark"] .zone-fir .zone-header{background:rgba(0,212,255,.08);border-bottom-color:rgba(0,212,255,.2)}
 .param-sections{display:flex;flex-direction:column;background:var(--panel)}
 .param-section{padding:12px 18px 14px}
 .param-section+.param-section{border-top:1px solid var(--border)}
 .param-row{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end}
 .ig{display:flex;flex-direction:column;gap:5px}
 .ig label,.sg label{font-size:10px;letter-spacing:1.5px;font-family:'Space Mono',monospace;text-transform:uppercase;color:var(--accent)}
+.ig.iir-lbl label{color:var(--purple)}
 .sg{display:flex;flex-direction:column;gap:4px}
 .sg label{color:var(--accent2)}
+.sg.iir-lbl label{color:var(--purple)}
 select{background:var(--panel2);border:1px solid var(--border);color:var(--text);font-family:'Noto Sans JP',sans-serif;font-size:13px;padding:6px 10px;border-radius:6px;cursor:pointer;outline:none;transition:border-color .2s}
 select:focus{border-color:var(--accent)}
 input[type="range"]{-webkit-appearance:none;width:100%;height:4px;background:var(--border);border-radius:2px;outline:none;cursor:pointer}
 input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;box-shadow:0 1px 4px var(--shadow)}
+.iir-range::-webkit-slider-thumb{background:var(--purple)!important}
 .irow{display:flex;align-items:center;gap:8px}
 .ival{font-family:'Space Mono',monospace;font-size:14px;color:var(--gold);min-width:88px;text-align:right;font-weight:700;white-space:nowrap}
+.ival.p{color:var(--purple)}
 .kaiser-g{display:none}
 .kaiser-g.vis{display:flex}
+.ripple-g{display:none}
+.ripple-g.vis{display:flex}
 /* fs number input */
 .fs-input{width:72px;font-family:'Space Mono',monospace;font-size:14px;font-weight:700;color:var(--gold);background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:5px 8px;outline:none;transition:border-color .2s;-moz-appearance:textfield}
 .fs-input::-webkit-outer-spin-button,.fs-input::-webkit-inner-spin-button{-webkit-appearance:none}
@@ -84,24 +107,38 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
 .win-desc{margin-top:10px;padding:10px 14px;background:var(--panel2);border-radius:8px;font-size:12.5px;line-height:1.8;color:var(--text);border:1px solid var(--border)}
 .win-desc strong{color:var(--accent)}
 .win-desc .spec{font-family:'Space Mono',monospace;font-size:11px;color:var(--accent2);font-weight:700}
+/* Method description inline */
+.method-desc{margin-top:10px;padding:10px 14px;background:var(--purple-bg);border-radius:8px;font-size:12.5px;line-height:1.8;color:var(--text);border:1px solid var(--purple-border)}
+.method-desc strong{color:var(--purple)}
+.method-desc .spec{font-family:'Space Mono',monospace;font-size:11px;color:var(--accent2);font-weight:700}
 /* BPF fc row toggle */
 .fc-single{display:flex}
 .fc-dual{display:none}
 .fc-single.hidden{display:none}
 .fc-dual.visible{display:flex}
+.iir-fc-single{display:flex}
+.iir-fc-dual{display:none}
+.iir-fc-single.hidden{display:none}
+.iir-fc-dual.visible{display:flex}
 
 /* Result cards (clickable) */
 .result-section{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:14px;box-shadow:0 1px 4px var(--shadow)}
+.result-section.iir{border-color:var(--purple-border)}
 .res-label{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-bottom:12px}
+.res-label.p{color:var(--purple)}
 .result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:8px}
 .rc{background:var(--panel2);border:2px solid var(--border);border-radius:10px;padding:10px 12px;text-align:center;cursor:pointer;transition:border-color .15s,transform .1s;user-select:none}
 .rc:hover{border-color:var(--accent);transform:translateY(-1px)}
+.rc.iir:hover{border-color:var(--purple)}
 .rc .rl{font-size:9px;letter-spacing:1.5px;color:var(--text-dim);font-family:'Space Mono',monospace;text-transform:uppercase;margin-bottom:4px}
 .rc .rv{font-family:'Space Mono',monospace;font-size:clamp(11px,1.5vw,14px);font-weight:700;color:var(--accent)}
 .rc .hint{font-size:9px;color:var(--text-dim);margin-top:2px;font-family:'Noto Sans JP',sans-serif}
 .rv.o{color:var(--accent2)}
 .rv.g{color:var(--green)}
 .rv.gold{color:var(--gold)}
+.rv.p{color:var(--purple)}
+.rv.ok{color:var(--green)}
+.rv.ng{color:var(--red)}
 .rc.hidden{display:none}
 
 /* Info popup */
@@ -135,9 +172,22 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
 .ctable tr.center td{color:var(--accent);font-weight:700}
 .ctable tr.center td:last-child{color:var(--accent2)}
 .coeff-note{font-size:11px;color:var(--text-dim);padding:6px 14px;background:var(--panel2);border-top:1px solid var(--border);font-family:'Noto Sans JP',sans-serif}
+
+/* Biquad SOS table */
+.bq-wrap{overflow-x:auto;overflow-y:auto;max-height:280px}
+.bq-table{width:100%;border-collapse:collapse;font-family:'Space Mono',monospace;font-size:11px}
+.bq-table th{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);padding:5px 10px;text-align:right;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--panel);z-index:1;white-space:nowrap}
+.bq-table th:first-child{text-align:center}
+.bq-table td{padding:4px 10px;border-bottom:1px solid var(--border);text-align:right;color:var(--text)}
+.bq-table td:first-child{text-align:center;color:var(--purple);font-weight:700}
+.bq-table td.ok{color:var(--green)}
+.bq-table td.ng{color:var(--red)}
+.bq-table tr:hover td{background:var(--panel2)}
 </style>
 </head>
 <body>
+<script>var RF_ACTIVE_TAB = 'fir';</script>
+<script src="../nav.js"></script>
 
 <!-- Info popup -->
 <div class="popup-overlay" id="popupOverlay" onclick="closePopup(event)">
@@ -152,28 +202,26 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
 <div class="container">
   <header>
     <a class="back-link" href="../index.html">← BACK</a>
-    <div class="header-tag">RF-TOOL / DSP / FIR</div>
-    <h1>FIR フィルター設計</h1>
-    <div class="subtitle">⑯ WINDOWED-SINC METHOD — TYPE I LINEAR PHASE</div>
+    <div class="header-tag">RF-TOOL / DSP / FILTER DESIGN</div>
+    <h1>デジタルフィルター設計</h1>
+    <div class="subtitle">⑯ FIR（窓掛けsinc） + IIR（双一次変換）</div>
     <button class="theme-toggle" onclick="toggleTheme()">◐ THEME</button>
   </header>
 
-  <!-- FIR intro -->
+  <!-- FIR vs IIR comparison intro -->
   <div class="intro-section">
-    <div class="intro-title">FIRフィルターとは？</div>
-    <div class="intro-grid">
-      <div class="intro-card">
-        <div class="intro-card-title">基本のしくみ</div>
-        <div class="intro-card-body">
-          FIR（Finite Impulse Response）は、過去 N サンプルの入力値に「タップ係数 h[n]」を掛けて足し合わせるだけのデジタルフィルターです。アナログ部品不要で、ソフトウェアだけで実装できます。<br><br>
-          最大の特長は<b>線形位相</b>——全周波数で遅延が一定なので波形の形を崩しません。IIRフィルターにはない安心感があります。
+    <div class="intro-title">FIR vs IIR — どちらを選ぶ？</div>
+    <div class="cmp-grid">
+      <div class="cmp-card fir">
+        <div class="cmp-card-title">FIR フィルター</div>
+        <div class="cmp-card-body">
+          過去 N サンプルの入力だけで計算する「有限インパルス応答」フィルター。<b>線形位相</b>（全周波数で遅延一定）が保証され、波形の形が崩れません。安定性も無条件。タップ数が多いほど高性能になりますが、計算コストと遅延も増えます。
         </div>
       </div>
-      <div class="intro-card">
-        <div class="intro-card-title">このツールの設計手法：窓掛けsinc法</div>
-        <div class="intro-card-body">
-          理想フィルターのインパルス応答（無限長のsinc関数）を「窓関数」で有限長に切り取ります。窓の種類を変えると、遮断域の鋭さとリップルのトレードオフが変わります。<br><br>
-          <b>タップ数を増やす</b>ほど特性が良くなり（遷移帯域が狭くなる）、<b>遅延も増える</b>のがトレードオフです。
+      <div class="cmp-card iir">
+        <div class="cmp-card-title">IIR フィルター</div>
+        <div class="cmp-card-body">
+          過去の出力も使うフィードバック構造の「無限インパルス応答」フィルター。同じ特性を<b>少ない次数で</b>実現できるため計算コストが低い。ただし位相は非線形になりやすく、設計次第で不安定にもなります。アナログフィルターの設計知識がそのまま使えます。
         </div>
       </div>
     </div>
@@ -193,14 +241,20 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
     </div>
   </div>
 
-  <!-- Settings zone -->
-  <div class="zone zone-settings">
+  <!-- ===== FIR SECTION ===== -->
+  <div class="sec-div fir">
+    <div class="sec-div-line"></div>
+    <div class="sec-div-label">FIR フィルター設計 — 窓掛けsinc法</div>
+    <div class="sec-div-line"></div>
+  </div>
+
+  <!-- FIR Settings zone -->
+  <div class="zone zone-fir">
     <div class="zone-header">
       <span style="width:8px;height:8px;border-radius:50%;background:var(--accent);display:inline-block;flex-shrink:0"></span>
-      パラメータ設定
+      FIR パラメータ設定
     </div>
     <div class="param-sections">
-
       <!-- Row 1: fs, N, filter type, window -->
       <div class="param-section">
         <div class="param-row">
@@ -245,13 +299,10 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
             </div>
           </div>
         </div>
-        <!-- Inline window description -->
         <div class="win-desc" id="winDesc"></div>
       </div>
-
-      <!-- Row 2: fc (LPF/HPF single, BPF dual) -->
+      <!-- Row 2: fc -->
       <div class="param-section">
-        <!-- LPF / HPF -->
         <div class="param-row fc-single" id="fcSingle">
           <div class="ig" style="flex:0 0 auto;width:clamp(180px,30%,300px)">
             <label id="lblFc">カットオフ周波数 fc</label>
@@ -261,7 +312,6 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
             </div>
           </div>
         </div>
-        <!-- BPF -->
         <div class="param-row fc-dual" id="fcDual" style="gap:20px">
           <div class="ig" style="flex:0 0 auto;width:clamp(180px,30%,300px)">
             <label>下限カットオフ fc_low</label>
@@ -279,13 +329,12 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
           </div>
         </div>
       </div>
-
     </div>
   </div>
 
-  <!-- Result cards -->
+  <!-- FIR Result cards -->
   <div class="result-section">
-    <div class="res-label">計算結果 — カードをクリックで説明</div>
+    <div class="res-label">FIR 計算結果 — カードをクリックで説明</div>
     <div class="result-grid" id="resultGrid">
       <div class="rc" id="rcFc1" onclick="showInfo('fc1')">
         <div class="rl" id="lblRcFc1">カットオフ fc</div>
@@ -325,7 +374,7 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
     </div>
   </div>
 
-  <!-- Graphs side by side -->
+  <!-- FIR Graphs -->
   <div class="graph-grid">
     <div class="panel">
       <div class="panel-header"><div class="dot"></div>インパルス応答 h[n]</div>
@@ -347,7 +396,7 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
     </div>
   </div>
 
-  <!-- Coefficient table -->
+  <!-- FIR Coefficient table -->
   <div class="panel">
     <div class="panel-header"><div class="dot dot-o"></div>タップ係数 h[n]（ユニーク係数のみ — 線形位相対称）</div>
     <div class="coeff-wrap">
@@ -358,133 +407,165 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;hei
     </div>
     <div class="coeff-note" id="coeffNote"></div>
   </div>
-</div>
+
+  <!-- ===== IIR SECTION ===== -->
+  <div class="sec-div iir">
+    <div class="sec-div-line"></div>
+    <div class="sec-div-label">IIR フィルター設計 — 双一次変換法</div>
+    <div class="sec-div-line"></div>
+  </div>
+
+  <!-- IIR Settings zone -->
+  <div class="zone zone-iir">
+    <div class="zone-header">
+      <span style="width:8px;height:8px;border-radius:50%;background:var(--purple);display:inline-block;flex-shrink:0"></span>
+      IIR パラメータ設定
+    </div>
+    <div class="param-sections">
+      <!-- Row 1: filter type, method, order, ripple -->
+      <div class="param-section">
+        <div class="param-row">
+          <div class="sg iir-lbl" style="flex:0 0 auto">
+            <label>フィルタータイプ</label>
+            <select id="iirSelType" onchange="onIirTypeChange()">
+              <option value="lpf">LPF — ローパス</option>
+              <option value="hpf">HPF — ハイパス</option>
+              <option value="bpf">BPF — バンドパス</option>
+            </select>
+          </div>
+          <div class="sg iir-lbl" style="flex:0 0 auto">
+            <label>設計手法</label>
+            <select id="iirSelMethod" onchange="onIirMethodChange()">
+              <option value="butterworth">バターワース（Butterworth）</option>
+              <option value="chebyshev1">チェビシェフ I型（Chebyshev I）</option>
+            </select>
+          </div>
+          <div class="ig iir-lbl" style="flex:0 0 auto;width:clamp(160px,22%,260px)">
+            <label>次数 N</label>
+            <div class="irow">
+              <input type="range" id="iirRngN" class="iir-range" min="1" max="10" step="1" value="4" oninput="onIirNChange()">
+              <span class="ival p" id="iirValN">N = 4</span>
+            </div>
+          </div>
+          <div class="ig iir-lbl ripple-g" id="iirRippleGroup" style="flex:0 0 auto;width:clamp(160px,22%,260px)">
+            <label>通過域リップル</label>
+            <div class="irow">
+              <input type="range" id="iirRngRipple" class="iir-range" min="0.1" max="3" step="0.1" value="1" oninput="onIirRippleChange()">
+              <span class="ival p" id="iirValRipple">1.0 dB</span>
+            </div>
+          </div>
+        </div>
+        <div class="method-desc" id="iirMethodDesc"></div>
+      </div>
+      <!-- Row 2: fc (IIR) -->
+      <div class="param-section">
+        <div class="param-row iir-fc-single" id="iirFcSingle">
+          <div class="ig iir-lbl" style="flex:0 0 auto;width:clamp(180px,30%,300px)">
+            <label id="iirLblFc">カットオフ周波数 fc</label>
+            <div class="irow">
+              <input type="range" id="iirRngFc" class="iir-range" min="2" max="98" step="1" value="50" oninput="onIirFcChange()">
+              <span class="ival p" id="iirValFc">—</span>
+            </div>
+          </div>
+        </div>
+        <div class="param-row iir-fc-dual" id="iirFcDual" style="gap:20px">
+          <div class="ig iir-lbl" style="flex:0 0 auto;width:clamp(180px,30%,300px)">
+            <label>下限カットオフ fc_low</label>
+            <div class="irow">
+              <input type="range" id="iirRngFcLow" class="iir-range" min="2" max="96" step="1" value="25" oninput="onIirFcLowChange()">
+              <span class="ival p" id="iirValFcLow">—</span>
+            </div>
+          </div>
+          <div class="ig iir-lbl" style="flex:0 0 auto;width:clamp(180px,30%,300px)">
+            <label>上限カットオフ fc_high</label>
+            <div class="irow">
+              <input type="range" id="iirRngFcHigh" class="iir-range" min="4" max="98" step="1" value="75" oninput="onIirFcHighChange()">
+              <span class="ival p" id="iirValFcHigh">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- IIR Result cards -->
+  <div class="result-section iir">
+    <div class="res-label p">IIR 計算結果 — カードをクリックで説明</div>
+    <div class="result-grid">
+      <div class="rc iir" id="iirRcFc1" onclick="showInfo('iir_fc1')">
+        <div class="rl" id="iirLblRcFc1">カットオフ fc</div>
+        <div class="rv o" id="iirResFc1">—</div>
+        <div class="hint">tap for detail</div>
+      </div>
+      <div class="rc iir hidden" id="iirRcFc2" onclick="showInfo('iir_fc2')">
+        <div class="rl">上限 fc_high</div>
+        <div class="rv o" id="iirResFc2">—</div>
+        <div class="hint">tap for detail</div>
+      </div>
+      <div class="rc iir" onclick="showInfo('iir_order')">
+        <div class="rl">フィルター次数</div>
+        <div class="rv p" id="iirResOrder">—</div>
+        <div class="hint">tap for detail</div>
+      </div>
+      <div class="rc iir" onclick="showInfo('iir_m3db')">
+        <div class="rl">−3 dB 周波数</div>
+        <div class="rv g" id="iirResM3db">—</div>
+        <div class="hint">tap for detail</div>
+      </div>
+      <div class="rc iir" onclick="showInfo('iir_atten')">
+        <div class="rl">阻止域減衰（実測）</div>
+        <div class="rv gold" id="iirResAtten">—</div>
+        <div class="hint">tap for detail</div>
+      </div>
+      <div class="rc iir" onclick="showInfo('iir_stab')">
+        <div class="rl">安定性</div>
+        <div class="rv" id="iirResStab">—</div>
+        <div class="hint">tap for detail</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- IIR Graphs -->
+  <div class="graph-grid">
+    <div class="panel">
+      <div class="panel-header"><div class="dot dot-p"></div>IIR 周波数応答 |H(f)| [dB]</div>
+      <canvas id="iirCanvasMag" style="height:270px"></canvas>
+      <div class="legend">
+        <div class="li"><div class="ls" style="background:var(--purple)"></div><span>|H(f)| [dB]</span></div>
+        <div class="li"><div class="ld" style="border-color:var(--accent2)"></div><span>fc</span></div>
+        <div class="li"><div class="ld" style="border-color:var(--red)"></div><span>−3 dB</span></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><div class="dot" style="background:var(--gold)"></div>IIR 位相応答 [degree]</div>
+      <canvas id="iirCanvasPhase" style="height:270px"></canvas>
+      <div class="legend">
+        <div class="li"><div class="ls" style="background:var(--gold)"></div><span>位相 [°]（アンラップ済み）</span></div>
+        <div class="li"><div class="ld" style="border-color:var(--accent2)"></div><span>fc</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- IIR Biquad SOS table -->
+  <div class="panel">
+    <div class="panel-header"><div class="dot dot-p"></div>バイクアッド係数（SOS — 2次セクション直列）</div>
+    <div class="bq-wrap">
+      <table class="bq-table">
+        <thead><tr><th>Section</th><th>b0</th><th>b1</th><th>b2</th><th>a1</th><th>a2</th><th>|z| max</th></tr></thead>
+        <tbody id="iirBqBody"></tbody>
+      </table>
+    </div>
+    <div class="coeff-note" id="iirBqNote">設計後に係数が表示されます</div>
+  </div>
+
+</div><!-- /container -->
 
 <script>
-// ===== State =====
+// ============================================================
+// SHARED
+// ============================================================
 let fsHz = 80e6;
-let N = 15;
-let filterType = 'lpf';
-let winType = 'hamming';
-let beta = 5.0;
-let fcNorm    = 0.25;  // LPF/HPF cutoff
-let fcLowNorm  = 0.125; // BPF low
-let fcHighNorm = 0.375; // BPF high
 
-// ===== FFT (Cooley-Tukey radix-2) =====
-function fft(re, im) {
-  const n = re.length;
-  let j = 0;
-  for (let i = 1; i < n; i++) {
-    let bit = n >> 1;
-    for (; j & bit; bit >>= 1) j ^= bit;
-    j ^= bit;
-    if (i < j) { [re[i],re[j]]=[re[j],re[i]]; [im[i],im[j]]=[im[j],im[i]]; }
-  }
-  for (let len = 2; len <= n; len <<= 1) {
-    const ang = -2*Math.PI/len, wR = Math.cos(ang), wI = Math.sin(ang);
-    for (let i = 0; i < n; i += len) {
-      let cR = 1, cI = 0;
-      for (let k = 0; k < len>>1; k++) {
-        const uR=re[i+k], uI=im[i+k];
-        const vR=re[i+k+len/2]*cR-im[i+k+len/2]*cI, vI=re[i+k+len/2]*cI+im[i+k+len/2]*cR;
-        re[i+k]=uR+vR; im[i+k]=uI+vI; re[i+k+len/2]=uR-vR; im[i+k+len/2]=uI-vI;
-        [cR,cI]=[cR*wR-cI*wI, cR*wI+cI*wR];
-      }
-    }
-  }
-}
-
-// ===== Bessel I0 =====
-function besselI0(x) {
-  let s=1, t=1;
-  for (let k=1; k<=35; k++) { t*=(x*.5/k)*(x*.5/k); s+=t; if(t<1e-15*s) break; }
-  return s;
-}
-
-// ===== Window =====
-function winVal(type, n, N, beta) {
-  const M = N-1;
-  switch(type) {
-    case 'rectangular': return 1;
-    case 'hann':     return 0.5*(1-Math.cos(2*Math.PI*n/M));
-    case 'hamming':  return 0.54-0.46*Math.cos(2*Math.PI*n/M);
-    case 'blackman': return 0.42-0.5*Math.cos(2*Math.PI*n/M)+0.08*Math.cos(4*Math.PI*n/M);
-    case 'bartlett': return 1-Math.abs(2*n/M-1);
-    case 'kaiser': { const r=2*n/M-1, a=1-r*r; return a<0?0:besselI0(beta*Math.sqrt(a))/besselI0(beta); }
-  }
-  return 1;
-}
-
-// ===== Ideal LPF sinc =====
-function sincLPF(t, fc) {
-  return Math.abs(t)<1e-10 ? 2*fc : Math.sin(2*Math.PI*fc*t)/(Math.PI*t);
-}
-
-// ===== FIR design =====
-function designFIR() {
-  const M = (N-1)/2;
-  const h = new Float64Array(N);
-  for (let n=0; n<N; n++) {
-    const t = n-M;
-    const w = winVal(winType, n, N, beta);
-    let ideal;
-    if (filterType === 'lpf') {
-      ideal = sincLPF(t, fcNorm);
-    } else if (filterType === 'hpf') {
-      // h_HPF = δ[n-M] - h_LPF
-      const delta = Math.abs(t)<1e-10 ? 1 : 0;
-      ideal = delta - sincLPF(t, fcNorm);
-    } else { // bpf
-      // h_BPF = h_LPF(fc_high) - h_LPF(fc_low)
-      ideal = sincLPF(t, fcHighNorm) - sincLPF(t, fcLowNorm);
-    }
-    h[n] = ideal * w;
-  }
-  return h;
-}
-
-// ===== Frequency response (2048-point FFT) =====
-function freqResponse(h) {
-  const NFFT = 2048;
-  const re = new Float64Array(NFFT), im = new Float64Array(NFFT);
-  for (let i=0; i<h.length; i++) re[i] = h[i];
-  fft(re, im);
-  const mag = new Float64Array(NFFT/2);
-  for (let k=0; k<NFFT/2; k++) {
-    const m = Math.sqrt(re[k]*re[k]+im[k]*im[k]);
-    mag[k] = m>1e-14 ? 20*Math.log10(m) : -120;
-  }
-  return mag;
-}
-
-// ===== Ripple / stopband stats =====
-function computeStats(mag) {
-  const NFFT = mag.length*2;
-  let pbStart, pbEnd, sbRanges;
-  if (filterType==='lpf') {
-    pbStart=1; pbEnd=Math.max(2,Math.floor(fcNorm*0.85*NFFT));
-    sbRanges=[[Math.ceil(fcNorm*1.15*NFFT), mag.length]];
-  } else if (filterType==='hpf') {
-    pbStart=Math.ceil(fcNorm*1.15*NFFT); pbEnd=mag.length;
-    sbRanges=[[1, Math.floor(fcNorm*0.85*NFFT)]];
-  } else {
-    pbStart=Math.ceil(fcLowNorm*1.1*NFFT); pbEnd=Math.floor(fcHighNorm*0.9*NFFT);
-    sbRanges=[[1,Math.floor(fcLowNorm*0.9*NFFT)],[Math.ceil(fcHighNorm*1.1*NFFT),mag.length]];
-  }
-  let pbMax=-Infinity, pbMin=Infinity;
-  for (let k=pbStart; k<pbEnd && k<mag.length; k++) {
-    if(mag[k]>pbMax) pbMax=mag[k]; if(mag[k]<pbMin) pbMin=mag[k];
-  }
-  const pbRipple = (pbEnd>pbStart && pbMax>-Infinity) ? Math.abs(pbMax-pbMin) : 0;
-  let sbMax=-Infinity;
-  for (const [s,e] of sbRanges)
-    for (let k=Math.max(0,s); k<Math.min(mag.length,e); k++) if(mag[k]>sbMax) sbMax=mag[k];
-  const sbAtten = sbMax>-Infinity ? -sbMax : 0;
-  return {pbRipple, sbAtten};
-}
-
-// ===== Formatters =====
 function fmtF(hz) {
   if (Math.abs(hz)>=1e6) return (hz/1e6).toFixed(3)+' MHz';
   if (Math.abs(hz)>=1e3) return (hz/1e3).toFixed(2)+' kHz';
@@ -498,7 +579,6 @@ function fmtFAxis(hz) {
 }
 function fmtFUnit() { return fsHz>=1e6?'MHz':fsHz>=1e3?'kHz':'Hz'; }
 
-// ===== Canvas HiDPI =====
 function initCanvas(c) {
   const dpr=window.devicePixelRatio||1;
   c._lw=c.offsetWidth; c._lh=c.offsetHeight;
@@ -507,137 +587,203 @@ function initCanvas(c) {
 function getCtx(c) {
   const ctx=c.getContext('2d'); ctx.setTransform(c._dpr,0,0,c._dpr,0,0); return ctx;
 }
-
-// ===== Draw impulse response =====
-function drawImpulse(h) {
-  const c=document.getElementById('canvasImp'), W=c._lw, H=c._lh, ctx=getCtx(c);
-  const dark=document.documentElement.getAttribute('data-theme')==='dark';
-  const BG=dark?'#111827':'#ffffff', GRID=dark?'rgba(0,212,255,0.06)':'rgba(100,116,139,0.09)';
-  const ZERO=dark?'rgba(226,232,240,0.2)':'rgba(30,41,59,0.15)', TXT='#64748b';
-  const BP=dark?'#00d4ff':'#0284c7', BN=dark?'#ff6b35':'#ea580c', CT=dark?'#ff6b35':'#ea580c';
-  ctx.fillStyle=BG; ctx.fillRect(0,0,W,H);
-  const pad={t:22,r:14,b:36,l:58}, gW=W-pad.l-pad.r, gH=H-pad.t-pad.b;
-  const M=(h.length-1)/2;
-  let maxAbs=0; for(let i=0;i<h.length;i++) maxAbs=Math.max(maxAbs,Math.abs(h[i]));
-  if(maxAbs<1e-14) maxAbs=1;
-  const yS=(gH/2)/(maxAbs*1.18), zy=pad.t+gH/2;
-  ctx.strokeStyle=GRID; ctx.lineWidth=1;
-  for(let i=0;i<=4;i++){const y=pad.t+i*gH/4; ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+gW,y);ctx.stroke();}
-  ctx.strokeStyle=ZERO; ctx.lineWidth=1.5;
-  ctx.beginPath();ctx.moveTo(pad.l,zy);ctx.lineTo(pad.l+gW,zy);ctx.stroke();
-  ctx.fillStyle=TXT; ctx.font='10px "Space Mono",monospace'; ctx.textAlign='right';
-  [maxAbs,maxAbs*.5,0,-maxAbs*.5,-maxAbs].forEach((v,i)=>
-    ctx.fillText(v===0?'0':v.toFixed(3),pad.l-4,pad.t+i*gH/4+3));
-  const cx=h.length>1?pad.l+(M/(h.length-1))*gW:pad.l+gW/2;
-  ctx.strokeStyle=CT; ctx.lineWidth=1; ctx.setLineDash([4,4]);
-  ctx.beginPath();ctx.moveTo(cx,pad.t);ctx.lineTo(cx,pad.t+gH);ctx.stroke();
-  ctx.setLineDash([]);
-  const circR=Math.max(2.5,Math.min(5,gW/h.length*0.3));
-  const stemW=Math.max(1.5,Math.min(3,gW/h.length*0.25));
-  for(let n=0;n<h.length;n++){
-    const x=h.length>1?pad.l+(n/(h.length-1))*gW:pad.l+gW/2, y=zy-h[n]*yS;
-    const col=h[n]>=0?BP:BN;
-    ctx.strokeStyle=col; ctx.lineWidth=stemW; ctx.beginPath();ctx.moveTo(x,zy);ctx.lineTo(x,y);ctx.stroke();
-    ctx.fillStyle=col; ctx.beginPath();ctx.arc(x,y,circR,0,2*Math.PI);ctx.fill();
-  }
-  ctx.fillStyle=TXT; ctx.font='10px "Space Mono",monospace'; ctx.textAlign='center';
-  const step=Math.max(1,Math.floor(h.length/8));
-  for(let n=0;n<h.length;n+=step){
-    const x=h.length>1?pad.l+(n/(h.length-1))*gW:pad.l+gW/2; ctx.fillText(n,x,pad.t+gH+16);
-  }
-  ctx.textAlign='left'; ctx.fillText('n',pad.l+gW+2,pad.t+gH+16);
+function toggleTheme() {
+  const html=document.documentElement;
+  html.setAttribute('data-theme',html.getAttribute('data-theme')==='dark'?'light':'dark');
+  updateFIR(); updateIIR();
 }
 
-// ===== Draw frequency response =====
-function drawFreq(mag) {
-  const c=document.getElementById('canvasFreq'), W=c._lw, H=c._lh, ctx=getCtx(c);
+// ============================================================
+// FIR
+// ============================================================
+let N=15, filterType='lpf', winType='hamming', beta=5.0;
+let fcNorm=0.25, fcLowNorm=0.125, fcHighNorm=0.375;
+
+function fft(re, im) {
+  const n=re.length; let j=0;
+  for (let i=1;i<n;i++){
+    let bit=n>>1; for(;j&bit;bit>>=1)j^=bit; j^=bit;
+    if(i<j){[re[i],re[j]]=[re[j],re[i]];[im[i],im[j]]=[im[j],im[i]];}
+  }
+  for(let len=2;len<=n;len<<=1){
+    const ang=-2*Math.PI/len,wR=Math.cos(ang),wI=Math.sin(ang);
+    for(let i=0;i<n;i+=len){
+      let cR=1,cI=0;
+      for(let k=0;k<len>>1;k++){
+        const uR=re[i+k],uI=im[i+k];
+        const vR=re[i+k+len/2]*cR-im[i+k+len/2]*cI,vI=re[i+k+len/2]*cI+im[i+k+len/2]*cR;
+        re[i+k]=uR+vR;im[i+k]=uI+vI;re[i+k+len/2]=uR-vR;im[i+k+len/2]=uI-vI;
+        [cR,cI]=[cR*wR-cI*wI,cR*wI+cI*wR];
+      }
+    }
+  }
+}
+function besselI0(x){let s=1,t=1;for(let k=1;k<=35;k++){t*=(x*.5/k)*(x*.5/k);s+=t;if(t<1e-15*s)break;}return s;}
+function winVal(type,n,N,beta){
+  const M=N-1;
+  switch(type){
+    case 'rectangular':return 1;
+    case 'hann':return 0.5*(1-Math.cos(2*Math.PI*n/M));
+    case 'hamming':return 0.54-0.46*Math.cos(2*Math.PI*n/M);
+    case 'blackman':return 0.42-0.5*Math.cos(2*Math.PI*n/M)+0.08*Math.cos(4*Math.PI*n/M);
+    case 'bartlett':return 1-Math.abs(2*n/M-1);
+    case 'kaiser':{const r=2*n/M-1,a=1-r*r;return a<0?0:besselI0(beta*Math.sqrt(a))/besselI0(beta);}
+  }
+  return 1;
+}
+function sincLPF(t,fc){return Math.abs(t)<1e-10?2*fc:Math.sin(2*Math.PI*fc*t)/(Math.PI*t);}
+function designFIR(){
+  const M=(N-1)/2, h=new Float64Array(N);
+  for(let n=0;n<N;n++){
+    const t=n-M, w=winVal(winType,n,N,beta);
+    let ideal;
+    if(filterType==='lpf') ideal=sincLPF(t,fcNorm);
+    else if(filterType==='hpf'){const delta=Math.abs(t)<1e-10?1:0;ideal=delta-sincLPF(t,fcNorm);}
+    else ideal=sincLPF(t,fcHighNorm)-sincLPF(t,fcLowNorm);
+    h[n]=ideal*w;
+  }
+  return h;
+}
+function firFreqResponse(h){
+  const NFFT=2048,re=new Float64Array(NFFT),im=new Float64Array(NFFT);
+  for(let i=0;i<h.length;i++) re[i]=h[i];
+  fft(re,im);
+  const mag=new Float64Array(NFFT/2);
+  for(let k=0;k<NFFT/2;k++){const m=Math.sqrt(re[k]*re[k]+im[k]*im[k]);mag[k]=m>1e-14?20*Math.log10(m):-120;}
+  return mag;
+}
+function computeFirStats(mag){
+  const NFFT=mag.length*2;
+  let pbStart,pbEnd,sbRanges;
+  if(filterType==='lpf'){pbStart=1;pbEnd=Math.max(2,Math.floor(fcNorm*0.85*NFFT));sbRanges=[[Math.ceil(fcNorm*1.15*NFFT),mag.length]];}
+  else if(filterType==='hpf'){pbStart=Math.ceil(fcNorm*1.15*NFFT);pbEnd=mag.length;sbRanges=[[1,Math.floor(fcNorm*0.85*NFFT)]];}
+  else{pbStart=Math.ceil(fcLowNorm*1.1*NFFT);pbEnd=Math.floor(fcHighNorm*0.9*NFFT);sbRanges=[[1,Math.floor(fcLowNorm*0.9*NFFT)],[Math.ceil(fcHighNorm*1.1*NFFT),mag.length]];}
+  let pbMax=-Infinity,pbMin=Infinity;
+  for(let k=pbStart;k<pbEnd&&k<mag.length;k++){if(mag[k]>pbMax)pbMax=mag[k];if(mag[k]<pbMin)pbMin=mag[k];}
+  const pbRipple=(pbEnd>pbStart&&pbMax>-Infinity)?Math.abs(pbMax-pbMin):0;
+  let sbMax=-Infinity;
+  for(const[s,e]of sbRanges)for(let k=Math.max(0,s);k<Math.min(mag.length,e);k++)if(mag[k]>sbMax)sbMax=mag[k];
+  return{pbRipple,sbAtten:sbMax>-Infinity?-sbMax:0};
+}
+
+function drawImpulse(h){
+  const c=document.getElementById('canvasImp'),W=c._lw,H=c._lh,ctx=getCtx(c);
   const dark=document.documentElement.getAttribute('data-theme')==='dark';
-  const BG=dark?'#111827':'#ffffff', GRID=dark?'rgba(0,212,255,0.06)':'rgba(100,116,139,0.09)';
-  const TXT='#64748b', LINE=dark?'#22c55e':'#16a34a', FILL=dark?'rgba(34,197,94,0.06)':'rgba(22,163,74,0.05)';
-  const FC_L=dark?'#ff6b35':'#ea580c', M3_L=dark?'#f87171':'#dc2626', ZL=dark?'rgba(226,232,240,0.25)':'rgba(30,41,59,0.2)';
-  ctx.fillStyle=BG; ctx.fillRect(0,0,W,H);
-  const pad={t:22,r:14,b:36,l:46}, gW=W-pad.l-pad.r, gH=H-pad.t-pad.b;
-  const NFFT=mag.length*2, dbMin=-80, dbMax=5, dbR=dbMax-dbMin;
-  const f2x=f=>pad.l+(f/(fsHz/2))*gW, db2y=db=>pad.t+(1-(db-dbMin)/dbR)*gH;
-  const dbTicks=[-80,-60,-40,-20,-3,0];
+  const BG=dark?'#111827':'#ffffff',GRID=dark?'rgba(0,212,255,0.06)':'rgba(100,116,139,0.09)';
+  const ZERO=dark?'rgba(226,232,240,0.2)':'rgba(30,41,59,0.15)',TXT='#64748b';
+  const BP=dark?'#00d4ff':'#0284c7',BN=dark?'#ff6b35':'#ea580c',CT=dark?'#ff6b35':'#ea580c';
+  ctx.fillStyle=BG;ctx.fillRect(0,0,W,H);
+  const pad={t:22,r:14,b:36,l:58},gW=W-pad.l-pad.r,gH=H-pad.t-pad.b;
+  const M=(h.length-1)/2;
+  let maxAbs=0;for(let i=0;i<h.length;i++)maxAbs=Math.max(maxAbs,Math.abs(h[i]));
+  if(maxAbs<1e-14)maxAbs=1;
+  const yS=(gH/2)/(maxAbs*1.18),zy=pad.t+gH/2;
+  ctx.strokeStyle=GRID;ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){const y=pad.t+i*gH/4;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+gW,y);ctx.stroke();}
+  ctx.strokeStyle=ZERO;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(pad.l,zy);ctx.lineTo(pad.l+gW,zy);ctx.stroke();
+  ctx.fillStyle=TXT;ctx.font='10px "Space Mono",monospace';ctx.textAlign='right';
+  [maxAbs,maxAbs*.5,0,-maxAbs*.5,-maxAbs].forEach((v,i)=>ctx.fillText(v===0?'0':v.toFixed(3),pad.l-4,pad.t+i*gH/4+3));
+  const cx=h.length>1?pad.l+(M/(h.length-1))*gW:pad.l+gW/2;
+  ctx.strokeStyle=CT;ctx.lineWidth=1;ctx.setLineDash([4,4]);
+  ctx.beginPath();ctx.moveTo(cx,pad.t);ctx.lineTo(cx,pad.t+gH);ctx.stroke();ctx.setLineDash([]);
+  const circR=Math.max(2.5,Math.min(5,gW/h.length*0.3)),stemW=Math.max(1.5,Math.min(3,gW/h.length*0.25));
+  for(let n=0;n<h.length;n++){
+    const x=h.length>1?pad.l+(n/(h.length-1))*gW:pad.l+gW/2,y=zy-h[n]*yS,col=h[n]>=0?BP:BN;
+    ctx.strokeStyle=col;ctx.lineWidth=stemW;ctx.beginPath();ctx.moveTo(x,zy);ctx.lineTo(x,y);ctx.stroke();
+    ctx.fillStyle=col;ctx.beginPath();ctx.arc(x,y,circR,0,2*Math.PI);ctx.fill();
+  }
+  ctx.fillStyle=TXT;ctx.font='10px "Space Mono",monospace';ctx.textAlign='center';
+  const step=Math.max(1,Math.floor(h.length/8));
+  for(let n=0;n<h.length;n+=step){const x=h.length>1?pad.l+(n/(h.length-1))*gW:pad.l+gW/2;ctx.fillText(n,x,pad.t+gH+16);}
+  ctx.textAlign='left';ctx.fillText('n',pad.l+gW+2,pad.t+gH+16);
+}
+
+function drawFreqCanvas(canvasId,mag,lineColor,fillColor,fcLines,dbMin,dbMax){
+  const c=document.getElementById(canvasId),W=c._lw,H=c._lh,ctx=getCtx(c);
+  const dark=document.documentElement.getAttribute('data-theme')==='dark';
+  const BG=dark?'#111827':'#ffffff',GRID=dark?'rgba(0,212,255,0.06)':'rgba(100,116,139,0.09)';
+  const TXT='#64748b',M3_L=dark?'#f87171':'#dc2626',FC_L=dark?'#ff6b35':'#ea580c';
+  const ZL=dark?'rgba(226,232,240,0.25)':'rgba(30,41,59,0.2)';
+  ctx.fillStyle=BG;ctx.fillRect(0,0,W,H);
+  const pad={t:22,r:14,b:36,l:46},gW=W-pad.l-pad.r,gH=H-pad.t-pad.b;
+  const NFFT=mag.length*2,dbR=dbMax-dbMin;
+  const f2x=f=>pad.l+(f/(fsHz/2))*gW;
+  const db2y=db=>pad.t+(1-(db-dbMin)/dbR)*gH;
+  const dbTicks=[dbMin,dbMin+(dbMax-dbMin)*0.25,dbMin+(dbMax-dbMin)*0.5,dbMin+(dbMax-dbMin)*0.75,-3,0].filter((v,i,a)=>a.indexOf(v)===i&&v>=dbMin&&v<=dbMax+1);
   dbTicks.forEach(db=>{
-    ctx.strokeStyle=db===0?ZL:GRID; ctx.lineWidth=db===0?1.5:1;
+    ctx.strokeStyle=db===0?ZL:GRID;ctx.lineWidth=db===0?1.5:1;
     ctx.beginPath();ctx.moveTo(pad.l,db2y(db));ctx.lineTo(pad.l+gW,db2y(db));ctx.stroke();
   });
-  ctx.strokeStyle=GRID; ctx.lineWidth=1;
+  ctx.strokeStyle=GRID;ctx.lineWidth=1;
   for(let i=0;i<=5;i++){const x=pad.l+(i/5)*gW;ctx.beginPath();ctx.moveTo(x,pad.t);ctx.lineTo(x,pad.t+gH);ctx.stroke();}
-  ctx.strokeStyle=M3_L; ctx.lineWidth=1; ctx.setLineDash([3,5]);
-  ctx.beginPath();ctx.moveTo(pad.l,db2y(-3));ctx.lineTo(pad.l+gW,db2y(-3));ctx.stroke();
-  // fc lines
-  const fcLines = filterType==='bpf'
-    ? [[fcLowNorm*fsHz,'fc_l'],[fcHighNorm*fsHz,'fc_h']]
-    : [[fcNorm*fsHz,'fc']];
+  if(dbMin<=-3&&dbMax>=-3){
+    ctx.strokeStyle=M3_L;ctx.lineWidth=1;ctx.setLineDash([3,5]);
+    ctx.beginPath();ctx.moveTo(pad.l,db2y(-3));ctx.lineTo(pad.l+gW,db2y(-3));ctx.stroke();
+  }
   fcLines.forEach(([fHz,lbl])=>{
     const x=f2x(fHz);
-    ctx.strokeStyle=FC_L; ctx.lineWidth=1.5; ctx.setLineDash([6,4]);
-    ctx.beginPath();ctx.moveTo(x,pad.t);ctx.lineTo(x,pad.t+gH);ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle=FC_L; ctx.font='10px "Space Mono",monospace'; ctx.textAlign='center';
-    ctx.fillText(lbl,x,pad.t-5);
+    ctx.strokeStyle=FC_L;ctx.lineWidth=1.5;ctx.setLineDash([6,4]);
+    ctx.beginPath();ctx.moveTo(x,pad.t);ctx.lineTo(x,pad.t+gH);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=FC_L;ctx.font='10px "Space Mono",monospace';ctx.textAlign='center';ctx.fillText(lbl,x,pad.t-5);
   });
   ctx.setLineDash([]);
-  ctx.fillStyle=FILL; ctx.beginPath(); let first=true;
+  ctx.fillStyle=fillColor;ctx.beginPath();let first=true;
   for(let k=0;k<mag.length;k++){
     const y=db2y(Math.max(dbMin,Math.min(dbMax,mag[k])));
     if(first){ctx.moveTo(f2x(k/NFFT*fsHz),y);first=false;}else ctx.lineTo(f2x(k/NFFT*fsHz),y);
   }
   ctx.lineTo(pad.l+gW,pad.t+gH);ctx.lineTo(pad.l,pad.t+gH);ctx.closePath();ctx.fill();
-  ctx.strokeStyle=LINE; ctx.lineWidth=2; ctx.beginPath(); first=true;
+  ctx.strokeStyle=lineColor;ctx.lineWidth=2;ctx.beginPath();first=true;
   for(let k=0;k<mag.length;k++){
     const y=db2y(Math.max(dbMin,Math.min(dbMax,mag[k])));
     if(first){ctx.moveTo(f2x(k/NFFT*fsHz),y);first=false;}else ctx.lineTo(f2x(k/NFFT*fsHz),y);
   }
   ctx.stroke();
-  ctx.fillStyle=TXT; ctx.font='10px "Space Mono",monospace'; ctx.textAlign='right';
+  ctx.fillStyle=TXT;ctx.font='10px "Space Mono",monospace';ctx.textAlign='right';
   dbTicks.forEach(db=>ctx.fillText(db+'dB',pad.l-3,db2y(db)+3));
   ctx.textAlign='center';
   for(let i=0;i<=5;i++){const f=(fsHz/2)*i/5;ctx.fillText(fmtFAxis(f),pad.l+(i/5)*gW,pad.t+gH+16);}
-  ctx.textAlign='left'; ctx.fillText(fmtFUnit(),pad.l+gW+2,pad.t+gH+16);
+  ctx.textAlign='left';ctx.fillText(fmtFUnit(),pad.l+gW+2,pad.t+gH+16);
 }
 
-// ===== Update table =====
-function updateTable(h) {
-  const M=Math.round((h.length-1)/2), tbody=document.getElementById('coeffBody');
+function drawFirFreq(mag){
+  const dark=document.documentElement.getAttribute('data-theme')==='dark';
+  const LINE=dark?'#22c55e':'#16a34a',FILL=dark?'rgba(34,197,94,0.06)':'rgba(22,163,74,0.05)';
+  const fcLines=filterType==='bpf'?[[fcLowNorm*fsHz,'fc_l'],[fcHighNorm*fsHz,'fc_h']]:[[fcNorm*fsHz,'fc']];
+  drawFreqCanvas('canvasFreq',mag,LINE,FILL,fcLines,-80,5);
+}
+
+function updateFirTable(h){
+  const M=Math.round((h.length-1)/2),tbody=document.getElementById('coeffBody');
   tbody.innerHTML='';
   for(let n=0;n<=M;n++){
     const tr=document.createElement('tr');
-    if(n===M) tr.classList.add('center');
+    if(n===M)tr.classList.add('center');
     tr.innerHTML=`<td>${n}</td><td>${h[n].toFixed(8)}</td>`;
     tbody.appendChild(tr);
   }
-  document.getElementById('coeffNote').textContent=
-    `表示: n = 0 〜 ${M}（中心タップ）の独立係数のみ。h[n] = h[${h.length-1}-n] の対称構造（${h.length} タップ中 ${M+1} 個が独立）`;
+  document.getElementById('coeffNote').textContent=`表示: n = 0 〜 ${M}（中心タップ）の独立係数のみ。h[n] = h[${h.length-1}-n] の対称構造（${h.length} タップ中 ${M+1} 個が独立）`;
 }
 
-// ===== Win spec =====
-const WIN_SPEC={
-  rectangular:{sl:21,trans:0.9},bartlett:{sl:26,trans:2.0},
-  hann:{sl:44,trans:3.1},hamming:{sl:53,trans:3.3},
-  blackman:{sl:74,trans:5.5},kaiser:{sl:null,trans:null}
+const WIN_SPEC={rectangular:{sl:21,trans:0.9},bartlett:{sl:26,trans:2.0},hann:{sl:44,trans:3.1},hamming:{sl:53,trans:3.3},blackman:{sl:74,trans:5.5},kaiser:{sl:null,trans:null}};
+const WIN_DESC={
+  rectangular:`<strong>Rectangular（矩形窓）</strong> — <span class="spec">SL: −13 dB ／ 遷移帯: 0.9/N × fs</span><br>係数をそのまま切り取るだけ。計算は最速ですが遮断域に強いリップルが残ります（ギブス現象）。理論学習・比較用途向け。`,
+  bartlett:`<strong>Bartlett（三角窓）</strong> — <span class="spec">SL: −26 dB ／ 遷移帯: 2.0/N × fs</span><br>三角形の形でなだらかに減衰。シンプルで計算が軽く、あまり厳しい仕様でない平滑化用途に。`,
+  hann:`<strong>Hann（ハン窓）</strong> — <span class="spec">SL: −31 dB ／ 遷移帯: 3.1/N × fs</span><br>コサイン曲線の滑らかな形で自然なカットオフを実現。音響解析・スペクトル計測の定番窓関数。`,
+  hamming:`<strong>Hamming（ハミング窓）</strong> — <span class="spec">SL: −41 dB ／ 遷移帯: 3.3/N × fs</span><br>「迷ったらこれ」の窓関数。Hannを微調整して第1サイドローブを特に低く抑えたもの。FIRフィルター設計の基本。`,
+  blackman:`<strong>Blackman（ブラックマン窓）</strong> — <span class="spec">SL: −58 dB ／ 遷移帯: 5.5/N × fs</span><br>阻止域を徹底して低くしたいときの選択肢。遷移帯域は広くなるが高精度な計測・オーディオ用途に。`,
+  kaiser:`<strong>Kaiser（カイザー窓）</strong> — <span class="spec">βパラメータで特性を自由に調整</span><br>βを上げると阻止域減衰が増え、代わりに遷移帯域が広がります（β=4: ≈−57 dB）。すべての窓関数を内包する万能型。`,
 };
+function updateWinDesc(){document.getElementById('winDesc').innerHTML=WIN_DESC[winType]||'';}
 
-// ===== Update results =====
-function updateResults(h, mag) {
-  const M=(h.length-1)/2, delayS=M/fsHz;
-  const {pbRipple,sbAtten}=computeStats(mag);
+function updateFirResults(h,mag){
+  const M=(h.length-1)/2,delayS=M/fsHz;
+  const{pbRipple,sbAtten}=computeFirStats(mag);
   const spec=WIN_SPEC[winType];
   let transHz;
-  if(winType==='kaiser'){
-    const A=beta<0.5?21:Math.round(beta/0.1102+8.7);
-    transHz=(A-8)/(2.285*h.length)*fsHz;
-  } else {
-    transHz=spec.trans/h.length*fsHz;
-  }
+  if(winType==='kaiser'){const A=beta<0.5?21:Math.round(beta/0.1102+8.7);transHz=(A-8)/(2.285*h.length)*fsHz;}
+  else transHz=spec.trans/h.length*fsHz;
   const delayStr=delayS>=1e-6?(delayS*1e6).toFixed(3)+' μs':(delayS*1e9).toFixed(2)+' ns';
-  const sbStr=sbAtten>0?'−'+sbAtten.toFixed(1)+' dB':'—';
-  const ripStr=pbRipple<0.001?'< 0.001 dB':pbRipple.toFixed(3)+' dB';
-
-  // Adapt cards for filter type
   const isBPF=filterType==='bpf';
   document.getElementById('rcFc2').classList.toggle('hidden',!isBPF);
   if(isBPF){
@@ -654,158 +800,406 @@ function updateResults(h, mag) {
   }
   document.getElementById('resN').textContent=h.length+' タップ';
   document.getElementById('resDelay').textContent=delayStr;
-  document.getElementById('resAtten').textContent=sbStr;
-  document.getElementById('resRipple').textContent=ripStr;
+  document.getElementById('resAtten').textContent=sbAtten>0?'−'+sbAtten.toFixed(1)+' dB':'—';
+  document.getElementById('resRipple').textContent=pbRipple<0.001?'< 0.001 dB':pbRipple.toFixed(3)+' dB';
 }
 
-// ===== Window descriptions =====
-const WIN_DESC={
-  rectangular:`<strong>Rectangular（矩形窓）</strong> — <span class="spec">SL: −13 dB ／ 遷移帯: 0.9/N × fs</span><br>係数をそのまま切り取るだけ。計算は最速ですが遮断域に強いリップルが残ります（ギブス現象）。通常の用途ではほぼ使わず、理論学習・比較用途向け。`,
-  bartlett:`<strong>Bartlett（三角窓）</strong> — <span class="spec">SL: −26 dB ／ 遷移帯: 2.0/N × fs</span><br>三角形の形でなだらかに減衰。Rectangularより大幅に改善されます。シンプルで計算が軽く、あまり厳しい仕様でない平滑化用途に。`,
-  hann:`<strong>Hann（ハン窓）</strong> — <span class="spec">SL: −31 dB ／ 遷移帯: 3.1/N × fs</span><br>音響解析・スペクトル計測の定番窓関数。コサイン曲線の滑らかな形で自然なカットオフを実現。FFT解析でもよく使われ、汎用性が高い最初の候補。`,
-  hamming:`<strong>Hamming（ハミング窓）</strong> — <span class="spec">SL: −41 dB ／ 遷移帯: 3.3/N × fs</span><br>「迷ったらこれ」の窓関数。Hannを微調整して第1サイドローブを特に低く抑えたもの。音声通信・デジタル通信の教科書的な選択肢で、FIRフィルター設計の基本。`,
-  blackman:`<strong>Blackman（ブラックマン窓）</strong> — <span class="spec">SL: −58 dB ／ 遷移帯: 5.5/N × fs</span><br>とにかく阻止域を徹底して低くしたいときの選択肢。サイドローブが非常に小さいが、その分遷移帯域が広くなりタップ数が増えます。高精度な計測・オーディオ用途に。`,
-  kaiser:`<strong>Kaiser（カイザー窓）</strong> — <span class="spec">βパラメータで特性を自由に調整</span><br>βを上げると阻止域減衰が増え、代わりに遷移帯域が広がります（β=4: ≈−57 dB）。仕様が決まっていてトレードオフを最適化したいときの最終手段。すべての窓関数を内包する万能型。`,
+function updateFIR(){
+  const h=designFIR(),mag=firFreqResponse(h);
+  initCanvas(document.getElementById('canvasImp'));
+  initCanvas(document.getElementById('canvasFreq'));
+  drawImpulse(h);drawFirFreq(mag);updateFirTable(h);updateFirResults(h,mag);
+}
+
+// FIR event handlers
+function onFsChange(){
+  const v=parseFloat(document.getElementById('inpFs').value);
+  if(!isNaN(v)&&v>0){fsHz=v*1e6;setFcDisplay();setBpfDisplay();iirSetFcDisplay();iirSetBpfDisplay();updateFIR();updateIIR();}
+}
+function onNChange(){N=parseInt(document.getElementById('rngN').value);document.getElementById('valN').textContent='N = '+N;updateFIR();}
+function onTypeChange(){
+  filterType=document.getElementById('selType').value;
+  const isBPF=filterType==='bpf';
+  document.getElementById('fcSingle').classList.toggle('hidden',isBPF);
+  document.getElementById('fcDual').classList.toggle('visible',isBPF);
+  document.getElementById('lblFc').textContent=filterType==='hpf'?'カットオフ周波数 fc（遮断周波数）':'カットオフ周波数 fc';
+  updateFIR();
+}
+function onWinChange(){winType=document.getElementById('selWin').value;document.getElementById('kaiserGroup').classList.toggle('vis',winType==='kaiser');updateWinDesc();updateFIR();}
+function onBetaChange(){beta=parseFloat(document.getElementById('rngBeta').value);document.getElementById('valBeta').textContent='β = '+beta.toFixed(1);updateFIR();}
+function onFcChange(){const pct=parseInt(document.getElementById('rngFc').value);fcNorm=pct/200;setFcDisplay();updateFIR();}
+function onFcLowChange(){
+  const pct=parseInt(document.getElementById('rngFcLow').value);fcLowNorm=pct/200;
+  if(fcLowNorm>=fcHighNorm-0.05){fcHighNorm=fcLowNorm+0.05;document.getElementById('rngFcHigh').value=Math.round(fcHighNorm*200);}
+  setBpfDisplay();updateFIR();
+}
+function onFcHighChange(){
+  const pct=parseInt(document.getElementById('rngFcHigh').value);fcHighNorm=pct/200;
+  if(fcHighNorm<=fcLowNorm+0.05){fcLowNorm=fcHighNorm-0.05;document.getElementById('rngFcLow').value=Math.round(fcLowNorm*200);}
+  setBpfDisplay();updateFIR();
+}
+function setFcDisplay(){document.getElementById('valFc').textContent=fmtF(fcNorm*fsHz);}
+function setBpfDisplay(){document.getElementById('valFcLow').textContent=fmtF(fcLowNorm*fsHz);document.getElementById('valFcHigh').textContent=fmtF(fcHighNorm*fsHz);}
+
+// ============================================================
+// IIR
+// ============================================================
+let iirFilterType='lpf', iirMethod='butterworth', iirN=4, iirRippleDb=1.0;
+let iirFcNorm=0.25, iirFcLowNorm=0.125, iirFcHighNorm=0.375;
+let iirSections=[];
+
+function iirSetFcDisplay(){document.getElementById('iirValFc').textContent=fmtF(iirFcNorm*fsHz);}
+function iirSetBpfDisplay(){document.getElementById('iirValFcLow').textContent=fmtF(iirFcLowNorm*fsHz);document.getElementById('iirValFcHigh').textContent=fmtF(iirFcHighNorm*fsHz);}
+
+// Butterworth prototype poles (LHP only, conjugate pairs + real if odd N)
+function butterPoles(N){
+  const poles=[];
+  for(let k=1;k<=N;k++){
+    const ang=Math.PI/2+Math.PI*(2*k-1)/(2*N);
+    poles.push({re:Math.cos(ang),im:Math.sin(ang)});
+  }
+  return poles;
+}
+// Chebyshev I prototype poles
+function cheby1Poles(N,ripple_dB){
+  const eps=Math.sqrt(Math.pow(10,ripple_dB/10)-1);
+  const v0=Math.asinh(1/eps)/N;
+  const poles=[];
+  for(let k=1;k<=N;k++){
+    const th=Math.PI*(2*k-1)/(2*N);
+    poles.push({re:-Math.sin(th)*Math.sinh(v0),im:Math.cos(th)*Math.cosh(v0)});
+  }
+  return poles;
+}
+
+// Build biquad SOS from analog prototype poles via bilinear transform
+// zeroType: 'lpf','hpf','bpf'
+function buildSOS(analogPoles, zeroType){
+  // bilinear: z = (2+s)/(2-s)  with s = analog pole
+  function bilinear(p){
+    // z = (2+p)/(2-p)
+    const nr={re:2+p.re,im:p.im}, dr={re:2-p.re,im:-p.im};
+    const dm=dr.re*dr.re+dr.im*dr.im;
+    return{re:(nr.re*dr.re+nr.im*dr.im)/dm,im:(nr.im*dr.re-nr.re*dr.im)/dm};
+  }
+
+  // Pair conjugate poles into sections
+  const dP=[...analogPoles];
+  const sections=[];
+  while(dP.length>0){
+    const p=dP.shift();
+    // Find conjugate
+    let conjIdx=-1;
+    for(let k=0;k<dP.length;k++){
+      if(Math.abs(dP[k].re-p.re)<1e-6&&Math.abs(dP[k].im+p.im)<1e-6){conjIdx=k;break;}
+    }
+    if(conjIdx>=0){
+      dP.splice(conjIdx,1);
+      // Conjugate pair → second order
+      const z=bilinear(p);
+      // Section: (z - zk)(z - zk*) = z^2 - 2Re(zk)z + |zk|^2
+      const a1=-2*z.re, a2=z.re*z.re+z.im*z.im;
+      let b0,b1,b2;
+      if(zeroType==='lpf'){b0=1;b1=2;b2=1;}
+      else if(zeroType==='hpf'){b0=1;b1=-2;b2=1;}
+      else{b0=1;b1=0;b2=-1;}
+      sections.push({b:[b0,b1,b2],a:[1,a1,a2],zR:z.re,zI:z.im});
+    } else {
+      // Real pole
+      const z=bilinear(p);
+      // First order → pad as second order with z^2 term = 0 (a2=0)
+      const a1=-z.re;
+      let b0,b1,b2;
+      if(zeroType==='lpf'){b0=1;b1=1;b2=0;}
+      else if(zeroType==='hpf'){b0=1;b1=-1;b2=0;}
+      else{b0=1;b1=0;b2=0;}
+      sections.push({b:[b0,b1,b2],a:[1,a1,0],zR:z.re,zI:0});
+    }
+  }
+  return sections;
+}
+
+function normalizeGain(secs, refNorm){
+  // Compute H(e^jw) at refNorm (0=DC, 0.5=Nyquist) and scale first section
+  const w=2*Math.PI*refNorm;
+  let gR=1,gI=0;
+  for(const s of secs){
+    // H(z) = (b0 + b1*z^-1 + b2*z^-2)/(1 + a1*z^-1 + a2*z^-2) at z=e^jw
+    const cosw=Math.cos(w),sinw=Math.sin(w),cos2w=Math.cos(2*w),sin2w=Math.sin(2*w);
+    const nR=s.b[0]+s.b[1]*cosw+s.b[2]*cos2w,nI=-s.b[1]*sinw-s.b[2]*sin2w;
+    const dR=1+s.a[1]*cosw+s.a[2]*cos2w,dI=-s.a[1]*sinw-s.a[2]*sin2w;
+    const dm=dR*dR+dI*dI;
+    const hR=(nR*dR+nI*dI)/dm,hI=(nI*dR-nR*dI)/dm;
+    [gR,gI]=[gR*hR-gI*hI,gR*hI+gI*hR];
+  }
+  const gMag=Math.sqrt(gR*gR+gI*gI);
+  if(gMag<1e-12) return secs;
+  const scale=1/gMag;
+  const out=[...secs];
+  out[0]={...out[0],b:[out[0].b[0]*scale,out[0].b[1]*scale,out[0].b[2]*scale]};
+  return out;
+}
+
+function designIIR(){
+  let apoles;
+  if(iirMethod==='butterworth') apoles=butterPoles(iirN);
+  else apoles=cheby1Poles(iirN,iirRippleDb);
+
+  let txPoles=[];
+  if(iirFilterType==='lpf'){
+    // LP prototype → LP: p_d = Ωa * p_lp, Ωa=2*tan(π*fc)
+    const Oa=2*Math.tan(Math.PI*iirFcNorm);
+    for(const p of apoles) txPoles.push({re:p.re*Oa,im:p.im*Oa});
+  } else if(iirFilterType==='hpf'){
+    // LP → HP: p_hp = Ωa / p_lp
+    const Oa=2*Math.tan(Math.PI*iirFcNorm);
+    for(const p of apoles){
+      const dm=p.re*p.re+p.im*p.im;
+      txPoles.push({re:Oa*p.re/dm,im:-Oa*p.im/dm});
+    }
+  } else {
+    // LP → BP
+    const Ol=2*Math.tan(Math.PI*iirFcLowNorm),Oh=2*Math.tan(Math.PI*iirFcHighNorm);
+    const O0=Math.sqrt(Ol*Oh),BW=Oh-Ol;
+    for(const p of apoles){
+      const bR=BW*p.re,bI=BW*p.im;
+      const dR=bR*bR-bI*bI-4*O0*O0,dI=2*bR*bI;
+      const dm=Math.sqrt(dR*dR+dI*dI),da=Math.atan2(dI,dR);
+      const sr=Math.sqrt(dm)*Math.cos(da/2),si=Math.sqrt(dm)*Math.sin(da/2);
+      txPoles.push({re:(bR+sr)/2,im:(bI+si)/2});
+      txPoles.push({re:(bR-sr)/2,im:(bI-si)/2});
+    }
+  }
+
+  let secs=buildSOS(txPoles,iirFilterType);
+  // Normalize gain
+  const refNorm=iirFilterType==='lpf'?0:iirFilterType==='hpf'?0.499:(iirFcLowNorm+iirFcHighNorm)/2;
+  secs=normalizeGain(secs,refNorm);
+  return secs;
+}
+
+function iirFreqResponse(secs){
+  const NPTS=512;
+  const mag=new Float64Array(NPTS),phase=new Float64Array(NPTS);
+  for(let k=0;k<NPTS;k++){
+    const w=Math.PI*k/NPTS;
+    let gR=1,gI=0,phAcc=0;
+    for(const s of secs){
+      const cosw=Math.cos(w),sinw=Math.sin(w),cos2w=Math.cos(2*w),sin2w=Math.sin(2*w);
+      const nR=s.b[0]+s.b[1]*cosw+s.b[2]*cos2w,nI=-s.b[1]*sinw-s.b[2]*sin2w;
+      const dR=1+s.a[1]*cosw+s.a[2]*cos2w,dI=-s.a[1]*sinw-s.a[2]*sin2w;
+      const dm=dR*dR+dI*dI;
+      const hR=(nR*dR+nI*dI)/dm,hI=(nI*dR-nR*dI)/dm;
+      [gR,gI]=[gR*hR-gI*hI,gR*hI+gI*hR];
+      phAcc+=Math.atan2(nI,nR)-Math.atan2(dI,dR);
+    }
+    const m=Math.sqrt(gR*gR+gI*gI);
+    mag[k]=m>1e-14?20*Math.log10(m):-120;
+    phase[k]=phAcc;
+  }
+  // Unwrap phase
+  for(let k=1;k<NPTS;k++){
+    let d=phase[k]-phase[k-1];
+    while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;
+    phase[k]=phase[k-1]+d;
+  }
+  return{mag,phase};
+}
+
+function drawIirPhase(phase,fcLines){
+  const c=document.getElementById('iirCanvasPhase'),W=c._lw,H=c._lh,ctx=getCtx(c);
+  const dark=document.documentElement.getAttribute('data-theme')==='dark';
+  const BG=dark?'#111827':'#ffffff',GRID=dark?'rgba(0,212,255,0.06)':'rgba(100,116,139,0.09)';
+  const TXT='#64748b',LINE=dark?'#fbbf24':'#d97706',FC_L=dark?'#ff6b35':'#ea580c';
+  ctx.fillStyle=BG;ctx.fillRect(0,0,W,H);
+  const pad={t:22,r:14,b:36,l:50},gW=W-pad.l-pad.r,gH=H-pad.t-pad.b;
+  const NPTS=phase.length;
+  const phDeg=Array.from(phase,v=>v*180/Math.PI);
+  let phMin=Math.min(...phDeg),phMax=Math.max(...phDeg);
+  if(phMin===phMax){phMin-=180;phMax+=180;}
+  const pad_v=Math.abs(phMax-phMin)*0.1;
+  phMin=Math.floor((phMin-pad_v)/90)*90;
+  phMax=Math.ceil((phMax+pad_v)/90)*90;
+  const phR=phMax-phMin||360;
+  const f2x=f=>pad.l+(f/(fsHz/2))*gW;
+  const ph2y=ph=>pad.t+(1-(ph-phMin)/phR)*gH;
+  ctx.strokeStyle=GRID;ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){const y=pad.t+i*gH/4;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+gW,y);ctx.stroke();}
+  for(let i=0;i<=5;i++){const x=pad.l+(i/5)*gW;ctx.beginPath();ctx.moveTo(x,pad.t);ctx.lineTo(x,pad.t+gH);ctx.stroke();}
+  ctx.setLineDash([]);
+  fcLines.forEach(([fHz,lbl])=>{
+    const x=f2x(fHz);
+    ctx.strokeStyle=FC_L;ctx.lineWidth=1.5;ctx.setLineDash([6,4]);
+    ctx.beginPath();ctx.moveTo(x,pad.t);ctx.lineTo(x,pad.t+gH);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=FC_L;ctx.font='10px "Space Mono",monospace';ctx.textAlign='center';ctx.fillText(lbl,x,pad.t-5);
+  });
+  ctx.strokeStyle=LINE;ctx.lineWidth=2;ctx.beginPath();let first=true;
+  for(let k=0;k<NPTS;k++){
+    const f=k/NPTS*(fsHz/2),y=ph2y(phDeg[k]);
+    if(first){ctx.moveTo(f2x(f),y);first=false;}else ctx.lineTo(f2x(f),y);
+  }
+  ctx.stroke();
+  ctx.fillStyle=TXT;ctx.font='10px "Space Mono",monospace';ctx.textAlign='right';
+  const nTicks=Math.min(7,Math.abs(phR/90)+1);
+  for(let i=0;i<=nTicks;i++){
+    const ph=phMin+i*(phR/nTicks);
+    ctx.fillText(ph.toFixed(0)+'°',pad.l-3,ph2y(ph)+3);
+  }
+  ctx.textAlign='center';
+  for(let i=0;i<=5;i++){const f=(fsHz/2)*i/5;ctx.fillText(fmtFAxis(f),pad.l+(i/5)*gW,pad.t+gH+16);}
+  ctx.textAlign='left';ctx.fillText(fmtFUnit(),pad.l+gW+2,pad.t+gH+16);
+}
+
+function iirStability(secs){
+  let maxZ=0;
+  for(const s of secs){
+    const r=Math.sqrt(s.zR*s.zR+s.zI*s.zI);
+    if(r>maxZ)maxZ=r;
+  }
+  return{stable:maxZ<1,maxZ};
+}
+
+function updateIirBqTable(secs){
+  const tbody=document.getElementById('iirBqBody');
+  tbody.innerHTML='';
+  for(let i=0;i<secs.length;i++){
+    const s=secs[i],r=Math.sqrt(s.zR*s.zR+s.zI*s.zI);
+    const tr=document.createElement('tr');
+    const ok=r<1;
+    tr.innerHTML=`<td>${i+1}</td><td>${s.b[0].toFixed(6)}</td><td>${s.b[1].toFixed(6)}</td><td>${s.b[2].toFixed(6)}</td><td>${s.a[1].toFixed(6)}</td><td>${s.a[2].toFixed(6)}</td><td class="${ok?'ok':'ng'}">${r.toFixed(4)}</td>`;
+    tbody.appendChild(tr);
+  }
+  document.getElementById('iirBqNote').textContent=`${secs.length} セクション直列。各行の |z| < 1 で安定。a0 = 1 は省略。`;
+}
+
+function updateIirResults(secs,mag){
+  const{stable,maxZ}=iirStability(secs);
+  // Find -3dB freq
+  let m3Hz=0;
+  if(iirFilterType==='lpf'){
+    for(let k=mag.length-1;k>=0;k--){if(mag[k]>=-3){m3Hz=k/(mag.length*2)*fsHz;break;}}
+  } else if(iirFilterType==='hpf'){
+    for(let k=0;k<mag.length;k++){if(mag[k]>=-3){m3Hz=k/(mag.length*2)*fsHz;break;}}
+  } else {
+    m3Hz=(iirFcLowNorm+iirFcHighNorm)/2*fsHz;
+  }
+  // Stopband atten
+  let sbMax=-Infinity;
+  const NFFT=mag.length*2;
+  const sbRanges=iirFilterType==='lpf'?[[Math.ceil(iirFcNorm*1.3*NFFT),mag.length]]:
+    iirFilterType==='hpf'?[[0,Math.floor(iirFcNorm*0.7*NFFT)]]:
+    [[0,Math.floor(iirFcLowNorm*0.8*NFFT)],[Math.ceil(iirFcHighNorm*1.2*NFFT),mag.length]];
+  for(const[s,e]of sbRanges)for(let k=Math.max(0,s);k<Math.min(mag.length,e);k++)if(mag[k]>sbMax)sbMax=mag[k];
+  const sbAtten=sbMax>-Infinity?-sbMax:0;
+
+  const isBPF=iirFilterType==='bpf';
+  document.getElementById('iirRcFc2').classList.toggle('hidden',!isBPF);
+  if(isBPF){
+    document.getElementById('iirLblRcFc1').textContent='下限 fc_low';
+    document.getElementById('iirResFc1').textContent=fmtF(iirFcLowNorm*fsHz);
+    document.getElementById('iirResFc2').textContent=fmtF(iirFcHighNorm*fsHz);
+  } else {
+    document.getElementById('iirLblRcFc1').textContent='カットオフ fc';
+    document.getElementById('iirResFc1').textContent=fmtF(iirFcNorm*fsHz);
+  }
+  document.getElementById('iirResOrder').textContent='N = '+iirN;
+  document.getElementById('iirResM3db').textContent=fmtF(m3Hz);
+  document.getElementById('iirResAtten').textContent=sbAtten>0?'−'+sbAtten.toFixed(1)+' dB':'—';
+  const stabEl=document.getElementById('iirResStab');
+  stabEl.textContent=stable?'✓ 安定':'✗ 不安定';
+  stabEl.className='rv '+(stable?'ok':'ng');
+}
+
+const IIR_METHOD_DESC={
+  butterworth:`<strong>バターワース（Butterworth）</strong> — <span class="spec">最大平坦特性</span><br>通過域が最も平坦なフィルター。リップルがなくなだらかな減衰特性。設計が簡単でオールラウンドに使える、IIR入門の定番。同じ次数ではチェビシェフより遮断特性は緩い。`,
+  chebyshev1:`<strong>チェビシェフ I型（Chebyshev I）</strong> — <span class="spec">通過域等リップル・急峻な遮断</span><br>通過域に等リップルを許容する代わりに、同じ次数でバターワースより急峻な遷移を実現。リップル量（dB）で特性を調整できます。遮断特性重視の用途に。`,
 };
+function updateIirMethodDesc(){document.getElementById('iirMethodDesc').innerHTML=IIR_METHOD_DESC[iirMethod]||'';}
 
-function updateWinDesc() {
-  document.getElementById('winDesc').innerHTML = WIN_DESC[winType] || '';
+function updateIIR(){
+  try{
+    iirSections=designIIR();
+    const{mag,phase}=iirFreqResponse(iirSections);
+    initCanvas(document.getElementById('iirCanvasMag'));
+    initCanvas(document.getElementById('iirCanvasPhase'));
+    const dark=document.documentElement.getAttribute('data-theme')==='dark';
+    const LINE=dark?'#a78bfa':'#7c3aed',FILL=dark?'rgba(167,139,250,0.07)':'rgba(124,58,237,0.05)';
+    const fcLines=iirFilterType==='bpf'?[[iirFcLowNorm*fsHz,'fc_l'],[iirFcHighNorm*fsHz,'fc_h']]:[[iirFcNorm*fsHz,'fc']];
+    drawFreqCanvas('iirCanvasMag',mag,LINE,FILL,fcLines,-80,5);
+    drawIirPhase(phase,fcLines);
+    updateIirBqTable(iirSections);
+    updateIirResults(iirSections,mag);
+  }catch(e){console.error('IIR design error:',e);}
 }
 
-// ===== Info popup =====
+// IIR event handlers
+function onIirTypeChange(){
+  iirFilterType=document.getElementById('iirSelType').value;
+  const isBPF=iirFilterType==='bpf';
+  document.getElementById('iirFcSingle').classList.toggle('hidden',isBPF);
+  document.getElementById('iirFcDual').classList.toggle('visible',isBPF);
+  document.getElementById('iirLblFc').textContent=iirFilterType==='hpf'?'カットオフ周波数 fc（遮断）':'カットオフ周波数 fc';
+  updateIIR();
+}
+function onIirMethodChange(){iirMethod=document.getElementById('iirSelMethod').value;document.getElementById('iirRippleGroup').classList.toggle('vis',iirMethod==='chebyshev1');updateIirMethodDesc();updateIIR();}
+function onIirNChange(){iirN=parseInt(document.getElementById('iirRngN').value);document.getElementById('iirValN').textContent='N = '+iirN;updateIIR();}
+function onIirRippleChange(){iirRippleDb=parseFloat(document.getElementById('iirRngRipple').value);document.getElementById('iirValRipple').textContent=iirRippleDb.toFixed(1)+' dB';updateIIR();}
+function onIirFcChange(){const pct=parseInt(document.getElementById('iirRngFc').value);iirFcNorm=pct/200;iirSetFcDisplay();updateIIR();}
+function onIirFcLowChange(){
+  const pct=parseInt(document.getElementById('iirRngFcLow').value);iirFcLowNorm=pct/200;
+  if(iirFcLowNorm>=iirFcHighNorm-0.05){iirFcHighNorm=iirFcLowNorm+0.05;document.getElementById('iirRngFcHigh').value=Math.round(iirFcHighNorm*200);}
+  iirSetBpfDisplay();updateIIR();
+}
+function onIirFcHighChange(){
+  const pct=parseInt(document.getElementById('iirRngFcHigh').value);iirFcHighNorm=pct/200;
+  if(iirFcHighNorm<=iirFcLowNorm+0.05){iirFcLowNorm=iirFcHighNorm-0.05;document.getElementById('iirRngFcLow').value=Math.round(iirFcLowNorm*200);}
+  iirSetBpfDisplay();updateIIR();
+}
+
+// ============================================================
+// FIR INFO POPUPS
+// ============================================================
 const INFO={
-  fc1:{
-    title:'カットオフ周波数 fc',
-    body:'理想フィルターで通過域と遮断域を分ける境界周波数です。窓掛けsinc法では、ここで指定した周波数が −6 dB 点（理想カットオフ）に対応します。実際の −3 dB 点はわずかに低い位置になります。',
-    formula:'fc_norm = fc / fs  （0 ≦ fc_norm ≦ 0.5）\nBPFの場合: fc_low ／ fc_high の2つを設定'
-  },
-  fc2:{
-    title:'上限カットオフ fc_high（BPF）',
-    body:'バンドパスフィルターの上限カットオフ周波数です。fc_low ～ fc_high の範囲が通過域となります。fc_high には必ず fc_low より大きい値を設定してください。',
-    formula:'BW = fc_high − fc_low  （通過帯域幅）\nfc_center = (fc_low + fc_high) / 2'
-  },
-  N:{
-    title:'タップ数 N',
-    body:'FIRフィルターの係数の個数です。Type I（奇数タップ）は線形位相を保証し、h[n]=h[N−1−n] の対称構造を持ちます。タップ数を増やすほど遷移帯域が狭く特性が良くなりますが、計算コストと遅延も増えます。',
-    formula:'グループ遅延 = (N−1)/2 サンプル（全周波数で一定）\n独立係数の数 = (N+1)/2 個'
-  },
-  delay:{
-    title:'グループ遅延',
-    body:'FIRフィルターは全周波数で遅延が一定（線形位相）という大きな特長があります。入力信号の波形の形を歪めることなく、ただ時間的に遅延させるだけです。タップ数が多いほど遅延時間が増加します。',
-    formula:'τ_g = (N−1) / (2·fs)  [秒]\n     = (N−1) / 2       [サンプル]'
-  },
-  trans:{
-    title:'遷移帯域幅（LPF/HPF）/ 通過帯域幅（BPF）',
-    body:'LPF/HPFでは通過域と遮断域の間の遷移帯域の幅です。窓関数の種類と N によって決まります。BPFでは fc_high−fc_low の通過帯域幅を示しています。遷移帯域幅は窓関数の理論値から推定しています。',
-    formula:'Δf = K / N × fs\nK（窓定数）: Rect=0.9, Bartlett=2.0, Hann=3.1,\n            Hamming=3.3, Blackman=5.5'
-  },
-  atten:{
-    title:'阻止域減衰量（実測）',
-    body:'FFTで計算した周波数応答から実際に読み取った阻止域のピーク値です。fc×1.15以上（LPF）またはfc×0.85以下（HPF）の帯域の最大振幅を計算しています。',
-    formula:'A_stop = −max|H(f)| [dB]\n（遷移帯域外の阻止域内での最大値、FFT 2048点）'
-  },
-  ripple:{
-    title:'通過域リップル（実測）',
-    body:'通過域内での振幅の最大−最小の差です。理想的には 0 dB ですが、窓関数による近似誤差でわずかな変動が生じます。Hammingで数十 mdB 以下、Rectangularで約 0.7 dB 程度になります。',
-    formula:'Ripple = max|H(f)| − min|H(f)| [dB]\n（通過域内、遷移帯域除く、FFT 2048点）'
-  },
+  fc1:{title:'カットオフ周波数 fc',body:'理想フィルターで通過域と遮断域を分ける境界周波数です。窓掛けsinc法では −6 dB 点に対応します。',formula:'fc_norm = fc / fs  （0 ≦ fc_norm ≦ 0.5）'},
+  fc2:{title:'上限カットオフ fc_high（BPF）',body:'バンドパスフィルターの上限カットオフ周波数。fc_low ～ fc_high の範囲が通過域です。',formula:'BW = fc_high − fc_low\nfc_center = (fc_low + fc_high) / 2'},
+  N:{title:'タップ数 N',body:'FIRフィルターの係数の個数。Type I（奇数タップ）は線形位相保証。タップ数を増やすほど遷移帯域が狭く特性が良くなりますが、計算コストと遅延も増えます。',formula:'グループ遅延 = (N−1)/2 サンプル\n独立係数の数 = (N+1)/2 個'},
+  delay:{title:'グループ遅延',body:'FIRフィルターは全周波数で遅延が一定（線形位相）。入力信号の波形を歪めることなく遅延させます。',formula:'τ_g = (N−1) / (2·fs)  [秒]'},
+  trans:{title:'遷移帯域幅 / 通過帯域幅',body:'LPF/HPFでは通過域と遮断域の間の遷移帯域幅。BPFでは fc_high−fc_low の通過帯域幅を示します。',formula:'Δf = K / N × fs\nK: Rect=0.9, Bartlett=2.0, Hann=3.1, Hamming=3.3, Blackman=5.5'},
+  atten:{title:'阻止域減衰量（実測）',body:'FFT 2048点で計算した周波数応答から読み取った阻止域のピーク値です。',formula:'A_stop = −max|H(f)| [dB]（遷移帯域外）'},
+  ripple:{title:'通過域リップル（実測）',body:'通過域内での振幅変動（最大−最小）。Hammingで数十 mdB 以下、Rectangularで約 0.7 dB 程度。',formula:'Ripple = max|H(f)| − min|H(f)| [dB]（通過域内）'},
+  iir_fc1:{title:'IIR カットオフ周波数 fc',body:'双一次変換では fc は周波数プリワーピングにより正確に設定されます。Ωa = 2·tan(π·fc/fs) でアナログ周波数に変換し、変換後に正確な周波数位置を保証します。',formula:'Ωa = 2·tan(π·fc_norm)\nz = (2 + s) / (2 − s)  （双一次変換）'},
+  iir_fc2:{title:'IIR 上限カットオフ fc_high（BPF）',body:'BPFの上限カットオフ周波数。fc_low〜fc_high が通過帯域です。プリワーピングにより両端の周波数が正確に保たれます。',formula:'Ωl = 2·tan(π·fc_low_norm)\nΩh = 2·tan(π·fc_high_norm)\nΩ0 = √(Ωl·Ωh)  BW = Ωh − Ωl'},
+  iir_order:{title:'フィルター次数 N',body:'IIRフィルターの次数。N次バターワースはN個の極を持ち、−20N dB/decade で減衰します。BPFの場合は内部でN次LPFプロトタイプをBPFに変換するため、実際の極は2N個になります。',formula:'バターワース: −20N dB/decade（遮断域）\nBPF: LPプロトタイプ次数 N → 極数 2N'},
+  iir_m3db:{title:'−3 dB 周波数',body:'周波数応答が −3 dB になる点。LPF/HPFではカットオフ付近、BPFでは通帯域内を示します。バターワースではこの点がちょうど fc に一致します。',formula:'|H(f_c)| = 1/√2 ≈ −3.01 dB'},
+  iir_atten:{title:'阻止域減衰（実測）',body:'DFT 512点で計算した周波数応答から実測した阻止域のピーク減衰量です。',formula:'A_stop = −max|H(f)| [dB]（阻止域内）'},
+  iir_stab:{title:'安定性',body:'IIRフィルターの安定条件は「すべての極が単位円の内側にあること（|z| < 1）」です。双一次変換で正しく設計された場合、安定性は保証されます。各セクションの |z| max を表の最終列で確認できます。',formula:'安定条件: 全極 |z| < 1\n双一次変換で LHP アナログ極 → |z| < 1 に写像'},
 };
 
-function showInfo(key) {
-  const d=INFO[key]; if(!d) return;
+function showInfo(key){
+  const d=INFO[key];if(!d)return;
   document.getElementById('popupTitle').textContent=d.title;
   document.getElementById('popupBody').textContent=d.body;
   const fEl=document.getElementById('popupFormula');
   if(d.formula){fEl.style.display='block';fEl.textContent=d.formula;}else fEl.style.display='none';
   document.getElementById('popupOverlay').classList.add('open');
 }
-function closePopup(e) {
-  if(e.target===document.getElementById('popupOverlay'))
-    document.getElementById('popupOverlay').classList.remove('open');
-}
+function closePopup(e){if(e.target===document.getElementById('popupOverlay'))document.getElementById('popupOverlay').classList.remove('open');}
 
-// ===== Main update =====
-function update() {
-  const h=designFIR(), mag=freqResponse(h);
-  initCanvas(document.getElementById('canvasImp'));
-  initCanvas(document.getElementById('canvasFreq'));
-  drawImpulse(h); drawFreq(mag); updateTable(h); updateResults(h, mag);
-}
-
-// ===== UI helpers =====
-function setFcDisplay() {
-  document.getElementById('valFc').textContent=fmtF(fcNorm*fsHz);
-}
-function setBpfDisplay() {
-  document.getElementById('valFcLow').textContent=fmtF(fcLowNorm*fsHz);
-  document.getElementById('valFcHigh').textContent=fmtF(fcHighNorm*fsHz);
-}
-
-// ===== Event handlers =====
-function onFsChange() {
-  const v=parseFloat(document.getElementById('inpFs').value);
-  if(!isNaN(v)&&v>0){ fsHz=v*1e6; setFcDisplay(); setBpfDisplay(); update(); }
-}
-function onNChange() {
-  N=parseInt(document.getElementById('rngN').value);
-  document.getElementById('valN').textContent='N = '+N;
-  update();
-}
-function onTypeChange() {
-  filterType=document.getElementById('selType').value;
-  const isBPF=filterType==='bpf';
-  document.getElementById('fcSingle').classList.toggle('hidden',isBPF);
-  document.getElementById('fcDual').classList.toggle('visible',isBPF);
-  document.getElementById('lblFc').textContent=filterType==='hpf'?'カットオフ周波数 fc（遮断周波数）':'カットオフ周波数 fc';
-  update();
-}
-function onWinChange() {
-  winType=document.getElementById('selWin').value;
-  document.getElementById('kaiserGroup').classList.toggle('vis',winType==='kaiser');
-  updateWinDesc(); update();
-}
-function onBetaChange() {
-  beta=parseFloat(document.getElementById('rngBeta').value);
-  document.getElementById('valBeta').textContent='β = '+beta.toFixed(1);
-  update();
-}
-function onFcChange() {
-  const pct=parseInt(document.getElementById('rngFc').value);
-  fcNorm=pct/200; setFcDisplay(); update();
-}
-function onFcLowChange() {
-  const pct=parseInt(document.getElementById('rngFcLow').value);
-  fcLowNorm=pct/200;
-  // Ensure fc_low + margin < fc_high
-  if(fcLowNorm>=fcHighNorm-0.05){
-    fcHighNorm=fcLowNorm+0.05;
-    document.getElementById('rngFcHigh').value=Math.round(fcHighNorm*200);
-  }
-  setBpfDisplay(); update();
-}
-function onFcHighChange() {
-  const pct=parseInt(document.getElementById('rngFcHigh').value);
-  fcHighNorm=pct/200;
-  if(fcHighNorm<=fcLowNorm+0.05){
-    fcLowNorm=fcHighNorm-0.05;
-    document.getElementById('rngFcLow').value=Math.round(fcLowNorm*200);
-  }
-  setBpfDisplay(); update();
-}
-function toggleTheme() {
-  const html=document.documentElement;
-  html.setAttribute('data-theme',html.getAttribute('data-theme')==='dark'?'light':'dark');
-  update();
-}
-
-// ===== Init =====
+// ============================================================
+// INIT
+// ============================================================
 window.addEventListener('load',()=>{
-  fcNorm=0.25; document.getElementById('rngFc').value=50;
-  setFcDisplay(); setBpfDisplay();
+  fcNorm=0.25;document.getElementById('rngFc').value=50;
+  setFcDisplay();setBpfDisplay();
   document.getElementById('valN').textContent='N = '+N;
-  updateWinDesc(); update();
+  updateWinDesc();updateFIR();
+
+  iirFcNorm=0.25;document.getElementById('iirRngFc').value=50;
+  iirSetFcDisplay();iirSetBpfDisplay();
+  document.getElementById('iirValN').textContent='N = '+iirN;
+  updateIirMethodDesc();updateIIR();
 });
-window.addEventListener('resize', update);
+window.addEventListener('resize',()=>{updateFIR();updateIIR();});
 </script>
 </body>
 </html>
