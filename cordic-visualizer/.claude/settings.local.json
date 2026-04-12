@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir \"C:\\\\Users\\\\User\\\\Documents\\\\GitHub\\\\rf-tool\\\\cordic-visualizer\"\")",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(where npx:*)",
+      "Bash(where node:*)",
+      "Bash(where python:*)"
+    ]
+  }
+}
