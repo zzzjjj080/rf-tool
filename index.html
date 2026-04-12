@@ -950,53 +950,73 @@
 <!-- ── [A] 周波数ミキサー：サインウェーブの乗算 ── -->
 <div class="card">
   <h2>A. 周波数ミキサー — サインウェーブの乗算による周波数変換</h2>
-  <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">
-    RF 信号処理でよく使われる、2つのサインウェーブを乗算したときの周波数成分を解説します。
-  </p>
 
-  <!-- 数式解説ブロック -->
+  <!-- ① なぜミキシングするのか -->
+  <div style="background:#eff6ff;border-left:4px solid #2563eb;border-radius:0 6px 6px 0;padding:12px 16px;margin-bottom:20px;">
+    <div style="font-size:13px;font-weight:700;color:#1e40af;margin-bottom:6px;">なぜミキシング（乗算）をするのか？</div>
+    <p style="font-size:13px;color:#1e40af;margin:0 0 6px;">
+      高い周波数の信号をそのままデジタル処理しようとすると、ADC のサンプリングレートも高くなり回路コストが増大します。
+      そこで、<strong>既知の基準周波数（参照信号）を乗算</strong>することで、元の周波数より低い「差周波数」に変換します。
+      これを <strong>ダウンコンバート</strong> と呼びます。
+    </p>
+    <p style="font-size:13px;color:#1e40af;margin:0;">
+      例: 27 MHz 入力 × 15 MHz 参照 → <strong>12 MHz</strong> の差周波数として取り出し、その後 CORDIC で IQ 検波。
+    </p>
+  </div>
+
+  <!-- ② 数式解説 -->
   <div class="card" style="background:#f7fafc;border:1px solid var(--border);margin-bottom:16px;">
-    <h3 style="color:var(--primary);margin-bottom:12px;">乗算の数学的展開</h3>
+    <h3 style="color:var(--primary);margin-bottom:14px;">乗算の数学的展開</h3>
 
-    <p style="font-size:13px;margin-bottom:10px;">入力信号 (周波数 <i>f</i><sub>s</sub>) と局部発振信号 (周波数 <i>f</i><sub>LO</sub>) を乗算します：</p>
+    <!-- 凡例 -->
+    <div style="display:flex;gap:20px;margin-bottom:12px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#2563eb;"></span>
+        <span style="font-size:12px;font-weight:700;color:#1e40af;">入力信号（測定対象）— f<sub>s</sub></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#d97706;"></span>
+        <span style="font-size:12px;font-weight:700;color:#92400e;">参照信号 LO（内部で生成する既知の信号）— f<sub>LO</sub></span>
+      </div>
+    </div>
 
-    <div style="background:#fff;border:1px solid #c8d6e5;border-radius:6px;padding:14px 18px;margin:10px 0;overflow-x:auto;">
+    <p style="font-size:13px;margin-bottom:6px;color:var(--muted);">この2つを乗算します：</p>
+    <div style="background:#fff;border:1px solid #c8d6e5;border-radius:6px;padding:14px 18px;margin:0 0 12px;overflow-x:auto;">
       <div id="tex_product" style="font-size:16px;"></div>
     </div>
 
-    <p style="font-size:13px;margin:10px 0 6px;">
+    <p style="font-size:13px;margin:0 0 6px;">
       高校数学の積和公式 <span id="tex_identity_inline" style="display:inline-block;vertical-align:middle;"></span> を使うと：
     </p>
-
-    <div style="background:#fff;border:1px solid #c8d6e5;border-radius:6px;padding:14px 18px;margin:10px 0;overflow-x:auto;">
+    <div style="background:#fff;border:1px solid #c8d6e5;border-radius:6px;padding:14px 18px;margin:0 0 12px;overflow-x:auto;">
       <div id="tex_expand" style="font-size:16px;"></div>
     </div>
 
-    <p style="font-size:13px;margin:10px 0 6px;">乗算後の信号には <strong>差周波数</strong> と <strong>和周波数</strong> の2成分が生まれます：</p>
+    <p style="font-size:13px;margin:0 0 10px;">乗算後には <strong>差周波数</strong>（欲しい成分）と <strong>和周波数</strong>（不要な成分）の2つが生まれます：</p>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
       <div class="result-item" style="border-color:#059669;background:#f0fdf4;">
-        <div class="label">差周波数（LPF 通過 ✓）</div>
-        <div id="tex_diff" class="value" style="font-size:15px;color:#059669;"></div>
+        <div class="label">差周波数 ✓ 残す</div>
+        <div id="tex_diff" class="value" style="font-size:14px;color:#059669;"></div>
       </div>
       <div class="result-item" style="border-color:#dc2626;background:#fef2f2;">
-        <div class="label">和周波数（LPF カット ✗）</div>
-        <div id="tex_sum" class="value" style="font-size:15px;color:#dc2626;"></div>
+        <div class="label">和周波数 ✗ LPFでカット</div>
+        <div id="tex_sum" class="value" style="font-size:14px;color:#dc2626;"></div>
       </div>
     </div>
 
-    <div style="margin-top:14px;padding:10px 14px;background:#fffbeb;border:1px solid #f59e0b;border-radius:6px;font-size:12px;color:#92400e;">
+    <div style="margin-top:12px;padding:10px 14px;background:#fffbeb;border:1px solid #f59e0b;border-radius:6px;font-size:12px;color:#92400e;">
       振幅は両成分とも元の <b>½</b> になります。LPF で和周波数を除去すれば、差周波数成分だけが残ります。
     </div>
   </div>
 
-  <!-- インタラクティブ計算 -->
+  <!-- ③ インタラクティブ計算 -->
   <h3>インタラクティブ周波数計算</h3>
   <div class="split-row" style="margin-top:10px;">
     <div class="inputs-col">
       <div class="form-group">
-        <label>入力信号周波数 f<sub>s</sub></label>
-        <input type="number" id="m99_fs" value="27.12" step="0.01" min="1" max="100" style="max-width:160px;" oninput="m99_calc()">
+        <label style="color:#1e40af;">▌ 入力信号周波数 f<sub>s</sub></label>
+        <input type="number" id="m99_fs" value="27.12" step="0.01" min="1" max="100" style="max-width:160px;border-color:#93c5fd;" oninput="m99_calc()">
         <span style="font-size:12px;color:var(--muted);margin-left:4px;">MHz</span>
         <div style="margin-top:4px;">
           <input type="range" id="m99_fs_slider" min="24.408" max="29.832" step="0.01" value="27.12"
@@ -1005,38 +1025,76 @@
         </div>
       </div>
       <div class="form-group">
-        <label>LO 周波数 f<sub>LO</sub></label>
-        <input type="number" id="m99_flo" value="15" step="0.1" min="1" max="100" style="max-width:160px;" oninput="m99_calc()">
+        <label style="color:#92400e;">▌ 参照信号（LO）周波数 f<sub>LO</sub></label>
+        <input type="number" id="m99_flo" value="15" step="0.1" min="1" max="100" style="max-width:160px;border-color:#fcd34d;" oninput="m99_calc()">
         <span style="font-size:12px;color:var(--muted);margin-left:4px;">MHz</span>
       </div>
     </div>
+
     <div class="results-col">
       <div class="result-grid" style="margin-top:0;">
-        <div class="result-item">
-          <div class="label">入力 f<sub>s</sub></div>
-          <div class="value" id="m99_out_fs">27.12</div>
+
+        <!-- 入力fs -->
+        <div class="result-item" style="border-color:#93c5fd;background:#eff6ff;cursor:pointer;" onclick="m99_toggle('info_fs')">
+          <div class="label" style="color:#1e40af;">入力信号 f<sub>s</sub> <span style="font-size:10px;opacity:0.7;">ⓘ</span></div>
+          <div class="value" id="m99_out_fs" style="color:#1e40af;">27.12</div>
           <div class="unit">MHz</div>
+          <div id="info_fs" style="display:none;font-size:11px;color:#1e40af;margin-top:6px;text-align:left;line-height:1.5;">
+            測定対象の信号周波数。この周波数のサインウェーブが ADC に入力されます。
+          </div>
         </div>
-        <div class="result-item">
-          <div class="label">LO f<sub>LO</sub></div>
-          <div class="value" id="m99_out_flo">15.00</div>
+
+        <!-- LO -->
+        <div class="result-item" style="border-color:#fcd34d;background:#fffbeb;cursor:pointer;" onclick="m99_toggle('info_lo')">
+          <div class="label" style="color:#92400e;">参照信号 f<sub>LO</sub> <span style="font-size:10px;opacity:0.7;">ⓘ</span></div>
+          <div class="value" id="m99_out_flo" style="color:#d97706;">15.00</div>
           <div class="unit">MHz</div>
+          <div id="info_lo" style="display:none;font-size:11px;color:#92400e;margin-top:6px;text-align:left;line-height:1.5;">
+            内部で生成する既知の基準信号（LO: Local Oscillator）。この周波数を入力信号に掛け合わせてダウンコンバートします。
+          </div>
         </div>
-        <div class="result-item highlight" style="border-color:#059669;background:#f0fdf4;">
-          <div class="label">差 |f<sub>s</sub> − f<sub>LO</sub>| ✓</div>
+
+        <!-- 差周波数 -->
+        <div class="result-item" style="border-color:#059669;background:#f0fdf4;cursor:pointer;" onclick="m99_toggle('info_diff')">
+          <div class="label" style="color:#065f46;">差周波数 |f<sub>s</sub> − f<sub>LO</sub>| ✓ <span style="font-size:10px;opacity:0.7;">ⓘ</span></div>
           <div class="value" id="m99_out_diff" style="color:#059669;">12.12</div>
           <div class="unit">MHz</div>
+          <div id="info_diff" style="display:none;font-size:11px;color:#065f46;margin-top:6px;text-align:left;line-height:1.5;">
+            乗算後に残したい成分。元の入力信号の情報（振幅・位相）を保ったまま、低い周波数に変換されます。LPF 通過後もこの成分が残ります。
+          </div>
         </div>
-        <div class="result-item" style="border-color:#dc2626;background:#fef2f2;">
-          <div class="label">和 f<sub>s</sub> + f<sub>LO</sub> ✗</div>
+
+        <!-- 和周波数 -->
+        <div class="result-item" style="border-color:#dc2626;background:#fef2f2;cursor:pointer;" onclick="m99_toggle('info_sum')">
+          <div class="label" style="color:#991b1b;">和周波数 f<sub>s</sub> + f<sub>LO</sub> ✗ <span style="font-size:10px;opacity:0.7;">ⓘ</span></div>
           <div class="value" id="m99_out_sum" style="color:#dc2626;">42.12</div>
           <div class="unit">MHz</div>
+          <div id="info_sum" style="display:none;font-size:11px;color:#991b1b;margin-top:6px;text-align:left;line-height:1.5;">
+            乗算によって生じる不要な高周波成分。LPF でカットします。差周波数から十分離れた高い周波数に現れるので、フィルタリングが容易です。
+          </div>
         </div>
+
+        <!-- LPF推奨カットオフ -->
+        <div class="result-item" style="border-color:#7c3aed;background:#f5f3ff;cursor:pointer;grid-column:1/-1;" onclick="m99_toggle('info_lpf')">
+          <div class="label" style="color:#5b21b6;">LPF 推奨カットオフ目安 <span style="font-size:10px;opacity:0.7;">ⓘ</span></div>
+          <div style="display:flex;align-items:baseline;justify-content:center;gap:6px;">
+            <div style="font-size:13px;color:#6b7280;">差 <span id="m99_out_diff2" style="color:#059669;font-weight:700;">12.12</span> MHz
+              &lt; <b style="color:#7c3aed;font-size:20px;" id="m99_out_lpf">~18</b> MHz
+              &lt; 和 <span id="m99_out_sum2" style="color:#dc2626;font-weight:700;">42.12</span> MHz
+            </div>
+          </div>
+          <div id="info_lpf" style="display:none;font-size:11px;color:#5b21b6;margin-top:6px;text-align:left;line-height:1.5;">
+            LPF のカットオフ周波数は「差周波数より高く、和周波数より十分低い」範囲に設定します。
+            目安として <b>差周波数 × 1.5</b> 付近が設定しやすいポイントです。
+            フィルタの次数（ロールオフの急峻さ）によって最適値は変わります。
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
 
-  <!-- スペクトル図 -->
+  <!-- ④ スペクトル図 -->
   <h3 style="margin-top:20px;">周波数スペクトル（乗算前後）</h3>
   <canvas id="m99_canvas" style="width:100%;max-width:720px;border:1px solid var(--border);border-radius:6px;display:block;margin-top:8px;"></canvas>
 
@@ -3418,27 +3476,37 @@ function m3s_animLoop() {
 
 
 <script>
+// ── mod99 ツールチップ toggle ──
+function m99_toggle(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
 // ── mod99 KaTeX 数式レンダリング ──
+// 色: 入力信号 #2563eb (青), 参照信号LO #d97706 (橙)
 function m99_renderKaTeX() {
   if (typeof katex === 'undefined') { setTimeout(m99_renderKaTeX, 100); return; }
   const R = (id, tex, disp) => {
     const el = document.getElementById(id);
     if (el) katex.render(tex, el, {throwOnError:false, displayMode:!!disp});
   };
+  // 積の式: 入力(青) × LO(橙) — 色付き
   R('tex_product',
-    '\\sin(2\\pi f_s t) \\;\\times\\; \\sin(2\\pi f_{\\rm LO} t)',
+    '\\textcolor{#2563eb}{\\sin(2\\pi f_s t)} \\;\\times\\; \\textcolor{#d97706}{\\sin(2\\pi f_{\\rm LO} t)}',
     true);
+  // 積和公式(インライン)
   R('tex_identity_inline',
     '\\sin A \\sin B = \\tfrac{1}{2}[\\cos(A-B) - \\cos(A+B)]',
     false);
+  // 展開式: 差(緑) - 和(赤)
   R('tex_expand',
-    '= \\;\\frac{1}{2}\\cos\\!\\bigl(2\\pi(f_s - f_{\\rm LO})t\\bigr) \\;-\\; \\frac{1}{2}\\cos\\!\\bigl(2\\pi(f_s + f_{\\rm LO})t\\bigr)',
+    '= \\;\\textcolor{#059669}{\\frac{1}{2}\\cos\\!\\bigl(2\\pi(f_s - f_{\\rm LO})t\\bigr)} \\;-\\; \\textcolor{#dc2626}{\\frac{1}{2}\\cos\\!\\bigl(2\\pi(f_s + f_{\\rm LO})t\\bigr)}',
     true);
   R('tex_diff',
-    '\\frac{1}{2}\\cos\\bigl(2\\pi|f_s-f_{\\rm LO}|t\\bigr)',
+    '\\dfrac{1}{2}\\cos\\bigl(2\\pi|f_s-f_{\\rm LO}|\\,t\\bigr)',
     false);
   R('tex_sum',
-    '\\frac{1}{2}\\cos\\bigl(2\\pi(f_s+f_{\\rm LO})t\\bigr)',
+    '\\dfrac{1}{2}\\cos\\bigl(2\\pi(f_s+f_{\\rm LO})\\,t\\bigr)',
     false);
 }
 m99_renderKaTeX();
@@ -3597,12 +3665,25 @@ function m99_drawSpectrum() {
 function m99_calc() {
   const fs  = parseFloat(document.getElementById('m99_fs')?.value)  || 27.12;
   const flo = parseFloat(document.getElementById('m99_flo')?.value) || 15;
+  const fd   = Math.abs(fs - flo);
+  const fsum = fs + flo;
+  const lpf  = fd * 1.5; // 推奨カットオフ目安: 差周波数 × 1.5
+
   const slider = document.getElementById('m99_fs_slider');
   if (slider && document.activeElement !== slider) slider.value = fs;
-  document.getElementById('m99_out_fs').textContent  = fs.toFixed(2);
-  document.getElementById('m99_out_flo').textContent = flo.toFixed(2);
-  document.getElementById('m99_out_diff').textContent = Math.abs(fs - flo).toFixed(2);
-  document.getElementById('m99_out_sum').textContent  = (fs + flo).toFixed(2);
+
+  document.getElementById('m99_out_fs').textContent   = fs.toFixed(2);
+  document.getElementById('m99_out_flo').textContent  = flo.toFixed(2);
+  document.getElementById('m99_out_diff').textContent = fd.toFixed(2);
+  document.getElementById('m99_out_sum').textContent  = fsum.toFixed(2);
+  // 数式ブロック内の結果表示（重複フィールド）
+  const d2 = document.getElementById('m99_out_diff2');
+  const s2 = document.getElementById('m99_out_sum2');
+  if (d2) d2.textContent = fd.toFixed(2);
+  if (s2) s2.textContent = fsum.toFixed(2);
+  const lpfEl = document.getElementById('m99_out_lpf');
+  if (lpfEl) lpfEl.textContent = '~' + lpf.toFixed(1);
+
   m99_drawSpectrum();
 }
 
