@@ -8,7 +8,7 @@
  *
  * RF_ACTIVE_TAB に設定できる値:
  *   'mod1'〜'mod5' | 'cordic' | 'adc' | 'filter' | 'pid'
- *   | 'fft' | 'na' | 'pa' | 'pll' | 'matching' | 'abcd' | 'fir'
+ *   | 'fft' | 'na' | 'pa' | 'pll' | 'matching' | 'abcd' | 'fir' | 'hilbert'
  */
 (function () {
   const scriptSrc = (document.currentScript || {}).src || '';
@@ -43,7 +43,8 @@
         { id: 'adc',    label: '⑦ ADC',       href: baseUrl + 'adc-visualizer/adc_visualizer.html' },
         { id: 'filter', label: '⑧ フィルター', href: baseUrl + 'digital-filter-designer/digital_filter_designer.html' },
         { id: 'fft',    label: '⑩ FFT',       href: baseUrl + 'fft-visualizer/fft-visualizer.html', featured: true },
-        { id: 'fir',    label: '⑯ FIR設計',   href: baseUrl + 'fir-designer/fir_designer.html' },
+        { id: 'fir',     label: '⑯ FIR設計',      href: baseUrl + 'fir-designer/fir_designer.html' },
+        { id: 'hilbert', label: '⑰ ヒルベルト変換', href: baseUrl + 'hilbert-visualizer/hilbert_visualizer.html' },
       ],
     },
     {
