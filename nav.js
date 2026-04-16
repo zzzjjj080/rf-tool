@@ -39,12 +39,12 @@
     {
       id: 'dsp', label: 'デジタル信号処理', cls: 'tg-dsp',
       tabs: [
-        { id: 'cordic', label: '⑥ CORDIC',    href: baseUrl + 'cordic-visualizer/cordic_visualizer.html' },
-        { id: 'adc',    label: '⑦ ADC',       href: baseUrl + 'adc-visualizer/adc_visualizer.html' },
-        { id: 'filter', label: '⑧ フィルター', href: baseUrl + 'digital-filter-designer/digital_filter_designer.html' },
-        { id: 'fft',    label: '⑩ FFT',       href: baseUrl + 'fft-visualizer/fft-visualizer.html', featured: true },
-        { id: 'fir',     label: '⑯ FIR設計',      href: baseUrl + 'fir-designer/fir_designer.html' },
+        { id: 'cordic',  label: '⑥ CORDIC',        href: baseUrl + 'cordic-visualizer/cordic_visualizer.html' },
+        { id: 'adc',     label: '⑦ ADC',            href: baseUrl + 'adc-visualizer/adc_visualizer.html' },
+        { id: 'filter',  label: '⑧ フィルター概要',  href: baseUrl + 'digital-filter-designer/digital_filter_designer.html' },
+        { id: 'fir',     label: '⑯ フィルター設計',  href: baseUrl + 'fir-designer/fir_designer.html' },
         { id: 'hilbert', label: '⑰ ヒルベルト変換', href: baseUrl + 'hilbert-visualizer/hilbert_visualizer.html' },
+        { id: 'fft',     label: '⑩ FFT',            href: baseUrl + 'fft-visualizer/fft-visualizer.html', featured: true },
       ],
     },
     {
@@ -52,6 +52,12 @@
       tabs: [
         { id: 'pid', label: '⑨ PID制御', href: baseUrl + 'pid-visualizer/pid-visualizer.html' },
         { id: 'pll', label: '⑬ PLL',     href: baseUrl + 'pll-simulator/pll_simulator.html' },
+      ],
+    },
+    {
+      id: 'other', label: 'その他', cls: 'tg-other',
+      tabs: [
+        { id: 'mod99', label: '㊾ 数学メモ', href: baseUrl + 'index.html?tab=mod99' },
       ],
     },
   ];
@@ -109,7 +115,9 @@
 .tg-rf   .rftab.rftab-active { border-bottom-color: #60a5fa !important; }
 .tg-pwr  .rftab.rftab-active { border-bottom-color: #fb923c !important; }
 .tg-dsp  .rftab.rftab-active { border-bottom-color: #34d399 !important; }
-.tg-ctrl .rftab.rftab-active { border-bottom-color: #c084fc !important; }
+.tg-ctrl  .rftab.rftab-active { border-bottom-color: #c084fc !important; }
+.tg-other .rftab-group-label { color: #f9a8d4; border-bottom: 2px solid #db2777; }
+.tg-other .rftab.rftab-active { border-bottom-color: #f9a8d4 !important; }
 /* タブ共通 */
 .rftab {
   padding: 6px 14px !important;
